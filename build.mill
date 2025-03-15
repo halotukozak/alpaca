@@ -3,6 +3,8 @@ import mill._
 import mill.scalalib._
 
 object alpaca extends ScalaModule {
+  def alpacaVersion = "0.1.0"
+
   def scalaVersion = "3.6.3"
 
   override def scalacOptions = Seq(
@@ -16,7 +18,6 @@ object alpaca extends ScalaModule {
     "-language:strictEquality",
     "-Vprofile",
     "-Xprint-inline",
-    "-XLint",
     "-Ycheck:all",
     "-Ydebug-error",
     "-Ydebug-flags",
@@ -24,17 +25,29 @@ object alpaca extends ScalaModule {
     "-Yexplain-lowlevel",
     "-Yexplicit-nulls",
     "-Yprint-debug",
-    "-Ysafe-init",
+    "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
-    "-Wnonunit-statements",
     "-Wunused:all",
+  )
+
+  override def scalaDocOptions = Seq(
+    "-project",
+    "alpaca",
+    "-project-version",
+    alpacaVersion,
+//    "-project-url TODO",
+//    "-project-logo TODO",
+    "-project-footer",
+    "made with ❤️ and coffee",
+    "-social-links:github::https://github.com/halotukozak/alpaca",
+    "-snippet-compiler:compile",
   )
 
   object test extends ScalaTests with TestModule.ScalaTest {
     def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest:3.2.19",
+      ivy"org.scalatest::scalatest:3.2.19"
     )
   }
 }
