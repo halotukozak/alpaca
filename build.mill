@@ -1,0 +1,13 @@
+package build
+import mill._
+import mill.scalalib._
+
+object alpaca extends ScalaModule {
+  def scalaVersion = "3.6.3"
+
+  object test extends ScalaTests with TestModule.ScalaTest {
+    def ivyDeps = Agg(
+      ivy"org.scalatest::scalatest:3.2.19"
+    )
+  }
+}
