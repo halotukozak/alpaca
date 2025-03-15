@@ -5,9 +5,36 @@ import mill.scalalib._
 object alpaca extends ScalaModule {
   def scalaVersion = "3.6.3"
 
+  override def scalacOptions = Seq(
+    "-deprecation",
+    "-feature",
+    "-explain",
+    "-new-syntax",
+    "-no-indent",
+    "-unchecked",
+    "-language:noAutoTupling",
+    "-language:strictEquality",
+    "-Vprofile",
+    "-Xprint-inline",
+    "-XLint",
+    "-Ycheck:all",
+    "-Ydebug-error",
+    "-Ydebug-flags",
+    "-Ydebug-missing-refs",
+    "-Yexplain-lowlevel",
+    "-Yexplicit-nulls",
+    "-Yprint-debug",
+    "-Ysafe-init",
+    "-Yshow-suppressed-errors",
+    "-Yshow-var-bounds",
+    "-Werror",
+    "-Wnonunit-statements",
+    "-Wunused:all",
+  )
+
   object test extends ScalaTests with TestModule.ScalaTest {
     def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest:3.2.19"
+      ivy"org.scalatest::scalatest:3.2.19",
     )
   }
 }
