@@ -7,7 +7,12 @@ on:
 jobs:
   test:
     permissions:
+      actions: read
+      contents: read
+      packages: read
       pull-requests: write
+      checks: write
+      issues: write
 
     runs-on: ubuntu-latest
 
