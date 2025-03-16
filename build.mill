@@ -1,18 +1,26 @@
 package build
+
+/* Plugins */
+import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
+import $ivy.`com.carlosedp::mill-aliases::0.6.0`
+/* imports */
 import mill._
 import mill.scalalib._
+import mill.contrib.scoverage.ScoverageModule
+import com.carlosedp.aliases._
 
-object alpaca extends ScalaModule {
+object `package` extends RootModule with ScalaModule with ScoverageModule {
   def alpacaVersion = "0.1.0"
 
   def scalaVersion = "3.6.3"
+  def scoverageVersion = "2.3.0"
 
   override def scalacOptions = Seq(
     "-deprecation",
     "-feature",
     "-explain",
     "-new-syntax",
-    "-no-indent",
+//    "-no-indent",
     "-unchecked",
     "-language:noAutoTupling",
     "-language:strictEquality",
@@ -45,9 +53,14 @@ object alpaca extends ScalaModule {
     "-snippet-compiler:compile",
   )
 
-  object test extends ScalaTests with TestModule.ScalaTest {
+  object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
     def ivyDeps = Agg(
       ivy"org.scalatest::scalatest:3.2.19"
     )
+  }
+
+  object utils extends Aliases {
+    def idea = alias("mill.idea.GenIdea/")
+    def bsp = alias("mill.bsp.BSP/install")
   }
 }

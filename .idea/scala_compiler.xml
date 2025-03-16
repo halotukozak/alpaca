@@ -1,21 +1,43 @@
 <project version="4">
     <component name="ScalaCompilerConfiguration">
-        <profile name="mill 1" modules="alpaca,alpaca.test">
-            <parameters> </parameters>
+        <profile name="mill 1" modules=",test">
+            <parameters>
+                <parameter value="-deprecation"/>
+                <parameter value="-feature"/>
+                <parameter value="-explain"/>
+                <parameter value="-new-syntax"/>
+                <parameter value="-unchecked"/>
+                <parameter value="-language:noAutoTupling"/>
+                <parameter value="-language:strictEquality"/>
+                <parameter value="-Vprofile"/>
+                <parameter value="-Xprint-inline"/>
+                <parameter value="-Ycheck:all"/>
+                <parameter value="-Ydebug-error"/>
+                <parameter value="-Ydebug-flags"/>
+                <parameter value="-Ydebug-missing-refs"/>
+                <parameter value="-Yexplain-lowlevel"/>
+                <parameter value="-Yexplicit-nulls"/>
+                <parameter value="-Yprint-debug"/>
+                <parameter value="-Wsafe-init"/>
+                <parameter value="-Yshow-suppressed-errors"/>
+                <parameter value="-Yshow-var-bounds"/>
+                <parameter value="-Werror"/>
+                <parameter value="-Wunused:all"/>
+            </parameters>
             <plugins> </plugins>
         </profile>
         <profile name="mill 2" modules="">
             <parameters>
-                <parameter value="-Xplugin:/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/scalac-mill-moduledefs-plugin_2.13.15/0.11.2/scalac-mill-moduledefs-plugin_2.13.15-0.11.2.jar"/>
+                <parameter value="-Xplugin:/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/scalac-mill-moduledefs-plugin_2.13.15/0.11.1/scalac-mill-moduledefs-plugin_2.13.15-0.11.1.jar"/>
                 <parameter 
-                value="-Xplugin:/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-runner-linenumbers_2.13/0.12.8/mill-runner-linenumbers_2.13-0.12.8.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-compiler/2.13.15/scala-compiler-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.15/scala-library-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-moduledefs_2.13/0.11.2/mill-moduledefs_2.13-0.11.2.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-main-client/0.12.8/mill-main-client-0.12.8.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.15/scala-reflect-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/jline/jline/3.26.3/jline-3.26.3.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/sourcecode_2.13/0.3.0/sourcecode_2.13-0.3.0.jar">
+                value="-Xplugin:/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-runner-linenumbers_2.13/0.12.5/mill-runner-linenumbers_2.13-0.12.5.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-compiler/2.13.15/scala-compiler-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.15/scala-library-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-moduledefs_2.13/0.11.1/mill-moduledefs_2.13-0.11.1.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/mill-main-client/0.12.5/mill-main-client-0.12.5.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-reflect/2.13.15/scala-reflect-2.13.15.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/jline/jline/3.26.3/jline-3.26.3.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar,/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/sourcecode_2.13/0.3.0/sourcecode_2.13-0.3.0.jar">
 </parameter>
                 <parameter value="-deprecation"/>
                 <parameter value="-Xplugin-require:mill-linenumber-plugin"/>
                 <parameter value="-Xplugin-require:auto-override-plugin"/>
             </parameters>
             <plugins>
-                <plugin path="/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/scalac-mill-moduledefs-plugin_2.13.15/0.11.2/scalac-mill-moduledefs-plugin_2.13.15-0.11.2.jar"/>
+                <plugin path="/Users/bartlomiejkozak/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/scalac-mill-moduledefs-plugin_2.13.15/0.11.1/scalac-mill-moduledefs-plugin_2.13.15-0.11.1.jar"/>
             </plugins>
         </profile>
     </component>
