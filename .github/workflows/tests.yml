@@ -1,26 +1,43 @@
 name: Test
 on:
   push:
-    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
 jobs:
   test:
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      pull-requests: write
+      checks: write
+      issues: write
+
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
 
       - name: Compile
-        run: mill _.compile
+        run: ./mill _.compile
 
       - name: Run tests
         run: ./mill __.test
+
+      - name: Code coverage
+        run: ./mill scoverage.xmlCoberturaReport
+
+      - name: Code Coverage Report
+        uses: 5monkeys/cobertura-action@master
+        with:
+          path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
+          minimum_coverage: 80
+          fail_below_threshold: 'true'
