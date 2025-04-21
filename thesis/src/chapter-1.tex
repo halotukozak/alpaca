@@ -1,4 +1,4 @@
-\chapter{Cel Wizja}
+\chapter{Cel prac i wizja projektu}
 \label{ch:cel-wizja}
 
 
@@ -45,56 +45,7 @@ Mimo pewnych zalet, jego złożoność i wysoki próg wejścia mogą stanowić w
 Ponieważ \textit{Lex} i \textit{Yacc} zostały zaprojektowane do współpracy z językiem C, ich integracja z nowoczesnymi językami programowania bywa utrudniona.
 Rozszerzanie tych narzędzi o dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w porównaniu z nowoczesnymi alternatywami.
-
-\begin{lstlisting}[language=c,float=!htbp,caption={Fragment definicji parsera Ruby w technologii Yacc},label={lst:lstlisting2}]
-        | command_asgn
-    | mlhs '=' command_call
-        {
-        /*%%%*/
-        value_expr($3);
-        $1->nd_value = $3;
-        $$ = $1;
-        /*%
-        $$ = dispatch2(massign, $1, $3);
-        %*/
-        }
-    | var_lhs tOP_ASGN command_call
-        {
-        value_expr($3);
-        $$ = new_op_assign($1, $2, $3);
-        }
-    | primary_value '[' opt_call_args rbracket tOP_ASGN command_call
-        {
-        /*%%%*/
-        NODE *args;
-
-        value_expr($6);
-        if (!$3) $3 = NEW_ZARRAY();
-        args = arg_concat($3, $6);
-        if ($5 == tOROP) {
-            $5 = 0;
-        }
-        else if ($5 == tANDOP) {
-            $5 = 1;
-        }
-        $$ = NEW_OP_ASGN1($1, $5, args);
-        fixpos($$, $1);
-        /*%
-        $$ = dispatch2(aref_field, $1, escape_Qundef($3));
-        $$ = dispatch3(opassign, $$, $5, $6);
-        %*/
-        }
-    | primary_value '.' tIDENTIFIER tOP_ASGN command_call
-        {
-        value_expr($5);
-        $$ = new_attr_op_assign($1, ripper_id2sym('.'), $3, $4, $5);
-        }
-    | primary_value '.' tCONSTANT tOP_ASGN command_call
-        {
-        value_expr($5);
-        $$ = new_attr_op_assign($1, ripper_id2sym('.'), $3, $4, $5);
-        }
-\end{lstlisting}
+\lstinputlisting[language=c,float=!htbp,caption={Fragment definicji parsera Ruby w technologii Yacc},label={lst:ruby-parser}]{listings/chapter1/parse.y}
 
 \subsection{PLY, SLY}
 \label{subsec:ply-sly}
@@ -107,7 +58,7 @@ Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te ch
 Przy implementacji parserów z użyciem biblioteki SLY w środowisku PyCharm obserwuje się wiele ostrzeżeń dotyczących potencjalnych naruszeń reguł, co często wymaga zastosowania mechanizmów supresji, aby uniknąć fałszywie pozytywnych wyników analizy statycznej kodu.
 Ponadto należy zaznaczyć, iż autor projektu informuje o braku dalszego rozwoju tych narzędzi\cite{sly-github}.
 
-Przykład ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
+Przykład \ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
 \begin{itemize}
     \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
     Literały muszą być zawarte w cudzysłowie, a „zmienna” odpowiada za matchowany „typ”.
@@ -118,69 +69,18 @@ Przykład ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych 
     Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
 \end{itemize}
 
-\begin{lstlisting}[language=Python,float=!htbp,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:lstlisting3}]
-    class MatrixParser(Parser):
-    tokens = MatrixScanner.tokens
+\lstinputlisting[language=Python,float=!htbp,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:python-parser}]{listings/chapter1/sly-parser.py}
 
-    precedence = (
-        ('nonassoc', 'IFX'),
-        ('nonassoc', 'ELSE'),
-        ('nonassoc', 'EQUAL'),
-    )
-
-    @_('"{" instructions "}"')
-    def block(self, p: YaccProduction):
-        raise NotImplementedError
-
-    @_('instruction')
-    def block(self, p: YaccProduction):
-        raise NotImplementedError
-
-    @_('IF "(" condition ")" block %prec IFX')
-    def instruction(self, p: YaccProduction):
-        raise NotImplementedError
-
-    @_('IF "(" condition ")" block ELSE block')
-    def instruction(self, p: YaccProduction):
-        raise NotImplementedError
-
-    @_('expr EQUAL expr')
-    def condition(self, p: YaccProduction):
-        args = [p.expr0, p.expr1]
-        raise NotImplementedError
-
-\end{lstlisting}
-
-Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone.
-Na przykład poniższy kod %todo(bkozak: lepsze wprowadzenie kodu)
-\begin{lstlisting}[language=Python,float=!htbp,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label=lst:maximum]
-tokens = Scanner().tokenize("a = 1 + 2")
-for tok in tokens:
-    print(tok)
-
-\end{lstlisting}
-
-po uruchomieniu informuje użytkownika
-\begin{lstlisting}[language=terminal, caption={Przykład komunikatu błędu w bibliotece \textit{SLY}},label={lst:lstlisting}]
-  File "main.py", line 2, in <module>
-    for tok in tokens:
-               ^^^^^^
-  File "Python\site-packages\sly\lex.py", line 374, in tokenize
-    _set_state(type(self))
-    ~~~~~~~~~~^^^^^^^^^^^^
-  File "Python\site-packages\sly\lex.py", line 367, in _set_state
-    _master_re = cls._master_re
-                 ^^^^^^^^^^^^^^
-AttributeError: type object 'Scanner' has no attribute '_master_re'
-\end{lstlisting}
-
+Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone, co obrazuje przykład \ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z fragmentu kodu \ref{lst:lstlisting}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji \verb|Lexer|.
+\lstinputlisting[language=Python,float=!htbp,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:not-working-sly}]{listings/chapter1/not-working-sly.py}
+
+\lstinputlisting[language=terminal, caption={Przykładowy komunikat błędu w bibliotece \textit{SLY}},label={lst:sly-result}]{listings/chapter1/not-working-result}
 
 \subsection{ANTLR}
 \label{subsec:antlr}
-%todo(tosz): a gdzie jakaś bibliografia do tego?
 
-\textit{ANTLR} to kolejne rozwiązanie inspirowane narzędziami \textit{Lex} i \textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
+\textit{ANTLR}\cite{parr2004s} to kolejne rozwiązanie inspirowane narzędziami \textit{Lex} i \textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
 Jego twórcy opracowali dedykowany język DSL, znany jako Grammar v4, który umożliwia definiowanie składni analizowanego języka.
 Na podstawie tej definicji \textit{ANTLR} generuje parser w wybranym przez użytkownika języku programowania, takim jak Python, Java, C++ lub JavaScript.
 
@@ -193,17 +93,14 @@ Jednakże, jej zastosowanie wiąże się z większym zużyciem pamięci oraz ni�
 Dodatkowym wyzwaniem podczas korzystania z \textit{ANTLR} jest konieczność nauki składni DSL Grammar v4 oraz ograniczenie wsparcia dla narzędzi deweloperskich.
 Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z jednego z dedykowanych środowisk, co może stanowić istotne ograniczenie dla użytkowników preferujących inne IDE\@.
 
-\subsection{Alternatywne rozwiązania w języku Scala}
-\label{subsec:rozwiazania-w-jezyku-scal}
-
-\subsubsection{Scala parser combinators}
-\label{subsubsec:scala-parser-combinators}
+\subsection{Scala parser combinators}
+\label{subsec:scala-parser-combinators}
 
 Biblioteka \textit{Scala parser combinators}\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, „Trudno jest jednak zrozumieć ich działanie i jak zacząć.
 Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna”\cite{parser-combinators-readme}.
 
-\subsubsection{ScalaBison}
-\label{subsubsec:scala-bison}
+\subsection{ScalaBison}
+\label{subsec:scala-bison}
 
 Z podsumowania artykułu na temat \textit{ScalaBison}\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i zstępowania, który akceptuje pliki wejściowe w formacie \textit{bison}.
 Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o błędach niż te generowane przez pierwowzór \textit{bison}, a także szybkość parsowania i wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM.
@@ -211,36 +108,24 @@ Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych k
 Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i stworzone w celach akademickich.
 Korzysta z przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i liczba funkcjonalności jest bardzo ograniczona w porównaniu do np. technologii \textit{SLY}.
 
-\subsubsection{parboiled2}
-\label{subsubsec:parboiled-2}
+\subsection{parboiled2}
+\label{subsec:parboiled-2}
 
 \textit{parboiled2}\cite{myltsev2019parboiled2} to biblioteka w Scali umożliwiająca lekkie i szybkie parsowanie dowolnego tekstu wejściowego.
 Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń parsujących (PEG), który działa w czasie kompilacji i tłumaczy definicję reguły gramatycznej na odpowiadający jej bytecode JVM. Niestety próg wejścia ze względu na skomplikowany i nieintuicyjny DSL jest wysoki.
-Zgodnie z przykładem poniżej, raportowanie błędów jest bardzo ograniczone (problem z implementacją wynika jedynie z różnic w liczbie parametrów funkcji).
-%todo(bkozak): lepsze linkowanie
+Zgodnie z przykładem \ref{lst:parboiled2-error}, raportowanie błędów jest bardzo ograniczone (problem z implementacją wynika jedynie z różnic w liczbie parametrów funkcji).
 
-\begin{lstlisting}[language=terminal, caption={
-    Fragment (sic!) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z prezentacji Li Haoyi na temat \textit{FastParse}\cite{fastparse-talk}.
-},label={lst:lstlisting4}]
-    [error] /Users/haoyi/Dropbox (Personal)/(...)/Parser.scala:16: type mismatch;
-    [error] found : shapeless.::[Int,shapeless.::[scalatex.stages.Ast.Block,shapeless.HNil]]
-    required: scalatex.stages.Ast.Block new Parser(input, offset).Body.run().get
-    [error]
-    [error] /Users/haoyi/Dropbox (Personal)/(...)/Parser.scala:60: overloaded
-    method value apply with alternatives:
-    [error] [I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, RR](f: (I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, scalatex.stages.Ast. Block.
-    Text, scalatex.stages.Ast.Chain, Int, scalatex.stages.Ast.Block) => RR)(implicit j: org.parboiled2.support.ActionOps.SJoin[shapeless.::[!, shapeless.::[J,shapeless.::[K,shapeless.::[L,shapeless.::[M,shapeless.:: [N,shapeless.::[O,shapeless.::[P,shapeless.::[Q,shapeless.::[R, shapeless.::[S,shapeless.::[T,shapeless.::[U,shapeless.::[V,shapeless.:: [W,shapeless.::[X,shapeless.::[Y,shapeless.::[Z,shapeless.
-    Ni/////], shapeless.HNil,RR], implicit c: org.parboiled2.support.FCapture[(I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, scalatex. stages.Ast.Block.Text, scalatex.stages.Ast.Chain, Int, scalatex.stages.Ast.Block) => RR])org.parboiled2.Rule[j.In,j.Out] <and>
-    [error] [J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, RR](f: (J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, scalatex.stages.Ast.Block. Text, scalatex.stages.Ast.Chain, Int, scalatex.stages.Ast.Block) => RR)(implicit j: org.parboiled2.support.ActionOps.SJoin[shapeless.::[J, shapeless.::[K,shapeless.::[L,shapeless.::[M,shapeless.::[N,shapeless.:: [O,shapeless.::[P,shapeless.::[Q,shapeless.::[R,shapeless.::[S, shapeless.::[T,shapeless.::[U,shapeless.::[V,shapeless.:: [W,shapeless.::[X,shapeless
-\end{lstlisting}
+\lstinputlisting[firstline=7, lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
+Niewielki fragment (14 z 133 linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z prezentacji Li Haoyi na temat \textit{FastParse}\cite{fastparse-talk}.
+},label={lst:parboiled2-error}]{listings/chapter1/parboiled2-error}
 
-\subsubsection{FastParse}
-\label{subsubsec:fastparse}
+\subsection{FastParse}
+\label{subsec:fastparse}
 
-FastParse\textit{FastParse}\cite{fastparse-docs}, opracowana przez Li Haoyi, to wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w celu uproszczenia tworzenia parserów tekstu strukturalnego.
+FastParse\textit{FastParse}\cite{fastparse-docs} to opracowana przez Li Haoyi, wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w celu uproszczenia tworzenia parserów tekstu strukturalnego.
 Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu nadaje się do parsowania języków programowania, formatów danych, takich jak JSON, czy DSL-i.
 Cechą charakterystyczną FastParse jest równowaga między użytecznością a wydajnością.
-Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak \verb&~& dla sekwencjonowania i \verb&\|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
+Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak \verb&~& dla sekwencjonowania i \verb&|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
 Według dokumentacji\cite{fastparse-docs}, parsery \textit{Fastparse} zajmują 1/10 kodu w porównaniu do ręcznie napisanego parsera rekurencyjnego.
 W porównaniu do narzędzi generujących parsery, takich jak \textit{ANTLR} lub \textit{Lex} i \textit{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu.
 To sprawia, że rozpoczęcie pracy z \textit{Fastparse} jest znacznie łatwiejsze niż w przypadku bardziej tradycyjnych narzędzi do generowania parserów.
