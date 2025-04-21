@@ -1,4 +1,4 @@
-\chapter{\chaptertitleprojectvision}
+\chapter{Cel Wizja}
 \label{ch:cel-wizja}
 
 
@@ -16,9 +16,10 @@ Celem pracy inżynierskiej jest stworzenie narzędzia \textit{ALPACA} (Another L
 \section{Motywacja projektu}
 \label{sec:motywacja-projektu}
 
-Projekt ma na celu stworzenie nowoczesnego narzędzia do generowania lekserów i parserów w języku Scala, łączącego zalety istniejących rozwiązań z nowoczesnym podejściem technologicznym. Jego główne cele to:
+Projekt ma na celu stworzenie nowoczesnego narzędzia do generowania lekserów i parserów w języku Scala, łączącego zalety istniejących rozwiązań z nowoczesnym podejściem technologicznym.
+Jego główne cele to:
 \begin{enumerate}
-    \item Stworzenie intuicyjnego API.
+    \item Stworzenie intuicyjnego API\@.
     \item Opracowanie obszernej dokumentacji.
     \item Rozbudowana diagnostyka błędów.
     \item Poprawa wydajności względem rozwiązań w języku Python.
@@ -35,7 +36,7 @@ Może on służyć jako narzędzie dydaktyczne, ułatwiając naukę teorii kompi
 Dostępne na rynku rozwiązania umożliwiają tworzenie analizatorów, jednak charakteryzują się ograniczeniami związanymi z wydajnością, wysokim progiem wejścia i diagnostyką błędów.
 
 \subsection{Lex, Yacc}
-\label{sec:lex-yacc}
+\label{subsec:lex-yacc}
 
 \textit{Lex}\cite{lesk1975lex} i \textit{Yacc}\cite{johnson1975yacc} to klasyczne, dobrze ugruntowane narzędzia, które odegrały kluczową rolę w tworzeniu setek współczesnych języków programowania.
 Definicja leksera i parsera w tych systemach odbywa się poprzez specjalnie zaprojektowaną składnię konfiguracyjną.
@@ -104,14 +105,14 @@ Oferują elastyczne podejście do budowy parserów, umożliwiając samodzielną 
 Głównym ograniczeniem PLY i SLY jest implementacja w języku Python.
 Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te charakteryzują się niską wydajnością, a brak statycznego typowania utrudnia wykrywanie błędów na etapie kompilacji.
 Przy implementacji parserów z użyciem biblioteki SLY w środowisku PyCharm obserwuje się wiele ostrzeżeń dotyczących potencjalnych naruszeń reguł, co często wymaga zastosowania mechanizmów supresji, aby uniknąć fałszywie pozytywnych wyników analizy statycznej kodu.
-Ponadto należy zaznaczyć, iż autor projektu inforuje o braku dalszego rozwoju tych narzędzi\cite{sly-github}.
+Ponadto należy zaznaczyć, iż autor projektu informuje o braku dalszego rozwoju tych narzędzi\cite{sly-github}.
 
 Przykład ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
 \begin{itemize}
     \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
     Literały muszą być zawarte w cudzysłowie, a „zmienna” odpowiada za matchowany „typ”.
     \item Nazwa metody oznacza „typ” zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
-    \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|%| prec pozwala nadpisać priorytet dla konkretnej reguły składniowej.
+    \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|% prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
     \item  Argument \verb|p| pozwala na dostęp do kontekstu produkcji (np. numeru linii), ale także do zmiennych w patternu match w adnotacji.
     Jeśli zdefiniowany jest więcej niż jeden, to dodajemy numer do accesora, np. \verb|expr1| jest odwołaniem się do drugiego wyrażenie \verb|expr|.
     Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
@@ -173,7 +174,7 @@ po uruchomieniu informuje użytkownika
 AttributeError: type object 'Scanner' has no attribute '_master_re'
 \end{lstlisting}
 
-Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji Lexera.
+Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji \verb|Lexer|.
 
 \subsection{ANTLR}
 \label{subsec:antlr}
@@ -198,17 +199,19 @@ Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z jednego z 
 \subsubsection{Scala parser combinators}
 \label{subsubsec:scala-parser-combinators}
 
-Biblioteka \textit{Scala parser combinators}s\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, „Trudno jest jednak zrozumieć ich działanie i jak zacząć. Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały. Ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna”\cite{parser-combinators-readme}.
+Biblioteka \textit{Scala parser combinators}\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, „Trudno jest jednak zrozumieć ich działanie i jak zacząć.
+Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna”\cite{parser-combinators-readme}.
 
 \subsubsection{ScalaBison}
 \label{subsubsec:scala-bison}
 
-Z podsumowania artykułu na temat \textit{ScalaBison}\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i zstępowania, który akceptuje pliki wejściowe w formacie \textit{bison}. Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o błędach niż te generowane przez pierwowzór \textit{bison}, a także szybkość parsowania i wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM.
+Z podsumowania artykułu na temat \textit{ScalaBison}\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i zstępowania, który akceptuje pliki wejściowe w formacie \textit{bison}.
+Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o błędach niż te generowane przez pierwowzór \textit{bison}, a także szybkość parsowania i wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM.
 
 Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i stworzone w celach akademickich.
 Korzysta z przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i liczba funkcjonalności jest bardzo ograniczona w porównaniu do np. technologii \textit{SLY}.
 
-\subsubsection{parboilded2}
+\subsubsection{parboiled2}
 \label{subsubsec:parboiled-2}
 
 \textit{parboiled2}\cite{myltsev2019parboiled2} to biblioteka w Scali umożliwiająca lekkie i szybkie parsowanie dowolnego tekstu wejściowego.
@@ -239,13 +242,14 @@ Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu
 Cechą charakterystyczną FastParse jest równowaga między użytecznością a wydajnością.
 Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak \verb&~& dla sekwencjonowania i \verb&\|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
 Według dokumentacji\cite{fastparse-docs}, parsery \textit{Fastparse} zajmują 1/10 kodu w porównaniu do ręcznie napisanego parsera rekurencyjnego.
-W porównaniu do narzędzi generujących parsery, takich jak \textit{ANTLR} lub \textit{Lex} i \textit{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu. To sprawia, że rozpoczęcie pracy z \textit{Fastparse} jest znacznie łatwiejsze niż w przypadku bardziej tradycyjnych narzędzi do generowania parserów. Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby obsługiwać zagnieżdżone nawiasy, pierwszeństwo operatorów i raportowanie błędów w mniej niż 20 liniach kodu\cite{fastparse-slides}. Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o błędach, które wskazują dokładną lokalizację i przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
+W porównaniu do narzędzi generujących parsery, takich jak \textit{ANTLR} lub \textit{Lex} i \textit{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu.
+To sprawia, że rozpoczęcie pracy z \textit{Fastparse} jest znacznie łatwiejsze niż w przypadku bardziej tradycyjnych narzędzi do generowania parserów.
+Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby obsługiwać zagnieżdżone nawiasy, pierwszeństwo operatorów i raportowanie błędów w mniej niż 20 liniach kodu\cite{fastparse-slides}.
+Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o błędach, które wskazują dokładną lokalizację i przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
 
 \subsection{Podsumowanie}
 \label{subsec:podsumowanie}
 
-\newcolumntype{C}{>{\centering\arraybackslash}m{0.15\linewidth}}
-\newcolumntype{L}{>{\centering\arraybackslash}m{0.15\linewidth}}
 \begin{table}[ht]
     \centering
     \begin{tabular}{L|CCCC}
