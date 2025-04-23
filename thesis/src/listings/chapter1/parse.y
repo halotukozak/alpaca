@@ -1,5 +1,3 @@
-| command_asgn
-| mlhs '=' command_call
 {
 /*%%%*/
 value_expr($3);

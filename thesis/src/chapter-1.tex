@@ -45,7 +45,7 @@ Mimo pewnych zalet, jego złożoność i wysoki próg wejścia mogą stanowić w
 Ponieważ \textit{Lex} i \textit{Yacc} zostały zaprojektowane do współpracy z językiem C, ich integracja z nowoczesnymi językami programowania bywa utrudniona.
 Rozszerzanie tych narzędzi o dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w porównaniu z nowoczesnymi alternatywami.
-\lstinputlisting[language=c,float=!htbp,caption={Fragment definicji parsera Ruby w technologii Yacc},label={lst:ruby-parser}]{listings/chapter1/parse.y}
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby w technologii Yacc},label={lst:ruby-parser}]{listings/chapter1/parse.y}
 
 \subsection{PLY, SLY}
 \label{subsec:ply-sly}
@@ -69,11 +69,11 @@ Przykład \ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznyc
     Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
 \end{itemize}
 
-\lstinputlisting[language=Python,float=!htbp,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:python-parser}]{listings/chapter1/sly-parser.py}
+\lstinputlisting[language=Python,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:python-parser}]{listings/chapter1/sly-parser.py}
 
 Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone, co obrazuje przykład \ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z fragmentu kodu \ref{lst:lstlisting}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji \verb|Lexer|.
-\lstinputlisting[language=Python,float=!htbp,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:not-working-sly}]{listings/chapter1/not-working-sly.py}
+\lstinputlisting[language=Python,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:not-working-sly}]{listings/chapter1/not-working-sly.py}
 
 \lstinputlisting[language=terminal, caption={Przykładowy komunikat błędu w bibliotece \textit{SLY}},label={lst:sly-result}]{listings/chapter1/not-working-result}
 
