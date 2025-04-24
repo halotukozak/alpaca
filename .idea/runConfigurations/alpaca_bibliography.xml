@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="alpaca bibliography" type="BIBTEX_RUN_CONFIGURATION" factoryName="LaTeX configuration factory">
+    <texify-bibtex>
+      <compiler>BIBER</compiler>
+      <compiler-path>$USER_HOME$/bin/biber</compiler-path>
+      <compiler-arguments />
+      <envs>
+        <env name="BIBINPUTS" value="$PROJECT_DIR$/thesis/src" />
+        <env name="BSTINPUTS" value="$PROJECT_DIR$/thesis/src:" />
+      </envs>
+      <main-file>$PROJECT_DIR$/thesis/src/alpaca.tex</main-file>
+      <aux-dir>$PROJECT_DIR$/thesis/out</aux-dir>
+      <latex-distribution>PROJECT_SDK</latex-distribution>
+    </texify-bibtex>
+    <method v="2" />
+  </configuration>
+</component>
