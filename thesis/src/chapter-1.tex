@@ -193,3 +193,29 @@ Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe ko
     \caption{Porównanie wybranych narzędzi do generowania lekserów i parserów}
     \label{tab:porownanie-alternatyw}
 \end{table}
+
+\subsection{Analiza ryzyka}
+\label{subsec:analiza-ryzyka}
+
+Realizacja projektu wiąże się z szeregiem potencjalnych zagrożeń, które mogą wpłynąć na jego przebieg oraz ostateczny rezultat. Poniżej przedstawiono najważniejsze ryzyka zidentyfikowane na etapie planowania, wraz z proponowanymi działaniami minimalizującymi ich wpływ:
+
+\begin{itemize}
+    \item \textbf{Złożoność algorytmów parsingu:}
+    Implementacja narzędzi takich jak lekser i parser od podstaw stanowi złożone wyzwanie wymagające zaawansowanej wiedzy z zakresu teorii kompilacji oraz algorytmiki. Może to prowadzić do opóźnień lub nawet uniemożliwić realizację projektu. W celu ograniczenia tego ryzyka przeprowadzono pogłębioną analizę zagadnień związanych z gramatykami formalnymi, automatami skończonymi oraz wyrażeniami regularnymi. Wykorzystano również istniejące rozwiązania jako punkt odniesienia w zakresie projektowania architektury systemu.
+    
+    \item \textbf{Wydajność rozwiązania:}
+    Jednym z głównych założeń projektu jest stworzenie narzędzia o wyższej wydajności niż analogiczne rozwiązania dostępne w języku Python. Niespełnienie tego założenia mogłoby znacząco ograniczyć użyteczność biblioteki. W celu zapewnienia wysokiej efektywności obliczeniowej wybrano język Scala, a kluczowe elementy analizatora syntaktycznego realizowane są z wykorzystaniem makr kompilacyjnych, co pozwala na przeniesienie części obliczeń na etap kompilacji i znaczące przyspieszenie działania programu w czasie wykonywania.
+    
+    \item \textbf{Brak kompatybilności z popularnymi zintegrowanymi środowiskami programistycznymi (IDE):}
+    Istniejące narzędzia do generowania analizatorów często nie oferują wsparcia dla współczesnych środowisk IDE, co utrudnia ich użycie i debugowanie. Projekt zakłada implementację biblioteki w czystym języku Scala, bez wykorzystania dedykowanego języka dziedzinowego (DSL), co umożliwia jej integrację z popularnymi narzędziami deweloperskimi wspierającymi Scalę, takimi jak IntelliJ IDEA czy Metals.
+    
+    \item \textbf{Wysoki próg wejścia:}
+    Złożoność i różnorodność istniejących narzędzi do tworzenia parserów skutkuje trudnościami w ich opanowaniu. Projekt przewiduje zaprojektowanie przejrzystego i intuicyjnego interfejsu programistycznego (API) oraz przygotowanie kompleksowej dokumentacji technicznej. Działania te mają na celu obniżenie bariery wejścia i ułatwienie użytkownikom rozpoczęcia pracy z biblioteką.
+    
+    \item \textbf{Złożoność mechanizmów metaprogramowania w języku Scala:}
+    W celu osiągnięcia zakładanej wydajności oraz elastyczności projekt wykorzystuje zaawansowane techniki metaprogramowania dostępne w języku Scala. Ich zastosowanie wymaga pogłębionej znajomości języka oraz jego systemu makr. W celu ograniczenia ryzyka wynikającego z potencjalnych trudności technicznych, przeprowadzono szczegółową analizę dokumentacji języka oraz ukończono specjalistyczny kurs z zakresu metaprogramowania w Scali\cite{scala-course}.
+    
+    \item \textbf{Zbyt szeroki zakres funkcjonalny projektu:}
+    Zakres planowanych funkcjonalności może przekraczać możliwości realizacyjne w ramach dostępnego czasu. Aby ograniczyć to ryzyko, projekt został podzielony na etapy według priorytetu wdrażania funkcji. W przypadku napotkania trudności możliwe będzie zakończenie projektu z działającym minimalnym zakresem funkcjonalnym (MVP), spełniającym podstawowe założenia.
+\end{itemize}
+
