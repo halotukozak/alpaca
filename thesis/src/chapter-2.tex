@@ -103,3 +103,61 @@ W zależności od kontekstu można wyróżnić następujące grupy docelowe:
 \end{itemize}
 
 Uwzględnienie potrzeb i oczekiwań powyższych grup użytkowników stanowiło główny cel projektowania architektury systemu oraz definiowania jego funkcjonalności.
+
+\section{Scenariusze użytkowania i testowania}
+\label{sec:scenariusze-uzytkowania}
+
+Poniższe scenariusze prezentują typowe przypadki użycia biblioteki \textit{Alpaca}, wraz z towarzyszącymi im kryteriami poprawności oraz celami testowymi.
+
+\subsection*{Scenariusz 1: Definicja parsera}
+
+\textbf{Cel:} Zdefiniowanie parsera dla prostego języka wyrażeń arytmetycznych.\\
+
+\textbf{Kroki:}
+\begin{enumerate}
+    \item Użytkownik definiuje leksemy (np. liczby, operatory arytmetyczne).
+    \item Tworzy nieterminale (np. \texttt{wyrazenie}, \texttt{iloczyn}) oraz odpowiadające im reguły gramatyczne (np. \texttt{potega = podstawa '**' wykladnik}).
+    \item Deklaruje funkcje ewaluacyjne dla odpowiednich produkcji (np. \texttt{pow(base, exponent)} dla potęgowania).
+    \item Uruchamia parser dla przykładowego ciągu wejściowego.
+\end{enumerate}
+
+\textbf{Oczekiwany rezultat:} Parser generuje poprawne drzewo składniowe (AST) oraz zwraca wynik zgodny z semantyką definiowanej gramatyki.\\
+
+\textbf{Przykład testowy:} \texttt{parse("2 + 2")} zwraca wartość \texttt{4} oraz drzewo składniowe reprezentujące operację dodawania z dwoma operandami liczbowymi.
+
+\subsection*{Scenariusz 2: Obsługa błędów składniowych}
+
+\textbf{Cel:} Weryfikacja zachowania parsera w przypadku niepoprawnych danych wejściowych.\\
+
+\textbf{Kroki:}
+\begin{enumerate}
+    \item Użytkownik korzysta z przykładowej definicji parsera udostępnionej w dokumentacji lub przez prowadzącego.
+    \item Parser uruchamiany jest na niepoprawnym ciągu wejściowym (np. brakujący nawias zamykający).
+    \item System zwraca komunikat o błędzie z podaniem lokalizacji problemu oraz jego opisu.
+\end{enumerate}
+
+\textbf{Oczekiwany rezultat:} System zgłasza czytelny komunikat błędu zawierający informacje o miejscu i charakterze błędu składniowego.
+
+\subsection*{Scenariusz 3: Weryfikacja deterministyczności gramatyki}
+
+\textbf{Cel:} Ocena, czy zadana gramatyka jest deterministyczna i wolna od niejednoznaczności.\\
+
+\textbf{Kroki:}
+\begin{enumerate}
+    \item Użytkownik konstruuje złożoną gramatykę zawierającą alternatywne reguły.
+    \item Parser analizuje zachowanie dla potencjalnie niejednoznacznych ciągów wejściowych.
+\end{enumerate}
+
+\textbf{Oczekiwany rezultat:} System wykrywa i zgłasza potencjalne konflikty składniowe, informując o możliwej niejednoznaczności gramatyki.
+
+\subsection*{Scenariusz 4: Testowanie wydajności dla dużych wejść}
+
+\textbf{Cel:} Pomiar wydajności działania parsera w przypadku dużych danych wejściowych.\\
+
+\textbf{Kroki:}
+\begin{enumerate}
+    \item Parser uruchamiany jest na ciągu wejściowym o rozmiarze kilkunastu megabajtów.
+    \item Rejestrowany jest czas działania oraz poziom wykorzystania zasobów systemowych (pamięć operacyjna, CPU).
+\end{enumerate}
+
+\textbf{Oczekiwany rezultat:} Parser przetwarza dane w akceptowalnym czasie, nie generując błędów oraz nie przekraczając założonego limitu zużycia pamięci.
