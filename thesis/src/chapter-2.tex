@@ -1,0 +1,30 @@
+\chapter{Zakres funkcjonalności}
+\label{ch:zakres-funkcjonalnosci}
+
+\section{Charakterystyka użytkowników}
+\label{sec:charakterystyka-uzytkownikow}
+
+\textit{Alpaca} jest skierowana do wszystkich zajmujących się aalizą składniową, lub gramatyczną, oraz tworzeniem języków formalnych, w szczególności języków programowania.
+W zależności od kontekstu można wyróżnić następujące grupy docelowe:
+
+\begin{itemize}
+    \item \textbf{Programiści tworzący języki domenowe (DSL):}
+    Specjaliści projektujący rozwiązania specyficzne dla danego problemu (np. 
+    konfiguratory\footnote{Konfigurator to specjalizowany język lub narzędzie umożliwiające deklaratywne definiowanie zachowania systemu lub aplikacji, najczęściej poprzez pliki konfiguracyjne. Przykłady to \texttt{docker-compose.yml} czy pliki konfiguracji serwisów CI/CD.}, 
+    silniki reguł\footnote{Silnik reguł (ang. \textit{rule engine}) to system przetwarzający zbiory warunków logicznych i wyzwalający odpowiednie akcje w oparciu o zdefiniowane reguły. Typowym zastosowaniem jest automatyzacja procesów biznesowych. Przykłady: Drools, CLIPS.}, 
+    ), dla których kluczowa jest elastyczność definiowania składni. Dla tej grupy istotna jest także niezawodność oraz wydajność procesu parsowania.
+
+    \item \textbf{Studenci kierunków technicznych:} 
+    Osoby uczące się podstaw teorii kompilacji, które korzystają z narzędzi typu lekser/parser w celach dydaktycznych.
+    Dla tej grupy kluczowe znaczenie ma intuicyjny interfejs programistyczny (API), rozbudowana dokumentacja oraz możliwość szybkiego uruchomienia przykładów bez konieczności ręcznej konfiguracji środowiska.
+
+    \item \textbf{Nauczyciele akademiccy i prowadzący zajęcia laboratoryjne:}
+    Osoby przygotowujące kursy dotyczące języków programowania, parserów, automatów i kompilatorów. 
+    \textit{Alpaca} może służyć jako narzędzie wspierające zajęcia, umożliwiające praktyczną demonstrację działania gramatyk oraz parserów w sposób prostszy i szybszy niż za pomocą niskopoziomowych narzędzi, takich jak Lex i Yacc.
+
+    \item \textbf{Entuzjaści języków programowania i narzędzi deweloperskich:}
+    Osoby zainteresowane eksperymentowaniem z nowymi technologiami, tworzeniem i rozwojem własnych języków lub eksploracją działania analizatorów leksykalnych i składniowych. 
+    Ta grupa użytkowników ceni sobie możliwość rozszerzania i dostosowywania narzędzia do własnych potrzeb.
+\end{itemize}
+
+Uwzględnienie potrzeb i oczekiwań powyższych grup użytkowników stanowiło główny cel projektowania architektury systemu oraz definiowania jego funkcjonalności.
