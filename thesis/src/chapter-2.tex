@@ -1,6 +1,81 @@
 \chapter{Zakres funkcjonalności}
 \label{ch:zakres-funkcjonalnosci}
 
+
+\section{Wymagania funkcjonalne}
+\label{sec:wymagania-funkcjonalne}
+
+\begin{itemize}
+
+    \item 1. Definicja parsera i gramatyki
+    \begin{itemize}
+        \item Możliwość definiowania reguł gramatycznych za pomocą czystego języka Scala z obsługą wyrażeń regularnych i hierarchii reguł (bez DSL).
+        \item Generowanie drzewa składniowego: Automatyczne tworzenie struktury AST (Abstract Syntax Tree) z formatu EBNF\@.
+        \item Możliwość definiowania reguł rekurencyjnych.
+        \item Precyzyjne raportowanie błędów z lokalizacją w źródle, sugestiami napraw i trybem odzyskiwania (np.\ pomijanie błędnych tokenów).
+        \item Obsługa precedencji i asocjacji operatorów.
+    \end{itemize}
+
+    \item \item 2. Integracja z narzędziami developerskimi
+    \begin{itemize}
+        \item Obsługa podświetlania składni, autouzupełniania i debugowania w środowiskach takich jak IntelliJ lub VS Code.
+    \end{itemize}
+
+    \item 3. Optymalizacje wydajnościowe
+    \begin{itemize}
+        \item Obsługa dużych plików poprzez przetwarzanie danych strumieniowo.
+        \item Przechowywanie skompilowanych gramatyk w pamięci w celu przyspieszenia powtarzalnych operacji.
+    \end{itemize}
+
+    \item 4. Rozszerzalność
+    \begin{itemize}
+        \item Możliwość dołączania funkcji wykonywanych podczas parsowania (np.\ walidacja kontekstowa).
+        \item Podział implementacji na niezależne komponenty (np.\ lexer, parser).
+        \item Mechanizmy transformacji AST: struktury TreeMap oraz TreeTraverser.
+    \end{itemize}
+
+    \item
+\end{itemize}
+
+
+\section{Wymagania niefunkcjonalne}
+\label{sec:wymagania-niefunkcjonalne}
+
+\begin{itemize}
+
+    \item \item 1. Wydajność
+    \begin{itemize}
+        \item Czas parsowania zbliżony lub lepszy od czasów narzędzi \textit{FastParse} i \textit{Sly}.
+        \item Zużycie pamięci stałe, niezależne od rozmiaru parsowanego pliku.
+    \end{itemize}
+
+    \item 2. Skalowalność
+    \begin{itemize}
+        \item Obsługa dużych gramatyk.
+        \item Modularność.
+    \end{itemize}
+
+    \item 3. Niezawodność
+    \begin{itemize}
+        \item Testy regresyjne: Pokrycie kodu testami ≥ 90\%, z automatycznym uruchamianiem po każdej zmianie.
+    \end{itemize}
+
+    \item 4. Kompatybilność
+    \begin{itemize}
+        \item Wsparcie dla IntelliJ i VS Code (Metals).
+        \item Systemy operacyjne: Działanie na Windows, Linux i macOS bez modyfikacji kodu.
+    \end{itemize}
+
+    \item 5. Użyteczność
+    \begin{itemize}
+        \item Obszerna dokumentacja z przykładami.
+        \item Narzędzia diagnostyczne, np.\ wizualizacja drzewa AST\@.
+        \item Weryfikacja poprawności gramatyk na poziomie typów.
+    \end{itemize}
+
+\end{itemize}
+
+
 \section{Charakterystyka użytkowników}
 \label{sec:charakterystyka-uzytkownikow}
 
@@ -9,21 +84,21 @@ W zależności od kontekstu można wyróżnić następujące grupy docelowe:
 
 \begin{itemize}
     \item \textbf{Programiści tworzący języki domenowe (DSL):}
-    Specjaliści projektujący rozwiązania specyficzne dla danego problemu (np. 
-    konfiguratory\footnote{Konfigurator to specjalizowany język lub narzędzie umożliwiające deklaratywne definiowanie zachowania systemu lub aplikacji, najczęściej poprzez pliki konfiguracyjne. Przykłady to \texttt{docker-compose.yml} czy pliki konfiguracji serwisów CI/CD.}, 
-    silniki reguł\footnote{Silnik reguł (ang. \textit{rule engine}) to system przetwarzający zbiory warunków logicznych i wyzwalający odpowiednie akcje w oparciu o zdefiniowane reguły. Typowym zastosowaniem jest automatyzacja procesów biznesowych. Przykłady: Drools, CLIPS.}, 
+    Specjaliści projektujący rozwiązania specyficzne dla danego problemu (np.
+    konfiguratory\footnote{Konfigurator to specjalizowany język lub narzędzie umożliwiające deklaratywne definiowanie zachowania systemu lub aplikacji, najczęściej poprzez pliki konfiguracyjne. Przykłady to \texttt{docker-compose.yml} czy pliki konfiguracji serwisów CI/CD.},
+    silniki reguł\footnote{Silnik reguł (ang. \textit{rule engine}) to system przetwarzający zbiory warunków logicznych i wyzwalający odpowiednie akcje w oparciu o zdefiniowane reguły. Typowym zastosowaniem jest automatyzacja procesów biznesowych. Przykłady: Drools, CLIPS.},
     ), dla których kluczowa jest elastyczność definiowania składni. Dla tej grupy istotna jest także niezawodność oraz wydajność procesu parsowania.
 
-    \item \textbf{Studenci kierunków technicznych:} 
+    \item \textbf{Studenci kierunków technicznych:}
     Osoby uczące się podstaw teorii kompilacji, które korzystają z narzędzi typu lekser/parser w celach dydaktycznych.
     Dla tej grupy kluczowe znaczenie ma intuicyjny interfejs programistyczny (API), rozbudowana dokumentacja oraz możliwość szybkiego uruchomienia przykładów bez konieczności ręcznej konfiguracji środowiska.
 
     \item \textbf{Nauczyciele akademiccy i prowadzący zajęcia laboratoryjne:}
-    Osoby przygotowujące kursy dotyczące języków programowania, parserów, automatów i kompilatorów. 
+    Osoby przygotowujące kursy dotyczące języków programowania, parserów, automatów i kompilatorów.
     \textit{Alpaca} może służyć jako narzędzie wspierające zajęcia, umożliwiające praktyczną demonstrację działania gramatyk oraz parserów w sposób prostszy i szybszy niż za pomocą niskopoziomowych narzędzi, takich jak Lex i Yacc.
 
     \item \textbf{Entuzjaści języków programowania i narzędzi deweloperskich:}
-    Osoby zainteresowane eksperymentowaniem z nowymi technologiami, tworzeniem i rozwojem własnych języków lub eksploracją działania analizatorów leksykalnych i składniowych. 
+    Osoby zainteresowane eksperymentowaniem z nowymi technologiami, tworzeniem i rozwojem własnych języków lub eksploracją działania analizatorów leksykalnych i składniowych.
     Ta grupa użytkowników ceni sobie możliwość rozszerzania i dostosowywania narzędzia do własnych potrzeb.
 \end{itemize}
 
