@@ -1,15 +1,13 @@
+//| mill-version: 1.0.0
+//| mill-jvm-version: 21
+//| mvnDeps:
+//| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 package build
-
-/* Plugins */
-import $ivy.`com.lihaoyi::mill-contrib-scoverage:`
-import $ivy.`com.carlosedp::mill-aliases::0.6.0`
-/* imports */
-import com.carlosedp.aliases._
 import mill._
 import mill.scalalib._
 import mill.contrib.scoverage.ScoverageModule
 
-object `package` extends RootModule with ScalaModule with ScoverageModule {
+object `package` extends ScalaModule with ScoverageModule {
   def alpacaVersion = "0.1.0"
 
   def scalaVersion = "3.6.3"
@@ -47,7 +45,7 @@ object `package` extends RootModule with ScalaModule with ScoverageModule {
     "-project-url",
     "https://halotukozak.github.io/alpaca/docs/index.html",
     "-project-logo",
-    (os.pwd / ".." / ".." / "docs" / "_assets" / "images" / "logo.png").toString, //todo: maybe can be simplified
+    (os.pwd / ".." / ".." / "docs" / "_assets" / "images" / "logo.png").toString, // todo: maybe can be simplified
     "-project-footer",
     "made with ❤️ and coffee",
     "-social-links:github::https://github.com/halotukozak/alpaca",
@@ -55,13 +53,8 @@ object `package` extends RootModule with ScalaModule with ScoverageModule {
   )
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
-    def ivyDeps = Agg(
-      ivy"org.scalatest::scalatest:3.2.19"
+    def mvnDeps = Seq(
+      mvn"org.scalatest::scalatest:3.2.19"
     )
-  }
-
-  object utils extends Aliases {
-    def idea = alias("mill.idea.GenIdea/")
-    def bsp = alias("mill.bsp.BSP/install")
   }
 }

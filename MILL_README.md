@@ -2,11 +2,11 @@ To prepare your project for IDEs, and in general any BSP client, you can also ru
 configuration files:
 
 ```bash
-./mill Alias/run bsp
+./mill --bsp-install
 ```
 
 To generate IntelliJ IDEA project files into .idea/, run:
 
 ```bash
-./mill Alias/run idea
+./mill mill.idea/
 ```
