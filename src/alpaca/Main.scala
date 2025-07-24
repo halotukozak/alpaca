@@ -2,12 +2,12 @@ package alpaca
 
 @main def main(): Unit =
   val productions: List[Production] = List(
-    Production(NonTerminal("S'"), List(NonTerminal("S"))),
-    Production(NonTerminal("S"), List(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
-    Production(NonTerminal("S"), List(NonTerminal("R"))),
-    Production(NonTerminal("L"), List(Terminal("*"), NonTerminal("R"))),
-    Production(NonTerminal("L"), List(Terminal("id"))),
-    Production(NonTerminal("R"), List(NonTerminal("L"))),
+    Production(NonTerminal("S'"), Vector(NonTerminal("S"))),
+    Production(NonTerminal("S"), Vector(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
+    Production(NonTerminal("S"), Vector(NonTerminal("R"))),
+    Production(NonTerminal("L"), Vector(Terminal("*"), NonTerminal("R"))),
+    Production(NonTerminal("L"), Vector(Terminal("id"))),
+    Production(NonTerminal("R"), Vector(NonTerminal("L"))),
   )
 
   val symbols = List(

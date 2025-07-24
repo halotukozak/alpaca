@@ -6,6 +6,10 @@ sealed trait Symbol(val isTerminal: Boolean) {
   override def toString: String = name
 }
 
+case class NonTerminal(name: String) extends Symbol(isTerminal = false)
+
 case class Terminal(name: String) extends Symbol(isTerminal = true)
 
-case class NonTerminal(name: String) extends Symbol(isTerminal = false)
+object Terminal {
+  val EOF = Terminal("$")
+}

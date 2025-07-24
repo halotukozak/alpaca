@@ -1,25 +1,27 @@
 package alpaca
 
-def parseTable(productions: List[Production]): Map[(Int, Symbol), Int | Production] = {
+import scala.collection.mutable
+
+def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | Production] = {
   val firstSet = FirstSet(productions)
   var currStateId = 0
-  var states = List(State.fromItem(State.empty(), productions.head.toItem(Terminal("$")), productions, firstSet))
-  var table = Map.empty[(Int, Symbol), Int | Production]
+  val states = mutable.ListBuffer(State.fromItem(State.empty, productions.head.toItem(), productions, firstSet))
+  val table = mutable.Map.empty[(Int, Symbol), Int | Production]
 
-  while (currStateId < states.length) do
+  while currStateId < states.length do
     val currState = states(currStateId)
 
     for (item <- currState if item.isLastItem) {
       table += ((currStateId, item.lookAhead), item.production)
     }
 
-    for (stepSymbol <- currState.possibleSteps()) {
-      val new_state = currState.nextState(stepSymbol, productions, firstSet)
+    for (stepSymbol <- currState.possibleSteps) {
+      val newState = currState.nextState(stepSymbol, productions, firstSet)
 
-      states.indexOf(new_state) match {
+      states.indexOf(newState) match {
         case -1 =>
           table += ((currStateId, stepSymbol), states.length)
-          states = states.appended(new_state)
+          states += newState
         case stateId =>
           table += ((currStateId, stepSymbol), stateId)
       }
