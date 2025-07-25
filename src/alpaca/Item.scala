@@ -4,7 +4,7 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
   if production.rhs.lengthIs < dotPosition then
     throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
 
-  def nextSymbol(): Symbol = production.rhs.lift(dotPosition).getOrElse(lookAhead)
+  lazy val nextSymbol = production.rhs.lift(dotPosition).getOrElse(lookAhead)
 
   def nextTerminals(firstSet: FirstSet): Set[Terminal] =
     production.rhs.lift(dotPosition + 1) match

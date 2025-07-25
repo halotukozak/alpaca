@@ -1,15 +1,17 @@
 package alpaca
 
-sealed trait Symbol(val isTerminal: Boolean) {
-  def name: String
+enum Symbol(val isTerminal: Boolean) {
+  val name: String
+
+  case NonTerminal(name: String) extends Symbol(isTerminal = false)
+  case Terminal(name: String) extends Symbol(isTerminal = true)
 
   override def toString: String = name
 }
 
-case class NonTerminal(name: String) extends Symbol(isTerminal = false)
-
-case class Terminal(name: String) extends Symbol(isTerminal = true)
-
-object Terminal {
-  val EOF = Terminal("$")
+object Symbol {
+  val EOF: Terminal = Terminal("$")
 }
+
+type NonTerminal = Symbol.NonTerminal
+type Terminal = Symbol.Terminal

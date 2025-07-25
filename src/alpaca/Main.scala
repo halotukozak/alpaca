@@ -1,5 +1,7 @@
 package alpaca
 
+import alpaca.Symbol.{NonTerminal, Terminal}
+
 @main def main(): Unit =
   val productions: List[Production] = List(
     Production(NonTerminal("S'"), Vector(NonTerminal("S"))),
@@ -49,7 +51,3 @@ def centerText(text: String, width: Int = 10): String = {
   val rightPad = padding - leftPad
   (" " * leftPad) + text + (" " * rightPad)
 }
-
-//  for ((k, v) <- parseTable(productions)) {
-//    println(s"$k -> $v")
-//  }

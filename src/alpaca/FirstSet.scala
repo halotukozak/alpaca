@@ -29,7 +29,7 @@ final class FirstSet(productions: List[Production]) {
 }
 
 object FirstSet {
-  private case class Meta(first: Set[Terminal], importsFrom: Set[NonTerminal]) {
+  private final case class Meta(first: Set[Terminal], importsFrom: Set[NonTerminal]) {
     def including(symbol: Symbol): Meta = symbol match
       case t: Terminal => Meta(first + t, importsFrom)
       case nt: NonTerminal => Meta(first, importsFrom + nt)

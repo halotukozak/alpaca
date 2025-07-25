@@ -8,7 +8,7 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
   val states = mutable.ListBuffer(State.fromItem(State.empty, productions.head.toItem(), productions, firstSet))
   val table = mutable.Map.empty[(Int, Symbol), Int | Production]
 
-  while currStateId < states.length do
+  while states.sizeIs > currStateId do
     val currState = states(currStateId)
 
     for (item <- currState if item.isLastItem) {
@@ -28,6 +28,7 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
     }
 
     currStateId += 1
+  end while
 
   table
 }
