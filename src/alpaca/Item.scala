@@ -22,4 +22,4 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
 }
 
 given Showable[Item] = item =>
-  s"${item.production.lhs} -> ${item.production.rhs.take(item.dotPosition).mkString}•${item.production.rhs.drop(item.dotPosition).mkString}, ${item.lookAhead}"
+  show"${item.production.lhs} -> ${item.production.rhs.take(item.dotPosition).mkShow}•${item.production.rhs.drop(item.dotPosition).mkShow}, ${item.lookAhead}"

@@ -30,5 +30,4 @@ object Showable {
     s"$name(${fields.zip(shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
 }
 
-extension [C[X] <: Iterable[X], T: Showable](coll: C[T])
-  def mkShow(start: String = "", sep: String = "", end: String = ""): String = coll.map(_.show).mkString(start, sep, end)
+extension [C[X] <: Iterable[X], T: Showable](coll: C[T]) def mkShow: String = coll.map(_.show).mkString
