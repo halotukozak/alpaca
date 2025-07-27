@@ -35,7 +35,7 @@ final class ShowableTest extends AnyFunSuite {
     val address = Address("Wonderland", 12345)
     val shown: String = show"$address"
 
-    assert(shown == "Address(Wonderland,12345)")
+    assert(shown == "Address(city: Wonderland, zip: 12345)")
   }
 
   test("Showable should not convert unsupported types") {

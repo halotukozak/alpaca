@@ -27,7 +27,7 @@ object Showable {
       compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
     val values = Tuple.fromProductTyped(t).toList
     val shown = showables.zip(values).map { case (s, v) => s.show(v) }
-    s"$name(${(fields zip shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
+    s"$name(${fields.zip(shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
 }
 
 extension [C[X] <: Iterable[X], T: Showable](coll: C[T])
