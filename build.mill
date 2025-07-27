@@ -35,6 +35,7 @@ object `package` extends ScalaModule with ScoverageModule {
     "-Yshow-var-bounds",
     "-Werror",
     "-Wunused:all",
+    "-language:implicitConversions",
   )
 
   override def scalaDocOptions = Seq(

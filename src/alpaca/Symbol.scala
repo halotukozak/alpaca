@@ -5,13 +5,10 @@ enum Symbol(val isTerminal: Boolean) {
 
   case NonTerminal(name: String) extends Symbol(isTerminal = false)
   case Terminal(name: String) extends Symbol(isTerminal = true)
-
-  override def toString: String = name
 }
+
+given Showable[Symbol] = _.name
 
 object Symbol {
   val EOF: Terminal = Terminal("$")
 }
-
-type NonTerminal = Symbol.NonTerminal
-type Terminal = Symbol.Terminal

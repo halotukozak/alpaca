@@ -1,6 +1,6 @@
 package alpaca
 
-import alpaca.Symbol.{NonTerminal, Terminal}
+import Symbol.*
 
 @main def main(): Unit =
   val productions: List[Production] = List(
@@ -27,19 +27,16 @@ import alpaca.Symbol.{NonTerminal, Terminal}
   print(centerText("S"))
   print("|")
   for (s <- symbols) {
-    print(centerText(s.toString))
+    print(centerText(s.show))
     print("|")
   }
 
   for (i <- 0 to 13) {
     println("")
-    print(centerText(i.toString))
+    print(centerText(i.show))
     print("|")
     for (s <- symbols) {
-      table.get((i, s)) match {
-        case Some(value) => print(centerText(value.toString))
-        case None => print(centerText(""))
-      }
+      print(centerText(table.get((i, s)).fold("")(_.show)))
       print("|")
     }
   }
@@ -51,3 +48,7 @@ def centerText(text: String, width: Int = 10): String = {
   val rightPad = padding - leftPad
   (" " * leftPad) + text + (" " * rightPad)
 }
+
+given Showable[Int | Production] =
+  case i: Int => i.show
+  case p: Production => p.show

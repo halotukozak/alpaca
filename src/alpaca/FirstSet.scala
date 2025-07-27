@@ -1,6 +1,7 @@
 package alpaca
 
 import scala.annotation.tailrec
+import Symbol.*
 
 final class FirstSet(productions: List[Production]) {
   private val firstSet = resolveGraph(dependenciesGraph(productions))
