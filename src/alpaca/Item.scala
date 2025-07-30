@@ -1,5 +1,7 @@
 package alpaca
 
+import Symbol.*
+
 final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   if production.rhs.lengthIs < dotPosition then
     throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
@@ -17,6 +19,7 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
     if isLastItem then throw AlgorithmError(s"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
 
-  override def toString: String =
-    s"${production.lhs} -> ${production.rhs.take(dotPosition).mkString}•${production.rhs.drop(dotPosition).mkString}, $lookAhead"
 }
+
+given Showable[Item] = item =>
+  show"${item.production.lhs} -> ${item.production.rhs.take(item.dotPosition).mkShow}•${item.production.rhs.drop(item.dotPosition).mkShow}, ${item.lookAhead}"

@@ -1,7 +1,9 @@
 package alpaca
 
+import Symbol.*
+
 final case class Production(lhs: NonTerminal, rhs: Vector[Symbol]) {
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
-
-  override def toString: String = s"$lhs -> ${rhs.mkString}"
 }
+
+given Showable[Production] = production => show"${production.lhs} -> ${production.rhs.mkShow}"
