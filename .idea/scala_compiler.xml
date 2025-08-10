@@ -30,21 +30,11 @@
                 <parameter value="-new-syntax"/>
                 <parameter value="-unchecked"/>
                 <parameter value="-language:noAutoTupling"/>
-                <parameter value="-Vprofile"/>
-                <parameter value="-Xprint-inline"/>
-                <parameter value="-Ycheck:all"/>
-                <parameter value="-Ydebug-error"/>
-                <parameter value="-Ydebug-flags"/>
-                <parameter value="-Ydebug-missing-refs"/>
                 <parameter value="-Yexplain-lowlevel"/>
                 <parameter value="-Yexplicit-nulls"/>
-                <parameter value="-Yprint-debug"/>
-                <parameter value="-Xprint:postInlining"/>
                 <parameter value="-Wsafe-init"/>
-                <parameter value="-Yshow-suppressed-errors"/>
-                <parameter value="-Yshow-var-bounds"/>
                 <parameter value="-Werror"/>
-                <parameter value="-Wunused:all"/>
+                <parameter value="-language:implicitConversions"/>
             </parameters>
             <plugins></plugins>
         </profile>

@@ -12,7 +12,7 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
     val currState = states(currStateId)
 
     for (item <- currState if item.isLastItem) {
-      table += ((currStateId, item.lookAhead), item.production)
+      table += ((currStateId, item.lookAhead) -> item.production)
     }
 
     for (stepSymbol <- currState.possibleSteps) {
@@ -20,10 +20,10 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
 
       states.indexOf(newState) match {
         case -1 =>
-          table += ((currStateId, stepSymbol), states.length)
+          table += ((currStateId, stepSymbol) -> states.length)
           states += newState
         case stateId =>
-          table += ((currStateId, stepSymbol), stateId)
+          table += ((currStateId, stepSymbol) -> stateId)
       }
     }
 
