@@ -5,14 +5,13 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class LexerTest extends AnyFunSuite {
 
-  showAst {
-    lexer {
-      case comment @ "#.*" => Token.Ignored
-      case newLines @ "\\n+" =>
-        ctx.lineno += newLines.count(_ == '\n')
-        Token.Ignored
-    }
-  }
+//  showAst {
+//    given Ctx = ???
+//    identity[String => Token[?]] {
+//      case literal @ ("(" | ")") => Token[literal.type]
+//      case "+" => Token["PLUS"]
+//    }
+//  }
 
   val CalcLexer: Tokenize = lexer {
     case comment @ "#.*" => Token.Ignored
@@ -104,13 +103,10 @@ class LexerTest extends AnyFunSuite {
     case "=" => Token["ASSIGN"]
     case "<=" => Token["LE"]
     case "<" => Token["LT"]
-    case x @ "[a-zA-Z_][a-zA-Z0-9_]*" =>
-      x match
-        case "if" => Token["IF"]
-        case "else" => Token["ELSE"]
-        case x => Token["ID"](x.toUpperCase)
+    case "if" => Token["IF"]
+    case "else" => Token["ELSE"]
+    case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](x.toUpperCase)
     case x @ "\\d+" => Token["NUMBER"](x.toInt)
-    case x @ "[^\\s#]+" => Token["ERROR"](x)
   }
 
   //    def error(self, t):

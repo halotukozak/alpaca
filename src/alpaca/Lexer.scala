@@ -1,84 +1,116 @@
 package alpaca
 
-import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.annotation.{compileTimeOnly, tailrec}
+import scala.collection.SortedSet
 import scala.quoted.*
 
-class Token[Name <: String](
+class Lexem[Name <: String](
   using Ctx
 )(
-  val value: Any | Null,
   val tpe: Name | Null,
+  val value: Any | Null,
   val lineno: Int = ctx.lineno,
   val index: Int = ctx.index,
   val end: Int = ctx.index,
 )
+sealed trait Token[Name <: String](val pattern: String, val ctxManipulation: Ctx ?=> Unit | Null)
 
-object Token {
-  val Ignored: Ctx ?=> Token[?] = new Token[Null](null, null)
-
-  inline def apply[Name <: String: ValueOf](using Ctx): Token[Name] = new Token[Name](null, valueOf[Name])
-  inline def apply[Name <: String: ValueOf](value: Any)(using Ctx): Token[Name] = new Token[Name](value, valueOf[Name])
+private class TokenImpl[Name <: String](
+  val tpe: Name | Null,
+  pattern: String,
+  ctxManipulation: Ctx ?=> Unit | Null = null,
+  val remapping: Expr[String => Any] | Null = null,
+) extends Token[Name](pattern, ctxManipulation) {
+  val index: Int = TokenImpl.nextIndex()
 }
 
-case class TokenizationResult(tokens: List[Token[?]], errors: List[String])(using val ctx: Ctx) {
+private object TokenImpl {
+  private var index = 0
+
+  private def nextIndex(): Int = {
+    index += 1
+    index
+  }
+}
+
+class IgnoredToken(pattern: String, ctxManipulation: Ctx ?=> Unit | Null = null)
+  extends Token[Nothing](pattern, ctxManipulation)
+
+given Ordering[Token[?]] = {
+  case (x: IgnoredToken, y: TokenImpl[?]) => -1 // Ignored tokens are always less than any other token
+  case (x: TokenImpl[?], y: IgnoredToken) => 1
+  case (x: TokenImpl[?], y: TokenImpl[?]) => x.index.compareTo(y.index)
+  case (x: IgnoredToken, y: IgnoredToken) => x.pattern.compareTo(y.pattern)
+}
+
+object Token {
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  val Ignored: Ctx ?=> Token[?] = ???
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ConstString](using Ctx): Token[Name] = ???
+
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ConstString](value: Any)(using Ctx): Token[Name] = ???
+}
+
+case class TokenizationResult(lexems: List[Lexem[?]], errors: List[String])(using val ctx: Ctx) {
   export ctx.*
 }
 
 trait Tokenize {
-  val ignorePatterns: Set[String]
-  val patterns: Map[String, String] // should be some lambda
   def tokenize(s: String): TokenizationResult = ???
 }
 
 type LexerDefinition = PartialFunction[String, Token[?]]
+
+type ConstString = String & Singleton
 inline def lexer(inline rules: Ctx ?=> LexerDefinition): Tokenize = ${ lexerImpl('{ rules }) }
 
 private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes): Expr[Tokenize] = {
   import quotes.reflect.*
-
-  type Result = (ignorePatterns: Set[String], mapping: mutable.SortedMap[String, String])
-
-  val (ignoredPatterns, mapping) = rules.asTerm.underlying match
+//  return '{???}
+  rules.asTerm.underlying match
     case Lambda(_ctx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
-      cases.foldLeft((Set.empty[String], mutable.SortedMap.empty[String, String])) {
-        case ((ignores, mapping), CaseDef(pattern, guard, body)) =>
-          def withPattern(name: String, value: String): Result =
-            if mapping contains name
-            then report.errorAndAbort(s"Duplicate token type: $name")
-            else (ignores, mapping + (name -> value))
+      cases.foldLeft(SortedSet.empty[Token[?]]) { case (tokens, CaseDef(pattern, guard, body)) =>
+        def treeToPattern(tree: Tree): String = tree match
+          case Bind(_, Literal(StringConstant(str))) => str
+          case Bind(_, alternatives: Alternatives) => treeToPattern(alternatives)
+          case Literal(StringConstant(str)) => str
+          case Alternatives(alternatives) => alternatives.map(treeToPattern).mkString("|")
+          case x => treeInfo(x).dbg
 
-          @tailrec def extract(body: Term): Result = body.asExpr match
-            case '{ Token.Ignored.apply(using $ctx) } =>
-              (ignores + pattern.show, mapping)
-            case '{
-                  type t <: String
-                  Token.apply[t](using $valueOf: ValueOf[t], $ctx: Ctx)
-                } =>
-              withPattern(Type.show[t], pattern.show) // should be some lambda
-            case '{
-                  type t <: String
-                  Token.apply[t]($value: v)(using $valueOf: ValueOf[t], $ctx: Ctx)
-                } =>
-              withPattern(Type.show[t], value.show)// should be some lambda
-            case _ =>
-              body match
-                case Block(statements, expr) =>
-                  //do not forget about putting statements in remapping
-                  extract(expr)
-                case x =>
-                  treeInfo(x).dbg
+        def withToken(token: Token[?]) =
+          if tokens contains token // should be better check (for regex overlapping)
+          then report.errorAndAbort(s"Duplicate token type: $token")
+          else tokens + token
 
-          extract(body)
+        @tailrec def extract(body: Expr[?]): SortedSet[Token[?]] = body match
+          case '{ Token.Ignored.apply(using $ctx) } =>
+            withToken(new IgnoredToken(treeToPattern(pattern)))
+          case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
+            withToken(new TokenImpl(Type.show[t], treeToPattern(pattern)))
+          case '{ type t <: ConstString; Token.apply[t]($value: v)(using $ctx: Ctx) } =>
+            // todo remapping
+            withToken(new TokenImpl(Type.show[t], treeToPattern(pattern)))
+          case ExprBlock(statements, expr) =>
+            statements.map(_.asTerm).map {
+              case Block(ValDef(_, _, _) :: Nil, Closure(meth, _)) =>
+                ???
+              case x =>
+                treeInfo(x).dbg
+            }
+            extract(expr)
+          case x =>
+            s"""Unsupported tree:
+               |treeInfo(x.asTerm)""".dbg
+
+        extract(body.asExpr)
       }
     case _ =>
       report.errorAndAbort("Lexer definition must be a lambda function")
 
   '{
-    new Tokenize {
-      val ignorePatterns: Set[String] = ${ Expr(ignoredPatterns) }
-      val patterns: Map[String, String] = ${ Expr(mapping.toMap) }
-    }
+    new Tokenize {}
   }
 }
 

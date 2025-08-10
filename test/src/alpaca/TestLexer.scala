@@ -15,10 +15,8 @@ val Lexer = lexer {
   case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
   case x @ "[0-9]+" => Token["int"](x.toInt)
   case x @ "[^\"]*" => Token["string"](x)
-  case x @ "[a-zA-Z_][a-zA-Z0-9_]*" =>
-    x match
-      case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
-          "print") =>
-        Token[keyword.type]
-      case x => Token["id"](x)
+  case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
+      "print") =>
+    Token[keyword.type]
+  case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
 }

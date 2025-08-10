@@ -118,8 +118,7 @@ extension (using quotes: Quotes)(e: Any)
     quotes.reflect.report.info(e.toString)
     e
 
-
-inline def showAst(inline body: Any) = ${showAstImpl('{ body })}
+inline def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
