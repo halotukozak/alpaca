@@ -2,7 +2,33 @@ package alpaca
 
 import Symbol.*
 
-@main def main(): Unit =
+@main def main(): Unit = lexerTest()
+
+def lexerTest(): Unit = {
+  val tokenDefs = List(
+    Token("WHITESPACE", "[ \t\n]+".r, ignore = true),
+    Token("IF", "if".r),
+    Token("ELSE", "else".r),
+    Token("WHILE", "while".r),
+    Token("NUMBER", "\\d+".r),
+    Token("ID", "[a-zA-Z_][a-zA-Z0-9_]*".r),
+    Token("GET", ">=".r),
+    Token("SET", "<=".r),
+    Token("LT", "<".r),
+    Token("GT", ">".r),
+    Token("NEQ", "!=".r),
+    Token("EQEQ", "==".r),
+    Token("EQ", "=".r),
+    Token("PLUS", "\\+".r),
+    Token("MINUS", "-".r),
+    Token("STAR", "\\*".r),
+    Token("SLASH", "/".r),
+  )
+
+  print(Lexer(tokenDefs).tokenize("a = 3"))
+}
+
+def parserTest(): Unit = {
   val productions: List[Production] = List(
     Production(NonTerminal("S'"), Vector(NonTerminal("S"))),
     Production(NonTerminal("S"), Vector(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
@@ -40,6 +66,7 @@ import Symbol.*
       print("|")
     }
   }
+}
 
 def centerText(text: String, width: Int = 10): String = {
   if text.length >= width then return text
