@@ -4,8 +4,8 @@
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 package build
 import mill._
-import mill.scalalib._
 import mill.contrib.scoverage.ScoverageModule
+import mill.scalalib._
 
 object `package` extends ScalaModule with ScoverageModule {
   def alpacaVersion = "0.1.0"
@@ -20,19 +20,19 @@ object `package` extends ScalaModule with ScoverageModule {
     "-new-syntax",
     "-unchecked",
     "-language:noAutoTupling",
-    // "-Vprofile",
-    // "-Xprint-inline",
-    // "-Ycheck:all",
-    // "-Ydebug-error",
-    // "-Ydebug-flags",
-    // "-Ydebug-missing-refs",
+    "-Vprofile",
+    "-Xprint-inline",
+    "-Ycheck:all",
+//    "-Ydebug-error",
+    "-Ydebug-flags",
+    "-Ydebug-missing-refs",
     "-Yexplain-lowlevel",
     "-Yexplicit-nulls",
-    // "-Yprint-debug",
-    // "-Xprint:postInlining",
+    "-Yprint-debug",
+    "-Xprint:postInlining",
     "-Wsafe-init",
-    // "-Yshow-suppressed-errors",
-    // "-Yshow-var-bounds",
+    "-Yshow-suppressed-errors",
+    "-Yshow-var-bounds",
     "-Werror",
 //    "-Wunused:all",
     "-language:implicitConversions",

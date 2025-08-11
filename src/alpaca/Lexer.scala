@@ -13,13 +13,13 @@ class Lexem[Name <: String](
   val index: Int = ctx.index,
   val end: Int = ctx.index,
 )
-sealed trait Token[Name <: String](val pattern: String, val ctxManipulation: Ctx ?=> Unit | Null)
+sealed trait Token[Name <: String](val pattern: String, val ctxManipulation: (Ctx => Unit) | Null)
 
 private class TokenImpl[Name <: String](
   val tpe: Name | Null,
   pattern: String,
-  ctxManipulation: Ctx ?=> Unit | Null = null,
-  val remapping: Expr[String => Any] | Null = null,
+  ctxManipulation: (Ctx => Unit) | Null = null,
+  val remapping: (String => Any) | Null = null,
 ) extends Token[Name](pattern, ctxManipulation) {
   val index: Int = TokenImpl.nextIndex()
 }
@@ -33,7 +33,7 @@ private object TokenImpl {
   }
 }
 
-class IgnoredToken(pattern: String, ctxManipulation: Ctx ?=> Unit | Null = null)
+class IgnoredToken(pattern: String, ctxManipulation: (Ctx => Unit) | Null = null)
   extends Token[Nothing](pattern, ctxManipulation)
 
 given Ordering[Token[?]] = {
@@ -58,6 +58,7 @@ case class TokenizationResult(lexems: List[Lexem[?]], errors: List[String])(usin
 }
 
 trait Tokenize {
+  val tokens: SortedSet[Token[?]]
   def tokenize(s: String): TokenizationResult = ???
 }
 
@@ -69,48 +70,85 @@ inline def lexer(inline rules: Ctx ?=> LexerDefinition): Tokenize = ${ lexerImpl
 private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes): Expr[Tokenize] = {
   import quotes.reflect.*
 //  return '{???}
-  rules.asTerm.underlying match
-    case Lambda(_ctx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
-      cases.foldLeft(SortedSet.empty[Token[?]]) { case (tokens, CaseDef(pattern, guard, body)) =>
-        def treeToPattern(tree: Tree): String = tree match
-          case Bind(_, Literal(StringConstant(str))) => str
-          case Bind(_, alternatives: Alternatives) => treeToPattern(alternatives)
-          case Literal(StringConstant(str)) => str
-          case Alternatives(alternatives) => alternatives.map(treeToPattern).mkString("|")
-          case x => treeInfo(x).dbg
+  def treeToPattern(tree: Tree): Expr[String] = tree match
+    case Bind(_, Literal(StringConstant(str))) => Expr(str)
+    case Bind(_, alternatives: Alternatives) => treeToPattern(alternatives)
+    case Literal(StringConstant(str)) => Expr(str)
+    case Alternatives(alternatives) => Expr(alternatives.map(treeToPattern).mkString("|"))
+    case x =>
+      s"""treeToPattern unsupported ${treeInfo(x)}""".dbg
 
-        def withToken(token: Token[?]) =
-          if tokens contains token // should be better check (for regex overlapping)
-          then report.errorAndAbort(s"Duplicate token type: $token")
-          else tokens + token
+  final class ReplaceRef(queries: (find: Term, replace: Term)*) extends TreeMap {
+    override def transformTerm(tree: Term)(owner: Symbol): Term =
+      queries.indexWhere(_.find.symbol == tree.symbol) match
+        case -1 => super.transformTerm(tree)(owner)
+        case idx => queries(idx).replace
+  }
 
-        @tailrec def extract(body: Expr[?]): SortedSet[Token[?]] = body match
+  val res = rules.asTerm.underlying match
+    case Lambda(ctx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
+      cases.foldLeft('{ SortedSet.empty[Token[?]] }) { case (tokens, CaseDef(pattern, guard, body)) =>
+        treeInfo(pattern).dbg
+
+        def withToken(token: Expr[Token[?]]) = '{
+          if $tokens contains $token
+            // todo: make it compile-time error
+            // should be better check (for regex overlapping)
+          then throw Exception(s"Duplicate token type: $$token")
+          else $tokens + $token
+        }
+
+        @tailrec def extract(
+          body: Expr[?]
+        )(
+          ctxManipulation: Expr[(Ctx => Unit) | Null] = '{ null }
+        ): Expr[SortedSet[Token[?]]] = body match
           case '{ Token.Ignored.apply(using $ctx) } =>
-            withToken(new IgnoredToken(treeToPattern(pattern)))
+            val regex = treeToPattern(pattern)
+            withToken('{ new IgnoredToken($regex, $ctxManipulation) })
           case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
-            withToken(new TokenImpl(Type.show[t], treeToPattern(pattern)))
+            val name = Expr(Type.show[t])
+            val regex = treeToPattern(pattern)
+            withToken('{ new TokenImpl($name, $regex, $ctxManipulation) })
           case '{ type t <: ConstString; Token.apply[t]($value: v)(using $ctx: Ctx) } =>
-            // todo remapping
-            withToken(new TokenImpl(Type.show[t], treeToPattern(pattern)))
+//            ReplaceRef(find = pattern, replace = Ref(ctx.symbol)).transformTree(value.asTerm)(Symbol.spliceOwner)
+            val name = Expr(Type.show[t])
+            val regex = treeToPattern(pattern)
+            withToken('{ new TokenImpl($name, $regex, $ctxManipulation) })
           case ExprBlock(statements, expr) =>
-            statements.map(_.asTerm).map {
-              case Block(ValDef(_, _, _) :: Nil, Closure(meth, _)) =>
-                ???
-              case x =>
-                treeInfo(x).dbg
-            }
-            extract(expr)
+            val ctxManipulation = Lambda(
+              Symbol.spliceOwner,
+              MethodType("ctx" :: Nil)(_ => TypeRepr.of[Ctx] :: Nil, _ => TypeRepr.of[Unit]),
+              {
+                case (methSym, ctx :: Nil) =>
+                  Block(
+                    statements.map(_.asTerm).map {
+                      case Block(ValDef(_, _, Some(rhs)) :: Nil, x) if rhs.symbol == ctx.symbol =>
+                        ReplaceRef(
+                          (find = rhs, replace = Ref(ctx.symbol)),
+                          // todo replace x also
+                        ).transformTerm(x)(Symbol.spliceOwner)
+                      case x => x
+                    },
+                    Literal(UnitConstant()),
+                  )
+                case _ => report.errorAndAbort("Invalid number of parameters in lambda")
+              },
+            ).asExprOf[Ctx => Unit]
+            extract(expr)(ctxManipulation)
           case x =>
             s"""Unsupported tree:
                |treeInfo(x.asTerm)""".dbg
 
-        extract(body.asExpr)
+        extract(body.asExpr)()
       }
     case _ =>
       report.errorAndAbort("Lexer definition must be a lambda function")
 
   '{
-    new Tokenize {}
+    new Tokenize {
+      val tokens = $res
+    }
   }
 }
 

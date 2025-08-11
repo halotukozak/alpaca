@@ -16,7 +16,9 @@ class LexerTest extends AnyFunSuite {
   val CalcLexer: Tokenize = lexer {
     case comment @ "#.*" => Token.Ignored
     case newLines @ "\\n+" =>
+      println("dupa")
       ctx.lineno += newLines.count(_ == '\n')
+      ctx.lineno += 8
       Token.Ignored
     case literal @ ("(" | ")") => Token[literal.type]
     case "+" => Token["PLUS"]
