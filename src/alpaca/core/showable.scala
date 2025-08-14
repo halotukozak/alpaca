@@ -1,4 +1,4 @@
-package alpaca
+package alpaca.core
 
 import scala.deriving.Mirror
 import scala.util.NotGiven

@@ -4,13 +4,13 @@
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 package build
 import mill._
-import mill.scalalib._
 import mill.contrib.scoverage.ScoverageModule
+import mill.scalalib._
 
 object `package` extends ScalaModule with ScoverageModule {
   def alpacaVersion = "0.1.0"
 
-  def scalaVersion = "3.6.3"
+  def scalaVersion = "3.7.2"
   def scoverageVersion = "2.3.0"
 
   override def scalacOptions = Seq(
@@ -23,18 +23,18 @@ object `package` extends ScalaModule with ScoverageModule {
     "-Vprofile",
     "-Xprint-inline",
     "-Ycheck:all",
-    // "-Ydebug-error",
-    // "-Ydebug-flags",
-    // "-Ydebug-missing-refs",
+//    "-Ydebug-error",
+    "-Ydebug-flags",
+    "-Ydebug-missing-refs",
     "-Yexplain-lowlevel",
     "-Yexplicit-nulls",
-    // "-Yprint-debug",
+    "-Yprint-debug",
     "-Xprint:postInlining",
     "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
-    "-Wunused:all",
+//    "-Wunused:all",
     "-language:implicitConversions",
   )
 

@@ -1,7 +1,8 @@
 package alpaca
 
-import Symbol.*
-
+import alpaca.core.{show, Showable}
+import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import parser.*
 
 @main def main(): Unit = {
   val productions: List[Production] = List(
