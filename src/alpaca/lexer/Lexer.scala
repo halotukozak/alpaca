@@ -43,8 +43,8 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
               case '{ Token.Ignored.apply(using $ctx) } =>
                 val regex = compiledPattern(pattern)
                 withToken('{
-                  val regexoName = $regex // probably better name required
-                  new IgnoredToken(regexoName, regexoName, $ctxManipulation)
+                  val tempName = Random.alphanumeric.take(8).mkString // todo:  better name required
+                  new IgnoredToken(tempName, $regex, $ctxManipulation)
                 })
               case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
                 val name = Expr(Type.show[t])
