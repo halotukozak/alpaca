@@ -23,6 +23,9 @@ private class TokenImpl[Name <: String](
   val remapping: (Ctx => Any) | Null = null,
 ) extends Token[Name](pattern, ctxManipulation) {
   val index: Int = TokenImpl.nextIndex()
+
+  override def toString: String =
+    s"TokenImpl(tpe = $tpe, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
 }
 
 private object TokenImpl {
@@ -35,7 +38,10 @@ private object TokenImpl {
 }
 
 class IgnoredToken(pattern: String, ctxManipulation: (Ctx => Unit) | Null = null)
-  extends Token[Nothing](pattern, ctxManipulation)
+  extends Token[Nothing](pattern, ctxManipulation) {
+  override def toString: String =
+    s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
+}
 
 given Ordering[Token[?]] = {
   case (x: IgnoredToken, y: TokenImpl[?]) => -1 // Ignored tokens are always less than any other token

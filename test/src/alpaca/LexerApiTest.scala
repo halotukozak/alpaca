@@ -13,6 +13,7 @@ val Lexer: Tokenize = lexer {
   case "\\.\\*" => Token["dotMul"]
   case "\\.\\/" => Token["dotDiv"]
   case "<=" => Token["lessEqual"]
+  case comment @ "#.*" => Token.Ignored
   case ">=" => Token["greaterEqual"]
   case "!=" => Token["notEqual"]
   case "==" => Token["equal"]
@@ -27,7 +28,8 @@ val Lexer: Tokenize = lexer {
 
 class LexerApiTest extends AnyFunSuite with Matchers {
   test("Lexer recognizes basic tokens") {
-    Lexer.tokens.map(_.pattern).toList shouldBe List( // todo the order is wrong
+    Lexer.tokens.toList.map(_.pattern) shouldBe List(
+      "#.*",
       "<|>|=|+|-|*|/|(|)|[|]|{|}|:|'|,|;",
       raw"\.\+",
       raw"\.\-",
