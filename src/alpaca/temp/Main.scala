@@ -2,7 +2,8 @@ package alpaca.temp
 
 import alpaca.temp.Symbol.*
 
-@main def main(): Unit =
+
+@main def main(): Unit = {
   val productions: List[Production] = List(
     Production(NonTerminal("S'"), Vector(NonTerminal("S"))),
     Production(NonTerminal("S"), Vector(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
@@ -40,6 +41,7 @@ import alpaca.temp.Symbol.*
       print("|")
     }
   }
+}
 
 def centerText(text: String, width: Int = 10): String = {
   if text.length >= width then return text
