@@ -1,6 +1,10 @@
 package alpaca
 
-val Lexer = lexer {
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+
+val Lexer: Tokenize = lexer {
   case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
       ";") =>
     Token[literal.type]
@@ -19,4 +23,25 @@ val Lexer = lexer {
       "print") =>
     Token[keyword.type]
   case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
+}
+
+class LexerApiTest extends AnyFunSuite with Matchers {
+  test("Lexer recognizes basic tokens") {
+    Lexer.tokens.map(_.pattern).toList shouldBe List( // todo the order is wrong
+      "<|>|=|+|-|*|/|(|)|[|]|{|}|:|'|,|;",
+      raw"\.\+",
+      raw"\.\-",
+      raw"\.\*",
+      raw"\.\/",
+      "<=",
+      ">=",
+      "!=",
+      "==",
+      raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
+      "[0-9]+",
+      "[^\"]*",
+      "if|else|for|while|break|continue|return|eye|zeros|ones|print",
+      "[a-zA-Z_][a-zA-Z0-9_]*",
+    )
+  }
 }

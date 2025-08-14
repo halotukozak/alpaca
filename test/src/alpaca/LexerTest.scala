@@ -5,14 +5,6 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class LexerTest extends AnyFunSuite {
 
-//  showAst {
-//    given Ctx = ???
-//    identity[String => Token[?]] {
-//      case literal @ ("(" | ")") => Token[literal.type]
-//      case "+" => Token["PLUS"]
-//    }
-//  }
-
   val CalcLexer: Tokenize = lexer {
     case comment @ "#.*" => Token.Ignored
     case newLines @ "\\n+" =>
@@ -79,7 +71,7 @@ class LexerTest extends AnyFunSuite {
     val vals = toks.map(_.value)
     assert(types == List("NUMBER", "PLUS", "MINUS"))
     assert(vals == List(123, "+", "-"))
-    assert(errors.toList == List(":+-"))
+    assert(errors == List(":+-"))
   }
 
   test("error token return handling") {
