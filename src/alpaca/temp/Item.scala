@@ -1,6 +1,7 @@
-package alpaca
+package alpaca.temp
 
-import Symbol.*
+import alpaca.Production
+import alpaca.temp.Symbol.*
 
 final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   if production.rhs.lengthIs < dotPosition then

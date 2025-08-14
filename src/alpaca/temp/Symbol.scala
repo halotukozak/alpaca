@@ -1,4 +1,4 @@
-package alpaca
+package alpaca.temp
 
 enum Symbol(val isTerminal: Boolean) {
   val name: String

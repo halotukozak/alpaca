@@ -1,6 +1,6 @@
-package alpaca
+package alpaca.temp
 
-import Symbol.*
+import alpaca.temp.Symbol.*
 
 @main def main(): Unit =
   val productions: List[Production] = List(

@@ -1,8 +1,10 @@
-package alpaca
+package alpaca.temp
+
+import alpaca.*
 
 import scala.annotation.{compileTimeOnly, tailrec}
-import scala.collection.{immutable, SortedSet}
 import scala.collection.immutable.::
+import scala.collection.{SortedSet, immutable}
 import scala.quoted.*
 
 class Lexem[Name <: String](

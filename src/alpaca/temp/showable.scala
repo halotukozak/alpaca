@@ -1,4 +1,6 @@
-package alpaca
+package alpaca.temp
+
+import alpaca.Showable
 
 import scala.deriving.Mirror
 import scala.util.NotGiven

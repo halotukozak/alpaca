@@ -1,5 +1,6 @@
 package alpaca
 
+import alpaca.temp.{Token, Tokenize, lexer}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

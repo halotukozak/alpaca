@@ -1,6 +1,6 @@
 package alpaca
 
-import alpaca.ctx
+import alpaca.temp.{Token, TokenizationResult, Tokenize, ctx, lexer}
 import org.scalatest.funsuite.AnyFunSuite
 
 class LexerTest extends AnyFunSuite {

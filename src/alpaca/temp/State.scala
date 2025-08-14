@@ -1,4 +1,4 @@
-package alpaca
+package alpaca.temp
 
 opaque type State <: Set[Item] = Set[Item]
 
