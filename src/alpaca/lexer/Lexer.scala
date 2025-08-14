@@ -5,6 +5,7 @@ import alpaca.{dbg, treeInfo}
 import scala.annotation.tailrec
 import scala.collection.{immutable, SortedSet}
 import scala.quoted.*
+import scala.util.Random
 
 type LexerDefinition = PartialFunction[String, Token[?]]
 type ConstString = String & Singleton
@@ -25,12 +26,8 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
     case Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
       cases.foldLeft('{ immutable.SortedSet.empty[Token[?]] }) {
         case (tokens, CaseDef(pattern, None, body)) =>
-          def withToken(token: Expr[Token[?]]) = '{
-            if $tokens contains $token
-              // todo: make it compile-time error, should be better check (for regex overlapping) https://github.com/halotukozak/alpaca/issues/41
-            then throw Exception(s"Duplicate token type: $$token")
-            else $tokens + $token
-          }
+          // todo: make compile-time check if pattern exists, also for regex overlapping https://github.com/halotukozak/alpaca/issues/41
+          def withToken(token: Expr[Token[?]]) = '{ $tokens + $token }
 
           def compiledPattern(pattern: Tree): Expr[String] = pattern match
             case Bind(_, Literal(StringConstant(str))) => Expr(str)
@@ -45,7 +42,10 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
             body match
               case '{ Token.Ignored.apply(using $ctx) } =>
                 val regex = compiledPattern(pattern)
-                withToken('{ new IgnoredToken($regex, $regex, $ctxManipulation) }) // probably better names
+                withToken('{
+                  val regexoName = $regex // probably better name required
+                  new IgnoredToken(regexoName, regexoName, $ctxManipulation)
+                })
               case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
                 val name = Expr(Type.show[t])
                 val regex = compiledPattern(pattern)

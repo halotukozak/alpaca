@@ -5,8 +5,8 @@ import scala.collection.SortedSet
 import scala.util.matching.Regex
 
 trait Tokenization {
-  val tokens: SortedSet[Token[?]]
-  private val compiled: Regex =
+  def tokens: SortedSet[Token[?]]
+  private lazy val compiled: Regex =
     tokens.view.map(tokenDef => s"(?<${tokenDef.tpe}>${tokenDef.pattern})").mkString("|").r
 
   @tailrec
