@@ -53,7 +53,6 @@ final class LexerTest extends AnyFunSuite {
       case "-" => Token["MINUS"]
       case "\\*" => Token["MULTIPLY"]
       case "\\(" => Token["LPAREN"]
-      case "\\(" => Token["RPAREN"]
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
     }

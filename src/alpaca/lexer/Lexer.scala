@@ -37,21 +37,34 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
             case x =>
               s"""compiledPattern unsupported ${treeInfo(x)}""".dbg
 
+          def compiledName[T: Type](pattern: Tree): Expr[String] = TypeRepr.of[T] match
+            case ConstantType(StringConstant(str)) => Expr(str)
+            case _ =>
+              def loop(pattern: Tree): Expr[String] = pattern match
+                case Bind(_, Literal(StringConstant(str))) => Expr(str)
+                case Bind(_, alternatives: Alternatives) => compiledPattern(alternatives)
+                case Literal(StringConstant(str)) => Expr(str)
+                case Alternatives(alternatives) =>
+                  Expr(alternatives.map(compiledPattern).map(_.valueOrAbort).mkString("_or_"))
+                case x =>
+                  s"""compiledPattern unsupported ${treeInfo(x)}""".dbg
+              loop(pattern)
+
           @tailrec def extract(body: Expr[?])(ctxManipulation: Expr[(Ctx => Unit) | Null] = '{ null })
             : Expr[immutable.SortedSet[Token[?]]] =
             body match
               case '{ Token.Ignored.apply(using $ctx) } =>
                 val regex = compiledPattern(pattern)
                 withToken('{
-                  val tempName = Random.alphanumeric.take(8).mkString // todo:  better name required
+                  val tempName = TempRandom.alpha().take(8).mkString // todo:  better name required
                   new IgnoredToken(tempName, $regex, $ctxManipulation)
                 })
               case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
-                val name = Expr(Type.show[t])
+                val name = compiledName[t](pattern)
                 val regex = compiledPattern(pattern)
                 withToken('{ new TokenImpl($name, $regex, $ctxManipulation) })
               case '{ type t <: ConstString; Token.apply[t]($value: v)(using $ctx: Ctx) } =>
-                val name = Expr(Type.show[t])
+                val name = compiledName[t](pattern)
                 val regex = compiledPattern(pattern)
                 val remapping = Lambda(
                   Symbol.spliceOwner,
@@ -98,5 +111,17 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
     new Tokenization {
       val tokens: SortedSet[Token[?]] = $res
     }
+  }
+}
+
+//tempporary solution
+object TempRandom {
+  def alpha(): LazyList[Char] = {
+    def nextAlphaNum: Char = {
+      val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      chars.charAt(Random.nextInt(chars.length))
+    }
+
+    LazyList.continually(nextAlphaNum)
   }
 }

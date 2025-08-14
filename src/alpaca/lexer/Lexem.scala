@@ -1,13 +1,12 @@
 package alpaca.lexer
 
-final class Lexem[Name <: String]
-(
+final case class Lexem[Name <: String](
 //  using Ctx
 //)(
-  val tpe: Name | Null,
-  val value: Any | Null,
+  tpe: Name | Null,
+  value: Any | Null,
 //  val lineno: Int = ctx.lineno,
-  val index: Int 
+  index: Int,
 //  = ctx.index,
 //  val end: Int = ctx.index,
 )
