@@ -1,7 +1,7 @@
-package alpaca.temp
+package alpaca.parser
 
-import alpaca.temp.Symbol.*
-import alpaca.{FirstSet, Production, Symbol}
+import Symbol.*
+import alpaca.lexer.AlgorithmError
 
 import scala.annotation.tailrec
 

@@ -1,4 +1,4 @@
-package alpaca.temp
+package alpaca
 
 import scala.quoted.*
 import scala.util.Try

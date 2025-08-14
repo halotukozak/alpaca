@@ -1,85 +1,17 @@
-package alpaca.temp
+package alpaca.lexer
 
-import alpaca.*
+import alpaca.{dbg, treeInfo}
 
-import scala.annotation.{compileTimeOnly, tailrec}
-import scala.collection.immutable.::
-import scala.collection.{SortedSet, immutable}
+import scala.annotation.tailrec
+import scala.collection.{immutable, SortedSet}
 import scala.quoted.*
 
-class Lexem[Name <: String](
-  using Ctx
-)(
-  val tpe: Name | Null,
-  val value: Any | Null,
-  val lineno: Int = ctx.lineno,
-  val index: Int = ctx.index,
-  val end: Int = ctx.index,
-)
-sealed trait Token[Name <: String](val pattern: String, val ctxManipulation: (Ctx => Unit) | Null)
-
-private class TokenImpl[Name <: String](
-  val tpe: Name | Null,
-  pattern: String,
-  ctxManipulation: (Ctx => Unit) | Null = null,
-  val remapping: (Ctx => Any) | Null = null,
-) extends Token[Name](pattern, ctxManipulation) {
-  val index: Int = TokenImpl.nextIndex()
-
-  override def toString: String =
-    s"TokenImpl(tpe = $tpe, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
-}
-
-private object TokenImpl {
-  private var index = 0
-
-  private def nextIndex(): Int = {
-    index += 1
-    index
-  }
-}
-
-class IgnoredToken(pattern: String, ctxManipulation: (Ctx => Unit) | Null = null)
-  extends Token[Nothing](pattern, ctxManipulation) {
-  override def toString: String =
-    s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
-}
-
-given Ordering[Token[?]] = {
-  case (x: IgnoredToken, y: TokenImpl[?]) => -1 // Ignored tokens are always less than any other token
-  case (x: TokenImpl[?], y: IgnoredToken) => 1
-  case (x: TokenImpl[?], y: TokenImpl[?]) => x.index.compareTo(y.index)
-  case (x: IgnoredToken, y: IgnoredToken) => x.pattern.compareTo(y.pattern)
-}
-
-object Token {
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  val Ignored: Ctx ?=> Token[?] = ???
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ConstString](using Ctx): Token[Name] = ???
-
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ConstString](value: Any)(using Ctx): Token[Name] = ???
-}
-
-case class TokenizationResult(lexems: List[Lexem[?]], errors: List[String])(using val ctx: Ctx) {
-  export ctx.*
-}
-
-trait Tokenize {
-  val tokens: SortedSet[Token[?]]
-  def tokenize(s: String): TokenizationResult = {
-    println(tokens.map(_.pattern))
-    ???
-  }
-}
-
 type LexerDefinition = PartialFunction[String, Token[?]]
-
 type ConstString = String & Singleton
-inline def lexer(inline rules: Ctx ?=> LexerDefinition): Tokenize = ${ lexerImpl('{ rules }) }
 
-private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes): Expr[Tokenize] = {
+inline def lexer(inline rules: Ctx ?=> LexerDefinition): Tokenization = ${ lexerImpl('{ rules }) }
+
+private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes): Expr[Tokenization] = {
   import quotes.reflect.*
 
   final class ReplaceRef(queries: (find: Symbol, replace: Term)*) extends TreeMap {
@@ -93,14 +25,12 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
     case Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
       cases.foldLeft('{ immutable.SortedSet.empty[Token[?]] }) {
         case (tokens, CaseDef(pattern, None, body)) =>
-          def withToken(token: Expr[Token[?]]) = '{ $tokens + $token }
-//        = '{
-//          if $tokens contains $token
-//            // todo: make it compile-time error
-//            // should be better check (for regex overlapping)
-//          then throw Exception(s"Duplicate token type: $$token")
-//          else $tokens + $token
-//        }
+          def withToken(token: Expr[Token[?]]) = '{
+            if $tokens contains $token
+              // todo: make it compile-time error, should be better check (for regex overlapping) https://github.com/halotukozak/alpaca/issues/41
+            then throw Exception(s"Duplicate token type: $$token")
+            else $tokens + $token
+          }
 
           def compiledPattern(pattern: Tree): Expr[String] = pattern match
             case Bind(_, Literal(StringConstant(str))) => Expr(str)
@@ -115,7 +45,7 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
             body match
               case '{ Token.Ignored.apply(using $ctx) } =>
                 val regex = compiledPattern(pattern)
-                withToken('{ new IgnoredToken($regex, $ctxManipulation) })
+                withToken('{ new IgnoredToken($regex, $regex, $ctxManipulation) }) // probably better names
               case '{ type t <: ConstString; Token.apply[t](using $ctx: Ctx) } =>
                 val name = Expr(Type.show[t])
                 val regex = compiledPattern(pattern)
@@ -165,16 +95,8 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
       report.errorAndAbort("Lexer definition must be a lambda function")
 
   '{
-    new Tokenize {
-      val tokens = $res
+    new Tokenization {
+      val tokens: SortedSet[Token[?]] = $res
     }
   }
 }
-
-trait Ctx {
-  var text: String
-  var index: Int
-  var lineno: Int
-}
-
-inline given ctx: Ctx = compiletime.summonInline

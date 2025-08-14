@@ -1,8 +1,8 @@
-package alpaca
+package alpaca.core
 
-import alpaca.temp.Showable
+import alpaca.core.Showable
 import org.scalatest.funsuite.AnyFunSuite
-import alpaca.temp.Showable.*
+import Showable.*
 
 final class ShowableTest extends AnyFunSuite {
 

@@ -1,4 +1,6 @@
-package alpaca.temp
+package alpaca.parser
+
+import alpaca.core.Showable
 
 enum Symbol(val isTerminal: Boolean) {
   val name: String
@@ -7,8 +9,8 @@ enum Symbol(val isTerminal: Boolean) {
   case Terminal(name: String) extends Symbol(isTerminal = true)
 }
 
-given Showable[Symbol] = _.name
-
 object Symbol {
   val EOF: Terminal = Terminal("$")
+
+  given Showable[Symbol] = _.name
 }
