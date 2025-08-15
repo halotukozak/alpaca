@@ -2,7 +2,11 @@ package alpaca.lexer
 
 import scala.annotation.compileTimeOnly
 
-sealed trait Token[Name <: String](val tpe: Name, val pattern: String, val ctxManipulation: (Ctx => Unit) | Null)
+sealed trait Token[Name <: String] {
+  val tpe: Name
+  val pattern: String
+  val ctxManipulation: Ctx => Ctx
+}
 object Token {
   @compileTimeOnly("Should never be called outside the lexer definition")
   val Ignored: Ctx ?=> Token[?] = ???
@@ -21,12 +25,12 @@ object Token {
 
 }
 
-final class TokenImpl[Name <: String](
+final case class TokenImpl[Name <: String](
   tpe: Name,
   pattern: String,
-  ctxManipulation: (Ctx => Unit) | Null = null,
-  val remapping: (Ctx => Any) | Null = null,
-) extends Token[Name](tpe, pattern, ctxManipulation) {
+  ctxManipulation: Ctx => Ctx,
+  remapping: Option[Ctx => Any] = None,
+) extends Token[Name] {
   val index: Int = TokenImpl.nextIndex()
 
   override def toString: String =
@@ -42,8 +46,11 @@ private object TokenImpl {
   }
 }
 
-final class IgnoredToken[Name <: String](tpe: Name, pattern: String, ctxManipulation: (Ctx => Unit) | Null = null)
-  extends Token(tpe, pattern, ctxManipulation) {
+final case class IgnoredToken[Name <: String](
+  tpe: Name,
+  pattern: String,
+  ctxManipulation: Ctx => Ctx,
+) extends Token {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
 }
