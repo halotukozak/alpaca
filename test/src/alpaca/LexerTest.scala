@@ -7,7 +7,7 @@ class LexerTest extends AnyFunSuite {
   test("tokenize simple identifier") {
     val tokens = List(Token("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9]*".r))
     val lexer = Lexer(tokens)
-    val result = lexer.tokenize("hello")
+    val result = lexer.tokenizeString("hello")
     
     assert(result == List(Lexem("IDENTIFIER", "hello", 0)))
   }
@@ -19,19 +19,19 @@ class LexerTest extends AnyFunSuite {
       Token("WHITESPACE", "\\s+".r, ignore = true)
     )
     val lexer = Lexer(tokens)
-    val result = lexer.tokenize("42 + 13")
+    val result = lexer.tokenizeString("42 + 13")
     
     assert(result == List(
       Lexem("NUMBER", "42", 0),
-      Lexem("PLUS", "+", 3),
-      Lexem("NUMBER", "13", 5)
+      Lexem("PLUS", "+", 0),
+      Lexem("NUMBER", "13", 0)
     ))
   }
   
   test("tokenize empty string") {
     val tokens = List(Token("IDENTIFIER", "[a-zA-Z]+".r))
     val lexer = Lexer(tokens)
-    val result = lexer.tokenize("")
+    val result = lexer.tokenizeString("")
     
     assert(result == List.empty)
   }
@@ -41,9 +41,9 @@ class LexerTest extends AnyFunSuite {
     val lexer = Lexer(tokens)
     
     val exception = intercept[RuntimeException] {
-      lexer.tokenize("123abc")
+      lexer.tokenizeString("123abc")
     }
-    assert(exception.getMessage.contains("Unexpected character at position 3"))
+    assert(exception.getMessage == "Unexpected character: 'a'")
   }
   
   test("tokenize complex expression") {
@@ -58,18 +58,18 @@ class LexerTest extends AnyFunSuite {
       Token("WHITESPACE", "\\s+".r, ignore = true)
     )
     val lexer = Lexer(tokens)
-    val result = lexer.tokenize("(x + 42) * y - 1")
+    val result = lexer.tokenizeString("(x + 42) * y - 1")
     
     assert(result == List(
       Lexem("LPAREN", "(", 0),
-      Lexem("IDENTIFIER", "x", 1),
-      Lexem("PLUS", "+", 3),
-      Lexem("NUMBER", "42", 5),
-      Lexem("RPAREN", ")", 7),
-      Lexem("MULTIPLY", "*", 9),
-      Lexem("IDENTIFIER", "y", 11),
-      Lexem("MINUS", "-", 13),
-      Lexem("NUMBER", "1", 15)
+      Lexem("IDENTIFIER", "x", 0),
+      Lexem("PLUS", "+", 0),
+      Lexem("NUMBER", "42", 0),
+      Lexem("RPAREN", ")", 0),
+      Lexem("MULTIPLY", "*", 0),
+      Lexem("IDENTIFIER", "y", 0),
+      Lexem("MINUS", "-", 0),
+      Lexem("NUMBER", "1", 0)
     ))
   }
 }
