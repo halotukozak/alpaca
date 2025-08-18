@@ -10,8 +10,10 @@ sealed trait Token[Name <: ValidName](
   val ctxManipulation: (Ctx => Unit) | Null,
 )
 object Token {
+
+  // todo: we'd like not to require the explicit name for Ignored tokens
   @compileTimeOnly("Should never be called outside the lexer definition")
-  val Ignored: Ctx ?=> Token[?] = ???
+  def Ignored[Name <: ValidName](using Ctx): Token[Name] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](using Ctx): Token[Name] = ???
 

@@ -20,8 +20,8 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
         case idx => queries(idx).replace
   }
 
-  def stringToType(str: String): Type[? <: ValidName] =
-    ConstantType(StringConstant(str)).asType.asInstanceOf[Type[? <: ValidName]]
+  def stringToType(str: String): Type[ValidName] =
+    ConstantType(StringConstant(str)).asType.asInstanceOf[Type[ValidName]]
 
   val tokens: List[Expr[Token[?]]] = rules.asTerm.underlying match
     case Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) =>
@@ -38,10 +38,10 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
             case x =>
               s"""compiledPattern unsupported ${treeInfo(x)}""".dbg
 
-          def compiledName[T: Type](pattern: Tree): Type[? <: ValidName] = TypeRepr.of[T] match
+          def compiledName[T: Type](pattern: Tree): Type[ValidName] = TypeRepr.of[T] match
             case ConstantType(StringConstant(str)) => stringToType(str)
             case _ =>
-              @tailrec def loop(pattern: Tree): Type[? <: ValidName] = pattern match
+              @tailrec def loop(pattern: Tree): Type[ValidName] = pattern match
                 case Bind(_, Literal(StringConstant(str))) => stringToType(str)
                 case Bind(_, alternatives: Alternatives) => loop(alternatives)
                 case Literal(StringConstant(str)) => stringToType(str)
@@ -54,8 +54,8 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
           @tailrec def extract(body: Expr[?])(ctxManipulation: Expr[(Ctx => Unit) | Null] = '{ null })
             : List[Expr[Token[?]]] =
             body match
-              case '{ Token.Ignored.apply(using $ctx) } =>
-                compiledName(pattern) match
+              case '{ type t <: ValidName; Token.Ignored[t](using $ctx) } =>
+                compiledName[t](pattern) match
                   case '[type name <: ValidName; name] =>
                     val regex = compiledPattern(pattern)
                     withToken('{
