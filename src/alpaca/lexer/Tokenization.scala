@@ -1,7 +1,5 @@
 package alpaca.lexer
 
-import alpaca.core.allValuesOfType
-
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 
