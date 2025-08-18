@@ -4,11 +4,13 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import scala.reflect.Selectable.reflectiveSelectable //todo: find a way to not require this
+
 final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer: Tokenization = lexer {
-    case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
-        ";") =>
-      Token[literal.type]
+  val Lexer = lexer {
+//    case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
+//        ";") =>
+//      Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -21,14 +23,14 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
     case x @ "[0-9]+" => Token["int"](x.toInt)
     case x @ "[^\"]*" => Token["string"](x)
-    case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
-        "print") =>
-      Token[keyword.type]
+//    case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
+//        "print") =>
+//      Token[keyword.type]
     case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
   }
 
   test("Lexer recognizes basic tokens") {
-    Lexer.tokens.toList.map(_.pattern) shouldBe List(
+    Lexer.tokens.map(_.pattern) shouldBe List(
       "#.*",
       "<|>|=|+|-|*|/|(|)|[|]|{|}|:|'|,|;",
       raw"\.\+",
@@ -45,5 +47,24 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       "if|else|for|while|break|continue|return|eye|zeros|ones|print",
       "[a-zA-Z_][a-zA-Z0-9_]*",
     )
+
+//     literal
+    Lexer.dotAdd
+    Lexer.dotSub
+    Lexer.dotMul
+    Lexer.dotDiv
+    Lexer.lessEqual
+    Lexer.greaterEqual
+    Lexer.notEqual
+    Lexer.equal
+    Lexer.float
+    Lexer.int
+    Lexer.string
+//
+//    @("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
+//      "print") =>
+//    Token[keyword.type]
+
+    Lexer.id
   }
 }

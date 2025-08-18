@@ -2,15 +2,21 @@ package alpaca.lexer
 
 import scala.annotation.compileTimeOnly
 
-sealed trait Token[Name <: String](val tpe: Name, val pattern: String, val ctxManipulation: (Ctx => Unit) | Null)
+type ValidName = String & Singleton
+
+sealed trait Token[Name <: ValidName](
+  val name: Name,
+  val pattern: String,
+  val ctxManipulation: (Ctx => Unit) | Null,
+)
 object Token {
   @compileTimeOnly("Should never be called outside the lexer definition")
   val Ignored: Ctx ?=> Token[?] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ConstString](using Ctx): Token[Name] = ???
+  def apply[Name <: ValidName](using Ctx): Token[Name] = ???
 
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ConstString](value: Any)(using Ctx): Token[Name] = ???
+  def apply[Name <: ValidName](value: Any)(using Ctx): Token[Name] = ???
 
   given Ordering[Token[?]] = {
     case (x: IgnoredToken[?], y: TokenImpl[?]) => -1 // Ignored tokens are always less than any other token
@@ -21,16 +27,16 @@ object Token {
 
 }
 
-final class TokenImpl[Name <: String](
-  tpe: Name,
+final class TokenImpl[Name <: ValidName](
+  name: Name,
   pattern: String,
   ctxManipulation: (Ctx => Unit) | Null = null,
   val remapping: (Ctx => Any) | Null = null,
-) extends Token[Name](tpe, pattern, ctxManipulation) {
+) extends Token[Name](name, pattern, ctxManipulation) {
   val index: Int = TokenImpl.nextIndex()
 
   override def toString: String =
-    s"TokenImpl(tpe = $tpe, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
+    s"TokenImpl(name = $name, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
 }
 
 private object TokenImpl {
@@ -42,8 +48,11 @@ private object TokenImpl {
   }
 }
 
-final class IgnoredToken[Name <: String](tpe: Name, pattern: String, ctxManipulation: (Ctx => Unit) | Null = null)
-  extends Token(tpe, pattern, ctxManipulation) {
+final class IgnoredToken[Name <: ValidName](
+  name: Name,
+  pattern: String,
+  ctxManipulation: (Ctx => Unit) | Null = null,
+) extends Token[Name](name, pattern, ctxManipulation) {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
 }

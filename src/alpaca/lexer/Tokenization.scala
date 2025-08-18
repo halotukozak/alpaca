@@ -1,13 +1,14 @@
 package alpaca.lexer
 
+import alpaca.core.allValuesOfType
+
 import scala.annotation.tailrec
-import scala.collection.SortedSet
 import scala.util.matching.Regex
 
 trait Tokenization {
-  def tokens: SortedSet[Token[?]]
+  def tokens: List[Token[?]] 
   private lazy val compiled: Regex =
-    tokens.view.map(tokenDef => s"(?<${tokenDef.tpe}>${tokenDef.pattern})").mkString("|").r
+    tokens.view.map(tokenDef => s"(?<${tokenDef.name}>${tokenDef.pattern})").mkString("|").r
 
   @tailrec
   final def tokenize(
@@ -25,11 +26,11 @@ trait Tokenization {
             throw new RuntimeException(s"Unexpected character at position $position: '${input(0)}'")
 
           case Some(m) =>
-            tokens.find(token => m.group(token.tpe) ne null) match
+            tokens.find(token => m.group(token.name) ne null) match
               case Some(tokenDef: IgnoredToken[?]) =>
                 tokenize(input.substring(m.end), position + m.end, acc)
               case Some(tokenDef) =>
-                val lexem = Lexem(tokenDef.tpe, m.group(tokenDef.tpe), position)
+                val lexem = Lexem(tokenDef.name, m.group(tokenDef.name), position)
                 tokenize(input.substring(m.end), position + m.end, lexem :: acc)
               case None =>
                 throw new AlgorithmError(s"$m matched but no token defined for it")
