@@ -1,6 +1,6 @@
 package alpaca.lexer
 
-import alpaca.{dbg, treeInfo}
+import alpaca.*
 
 import scala.annotation.{experimental, tailrec}
 import scala.quoted.*
@@ -14,10 +14,13 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
   import quotes.reflect.*
 
   final class ReplaceRef(queries: (find: Symbol, replace: Term)*) extends TreeMap {
+    // skip NoSymbol
+    private val filtered = queries.view.filterNot(_.find.isNoSymbol)
+
     override def transformTerm(tree: Term)(owner: Symbol): Term =
-      queries.indexWhere(_.find == tree.symbol) match
-        case -1 => super.transformTerm(tree)(owner)
-        case idx => queries(idx).replace
+      filtered
+        .collectFirst { case (find, replace) if find == tree.symbol => replace }
+        .getOrElse(super.transformTerm(tree)(owner))
   }
 
   def stringToType(str: String): Type[ValidName] =
@@ -94,18 +97,17 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
                           ReplaceRef(
                             (find = oldCtx.symbol, replace = newCtx),
                             (find = pattern.symbol, replace = Select.unique(newCtx, "text")),
-                          ).transformTerm(Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())))(
-                            methSym,
-                          )
+                          ).transformTerm(Block(statements.map(_.changeOwner(methSym)), newCtx))(methSym)
                         case _ => report.errorAndAbort("Invalid number of parameters in lambda")
                       },
-                    ).asExprOf[Ctx => Unit]
+                    ).asExprOf[Ctx => Ctx]
+
                     extract(expr.asExpr)(ctxManipulation)
                   case x =>
                     s"""Unsupported tree:
                    |${treeInfo(x)}""".dbg
 
-          extract(body.asExpr)()
+          extract(body.asExpr)('{ _.copy() })
         case (tokens, CaseDef(pattern, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
       }
     case _ =>
