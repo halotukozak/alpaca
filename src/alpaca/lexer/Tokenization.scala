@@ -20,22 +20,22 @@ trait Tokenization {
           case Some(m) =>
             val newCtx = new Ctx(text = ctx.text.substring(m.end), position = ctx.position + m.end)
 
-            tokens.find(token => m.group(token.tpe) ne null) match
-              case Some(IgnoredToken(tpe, _, modifyCtx)) =>
+            tokens.find(token => m.group(token.name) ne null) match
+              case Some(IgnoredToken(name, _, modifyCtx)) =>
                 loop(modifyCtx(newCtx), acc)
-              case Some(TokenImpl(tpe, _, modifyCtx, remapping)) =>
+              case Some(TokenImpl(name, _, modifyCtx, remapping)) =>
                 val value = {
-                  val matched = m.group(tpe)
+                  val matched = m.group(name)
                   remapping match
                     case Some(remap) => remap(new Ctx(text = matched, position = ctx.position))
                     case None => matched
                 }
 
-                val lexem = Lexem(tpe, value, ctx.position)
+                val lexem = Lexem(name, value, ctx.position)
                 loop(modifyCtx(newCtx), lexem :: acc)
               case None =>
                 throw new AlgorithmError(s"$m matched but no token defined for it")
 
-    loop(new Ctx(input, 0))(Nil)
+    loop(new Ctx(input, 0), Nil)
   }
 }

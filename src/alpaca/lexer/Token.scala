@@ -4,10 +4,12 @@ import scala.annotation.compileTimeOnly
 
 type ValidName = String & Singleton
 
+type CtxManipulation = Ctx => Ctx
+
 sealed trait Token[Name <: ValidName] {
   val name: Name
   val pattern: String
-  val ctxManipulation: Ctx => Ctx
+  val ctxManipulation: CtxManipulation
 }
 object Token {
 
@@ -32,8 +34,8 @@ object Token {
 final case class TokenImpl[Name <: ValidName](
   name: Name,
   pattern: String,
-  ctxManipulation: Ctx => Ctx,
-  remapping: Option[Ctx => Any] = None,,
+  ctxManipulation: CtxManipulation,
+  remapping: Option[Ctx => Any] = None,
 ) extends Token[Name] {
   val index: Int = TokenImpl.nextIndex()
 
@@ -51,9 +53,9 @@ private object TokenImpl {
 }
 
 final case class IgnoredToken[Name <: ValidName](
-  tpe: Name,
+  name: Name,
   pattern: String,
-  ctxManipulation: Ctx => Ctx,
+  ctxManipulation: CtxManipulation,
 ) extends Token {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
