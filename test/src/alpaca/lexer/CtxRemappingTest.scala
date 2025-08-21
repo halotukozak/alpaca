@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
-      case "\\s+" => Token.Ignored
+      case "\\s+" => Token.Ignored["temp"]
       case x @ "[0-9]+" => Token["int"](x.toInt)
       case s @ "[a-z]+" => Token["id"](s.toUpperCase)
     }
@@ -23,10 +23,10 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
       case "A" => Token["A"]
       case "!" =>
         ctx.position += 5
-        Token.Ignored
+        Token.Ignored["temp"]
       case x @ "\n+" =>
         ctx.position += x.count(_ == '\n')
-        Token.Ignored
+        Token.Ignored["temp"]
     }
 
     val ex = intercept[RuntimeException] {

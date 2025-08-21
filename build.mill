@@ -36,6 +36,7 @@ object `package` extends ScalaModule with ScoverageModule {
     "-Werror",
 //    "-Wunused:all",
     "-language:implicitConversions",
+    "-experimental"
   )
 
   override def scalaDocOptions = Seq(

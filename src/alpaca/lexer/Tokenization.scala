@@ -1,16 +1,16 @@
 package alpaca.lexer
 
 import scala.annotation.tailrec
-import scala.collection.SortedSet
 import scala.util.matching.Regex
 
 trait Tokenization {
-  def tokens: SortedSet[Token[?]]
   private lazy val compiled: Regex =
-    tokens.view.map(tokenDef => s"(?<${tokenDef.tpe}>${tokenDef.pattern})").mkString("|").r
+    tokens.view.map(tokenDef => s"(?<${tokenDef.name}>${tokenDef.pattern})").mkString("|").r
+
+  def tokens: List[Token[?]]
 
   final def tokenize(input: String): List[Lexem[?]] = {
-    @tailrec def loop(using ctx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] = ctx.text match
+    @tailrec def loop(ctx: Ctx, acc: List[Lexem[?]]): List[Lexem[?]] = ctx.text match
       case "" =>
         acc.reverse
       case _ =>
@@ -20,22 +20,22 @@ trait Tokenization {
           case Some(m) =>
             val newCtx = new Ctx(text = ctx.text.substring(m.end), position = ctx.position + m.end)
 
-            tokens.find(token => m.group(token.tpe) ne null) match
-              case Some(IgnoredToken(tpe, _, modifyCtx)) =>
-                loop(modifyCtx(newCtx))(acc)
-              case Some(TokenImpl(tpe, _, modifyCtx, remapping)) =>
+            tokens.find(token => m.group(token.name) ne null) match
+              case Some(IgnoredToken(name, _, modifyCtx)) =>
+                loop(modifyCtx(newCtx), acc)
+              case Some(TokenImpl(name, _, modifyCtx, remapping)) =>
                 val value = {
-                  val matched = m.group(tpe)
+                  val matched = m.group(name)
                   remapping match
                     case Some(remap) => remap(new Ctx(text = matched, position = ctx.position))
                     case None => matched
                 }
 
-                val lexem = Lexem(tpe, value, ctx.position)
-                loop(modifyCtx(newCtx))(lexem :: acc)
+                val lexem = Lexem(name, value, ctx.position)
+                loop(modifyCtx(newCtx), lexem :: acc)
               case None =>
                 throw new AlgorithmError(s"$m matched but no token defined for it")
 
-    loop(new Ctx(input, 0))(Nil)
+    loop(new Ctx(input, 0), Nil)
   }
 }
