@@ -6,10 +6,8 @@ import scala.annotation.{experimental, tailrec}
 import scala.quoted.*
 
 type LexerDefinition = PartialFunction[String, Token[?]]
-@experimental
 transparent inline def lexer(inline rules: Ctx ?=> LexerDefinition): Tokenization = ${ lexerImpl('{ rules }) }
 
-@experimental
 private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes): Expr[Tokenization] = {
   import quotes.reflect.*
 
