@@ -61,12 +61,12 @@ private def lexerImpl(rules: Expr[Ctx ?=> LexerDefinition])(using quotes: Quotes
                     withToken('{
                       new IgnoredToken[name](compiletime.constValue[name], $regex, $ctxManipulation)
                     })
-              case '{ type t <: ValidName; Token.apply[t](using $ctx: Ctx) } =>
+              case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
                 compiledName[t](pattern) match
                   case '[type name <: ValidName; name] =>
                     val regex = compiledPattern(pattern)
                     withToken('{ new TokenImpl[name](compiletime.constValue[name], $regex, $ctxManipulation) })
-              case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx: Ctx) } =>
+              case '{ type t <: ValidName; Token.apply[t]($value)(using $ctx) } =>
                 compiledName[t](pattern) match
                   case '[type name <: ValidName; name] =>
                     val regex = compiledPattern(pattern)

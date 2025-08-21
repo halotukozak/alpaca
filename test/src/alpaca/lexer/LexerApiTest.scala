@@ -32,7 +32,23 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     // todo: should be in order of definition
     Lexer.tokens.map(_.pattern) should contain theSameElementsAs List(
       "#.*",
-//      "<|>|=|+|-|*|/|(|)|[|]|{|}|:|'|,|;",
+      "<",
+      ">",
+      "=",
+      "+",
+      "-",
+      "*",
+      "/",
+      "(",
+      ")",
+      "[",
+      "]",
+      "{",
+      "}",
+      ":",
+      "'",
+      ",",
+      ";",
       raw"\.\+",
       raw"\.\-",
       raw"\.\*",
@@ -44,11 +60,37 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
       "[0-9]+",
       "[^\"]*",
-//      "if|else|for|while|break|continue|return|eye|zeros|ones|print",
+      "if",
+      "else",
+      "for",
+      "while",
+      "break",
+      "continue",
+      "return",
+      "eye",
+      "zeros",
+      "ones",
+      "print",
       "[a-zA-Z_][a-zA-Z0-9_]*",
     )
 
-//     literal
+    Lexer.<
+    Lexer.>
+    Lexer.`=`
+    Lexer.+
+    Lexer.-
+    Lexer.*
+    Lexer./
+    Lexer.`(`
+    Lexer.`)`
+    Lexer.`[`
+    Lexer.`]`
+    Lexer.`{`
+    Lexer.`}`
+    Lexer.`:`
+    Lexer.`'`
+    Lexer.`,`
+    Lexer.`;`
     Lexer.dotAdd
     Lexer.dotSub
     Lexer.dotMul
@@ -60,11 +102,17 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.float
     Lexer.int
     Lexer.string
-//
-//    @("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
-//      "print") =>
-//    Token[keyword.type]
-
+    Lexer.`if`
+    Lexer.`else`
+    Lexer.`for`
+    Lexer.`while`
+    Lexer.break
+    Lexer.continue
+    Lexer.`return`
+    Lexer.eye
+    Lexer.zeros
+    Lexer.ones
+    Lexer.print
     Lexer.id
   }
 }
