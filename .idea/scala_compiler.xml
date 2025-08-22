@@ -44,6 +44,7 @@
                 <parameter value="-Yshow-var-bounds"/>
                 <parameter value="-Werror"/>
                 <parameter value="-language:implicitConversions"/>
+                <parameter value="-experimental"/>
             </parameters>
             <plugins></plugins>
         </profile>
