@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.reflect.Selectable.reflectiveSelectable //todo: find a way to not require this
 
 final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer = lexer {
+  val Lexer = lexer[EmptyCtx] {
     case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
         ";") =>
       Token[literal.type]
@@ -16,7 +16,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case "\\.\\/" => Token["dotDiv"]
     case "<=" => Token["lessEqual"]
     case comment @ "#.*" => Token.Ignored["comment"]
-    case ">=" => Token["greaterEqual"]
+    case ">=" => Token["greaterEqual"](using ctx)
     case "!=" => Token["notEqual"]
     case "==" => Token["equal"]
     case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)

@@ -12,6 +12,12 @@ trait EmptyCtx { // or AnyCtx ?
   }
 }
 
+object EmptyCtx {
+  def create(arg: String): EmptyCtx = new EmptyCtx {
+    var text: String = arg
+  }
+}
+
 trait PositionTracking { this: EmptyCtx =>
   var position: Int
 
@@ -21,10 +27,15 @@ trait PositionTracking { this: EmptyCtx =>
 }
 
 case class DefaultCtx(
-  val text: String,
+  var text: String,
   var position: Int,
 ) extends EmptyCtx
     with PositionTracking
 
+object DefaultCtx {
+  def create(arg: String) = new DefaultCtx(arg, 0)
+}
+
 //todo: custom Ctx should be available https://github.com/halotukozak/alpaca/issues/45
-inline given ctx[Ctx <: EmptyCtx]: Ctx = compiletime.summonInline
+transparent inline given ctx(using c: EmptyCtx): c.type = c
+// transparent inline def ctx(using c: EmptyCtx): c.type = c

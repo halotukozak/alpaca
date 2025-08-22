@@ -1,5 +1,7 @@
 package alpaca.core
 
+import scala.quoted.{Expr, Quotes}
+
 private object NoValueMarker
 private val NoValueMarkerFunc = (_: Any) => NoValueMarker
 

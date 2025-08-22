@@ -1,7 +1,8 @@
 package alpaca.lexer
 
-import scala.annotation.compileTimeOnly
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.compileTimeOnly
+import scala.annotation.unchecked.uncheckedVariance as uv
 
 type ValidName = String & Singleton
 
@@ -16,10 +17,10 @@ object Remapping {
   def empty[Ctx <: EmptyCtx]: Remapping[Ctx] = _.text
 }
 
-sealed trait Token[Name <: ValidName, Ctx <: EmptyCtx] {
+sealed trait Token[Name <: ValidName, +Ctx <: EmptyCtx] {
   val name: Name
   val pattern: String
-  val ctxManipulation: CtxManipulation[Ctx]
+  val ctxManipulation: CtxManipulation[Ctx @uv]
 }
 
 object Token {
@@ -32,6 +33,7 @@ object Token {
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: EmptyCtx): Token[Name, ctx.type] = ???
 
+  // todo: reconsider using or removing
   given Ordering[Token[?, ?]] = {
     case (x: IgnoredToken[?, ?], y: DefinedToken[?, ?]) => -1 // Ignored tokens are always less than any other token
     case (x: DefinedToken[?, ?], y: IgnoredToken[?, ?]) => 1
@@ -40,11 +42,11 @@ object Token {
   }
 }
 
-final case class DefinedToken[Name <: ValidName, Ctx <: EmptyCtx](
+final case class DefinedToken[Name <: ValidName, +Ctx <: EmptyCtx](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation[Ctx] = CtxManipulation.empty,
-  remapping: Remapping[Ctx] = Remapping.empty,
+  ctxManipulation: CtxManipulation[Ctx @uv] = CtxManipulation.empty,
+  remapping: Remapping[Ctx @uv] = Remapping.empty,
 ) extends Token[Name, Ctx] {
   val index: Int = TokenImpl.nextIndex()
 
@@ -54,10 +56,10 @@ final case class DefinedToken[Name <: ValidName, Ctx <: EmptyCtx](
 
 private object TokenImpl extends HasIndex
 
-final case class IgnoredToken[Name <: ValidName, Ctx <: EmptyCtx](
+final case class IgnoredToken[Name <: ValidName, +Ctx <: EmptyCtx](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation[Ctx] = CtxManipulation.empty,
+  ctxManipulation: CtxManipulation[Ctx @uv] = CtxManipulation.empty,
 ) extends Token[Name, Ctx] {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
