@@ -1,0 +1,42 @@
+package alpaca.core
+
+import scala.quoted.Quotes
+import scala.quoted.Type
+import scala.util.TupledFunction
+import scala.quoted.Expr
+import Tuple.Map
+
+inline given [Args <: Tuple, T[_]] => Args `Map` T = compiletime.summonAll[Args `Map` T]
+
+private[alpaca] def raiseShouldNeverBeCalled(x: String = "")(using quotes: Quotes): Nothing =
+  quotes.reflect.report.errorAndAbort(s"It should never happen. Got: $x")
+
+private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
+  import quotes.reflect.*
+
+  def apply(queries: (find: Symbol, replace: Term)*) = new TreeMap {
+    // skip NoSymbol
+    private val filtered = queries.view.filterNot(_.find.isNoSymbol)
+
+    override def transformTerm(tree: Term)(owner: Symbol): Term =
+      filtered
+        .collectFirst { case (find, replace) if find == tree.symbol => replace }
+        .getOrElse(super.transformTerm(tree)(owner))
+  }
+}
+
+private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
+  import quotes.reflect.*
+
+  def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] = {
+    require(TypeRepr.of[F].isFunctionType, s"Expected a function type, but got: ${TypeRepr.of[F]}")
+
+    val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
+
+    Lambda(
+      Symbol.spliceOwner,
+      MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
+      (sym, args) => rhsFn.applyOrElse((sym, args), _ => raiseShouldNeverBeCalled(s"Unexpected arguments: $sym, $args")),
+    ).asExprOf[F]
+  }
+}

@@ -1,10 +1,18 @@
 package alpaca.lexer
 
 import scala.annotation.compileTimeOnly
+import java.util.concurrent.atomic.AtomicInteger
 
 type ValidName = String & Singleton
 
 type CtxManipulation = Ctx => Ctx
+object CtxManipulation {
+  val empty: CtxManipulation = identity
+}
+type Remapping = Ctx => Any
+object Remapping {
+  val empty: Remapping = _.text
+}
 
 sealed trait Token[Name <: ValidName] {
   val name: Name
@@ -23,19 +31,18 @@ object Token {
   def apply[Name <: ValidName](value: Any)(using Ctx): Token[Name] = ???
 
   given Ordering[Token[?]] = {
-    case (x: IgnoredToken[?], y: TokenImpl[?]) => -1 // Ignored tokens are always less than any other token
-    case (x: TokenImpl[?], y: IgnoredToken[?]) => 1
-    case (x: TokenImpl[?], y: TokenImpl[?]) => x.index.compareTo(y.index)
+    case (x: IgnoredToken[?], y: DefinedToken[?]) => -1 // Ignored tokens are always less than any other token
+    case (x: DefinedToken[?], y: IgnoredToken[?]) => 1
+    case (x: DefinedToken[?], y: DefinedToken[?]) => x.index.compareTo(y.index)
     case (x: IgnoredToken[?], y: IgnoredToken[?]) => x.pattern.compareTo(y.pattern)
   }
-
 }
 
-final case class TokenImpl[Name <: ValidName](
+final case class DefinedToken[Name <: ValidName](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation,
-  remapping: Option[Ctx => Any] = None,
+  ctxManipulation: CtxManipulation = CtxManipulation.empty,
+  remapping: Remapping = Remapping.empty,
 ) extends Token[Name] {
   val index: Int = TokenImpl.nextIndex()
 
@@ -43,20 +50,21 @@ final case class TokenImpl[Name <: ValidName](
     s"TokenImpl(name = $name, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
 }
 
-private object TokenImpl {
-  private var index = 0
-
-  private def nextIndex(): Int = {
-    index += 1
-    index
-  }
-}
+private object TokenImpl extends HasIndex
 
 final case class IgnoredToken[Name <: ValidName](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation,
+  ctxManipulation: CtxManipulation = CtxManipulation.empty,
 ) extends Token {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
+}
+
+private object IgnoredToken extends HasIndex
+
+private sealed trait HasIndex {
+  private val index = new AtomicInteger(0)
+
+  def nextIndex(): Int = index.getAndIncrement()
 }

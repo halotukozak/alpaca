@@ -23,14 +23,8 @@ trait Tokenization {
             tokens.find(token => m.group(token.name) ne null) match
               case Some(IgnoredToken(name, _, modifyCtx)) =>
                 loop(modifyCtx(newCtx), acc)
-              case Some(TokenImpl(name, _, modifyCtx, remapping)) =>
-                val value = {
-                  val matched = m.group(name)
-                  remapping match
-                    case Some(remap) => remap(new Ctx(text = matched, position = ctx.position))
-                    case None => matched
-                }
-
+              case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
+                val value = remapping(new Ctx(text = m.group(name), position = ctx.position))
                 val lexem = Lexem(name, value, ctx.position)
                 loop(modifyCtx(newCtx), lexem :: acc)
               case None =>
