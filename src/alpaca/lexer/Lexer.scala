@@ -42,7 +42,7 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
         (find = pattern.symbol, replace = Select.unique(newCtx, "text")),
       )
 
-      def extractSimple(body: Expr[Token[?, Ctx]], ctxManipulation: Expr[CtxManipulation[Ctx]]) = body.matchOption:
+      def extractSimple(body: Expr[Token[?, Ctx]], ctxManipulation: Expr[CtxManipulation[Ctx]]) = body matchOption:
         case '{ type t <: ValidName; Token.Ignored[t](using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
@@ -125,5 +125,5 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
-      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
+      Block(clsDef :: Nil, '{??? :( Tokenization[Ctx] & refinedTpe)}.asTerm).asExprOf[Tokenization[Ctx] & refinedTpe]
 }
