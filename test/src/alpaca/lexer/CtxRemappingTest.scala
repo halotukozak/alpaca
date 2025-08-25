@@ -2,16 +2,24 @@ package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.showAst
 
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
+
+  showAst {
+    class B extends Tokenization[DefaultCtx] {
+      def tokens = ???
+    }
+  }
+
   test("remapping maps matched text to custom values using ctx.text") {
-    val L = lexer[EmptyCtx] {
+    val L = lexer {
       case "\\s+" => Token.Ignored["temp"]
       case x @ "[0-9]+" => Token["int"](x.toInt)
       case s @ "[a-z]+" => Token["id"](s.toUpperCase)
     }
 
-    val res = L.tokenize("12 abc 7", EmptyCtx.create)
+    val res = L.tokenize("12 abc 7", NoCtx.create)
 
     res.map(_.tpe) shouldBe List("int", "id", "int")
     res.map(_.value) shouldBe List(12, "ABC", 7)

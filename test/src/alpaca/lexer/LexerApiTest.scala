@@ -2,11 +2,13 @@ package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.core.Copyable.given
 
 import scala.reflect.Selectable.reflectiveSelectable //todo: find a way to not require this
+import alpaca.core.Copyable
 
 final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer = lexer[EmptyCtx] {
+  val Lexer = lexer {
     case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
         ";") =>
       Token[literal.type]

@@ -1,13 +1,16 @@
 package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
+import alpaca.core.:=
+import alpaca.core.:=.given
+import alpaca.core.Copyable.given
 
 final class LexerTest extends AnyFunSuite {
 
   test("tokenize simple identifier") {
-    val Lexer = lexer[EmptyCtx] { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
+    val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
 
-    val result = Lexer.tokenize("hello", EmptyCtx.create)
+    val result = Lexer.tokenize("hello", NoCtx.create)
 
     assert(result == List(Lexem("IDENTIFIER", "hello", ???)))
   }
@@ -18,7 +21,7 @@ final class LexerTest extends AnyFunSuite {
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("42 + 13", EmptyCtx.create)
+    val result = Lexer.tokenize("42 + 13", NoCtx.create)
 
     assert(
       result == List(
@@ -31,7 +34,7 @@ final class LexerTest extends AnyFunSuite {
 
   test("tokenize empty string") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
-    val result = Lexer.tokenize("", EmptyCtx.create)
+    val result = Lexer.tokenize("", NoCtx.create)
 
     assert(result == List.empty)
   }
@@ -40,7 +43,7 @@ final class LexerTest extends AnyFunSuite {
     val Lexer = lexer { case "[0-9]+" => Token["NUMBER"] }
 
     val exception = intercept[RuntimeException] {
-      Lexer.tokenize("123abc", EmptyCtx.create)
+      Lexer.tokenize("123abc", NoCtx.create)
     }
     assert(exception.getMessage.contains("Unexpected character at position 3"))
   }
@@ -56,7 +59,7 @@ final class LexerTest extends AnyFunSuite {
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("(x + 42) * y - 1", EmptyCtx.create)
+    val result = Lexer.tokenize("(x + 42) * y - 1", NoCtx.create)
 
     assert(
       result == List(

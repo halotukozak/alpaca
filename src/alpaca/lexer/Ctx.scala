@@ -2,8 +2,7 @@ package alpaca.lexer
 
 import scala.util.matching.Regex.Match
 
-//todo: find a way to make Ctx immutable with mutable-like changes https://github.com/halotukozak/alpaca/issues/45
-
+//todo: find a way to make Ctx immutable with mutable-like changes
 trait EmptyCtx { // or AnyCtx ?
   var text: String
 
@@ -26,6 +25,14 @@ trait PositionTracking { this: EmptyCtx =>
   }
 }
 
+case class NoCtx(
+  var text: String,
+) extends EmptyCtx
+
+object NoCtx {
+  def create(arg: String) = new NoCtx(arg)
+}
+
 case class DefaultCtx(
   var text: String,
   var position: Int,
@@ -36,6 +43,4 @@ object DefaultCtx {
   def create(arg: String) = new DefaultCtx(arg, 0)
 }
 
-//todo: custom Ctx should be available https://github.com/halotukozak/alpaca/issues/45
 transparent inline given ctx(using c: EmptyCtx): c.type = c
-// transparent inline def ctx(using c: EmptyCtx): c.type = c
