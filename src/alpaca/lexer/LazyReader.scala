@@ -6,8 +6,9 @@ import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import java.io.Reader
 import scala.annotation.tailrec
+import java.io.Closeable
 
-final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence {
+final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable {
   private val buffer = mutable.ArrayDeque.empty[Char]
   private val chunk = new Array[Char](8192)
 
@@ -29,7 +30,7 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
     this
   }
 
-  def close(): Unit = reader.close()
+  override def close(): Unit = reader.close()
 
   @tailrec
   private def ensure(pos: Int): Unit = {
