@@ -3,9 +3,8 @@ package alpaca.lexer
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import alpaca.core.Copyable.given
-
-import scala.reflect.Selectable.reflectiveSelectable //todo: find a way to not require this
 import alpaca.core.Copyable
+import alpaca.showAst
 
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {

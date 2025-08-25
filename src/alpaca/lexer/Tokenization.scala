@@ -5,7 +5,7 @@ import scala.util.matching.Regex
 import scala.util.chaining.scalaUtilChainingOps
 import alpaca.core.Copyable
 
-abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] {
+abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] extends Selectable {
 
   // todo: simplify types in refinement
   // type Token[Name <: ValidName] = alpaca.Token[Name, Ctx]
@@ -15,6 +15,10 @@ abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] {
     tokens.view.map(tokenDef => s"(?<${tokenDef.name}>${tokenDef.pattern})").mkString("|").r
 
   def tokens: List[Token[?, Ctx]]
+
+  lazy val byName: Map[ValidName, Token[?, Ctx]] = tokens.view.map(token => token.name -> token).toMap
+
+  def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
 
   final def tokenize(input: String, initialContext: String => Ctx): List[Lexem[?, Ctx]] = {
     @tailrec def loop(ctx: Ctx, acc: List[Lexem[?, Ctx]]): List[Lexem[?, Ctx]] = ctx.text match

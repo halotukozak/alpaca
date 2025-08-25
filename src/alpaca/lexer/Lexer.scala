@@ -3,6 +3,7 @@ package alpaca.lexer
 import alpaca.*
 import alpaca.core.*
 
+import scala.NamedTuple.*
 import scala.annotation.experimental
 import scala.quoted.*
 
@@ -85,21 +86,48 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
 
   val (definedTokens, ignoredTokens) = tokens.partition(_.isExprOf[DefinedToken[?, Ctx]]).runtimeChecked
 
-  def decls(cls: Symbol): List[Symbol] = definedTokens.map { case '{ $token: DefinedToken[name, Ctx] } =>
-    Symbol.newVal(
+  def decls(cls: Symbol): List[Symbol] = {
+    val tokenDecls = definedTokens.map { case '{ $token: DefinedToken[name, Ctx] } =>
+      Symbol.newVal(
+        parent = cls,
+        name = typeToString[name],
+        tpe = TypeRepr.of[Token[name, Ctx]],
+        flags = Flags.Synthetic,
+        privateWithin = Symbol.noSymbol,
+      )
+    }
+
+    val fieldTpe =
+      definedTokens
+        .foldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])) {
+          case (('[type names <: Tuple; names], '[type types <: Tuple; types]), '{ $token: DefinedToken[name, Ctx] }) =>
+            (Type.of[name *: names], Type.of[Token[name, Ctx] *: types])
+          case _ => raiseShouldNeverBeCalled()
+        }
+        .runtimeChecked match
+        case ('[type names <: Tuple; names], '[type types <: Tuple; types]) => TypeRepr.of[NamedTuple[names, types]]
+
+    val fieldsDecls = Symbol.newTypeAlias(
       parent = cls,
-      name = typeToString[name],
-      tpe = TypeRepr.of[Token[name, Ctx]],
+      name = "Fields",
+      tpe = fieldTpe,
       flags = Flags.Synthetic,
       privateWithin = Symbol.noSymbol,
     )
-  } :+ Symbol.newVal(
-    parent = cls,
-    name = "tokens",
-    tpe = TypeRepr.of[List[Token[?, Ctx]]],
-    flags = Flags.Synthetic | Flags.Override,
-    privateWithin = Symbol.noSymbol,
-  )
+
+    val allTokens = Symbol.newVal(
+      parent = cls,
+      name = "tokens",
+      tpe = TypeRepr.of[List[Token[?, Ctx]]],
+      flags = Flags.Synthetic | Flags.Override,
+      privateWithin = Symbol.noSymbol,
+    )
+
+    tokenDecls ++ List(
+      fieldsDecls,
+      allTokens,
+    )
+  }
 
   val cls = Symbol.newClass(
     Symbol.spliceOwner,
@@ -111,22 +139,26 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
 
   val body = definedTokens.collect { case '{ $token: DefinedToken[name, Ctx] } =>
     ValDef(cls.fieldMember(typeToString[name]), Some(token.asTerm.changeOwner(cls.fieldMember(typeToString[name]))))
-  } :+ ValDef(
-    cls.fieldMember("tokens"),
-    Some {
-      val declaredTokens =
-        cls.fieldMembers
-          .filter(_.typeRef.widen <:< TypeRepr.of[Token[?, Ctx]])
-          .map(Select(This(cls), _).asExprOf[Token[?, Ctx]])
+  } ++ List(
+    TypeDef(cls.typeMember("Fields")),
+    ValDef(
+      cls.fieldMember("tokens"),
+      Some {
+        val declaredTokens =
+          cls.fieldMembers
+            .filter(_.typeRef.widen <:< TypeRepr.of[Token[?, Ctx]])
+            .map(This(cls).select(_).asExprOf[Token[?, Ctx]])
 
-      Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
-    },
+        Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
+      },
+    ),
   )
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
   val parents =
-    Select(New(TypeTree.of[Tokenization[Ctx]]), tokenizationConstructor)
+    New(TypeTree.of[Tokenization[Ctx]])
+      .select(tokenizationConstructor)
       .appliedToType(TypeRepr.of[Ctx])
       .appliedTo(copy.asTerm) :: Nil
 

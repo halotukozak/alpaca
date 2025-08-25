@@ -1,11 +1,14 @@
 package alpaca.lexer
 
+import alpaca.core.reifyAllBetweenLexems
+
 import scala.util.matching.Regex.Match
 
 //todo: find a way to make Ctx immutable with mutable-like changes
 trait EmptyCtx { // or AnyCtx ?
   var text: String
 
+  // todo: find some better way of modularization
   def betweenLexems(m: Match): Unit = {
     this.text = this.text.substring(m.start, m.end)
   }
@@ -27,7 +30,11 @@ trait PositionTracking { this: EmptyCtx =>
 
 case class NoCtx(
   var text: String,
-) extends EmptyCtx
+) extends EmptyCtx {
+
+  override def betweenLexems(m: Match): Unit =
+    reifyAllBetweenLexems(this)(m)
+}
 
 object NoCtx {
   def create(arg: String) = new NoCtx(arg)
@@ -37,7 +44,11 @@ case class DefaultCtx(
   var text: String,
   var position: Int,
 ) extends EmptyCtx
-    with PositionTracking
+    with PositionTracking {
+
+  override def betweenLexems(m: Match): Unit =
+    reifyAllBetweenLexems(this)(m)
+}
 
 object DefaultCtx {
   def create(arg: String) = new DefaultCtx(arg, 0)
