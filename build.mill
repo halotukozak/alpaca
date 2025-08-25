@@ -28,15 +28,15 @@ object `package` extends ScalaModule with ScoverageModule {
     "-Ydebug-missing-refs",
     "-Yexplain-lowlevel",
     "-Yexplicit-nulls",
-    "-Yprint-debug",
-    "-Xprint:postInlining",
+    // "-Yprint-debug",
+    // "-Xprint:postInlining",
     "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
 //    "-Wunused:all",
     "-language:implicitConversions",
-    "-experimental"
+    "-experimental",
   )
 
   override def scalaDocOptions = Seq(
@@ -56,7 +56,7 @@ object `package` extends ScalaModule with ScoverageModule {
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
     def mvnDeps = Seq(
-      mvn"org.scalatest::scalatest:3.2.19"
+      mvn"org.scalatest::scalatest:3.2.19",
     )
   }
 }
