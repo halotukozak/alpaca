@@ -15,9 +15,8 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
 
     val res = L.tokenize("12 abc 7", NoCtx.create)
 
-    res.map(_.tpe) shouldBe List("int", "id", "int")
+    res.map(_.name) shouldBe List("int", "id", "int")
     res.map(_.value) shouldBe List(12, "ABC", 7)
-    // res.map(_.index) shouldBe List(0, 3, 7)
   }
 
   test("ctx manipulation influences error position after ignored token") {
@@ -28,7 +27,7 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
         Token.Ignored["temp"]
       case x @ "\n+" =>
         ctx.position += x.count(_ == '\n')
-        Token.Ignored["temp"]
+        Token.Ignored["dupa"]
     }
 
     val ex = intercept[RuntimeException] {

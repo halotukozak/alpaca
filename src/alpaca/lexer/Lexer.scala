@@ -1,6 +1,6 @@
-package alpaca.lexer
+package alpaca
+package lexer
 
-import alpaca.*
 import alpaca.core.*
 
 import scala.NamedTuple.*

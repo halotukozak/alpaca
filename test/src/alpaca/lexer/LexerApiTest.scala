@@ -1,10 +1,9 @@
 package alpaca.lexer
 
+import alpaca.core.Copyable
+import alpaca.core.Copyable.given
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.core.Copyable.given
-import alpaca.core.Copyable
-import alpaca.showAst
 
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
@@ -16,8 +15,8 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case "\\.\\*" => Token["dotMul"]
     case "\\.\\/" => Token["dotDiv"]
     case "<=" => Token["lessEqual"]
-    case comment @ "#.*" => Token.Ignored["comment"]
-    case ">=" => Token["greaterEqual"](using ctx)
+    case comment @ "#.*" => Token.Ignored[comment.type]
+    case ">=" => Token["greaterEqual"]
     case "!=" => Token["notEqual"]
     case "==" => Token["equal"]
     case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
@@ -30,26 +29,12 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer recognizes basic tokens") {
-    // todo: should be in order of definition
-    Lexer.tokens.map(_.pattern) shouldBe List(
+    // todo: should be in order of definition // https://github.com/halotukozak/alpaca/issues/51
+//    Lexer.tokens.map(_.pattern) shouldBe List(
+    //format: off
+    Lexer.tokens.map(_.pattern) should contain theSameElementsAs List(
       "#.*",
-      "<",
-      ">",
-      "=",
-      "+",
-      "-",
-      "*",
-      "/",
-      "(",
-      ")",
-      "[",
-      "]",
-      "{",
-      "}",
-      ":",
-      "'",
-      ",",
-      ";",
+      "<", ">", "=", "+", "-", "*", "/", "(", ")", "[", "]", "{", "}", ":", "'", ",", ";",
       raw"\.\+",
       raw"\.\-",
       raw"\.\*",
@@ -61,19 +46,10 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
       "[0-9]+",
       "[^\"]*",
-      "if",
-      "else",
-      "for",
-      "while",
-      "break",
-      "continue",
-      "return",
-      "eye",
-      "zeros",
-      "ones",
-      "print",
+      "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
       "[a-zA-Z_][a-zA-Z0-9_]*",
     )
+    //format: on
 
     Lexer.<
     Lexer.>

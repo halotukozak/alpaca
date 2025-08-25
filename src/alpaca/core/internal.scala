@@ -1,8 +1,8 @@
-package alpaca.core
+package alpaca
+package core
 
 import scala.Tuple.Map
 import scala.quoted.{Expr, Quotes, Type}
-import scala.util.TupledFunction
 
 inline given [Args <: Tuple, T[_]] => Args `Map` T = compiletime.summonAll[Args `Map` T]
 

@@ -1,7 +1,7 @@
 package alpaca
 
-import alpaca.core.{show, Showable}
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import core.{show, Showable}
+import parser.Symbol.{NonTerminal, Terminal}
 import parser.*
 
 @main def main(): Unit = {

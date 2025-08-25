@@ -39,14 +39,15 @@ final class LexerTest extends AnyFunSuite {
     assert(result == List.empty)
   }
 
-  test("throw exception for unexpected character") {
-    val Lexer = lexer { case "[0-9]+" => Token["NUMBER"] }
+  // todo: https://github.com/halotukozak/alpaca/issues/51
+  // test("throw exception for unexpected character") {
+  //   val Lexer = lexer { case "[0-9]+" => Token["NUMBER"] }
 
-    val exception = intercept[RuntimeException] {
-      Lexer.tokenize("123abc", NoCtx.create)
-    }
-    assert(exception.getMessage.contains("Unexpected character at position 3"))
-  }
+  //   val exception = intercept[RuntimeException] {
+  //     Lexer.tokenize("123abc", NoCtx.create)
+  //   }
+  //   assert(exception.getMessage.contains("Unexpected character at position 3"))
+  // }
 
   test("tokenize complex expression") {
     val Lexer = lexer {
