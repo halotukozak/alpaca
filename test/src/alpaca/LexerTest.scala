@@ -1,15 +1,16 @@
 package alpaca
 
 import org.scalatest.funsuite.AnyFunSuite
+import java.nio.file.Path
 
 class LexerTest extends AnyFunSuite {
   
   test("tokenize simple identifier") {
     val tokens = List(Token("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9]*".r))
     val lexer = Lexer(tokens)
-    val result = lexer.tokenizeString("hello")
+    val result = lexer.tokenize("hello")
     
-    assert(result == List(Lexem("IDENTIFIER", "hello", 0)))
+    assert(result == List(Lexem("IDENTIFIER", "hello")))
   }
   
   test("tokenize with whitespace ignored") {
@@ -19,19 +20,19 @@ class LexerTest extends AnyFunSuite {
       Token("WHITESPACE", "\\s+".r, ignore = true)
     )
     val lexer = Lexer(tokens)
-    val result = lexer.tokenizeString("42 + 13")
+    val result = lexer.tokenize("42 + 13")
     
     assert(result == List(
-      Lexem("NUMBER", "42", 0),
-      Lexem("PLUS", "+", 0),
-      Lexem("NUMBER", "13", 0)
+      Lexem("NUMBER", "42"),
+      Lexem("PLUS", "+"),
+      Lexem("NUMBER", "13")
     ))
   }
   
   test("tokenize empty string") {
     val tokens = List(Token("IDENTIFIER", "[a-zA-Z]+".r))
     val lexer = Lexer(tokens)
-    val result = lexer.tokenizeString("")
+    val result = lexer.tokenize("")
     
     assert(result == List.empty)
   }
@@ -41,7 +42,7 @@ class LexerTest extends AnyFunSuite {
     val lexer = Lexer(tokens)
     
     val exception = intercept[RuntimeException] {
-      lexer.tokenizeString("123abc")
+      lexer.tokenize("123abc")
     }
     assert(exception.getMessage == "Unexpected character: 'a'")
   }
@@ -58,18 +59,45 @@ class LexerTest extends AnyFunSuite {
       Token("WHITESPACE", "\\s+".r, ignore = true)
     )
     val lexer = Lexer(tokens)
-    val result = lexer.tokenizeString("(x + 42) * y - 1")
+    val result = lexer.tokenize("(x + 42) * y - 1")
     
     assert(result == List(
-      Lexem("LPAREN", "(", 0),
-      Lexem("IDENTIFIER", "x", 0),
-      Lexem("PLUS", "+", 0),
-      Lexem("NUMBER", "42", 0),
-      Lexem("RPAREN", ")", 0),
-      Lexem("MULTIPLY", "*", 0),
-      Lexem("IDENTIFIER", "y", 0),
-      Lexem("MINUS", "-", 0),
-      Lexem("NUMBER", "1", 0)
+      Lexem("LPAREN", "("),
+      Lexem("IDENTIFIER", "x"),
+      Lexem("PLUS", "+"),
+      Lexem("NUMBER", "42"),
+      Lexem("RPAREN", ")"),
+      Lexem("MULTIPLY", "*"),
+      Lexem("IDENTIFIER", "y"),
+      Lexem("MINUS", "-"),
+      Lexem("NUMBER", "1")
+    ))
+  }
+
+  test("tokeniza file") {
+    val tokens = List(
+      Token("NUMBER", "[0-9]+".r),
+      Token("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9]*".r),
+      Token("PLUS", "\\+".r),
+      Token("MINUS", "-".r),
+      Token("MULTIPLY", "\\*".r),
+      Token("LPAREN", "\\(".r),
+      Token("RPAREN", "\\)".r),
+      Token("WHITESPACE", "\\s+".r, ignore = true)
+    )
+    val lexer = Lexer(tokens)
+    val result = lexer.tokenize(Path.of("in/test.txt"))
+    
+    assert(result == List(
+      Lexem("LPAREN", "("),
+      Lexem("IDENTIFIER", "x"),
+      Lexem("PLUS", "+"),
+      Lexem("NUMBER", "42"),
+      Lexem("RPAREN", ")"),
+      Lexem("MULTIPLY", "*"),
+      Lexem("IDENTIFIER", "y"),
+      Lexem("MINUS", "-"),
+      Lexem("NUMBER", "1")
     ))
   }
 }
