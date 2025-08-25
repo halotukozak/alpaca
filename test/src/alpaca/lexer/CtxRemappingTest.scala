@@ -6,12 +6,6 @@ import alpaca.showAst
 
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
 
-  showAst {
-    class B extends Tokenization[DefaultCtx] {
-      def tokens = ???
-    }
-  }
-
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
       case "\\s+" => Token.Ignored["temp"]

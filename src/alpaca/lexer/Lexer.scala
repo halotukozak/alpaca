@@ -126,8 +126,8 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
   val parents =
-    Select
-      .unique(New(TypeTree.of[Tokenization[Ctx]]), "<init>")
+    Select(New(TypeTree.of[Tokenization[Ctx]]), tokenizationConstructor)
+      .appliedToType(TypeRepr.of[Ctx])
       .appliedTo(copy.asTerm) :: Nil
 
   val clsDef = ClassDef(cls, parents, body)
