@@ -2,7 +2,7 @@ package alpaca.lexer
 
 //todo: find a way to make Ctx immutable with mutable-like changes https://github.com/halotukozak/alpaca/issues/45
 class Ctx(
-  val text: String,
+  val text: CharSequence,
   var position: Int,
 ) {
   private[lexer] def copy() = new Ctx(text, position)
