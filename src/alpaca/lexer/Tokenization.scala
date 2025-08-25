@@ -9,16 +9,16 @@ trait Tokenization {
 
   def tokens: List[Token[?]]
 
-  final def tokenize(input: String): List[Lexem[?]] = {
+  final def tokenize(input: CharSequence): List[Lexem[?]] = {
     @tailrec def loop(ctx: Ctx, acc: List[Lexem[?]]): List[Lexem[?]] = ctx.text match
       case "" =>
         acc.reverse
       case _ =>
         compiled.findPrefixMatchOf(ctx.text) match
           case None =>
-            throw new RuntimeException(s"Unexpected character at position ${ctx.position}: '${ctx.text(0)}'")
+            throw new RuntimeException(s"Unexpected character at position ${ctx.position}: '${ctx.text.charAt(0)}'")
           case Some(m) =>
-            val newCtx = new Ctx(text = ctx.text.substring(m.end), position = ctx.position + m.end)
+            val newCtx = new Ctx(_text = ctx.text.from(m.end), position = ctx.position + m.end)
 
             tokens.find(token => m.group(token.name) ne null) match
               case Some(IgnoredToken(name, _, modifyCtx)) =>
@@ -27,7 +27,7 @@ trait Tokenization {
                 val value = {
                   val matched = m.group(name)
                   remapping match
-                    case Some(remap) => remap(new Ctx(text = matched, position = ctx.position))
+                    case Some(remap) => remap(new Ctx(_text = matched, position = ctx.position))
                     case None => matched
                 }
 
