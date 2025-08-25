@@ -8,7 +8,7 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
     val L = lexer {
       case "\\s+" => Token.Ignored["temp"]
       case x @ "[0-9]+" => Token["int"](x.toInt)
-      case s @ "[a-z]+" => Token["id"](s.toUpperCase)
+      case s @ "[a-z]+" => Token["id"](s.toString().toUpperCase)
     }
 
     val res = L.tokenize("12 abc 7")

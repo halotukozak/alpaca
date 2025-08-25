@@ -1,4 +1,4 @@
-package alpaca
+package alpaca.lexer
 
 import scala.collection.mutable
 import java.nio.charset.StandardCharsets
@@ -19,7 +19,7 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
   def length: Int = math.min(Int.MaxValue, size).toInt
 
   def subSequence(start: Int, end: Int): CharSequence = {
-    ensure(end-1)
+    ensure(end - 1)
     buffer.slice(start, end).mkString
   }
 
