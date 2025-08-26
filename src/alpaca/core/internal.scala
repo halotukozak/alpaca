@@ -2,6 +2,7 @@ package alpaca
 package core
 
 import scala.Tuple.Map
+import scala.annotation.experimental
 import scala.quoted.{Expr, Quotes, Type}
 
 inline given [Args <: Tuple, T[_]] => Args `Map` T = compiletime.summonAll[Args `Map` T]
@@ -23,6 +24,7 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
+@experimental // for IJ
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 

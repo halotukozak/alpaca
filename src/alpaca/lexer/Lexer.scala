@@ -9,6 +9,7 @@ import scala.quoted.*
 
 type LexerDefinition[Ctx <: EmptyCtx] = PartialFunction[String, Token[?, Ctx]]
 
+@experimental //for IJ
 transparent inline private def lexer[Ctx <: EmptyCtx & Product](
   using Ctx := NoCtx,
 )(
@@ -19,6 +20,7 @@ transparent inline private def lexer[Ctx <: EmptyCtx & Product](
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping
+@experimental //for IJ
 private def lexerImpl[Ctx <: EmptyCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],

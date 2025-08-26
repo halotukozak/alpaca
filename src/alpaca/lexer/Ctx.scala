@@ -1,6 +1,7 @@
 package alpaca.lexer
 
 import alpaca.core.reifyAllBetweenLexems
+import alpaca.showAst
 
 import scala.util.matching.Regex.Match
 
@@ -11,6 +12,11 @@ trait EmptyCtx { // or AnyCtx ?
   // todo: find some better way of modularization
   def betweenLexems(m: Match): Unit = {
     this.text = this.text.substring(m.start, m.end)
+  }
+
+  // todo: better names
+  def betweenStages(m: Match): Unit = {
+    this.text = this.text.substring(m.start)
   }
 }
 
@@ -26,6 +32,8 @@ trait PositionTracking { this: EmptyCtx =>
   override def betweenLexems(m: Match): Unit = {
     this.position = this.position + m.end
   }
+
+  override def betweenStages(m: Match): Unit = {}
 }
 
 case class NoCtx(
@@ -33,7 +41,11 @@ case class NoCtx(
 ) extends EmptyCtx {
 
   override def betweenLexems(m: Match): Unit =
-    reifyAllBetweenLexems(this)(m)
+    // reifyAllBetweenLexems(this)(m)
+    super[EmptyCtx].betweenLexems(m)
+
+  override def betweenStages(m: Match): Unit =
+    super[EmptyCtx].betweenStages(m)
 }
 
 object NoCtx {
@@ -47,7 +59,13 @@ case class DefaultCtx(
     with PositionTracking {
 
   override def betweenLexems(m: Match): Unit =
-    reifyAllBetweenLexems(this)(m)
+    // reifyAllBetweenLexems(this)(m)
+    super[EmptyCtx].betweenLexems(m)
+    super[PositionTracking].betweenLexems(m)
+
+  override def betweenStages(m: Match): Unit =
+    super[EmptyCtx].betweenStages(m)
+    super[PositionTracking].betweenStages(m)
 }
 
 object DefaultCtx {

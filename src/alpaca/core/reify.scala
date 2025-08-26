@@ -22,6 +22,7 @@ private def reifyAll[T: Type](obj: Expr[T], method: Expr[String])(params: Expr[A
       .methodMember(method.valueOrAbort)
       .flatMap(_.allOverriddenSymbols)
 
+  // it should call supers
   val calls = allSymbols.map(obj.asTerm.select(_).appliedToArgs(params.map(_.asTerm).toList))
 
   Block(calls, Literal(UnitConstant())).asExprOf[Unit]
