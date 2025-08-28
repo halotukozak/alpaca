@@ -39,7 +39,7 @@ trait GlobalCtx[LexemTpe <: Lexem[?]] {
   type Lexem = LexemTpe
 
   var lastLexem: Lexem | Null
-  var text: String
+  var text: CharSequence
 }
 
 trait PositionTracking {
@@ -54,12 +54,12 @@ given BetweenStages[PositionTracking & AnyGlobalCtx] = (m: Match, ctx: PositionT
 
 case class EmptyGlobalCtx[LexemTpe <: Lexem[?]](
   var lastLexem: LexemTpe | Null = null,
-  var text: String = "",
+  var text: CharSequence = "",
 ) extends GlobalCtx[LexemTpe]
 
 case class DefaultGlobalCtx[LexemTpe <: Lexem[?]](
   var lastLexem: LexemTpe | Null = null,
-  var text: String = "",
+  var text: CharSequence = "",
   var position: Int = 0,
 ) extends GlobalCtx[LexemTpe]
     with PositionTracking

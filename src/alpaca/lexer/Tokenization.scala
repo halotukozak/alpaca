@@ -20,7 +20,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
 
   def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
 
-  final def tokenize(input: String, initialContext: Ctx): List[Lexem[?]] = {
+  final def tokenize(input: CharSequence, initialContext: Ctx): List[Lexem[?]] = {
 
     @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] =
       globalCtx.text match
