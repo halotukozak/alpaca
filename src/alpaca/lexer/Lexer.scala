@@ -7,11 +7,10 @@ import scala.NamedTuple.*
 import scala.annotation.experimental
 import scala.quoted.*
 
-type LexerDefinition[Ctx <: EmptyCtx] = PartialFunction[String, Token[?, Ctx]]
+type LexerDefinition[Ctx <: EmptyGlobalCtx[?]] = PartialFunction[String, Token[?, Ctx]]
 
-@experimental //for IJ
-transparent inline private def lexer[Ctx <: EmptyCtx & Product](
-  using Ctx := NoCtx,
+transparent inline private def lexer[Ctx <: EmptyGlobalCtx[?] & Product](
+  using Ctx := EmptyGlobalCtx[EmptyLexemCtx],
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using copy: Copyable[Ctx],
@@ -20,13 +19,15 @@ transparent inline private def lexer[Ctx <: EmptyCtx & Product](
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping
-@experimental //for IJ
-private def lexerImpl[Ctx <: EmptyCtx: Type](
+private def lexerImpl[Ctx <: EmptyGlobalCtx[?]: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx]] = {
   import quotes.reflect.*
+
+  type LocalCtx = Ctx match
+    case GlobalCtx[localCtx] => localCtx
 
 //todo: only for debugging, remove in real world
   def stringToType(str: String): Type[ValidName] =
@@ -58,7 +59,7 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
-              '{ new DefinedToken[name, Ctx]($name, $regex, $ctxManipulation) }
+              '{ new DefinedToken[name, Ctx]($name, $regex, $ctxManipulation, identity)) }
 
         case '{ type t <: ValidName; Token.apply[t]($value)(using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
@@ -69,7 +70,7 @@ private def lexerImpl[Ctx <: EmptyCtx: Type](
               '{ new DefinedToken[name, Ctx]($name, $regex, $ctxManipulation, $remapping) }
 
       val newTokens =
-        extractSimple(body.asExprOf[Token[?, Ctx]], '{ CtxManipulation.empty })
+        extractSimple(body.asExprOf[Token[?, Ctx]], '{ identity })
           .orElse {
             body match
               case Block(statements, expr) =>

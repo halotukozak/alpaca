@@ -1,14 +1,14 @@
 package alpaca.core
 
 import scala.quoted.Expr
-import alpaca.lexer.EmptyCtx
+import alpaca.lexer.AnyGlobalCtx
 import scala.quoted.Quotes
 import alpaca.symbolInfo
 import alpaca.dbg
 import scala.quoted.Type
 import scala.util.matching.Regex.Match
 
-inline def reifyAllBetweenLexems[Ctx <: EmptyCtx](ctx: Ctx)(m: Match): Unit =
+inline def reifyAllBetweenLexems[Ctx <: AnyGlobalCtx](ctx: Ctx)(m: Match): Unit =
   ${ reifyAll[Ctx]('{ ctx }, '{ "betweenLexems" })('{ m }) }
 
 private def reifyAll[T: Type](obj: Expr[T], method: Expr[String])(params: Expr[Any]*)(using quotes: Quotes)

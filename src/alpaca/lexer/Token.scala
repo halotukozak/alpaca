@@ -6,18 +6,11 @@ import scala.annotation.unchecked.uncheckedVariance as uv
 
 type ValidName = String & Singleton
 
-type CtxManipulation[Ctx <: EmptyCtx] = Ctx => Ctx
+type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Ctx
 
-object CtxManipulation {
-  def empty[Ctx <: EmptyCtx]: CtxManipulation[Ctx] = identity
-}
-type Remapping[Ctx <: EmptyCtx] = Ctx => Any
+type Remapping[+Ctx <: AnyGlobalCtx] = Ctx#LexemCtx => Any
 
-object Remapping {
-  def empty[Ctx <: EmptyCtx]: Remapping[Ctx] = _.text
-}
-
-sealed trait Token[Name <: ValidName, +Ctx <: EmptyCtx] {
+sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx] {
   val name: Name
   val pattern: String
   val ctxManipulation: CtxManipulation[Ctx @uv]
@@ -27,11 +20,11 @@ object Token {
 
   // todo: we'd like not to require the explicit name for Ignored tokens
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored[Name <: ValidName](using ctx: EmptyCtx): Token[Name, ctx.type] = ???
+  def Ignored[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: EmptyCtx): Token[Name, ctx.type] = ???
+  def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: EmptyCtx): Token[Name, ctx.type] = ???
+  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
 
   // todo: reconsider using or removing
   given Ordering[Token[?, ?]] = {
@@ -42,11 +35,11 @@ object Token {
   }
 }
 
-final case class DefinedToken[Name <: ValidName, +Ctx <: EmptyCtx](
+final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation[Ctx @uv] = CtxManipulation.empty,
-  remapping: Remapping[Ctx @uv] = Remapping.empty,
+  ctxManipulation: CtxManipulation[Ctx @uv],
+  remapping: Remapping[Ctx],
 ) extends Token[Name, Ctx] {
   val index: Int = TokenImpl.nextIndex()
 
@@ -56,10 +49,10 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: EmptyCtx](
 
 private object TokenImpl extends HasIndex
 
-final case class IgnoredToken[Name <: ValidName, +Ctx <: EmptyCtx](
+final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
   name: Name,
   pattern: String,
-  ctxManipulation: CtxManipulation[Ctx @uv] = CtxManipulation.empty,
+  ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx] {
   override def toString: String =
     s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"

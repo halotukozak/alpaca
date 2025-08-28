@@ -1,7 +1,7 @@
 package alpaca.lexer
 
-final case class Lexem[Name <: String, Ctx <: EmptyCtx](
+final case class Lexem[Name <: String, Ctx <: AnyLexemCtx](
   name: Name,
-  value: Any | Null,
+  value: Any,
   ctx: Ctx,
 )

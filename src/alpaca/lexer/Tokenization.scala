@@ -6,7 +6,9 @@ import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
 import scala.util.matching.Regex
 
-abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] extends Selectable {
+abstract class Tokenization[+Ctx <: AnyGlobalCtx: Copyable as copy] extends Selectable {
+
+  type LexemCtx = Ctx#LocalCtx
 
   // todo: simplify types in refinement
   // type Token[Name <: ValidName] = alpaca.Token[Name, Ctx]
@@ -20,8 +22,8 @@ abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] extends Selectabl
 
   def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
 
-  final def tokenize(input: String, initialContext: String => Ctx): List[Lexem[?, Ctx]] = {
-    @tailrec def loop(globalCtx: Ctx, acc: List[Lexem[?, Ctx]]): List[Lexem[?, Ctx]] = globalCtx.text match
+  final def tokenize(input: String, initialContext: String => Ctx): List[Lexem[?, LexemCtx]] = {
+    @tailrec def loop(globalCtx: Ctx, acc: List[Lexem[?, LexemCtx]]): List[Lexem[?, LexemCtx]] = globalCtx.text match
       case "" =>
         acc.reverse
       case _ =>
@@ -36,7 +38,7 @@ abstract class Tokenization[Ctx <: EmptyCtx: Copyable as copy] extends Selectabl
                 loop(newGlobalCtx, acc)
               case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
                 val newGlobalCtx = copy(globalCtx).tap(_.betweenStages(m))
-                val tokenCtx = copy(newGlobalCtx).tap(modifyCtx).tap(_.betweenLexems(m))
+                val tokenCtx = copy(newGlobalCtx).tap(_.betweenLexems(m)).lastLexemCtx
                 val value = remapping(tokenCtx)
 
                 val lexem = Lexem(name, value, tokenCtx)

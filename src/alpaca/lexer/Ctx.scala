@@ -5,8 +5,17 @@ import alpaca.showAst
 
 import scala.util.matching.Regex.Match
 
+trait AnyLexemCtx {
+  var text: String
+}
+
+type AnyGlobalCtx = GlobalCtx[?]
+
 //todo: find a way to make Ctx immutable with mutable-like changes
-trait EmptyCtx { // or AnyCtx ?
+trait GlobalCtx[LCtx <: AnyLexemCtx] {
+  type LexemCtx = LCtx
+
+  var lastLexemCtx: LexemCtx
   var text: String
 
   // todo: find some better way of modularization
@@ -20,56 +29,44 @@ trait EmptyCtx { // or AnyCtx ?
   }
 }
 
-object EmptyCtx {
-  def create(arg: String): EmptyCtx = new EmptyCtx {
-    var text: String = arg
-  }
-}
+trait PositionTracking {
+  this: EmptyGlobalCtx[?] =>
 
-trait PositionTracking { this: EmptyCtx =>
   var position: Int
 
-  override def betweenLexems(m: Match): Unit = {
+  def betweenLexems(m: Match): Unit = {
     this.position = this.position + m.end
   }
 
-  override def betweenStages(m: Match): Unit = {}
+  // todo: better names
+  def betweenStages(m: Match): Unit = ???
 }
 
-case class NoCtx(
+case class EmptyGlobalCtx[LexemCtx <: AnyGlobalCtx](
+  var lastLexemCtx: LexemCtx,
   var text: String,
-) extends EmptyCtx {
+) extends GlobalCtx[LexemCtx]
 
-  override def betweenLexems(m: Match): Unit =
-    // reifyAllBetweenLexems(this)(m)
-    super[EmptyCtx].betweenLexems(m)
+case class EmptyLexemCtx(
+  var text: String,
+)
 
-  override def betweenStages(m: Match): Unit =
-    super[EmptyCtx].betweenStages(m)
-}
-
-object NoCtx {
-  def create(arg: String) = new NoCtx(arg)
-}
-
-case class DefaultCtx(
+case class DefaultGlobalCtx[LexemCtx <: AnyGlobalCtx](
+  var lastLexemCtx: LexemCtx,
   var text: String,
   var position: Int,
-) extends EmptyCtx
+) extends GlobalCtx[LexemCtx]
     with PositionTracking {
-
-  override def betweenLexems(m: Match): Unit =
-    // reifyAllBetweenLexems(this)(m)
-    super[EmptyCtx].betweenLexems(m)
+  override def betweenLexems(m: Match): Unit = {
+    super[GlobalCtx].betweenLexems(m)
     super[PositionTracking].betweenLexems(m)
+  }
 
-  override def betweenStages(m: Match): Unit =
-    super[EmptyCtx].betweenStages(m)
+  // todo: better names
+  override def betweenStages(m: Match): Unit = {
+    super[GlobalCtx].betweenStages(m)
     super[PositionTracking].betweenStages(m)
+  }
 }
 
-object DefaultCtx {
-  def create(arg: String) = new DefaultCtx(arg, 0)
-}
-
-transparent inline given ctx(using c: EmptyCtx): c.type = c
+transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
