@@ -34,12 +34,13 @@ given BetweenStages[AnyGlobalCtx] = (m: Match, ctx: AnyGlobalCtx) => {
 
 type AnyGlobalCtx = GlobalCtx[?]
 
-//todo: find a way to make Ctx immutable with mutable-like changes
 trait GlobalCtx[LexemTpe <: Lexem[?]] {
   type Lexem = LexemTpe
-
+  val text: String = _text.toString
   var lastLexem: Lexem | Null
-  var text: CharSequence
+  protected var _text: CharSequence
+
+  def text_=(t: CharSequence): Unit = _text = t
 }
 
 trait PositionTracking {
@@ -54,12 +55,12 @@ given BetweenStages[PositionTracking & AnyGlobalCtx] = (m: Match, ctx: PositionT
 
 case class EmptyGlobalCtx[LexemTpe <: Lexem[?]](
   var lastLexem: LexemTpe | Null = null,
-  var text: CharSequence = "",
+  protected var _text: CharSequence = "",
 ) extends GlobalCtx[LexemTpe]
 
 case class DefaultGlobalCtx[LexemTpe <: Lexem[?]](
   var lastLexem: LexemTpe | Null = null,
-  var text: CharSequence = "",
+  protected var _text: CharSequence = "",
   var position: Int = 0,
 ) extends GlobalCtx[LexemTpe]
     with PositionTracking
