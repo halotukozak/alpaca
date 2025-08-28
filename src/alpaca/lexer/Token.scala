@@ -8,7 +8,7 @@ type ValidName = String & Singleton
 
 type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Ctx
 
-type Remapping[+Ctx <: AnyGlobalCtx] = Ctx#LexemCtx => Any
+type Remapping[Ctx <: AnyGlobalCtx] = Ctx => Any
 
 sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx] {
   val name: Name
@@ -39,7 +39,7 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
   name: Name,
   pattern: String,
   ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: Remapping[Ctx],
+  remapping: Remapping[Ctx @uv],
 ) extends Token[Name, Ctx] {
   val index: Int = TokenImpl.nextIndex()
 

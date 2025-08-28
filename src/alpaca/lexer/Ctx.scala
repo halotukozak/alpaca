@@ -2,71 +2,67 @@ package alpaca.lexer
 
 import alpaca.core.reifyAllBetweenLexems
 import alpaca.showAst
-
 import scala.util.matching.Regex.Match
+import scala.CanEqual.derived
+import scala.quoted.Type
+import scala.quoted.Quotes
+import scala.quoted.Expr
 
-trait AnyLexemCtx {
-  var text: String
+opaque type BetweenStages[-Ctx <: AnyGlobalCtx] <: (Match, Ctx) => Unit = (Match, Ctx) => Unit
+
+object BetweenStages {
+  inline given derived[Ctx <: AnyGlobalCtx]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
+
+  private def derivedImpl[Ctx <: AnyGlobalCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
+    import quotes.reflect.*
+
+    val parents = TypeRepr.of[Ctx].baseClasses.map(_.typeRef.asType) // todo: should we add some filter?
+
+    val betweenStages = Expr.ofList(
+      parents
+        .map { case '[type ctx >: Ctx <: AnyGlobalCtx; ctx] =>
+          '{ compiletime.summonInline[BetweenStages[ctx]] }
+        },
+    )
+
+    '{ (m, ctx: Ctx) => $betweenStages.foreach(_.apply(m, ctx)) }
+  }
+}
+
+given BetweenStages[AnyGlobalCtx] = (m: Match, ctx: AnyGlobalCtx) => {
+  ???
 }
 
 type AnyGlobalCtx = GlobalCtx[?]
 
 //todo: find a way to make Ctx immutable with mutable-like changes
-trait GlobalCtx[LCtx <: AnyLexemCtx] {
-  type LexemCtx = LCtx
+trait GlobalCtx[LexemTpe <: Lexem[?]] {
+  type Lexem = LexemTpe
 
-  var lastLexemCtx: LexemCtx
+  var lastLexem: Lexem | Null
   var text: String
-
-  // todo: find some better way of modularization
-  def betweenLexems(m: Match): Unit = {
-    this.text = this.text.substring(m.start, m.end)
-  }
-
-  // todo: better names
-  def betweenStages(m: Match): Unit = {
-    this.text = this.text.substring(m.start)
-  }
 }
 
 trait PositionTracking {
-  this: EmptyGlobalCtx[?] =>
+  this: GlobalCtx[?] =>
 
   var position: Int
-
-  def betweenLexems(m: Match): Unit = {
-    this.position = this.position + m.end
-  }
-
-  // todo: better names
-  def betweenStages(m: Match): Unit = ???
 }
 
-case class EmptyGlobalCtx[LexemCtx <: AnyGlobalCtx](
-  var lastLexemCtx: LexemCtx,
-  var text: String,
-) extends GlobalCtx[LexemCtx]
-
-case class EmptyLexemCtx(
-  var text: String,
-)
-
-case class DefaultGlobalCtx[LexemCtx <: AnyGlobalCtx](
-  var lastLexemCtx: LexemCtx,
-  var text: String,
-  var position: Int,
-) extends GlobalCtx[LexemCtx]
-    with PositionTracking {
-  override def betweenLexems(m: Match): Unit = {
-    super[GlobalCtx].betweenLexems(m)
-    super[PositionTracking].betweenLexems(m)
-  }
-
-  // todo: better names
-  override def betweenStages(m: Match): Unit = {
-    super[GlobalCtx].betweenStages(m)
-    super[PositionTracking].betweenStages(m)
-  }
+given BetweenStages[PositionTracking & AnyGlobalCtx] = (m: Match, ctx: PositionTracking) => {
+  ???
 }
+
+case class EmptyGlobalCtx[LexemTpe <: Lexem[?]](
+  var lastLexem: LexemTpe | Null = null,
+  var text: String = "",
+) extends GlobalCtx[LexemTpe]
+
+case class DefaultGlobalCtx[LexemTpe <: Lexem[?]](
+  var lastLexem: LexemTpe | Null = null,
+  var text: String = "",
+  var position: Int = 0,
+) extends GlobalCtx[LexemTpe]
+    with PositionTracking
 
 transparent inline given ctx(using c: AnyGlobalCtx): c.type = c

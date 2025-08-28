@@ -6,10 +6,8 @@ import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
 import scala.util.matching.Regex
 
-abstract class Tokenization[+Ctx <: AnyGlobalCtx: Copyable as copy] extends Selectable {
-
-  type LexemCtx = Ctx#LocalCtx
-
+abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStages as betweenStages}]
+  extends Selectable {
   // todo: simplify types in refinement
   // type Token[Name <: ValidName] = alpaca.Token[Name, Ctx]
   // type Lexem[Name <: ValidName] = alpaca.Lexem[Name, Ctx]
@@ -22,30 +20,33 @@ abstract class Tokenization[+Ctx <: AnyGlobalCtx: Copyable as copy] extends Sele
 
   def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
 
-  final def tokenize(input: String, initialContext: String => Ctx): List[Lexem[?, LexemCtx]] = {
-    @tailrec def loop(globalCtx: Ctx, acc: List[Lexem[?, LexemCtx]]): List[Lexem[?, LexemCtx]] = globalCtx.text match
-      case "" =>
-        acc.reverse
-      case _ =>
-        compiled.findPrefixMatchOf(globalCtx.text) match
-          case None =>
-            throw new RuntimeException(s"Unexpected character ${globalCtx.text(0)}'") // custom error handling
-          case Some(m) =>
-            tokens.find(token => m.group(token.name) ne null) match
-              case Some(IgnoredToken(name, _, modifyCtx)) =>
-                val newGlobalCtx = copy(globalCtx).tap(_.betweenStages(m))
+  final def tokenize(input: String, initialContext: Ctx): List[Lexem[?]] = {
 
-                loop(newGlobalCtx, acc)
-              case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
-                val newGlobalCtx = copy(globalCtx).tap(_.betweenStages(m))
-                val tokenCtx = copy(newGlobalCtx).tap(_.betweenLexems(m)).lastLexemCtx
-                val value = remapping(tokenCtx)
+    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] =
+      globalCtx.text match
+        case "" =>
+          acc.reverse
+        case _ =>
+          compiled.findPrefixMatchOf(globalCtx.text) match
+            case None =>
+              throw new RuntimeException(s"Unexpected character ${globalCtx.text(0)}'") // todo: custom error handling
+            case Some(m) =>
+              tokens.find(token => m.group(token.name) ne null) match
+                case Some(IgnoredToken(name, _, modifyCtx)) =>
+                  betweenStages(m, globalCtx)
 
-                val lexem = Lexem(name, value, tokenCtx)
-                loop(newGlobalCtx, lexem :: acc)
-              case None =>
-                throw new AlgorithmError(s"$m matched but no token defined for it")
+                  loop(globalCtx)(acc)
+                case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
+                  betweenStages(m, globalCtx)
 
-    loop(initialContext(input), Nil)
+                  val value = remapping(globalCtx)
+                  val lexem = globalCtx.lastLexem.nn // todo: for now
+
+                  loop(globalCtx)(lexem :: acc)
+                case None =>
+                  throw new AlgorithmError(s"$m matched but no token defined for it")
+
+    initialContext.text = input
+    loop(initialContext)(Nil)
   }
 }

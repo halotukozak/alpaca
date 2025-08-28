@@ -1,7 +1,11 @@
 package alpaca.lexer
 
-final case class Lexem[Name <: String, Ctx <: AnyLexemCtx](
+trait Lexem[Name <: ValidName] {
+  val name: Name
+  val value: Any
+}
+
+final case class DefaultLexem[Name <: ValidName](
   name: Name,
   value: Any,
-  ctx: Ctx,
-)
+) extends Lexem[Name]

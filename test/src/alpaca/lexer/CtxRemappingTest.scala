@@ -21,7 +21,7 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
   // }
 
   test("ctx manipulation influences error position after ignored token") {
-    val L2 = lexer[DefaultCtx] {
+    val L2 = lexer[DefaultGlobalCtx[DefaultLexem[?]]] {
       case "A" => Token["A"]
       case "!" =>
         ctx.position += 5
@@ -32,7 +32,7 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
     }
 
     val ex = intercept[RuntimeException] {
-      L2.tokenize("A!?", DefaultCtx.create)
+      L2.tokenize("A!?", DefaultGlobalCtx())
     }
 
     ex.getMessage should include("Unexpected character at position 7")

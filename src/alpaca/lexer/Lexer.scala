@@ -7,27 +7,27 @@ import scala.NamedTuple.*
 import scala.annotation.experimental
 import scala.quoted.*
 
-type LexerDefinition[Ctx <: EmptyGlobalCtx[?]] = PartialFunction[String, Token[?, Ctx]]
+type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx]]
 
-transparent inline private def lexer[Ctx <: EmptyGlobalCtx[?] & Product](
-  using Ctx := EmptyGlobalCtx[EmptyLexemCtx],
+transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
+  using Ctx := EmptyGlobalCtx[DefaultLexem[?]],
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
-)(using copy: Copyable[Ctx],
+)(using
+  copy: Copyable[Ctx],
+  betweenStages: BetweenStages[Ctx],
 ): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }) }
+  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages }) }
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping
-private def lexerImpl[Ctx <: EmptyGlobalCtx[?]: Type](
+private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
+  betweenStages: Expr[BetweenStages[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx]] = {
   import quotes.reflect.*
-
-  type LocalCtx = Ctx match
-    case GlobalCtx[localCtx] => localCtx
 
 //todo: only for debugging, remove in real world
   def stringToType(str: String): Type[ValidName] =
@@ -59,7 +59,7 @@ private def lexerImpl[Ctx <: EmptyGlobalCtx[?]: Type](
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
-              '{ new DefinedToken[name, Ctx]($name, $regex, $ctxManipulation, identity)) }
+              '{ new DefinedToken[name, Ctx]($name, $regex, $ctxManipulation, identity) }
 
         case '{ type t <: ValidName; Token.apply[t]($value)(using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
@@ -163,7 +163,7 @@ private def lexerImpl[Ctx <: EmptyGlobalCtx[?]: Type](
     New(TypeTree.of[Tokenization[Ctx]])
       .select(tokenizationConstructor)
       .appliedToType(TypeRepr.of[Ctx])
-      .appliedTo(copy.asTerm) :: Nil
+      .appliedToArgs(List(copy.asTerm, betweenStages.asTerm)) :: Nil
 
   val clsDef = ClassDef(cls, parents, body)
 

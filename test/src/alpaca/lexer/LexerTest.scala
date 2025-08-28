@@ -10,9 +10,9 @@ final class LexerTest extends AnyFunSuite {
   test("tokenize simple identifier") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
 
-    val result = Lexer.tokenize("hello", NoCtx.create)
+    val result = Lexer.tokenize("hello", EmptyGlobalCtx())
 
-    assert(result == List(Lexem("IDENTIFIER", "hello", ???)))
+    assert(result == List(DefaultLexem("IDENTIFIER", "hello")))
   }
 
   test("tokenize with whitespace ignored") {
@@ -21,20 +21,20 @@ final class LexerTest extends AnyFunSuite {
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("42 + 13", NoCtx.create)
+    val result = Lexer.tokenize("42 + 13", EmptyGlobalCtx())
 
     assert(
       result == List(
-        Lexem("NUMBER", "42", ???),
-        Lexem("PLUS", "+", ???),
-        Lexem("NUMBER", "13", ???),
+        DefaultLexem("NUMBER", "42"),
+        DefaultLexem("PLUS", "+"),
+        DefaultLexem("NUMBER", "13"),
       ),
     )
   }
 
   test("tokenize empty string") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
-    val result = Lexer.tokenize("", NoCtx.create)
+    val result = Lexer.tokenize("", EmptyGlobalCtx())
 
     assert(result == List.empty)
   }
@@ -60,19 +60,19 @@ final class LexerTest extends AnyFunSuite {
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("(x + 42) * y - 1", NoCtx.create)
+    val result = Lexer.tokenize("(x + 42) * y - 1", EmptyGlobalCtx())
 
     assert(
       result == List(
-        Lexem("LPAREN", "(", ???),
-        Lexem("IDENTIFIER", "x", ???),
-        Lexem("PLUS", "+", ???),
-        Lexem("NUMBER", "42", ???),
-        Lexem("RPAREN", ")", ???),
-        Lexem("MULTIPLY", "*", ???),
-        Lexem("IDENTIFIER", "y", ???),
-        Lexem("MINUS", "-", ???),
-        Lexem("NUMBER", "1", ???),
+        DefaultLexem("LPAREN", "("),
+        DefaultLexem("IDENTIFIER", "x"),
+        DefaultLexem("PLUS", "+"),
+        DefaultLexem("NUMBER", "42"),
+        DefaultLexem("RPAREN", ")"),
+        DefaultLexem("MULTIPLY", "*"),
+        DefaultLexem("IDENTIFIER", "y"),
+        DefaultLexem("MINUS", "-"),
+        DefaultLexem("NUMBER", "1"),
       ),
     )
   }
