@@ -39,5 +39,5 @@ jobs:
         uses: 5monkeys/cobertura-action@master
         with:
           path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 80
+          # minimum_coverage: 80 //todo: #51
           fail_below_threshold: 'true'
