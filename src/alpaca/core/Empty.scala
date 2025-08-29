@@ -5,10 +5,8 @@ import scala.quoted.*
 
 trait Empty[T] extends (() => T)
 
-//todo: tests https://github.com/halotukozak/alpaca/issues/53
 object Empty {
-  //todo: replace with semi-auto derivation https://github.com/halotukozak/alpaca/issues/53
-  inline given [T <: Product]: Empty[T] = ${ derivesImpl[T] }
+  inline def derived[T <: Product]: Empty[T] = ${ derivesImpl[T] }
 
   private def derivesImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
     import quotes.reflect.*
