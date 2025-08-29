@@ -4,10 +4,10 @@ import scala.quoted.*
 import scala.util.Try
 
 def symbolInfo(
-  using quotes: Quotes
+  using quotes: Quotes,
 )(
-  symbol: quotes.reflect.Symbol
-)(using quotes.reflect.Printer[quotes.reflect.TypeRepr]
+  symbol: quotes.reflect.Symbol,
+)(using quotes.reflect.Printer[quotes.reflect.TypeRepr],
 ): String =
   s"""
      |$symbol
@@ -63,10 +63,10 @@ def symbolInfo(
      |""".stripMargin
 
 def typeReprInfo(
-  using quotes: Quotes
+  using quotes: Quotes,
 )(
-  tpe: quotes.reflect.TypeRepr
-)(using quotes.reflect.Printer[quotes.reflect.TypeRepr]
+  tpe: quotes.reflect.TypeRepr,
+)(using quotes.reflect.Printer[quotes.reflect.TypeRepr],
 ): String =
   s"""
      |type: ${tpe.show}
@@ -122,5 +122,5 @@ inline def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
-  treeInfo(body.asTerm).dbg
+  treeInfo(body.asTerm.underlyingArgument).dbg
 }

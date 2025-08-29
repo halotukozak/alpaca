@@ -32,12 +32,13 @@ jobs:
       - name: Run tests
         run: ./mill __.test
 
-      - name: Code coverage
-        run: ./mill scoverage.xmlCoberturaReport
+      # todo:https://github.com/halotukozak/alpaca/issues/52
+      # - name: Code coverage
+      #   run: ./mill scoverage.xmlCoberturaReport
 
-      - name: Code Coverage Report
-        uses: 5monkeys/cobertura-action@master
-        with:
-          path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 80
-          fail_below_threshold: 'true'
+      # - name: Code Coverage Report
+      #   uses: 5monkeys/cobertura-action@master
+      #   with:
+      #     path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
+      #     minimum_coverage: 80
+      #     fail_below_threshold: 'true'

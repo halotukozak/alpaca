@@ -1,8 +1,6 @@
 package alpaca.core
 
-import alpaca.core.Showable
 import org.scalatest.funsuite.AnyFunSuite
-import Showable.*
 
 final class ShowableTest extends AnyFunSuite {
 
@@ -47,7 +45,7 @@ final class ShowableTest extends AnyFunSuite {
          |
          |val unsupported: UnsupportedType = new UnsupportedType("Unsupported")
          |val shown: String = show"$unsupported"
-         |""".stripMargin
+         |""".stripMargin,
     )
   }
 }

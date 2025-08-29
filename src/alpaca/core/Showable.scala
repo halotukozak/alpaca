@@ -1,7 +1,6 @@
 package alpaca.core
 
 import scala.deriving.Mirror
-import scala.util.NotGiven
 
 trait Showable[T] {
   def show(t: T): String
@@ -15,10 +14,8 @@ object Showable {
 
   given [T: Showable]: Conversion[T, Shown] = _.show
 
-  given Showable[String] = Showable.derived
-  given Showable[Int] = Showable.derived
-
-  def derived[T](using NotGiven[Mirror.Of[T]]): Showable[T] = _.toString
+  given Showable[String] = x => x
+  given Showable[Int] = _.toString
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
     val name = compiletime.constValue[m.MirroredLabel]

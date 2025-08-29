@@ -1,12 +1,17 @@
 package alpaca.parser
 
-import Symbol.*
 import alpaca.lexer.AlgorithmError
+import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
 
 final class FirstSet(productions: List[Production]) {
   private val firstSet = resolveGraph(dependenciesGraph(productions))
+
+  def first(symbol: Symbol): Set[Terminal] = symbol match {
+    case t: Terminal => Set(t)
+    case nt: NonTerminal => firstSet.getOrElse(nt, FirstSet.Meta.empty).first
+  }
 
   private def dependenciesGraph(productions: List[Production]): Map[NonTerminal, FirstSet.Meta] =
     productions.foldLeft(Map.empty[NonTerminal, FirstSet.Meta].withDefaultValue(FirstSet.Meta.empty)) {
@@ -23,12 +28,6 @@ final class FirstSet(productions: List[Production]) {
       graph.map((nt, meta) => (nt, meta.importsFrom.foldLeft(meta)((acc, nt) => acc.including(graph(nt).first))))
     if graph == newGraph then newGraph else resolveGraph(newGraph)
   }
-
-  def first(symbol: Symbol): Set[Terminal] =
-    symbol match {
-      case t: Terminal => Set(t)
-      case nt: NonTerminal => firstSet.getOrElse(nt, FirstSet.Meta.empty).first
-    }
 }
 
 object FirstSet {

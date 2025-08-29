@@ -1,20 +1,19 @@
-package alpaca.core
+package alpaca
+package core
 
-import scala.quoted.Quotes
-import scala.quoted.Type
-import scala.util.TupledFunction
-import scala.quoted.Expr
-import Tuple.Map
+import scala.Tuple.Map
+import scala.annotation.experimental
+import scala.quoted.{Expr, Quotes, Type}
 
 inline given [Args <: Tuple, T[_]] => Args `Map` T = compiletime.summonAll[Args `Map` T]
 
-private[alpaca] def raiseShouldNeverBeCalled(x: String = "")(using quotes: Quotes): Nothing =
-  quotes.reflect.report.errorAndAbort(s"It should never happen. Got: $x")
+private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
+  throw new Exception(s"It should never happen. Got: $x")
 
 private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
-  def apply(queries: (find: Symbol, replace: Term)*) = new TreeMap {
+  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap {
     // skip NoSymbol
     private val filtered = queries.view.filterNot(_.find.isNoSymbol)
 
@@ -25,6 +24,7 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
+@experimental // for IJ
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 

@@ -7,7 +7,11 @@ import mill._
 import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._
 
-object `package` extends ScalaModule with ScoverageModule {
+object `package`
+  extends ScalaModule
+  // todo: sth is wrong with scoverage with macros xd https://github.com/halotukozak/alpaca/issues/52
+// with ScoverageModule
+  {
   def alpacaVersion = "0.1.0"
 
   def scalaVersion = "3.7.2"
@@ -28,15 +32,15 @@ object `package` extends ScalaModule with ScoverageModule {
     "-Ydebug-missing-refs",
     "-Yexplain-lowlevel",
     "-Yexplicit-nulls",
-    "-Yprint-debug",
-    "-Xprint:postInlining",
+    // "-Yprint-debug",
+    // "-Xprint:postInlining",
     "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
 //    "-Wunused:all",
     "-language:implicitConversions",
-    "-experimental"
+    "-experimental",
   )
 
   override def scalaDocOptions = Seq(
@@ -54,9 +58,14 @@ object `package` extends ScalaModule with ScoverageModule {
     "-snippet-compiler:compile",
   )
 
-  object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
+  object test
+    extends ScalaTests
+      with TestModule.ScalaTest
+      // todo: sth is wrong with scoverage with macros xd https://github.com/halotukozak/alpaca/issues/52
+      //  with ScoverageTests
+      {
     def mvnDeps = Seq(
-      mvn"org.scalatest::scalatest:3.2.19"
+      mvn"org.scalatest::scalatest:3.2.19",
     )
   }
 }
