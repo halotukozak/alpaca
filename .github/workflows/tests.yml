@@ -29,6 +29,9 @@ jobs:
       - name: Compile
         run: ./mill _.compile
 
+      - name: Compile tests
+        run: ./mill _.test.compile
+
       - name: Run tests
         run: ./mill __.test
 
@@ -41,3 +44,6 @@ jobs:
           path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
           minimum_coverage: 0 #todo: #51
           fail_below_threshold: 'true'
+
+      - name: Generate Docs
+        run: ./mill docJar
