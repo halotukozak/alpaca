@@ -1,6 +1,8 @@
 package alpaca.lexer.context
 
-import scala.annotation.unchecked.uncheckedVariance
+import alpaca.core.Copyable
+
+import scala.deriving.Mirror
 import scala.util.matching.Regex.Match
 
 type AnyGlobalCtx = GlobalCtx[?]
@@ -17,3 +19,7 @@ trait GlobalCtx[LexemTpe <: Lexem[?]] {
 
   def text_=(t: CharSequence): Unit = _text = t
 }
+
+object GlobalCtx:
+  given [LexemTpe <: Lexem[?], Ctx <: GlobalCtx[LexemTpe] & Product: Mirror.ProductOf]: Copyable[Ctx] =
+    Copyable.derived

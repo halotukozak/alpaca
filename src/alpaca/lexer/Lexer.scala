@@ -13,6 +13,7 @@ transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
 
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx]]
 
+@experimental //for IJ  :/
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx[DefaultLexem[?]],
 )(
@@ -25,6 +26,7 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping
+@experimental//for IJ  :/
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
