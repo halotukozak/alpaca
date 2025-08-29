@@ -42,14 +42,14 @@ object `package` extends ScalaModule with ScoverageModule {
     "alpaca",
     "-project-version",
     alpacaVersion,
-    "-project-url",
-    "https://halotukozak.github.io/alpaca/docs/index.html",
     "-project-logo",
-    (os.pwd / ".." / ".." / "docs" / "_assets" / "images" / "logo.png").toString, // todo: maybe can be simplified
+    s"$moduleDir/docs/_assets/images/logo.png",
     "-project-footer",
     "made with ❤️ and coffee",
     "-social-links:github::https://github.com/halotukozak/alpaca",
     "-snippet-compiler:compile",
+    "-source-links:github://halotukozak/alpaca",
+    "-revision:master",
   )
 
   def alpacaVersion = "0.1.0"
