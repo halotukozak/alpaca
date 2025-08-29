@@ -27,10 +27,13 @@ jobs:
           distribution: 'temurin'
 
       - name: Compile
-        run: ./mill _.compile
+        run: ./mill compile
+
+      - name: Compile tests
+        run: ./mill test.compile
 
       - name: Run tests
-        run: ./mill __.test
+        run: ./mill test
 
       - name: Code coverage
         run: ./mill scoverage.xmlCoberturaReport
@@ -41,3 +44,6 @@ jobs:
           path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
           minimum_coverage: 0 #todo: #51
           fail_below_threshold: 'true'
+
+      - name: Generate Docs
+        run: ./mill docJar
