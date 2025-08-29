@@ -1,5 +1,0 @@
-<project version="4">
-    <component name="ProjectRootManager" version="2" languageLevel="JDK_21" project-jdk-name="BSP_Home" project-jdk-type="JavaSDK">
-        <output url="file://$PROJECT_DIR$/target/idea_output"/>
-    </component>
-</project>

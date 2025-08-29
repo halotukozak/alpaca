@@ -1,20 +1,14 @@
-//| mill-version: 1.0.0
+//| mill-version: 1.0.4
 //| mill-jvm-version: 21
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 package build
-import mill._
 import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._
 
-object `package`
-  extends ScalaModule
-  // todo: sth is wrong with scoverage with macros xd https://github.com/halotukozak/alpaca/issues/52
-// with ScoverageModule
-  {
-  def alpacaVersion = "0.1.0"
-
+object `package` extends ScalaModule with ScoverageModule {
   def scalaVersion = "3.7.2"
+
   def scoverageVersion = "2.3.0"
 
   override def scalacOptions = Seq(
@@ -26,7 +20,7 @@ object `package`
     "-language:noAutoTupling",
     "-Vprofile",
     "-Xprint-inline",
-    "-Ycheck:all",
+//    "-Ycheck:all", // cannot be enabled when scoverage used :/
 //    "-Ydebug-error",
     "-Ydebug-flags",
     "-Ydebug-missing-refs",
@@ -58,12 +52,9 @@ object `package`
     "-snippet-compiler:compile",
   )
 
-  object test
-    extends ScalaTests
-      with TestModule.ScalaTest
-      // todo: sth is wrong with scoverage with macros xd https://github.com/halotukozak/alpaca/issues/52
-      //  with ScoverageTests
-      {
+  def alpacaVersion = "0.1.0"
+
+  object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
     def mvnDeps = Seq(
       mvn"org.scalatest::scalatest:3.2.19",
     )
