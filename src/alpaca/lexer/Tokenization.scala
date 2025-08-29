@@ -9,13 +9,14 @@ import scala.util.matching.Regex
 abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStages as betweenStages}]
   extends Selectable {
 
-  lazy val byName: Map[ValidName, Token[?, Ctx]] = tokens.view.map(token => token.name -> token).toMap
   private lazy val compiled: Regex =
     tokens.view.map(tokenDef => s"(?<${tokenDef.name}>${tokenDef.pattern})").mkString("|").r
 
   def tokens: List[Token[?, Ctx]]
+  def byName: Map[String, Token[?, Ctx]] // todo: reconsider if selectDynamic should be implemented with PM
 
-  def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
+  def selectDynamic(fieldName: String): Token[?, Ctx] =
+    byName(scala.reflect.NameTransformer.decode(fieldName))
 
   final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?]] = {
     @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] =

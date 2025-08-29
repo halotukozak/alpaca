@@ -56,12 +56,10 @@ final class CopyableTest extends AnyFunSuite with Matchers {
     typeChecks("import alpaca.core.Copyable; val c = Copyable.derived[String]") shouldBe false
 
     // Define a plain (non-case) class and try to derive should fail
-    val code =
-      """
-        |import alpaca.core.Copyable
-        |class Regular(val x: Int)
-        |val c = Copyable.derived[Regular]
-        |""".stripMargin
-    typeChecks(code) shouldBe false
+    """
+      |import alpaca.core.Copyable
+      |class Regular(val x: Int)
+      |val c = Copyable.derived[Regular]
+      |""".stripMargin shouldNot compile
   }
 }

@@ -1,8 +1,9 @@
 package alpaca.core
 
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-final class ShowableTest extends AnyFunSuite {
+final class ShowableTest extends AnyFunSuite with Matchers {
 
   test("Showable should convert String to Shown") {
     val str = "Hello, World!"
@@ -38,14 +39,12 @@ final class ShowableTest extends AnyFunSuite {
   }
 
   test("Showable should not convert unsupported types") {
-    assertDoesNotCompile(
-      """|
-         |import Showable._
-         |class UnsupportedType(val value: String)
-         |
-         |val unsupported: UnsupportedType = new UnsupportedType("Unsupported")
-         |val shown: String = show"$unsupported"
-         |""".stripMargin,
-    )
+    """|
+       |import Showable._
+       |class UnsupportedType(val value: String)
+       |
+       |val unsupported: UnsupportedType = new UnsupportedType("Unsupported")
+       |val shown: String = show"$unsupported"
+       |""".stripMargin shouldNot compile
   }
 }

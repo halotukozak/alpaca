@@ -50,45 +50,46 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     // )
     //format: on
 
-    // Lexer.<
-    // Lexer.>
-    // Lexer.`=`
-    // Lexer.+
-    // Lexer.-
-    // Lexer.*
-    // Lexer./
-    // Lexer.`(`
-    // Lexer.`)`
-    // Lexer.`[`
-    // Lexer.`]`
-    // Lexer.`{`
-    // Lexer.`}`
-    // Lexer.`:`
-    // Lexer.`'`
-    // Lexer.`,`
-    // Lexer.`;`
-    // Lexer.dotAdd
-    // Lexer.dotSub
-    // Lexer.dotMul
-    // Lexer.dotDiv
-    // Lexer.lessEqual
-    // Lexer.greaterEqual
-    // Lexer.notEqual
-    // Lexer.equal
-    // Lexer.float
-    // Lexer.int
-    // Lexer.string
-    // Lexer.`if`
-    // Lexer.`else`
-    // Lexer.`for`
-    // Lexer.`while`
-    // Lexer.break
-    // Lexer.continue
-    // Lexer.`return`
-    // Lexer.eye
-    // Lexer.zeros
-    // Lexer.ones
-    // Lexer.print
-    // Lexer.id
+    // we check if compiles and not crashes
+    Lexer.<
+    Lexer.>
+    Lexer.`=`
+    Lexer.+
+    Lexer.-
+    Lexer.*
+    Lexer./
+    Lexer.`(`
+    Lexer.`)`
+    Lexer.`[`
+    Lexer.`]`
+    Lexer.`{`
+    Lexer.`}`
+    Lexer.`:`
+    Lexer.`'`
+    Lexer.`,`
+    Lexer.`;`
+    Lexer.dotAdd
+    Lexer.dotSub
+    Lexer.dotMul
+    Lexer.dotDiv
+    Lexer.lessEqual
+    Lexer.greaterEqual
+    Lexer.notEqual
+    Lexer.equal
+    Lexer.float
+    Lexer.int
+    Lexer.string
+    Lexer.`if`
+    Lexer.`else`
+    Lexer.`for`
+    Lexer.`while`
+    Lexer.break
+    Lexer.continue
+    Lexer.`return`
+    Lexer.eye
+    Lexer.zeros
+    Lexer.ones
+    Lexer.print
+    Lexer.id
   }
 }
