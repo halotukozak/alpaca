@@ -6,9 +6,11 @@ import scala.quoted.*
 trait Empty[T] extends (() => T)
 
 object Empty {
-  inline def derived[T <: Product]: Empty[T] = ${ derivesImpl[T] }
 
-  private def derivesImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
+  // either way it must be inlined for generic classes
+  inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
+
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
