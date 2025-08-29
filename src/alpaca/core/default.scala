@@ -1,15 +1,15 @@
 package alpaca.core
 
 //todo: better name
-infix class :=[T, Q]
+infix private[alpaca] class WithDefault[T, Q]
 
-trait Default_:= {
+trait WithDefaultLowImplicitPriority {
 
   /** Ignore default */
-  given useProvided[Provided, Default]: (Provided := Default) = new (Provided := Default)
+  given useProvided[Provided, Default]: (Provided WithDefault Default) = new (Provided WithDefault Default)
 }
-object := extends Default_:= {
+object WithDefault extends WithDefaultLowImplicitPriority {
 
   /** Infer type argument to default */
-  given useDefault[Default]: (Default := Default) = new (Default := Default)
+  given useDefault[Default]: (Default WithDefault Default) = new (Default WithDefault Default)
 }

@@ -2,22 +2,26 @@ package alpaca
 package lexer
 
 import alpaca.core.*
+import alpaca.lexer.context.default.{DefaultGlobalCtx, DefaultLexem}
+import alpaca.lexer.context.{AnyGlobalCtx, BetweenStages}
 
 import scala.NamedTuple.*
 import scala.annotation.experimental
 import scala.quoted.*
 
+transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
+
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx]]
 
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
-  using Ctx := EmptyGlobalCtx[DefaultLexem[?]],
+  using Ctx WithDefault DefaultGlobalCtx[DefaultLexem[?]],
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
   copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
 ): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages }) }
+  ${ lexerImpl[Ctx]('{ rules }, '{ summon }, '{ summon }) }
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping

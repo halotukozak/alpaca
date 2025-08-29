@@ -1,12 +1,10 @@
 package alpaca.lexer
 
-import scala.collection.mutable
-import java.nio.charset.StandardCharsets
+import java.io.{Closeable, Reader}
+import java.nio.charset.{Charset, StandardCharsets}
 import java.nio.file.{Files, Path}
-import java.nio.charset.Charset
-import java.io.Reader
 import scala.annotation.tailrec
-import java.io.Closeable
+import scala.collection.mutable
 
 final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable {
   private val buffer = mutable.ArrayDeque.empty[Char]

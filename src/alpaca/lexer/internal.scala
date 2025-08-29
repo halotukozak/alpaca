@@ -1,9 +1,8 @@
 package alpaca.lexer
 
-import scala.quoted.*
-import scala.util.TupledFunction
 import alpaca.core.raiseShouldNeverBeCalled
-import alpaca.soft
+
+import scala.quoted.*
 
 // this util has bugs for sure https://github.com/halotukozak/alpaca/issues/51
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {

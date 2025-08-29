@@ -12,6 +12,8 @@ extension (items: Set[Item]) {
 }
 
 object State {
+  val empty: State = Set.empty
+
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
     if !item.isLastItem && !item.nextSymbol.isTerminal then
       val lookAheads = item.nextTerminals(firstSet)
@@ -25,6 +27,4 @@ object State {
           }
         }
     else state + item
-
-  val empty: State = Set.empty
 }

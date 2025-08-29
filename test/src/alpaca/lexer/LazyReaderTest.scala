@@ -1,9 +1,10 @@
 package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
+
 import java.io.StringReader
-import java.nio.file.Files
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import scala.util.Using
 
 class LazyReaderTest extends AnyFunSuite {

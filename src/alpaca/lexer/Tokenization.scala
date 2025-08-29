@@ -1,16 +1,13 @@
 package alpaca.lexer
 
-import alpaca.core.Copyable
+import alpaca.core.{Copyable, Empty}
+import alpaca.lexer.context.{AnyGlobalCtx, BetweenStages, Lexem}
 
 import scala.annotation.tailrec
-import scala.util.chaining.scalaUtilChainingOps
 import scala.util.matching.Regex
 
 abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStages as betweenStages}]
   extends Selectable {
-  // todo: simplify types in refinement
-  // type Token[Name <: ValidName] = alpaca.Token[Name, Ctx]
-  // type Lexem[Name <: ValidName] = alpaca.Lexem[Name, Ctx]
 
   lazy val byName: Map[ValidName, Token[?, Ctx]] = tokens.view.map(token => token.name -> token).toMap
   private lazy val compiled: Regex =
@@ -20,8 +17,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
 
   def selectDynamic(fieldName: String): Token[?, Ctx] = byName(fieldName)
 
-  final def tokenize(input: CharSequence, initialContext: Ctx): List[Lexem[?]] = {
-
+  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?]] = {
     @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] =
       globalCtx.text match
         case "" =>
@@ -46,6 +42,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
                 case None =>
                   throw new AlgorithmError(s"$m matched but no token defined for it")
 
+    val initialContext = empty()
     initialContext.text = input
     loop(initialContext)(Nil)
   }

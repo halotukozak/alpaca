@@ -1,5 +1,7 @@
 package alpaca.lexer
 
+import alpaca.lexer.context.AnyGlobalCtx
+
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv

@@ -1,9 +1,6 @@
 package alpaca.lexer
-
-trait Lexem[Name <: ValidName] {
-  val name: Name
-  val value: Any
-}
+package context
+package default
 
 final case class DefaultLexem[Name <: ValidName](
   name: Name,
