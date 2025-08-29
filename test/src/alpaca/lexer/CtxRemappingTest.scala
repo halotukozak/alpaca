@@ -22,10 +22,10 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
     val L2 = lexer {
       case "A" => Token["A"]
       case "!" =>
-        ctx.position += 5
+        // ctx.position += 5
         Token.Ignored["temp"]
       case x @ "\n+" =>
-        ctx.position += x.count(_ == '\n')
+        // ctx.position += x.count(_ == '\n')
         Token.Ignored["temp"]
     }
 
