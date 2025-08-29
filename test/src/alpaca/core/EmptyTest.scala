@@ -3,8 +3,6 @@ package alpaca.core
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.compiletime.testing.typeChecks
-
 final class EmptyTest extends AnyFunSuite with Matchers {
 
   inline def empty[T]: Empty[T] = compiletime.summonInline[Empty[T]]
@@ -39,20 +37,16 @@ final class EmptyTest extends AnyFunSuite with Matchers {
   }
 
   test("cannot derive Empty when any parameter lacks a default (compile-time)") {
-    val code =
-      """
-        |import alpaca.core.Empty
-        |case class Mixed(a: Int, b: String = "b") derives Empty
-        |""".stripMargin
-    typeChecks(code) shouldBe false
+    """
+      |import alpaca.core.Empty
+      |case class Mixed(a: Int, b: String = "b") derives Empty
+      |""".stripMargin shouldNot compile
   }
 
   test("cannot derive Empty for non-case classes (compile-time)") {
-    val code =
-      """
-        |import alpaca.core.Empty
-        |class Regular(val x: Int) derives Empty
-        |""".stripMargin
-    typeChecks(code) shouldBe false
+    """
+      |import alpaca.core.Empty
+      |class Regular(val x: Int) derives Empty
+      |""".stripMargin shouldNot compile
   }
 }

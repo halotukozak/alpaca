@@ -5,7 +5,7 @@ import alpaca.core.*
 import alpaca.lexer.context.default.{DefaultGlobalCtx, DefaultLexem}
 import alpaca.lexer.context.{AnyGlobalCtx, BetweenStages}
 
-import scala.NamedTuple.*
+import scala.NamedTuple.NamedTuple
 import scala.annotation.experimental
 import scala.quoted.*
 
@@ -26,7 +26,7 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 
 //todo: ctxManipulation should work
 //todo: more complex expressions should be supported in remaping
-@experimental//for IJ  :/
+@experimental //for IJ  :/
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
@@ -132,9 +132,18 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       privateWithin = Symbol.noSymbol,
     )
 
+    val byName = Symbol.newVal(
+      parent = cls,
+      name = "byName",
+      tpe = TypeRepr.of[Map[String, Token[?, Ctx]]],
+      flags = Flags.Synthetic | Flags.Lazy, // todo: reconsider lazy
+      privateWithin = Symbol.noSymbol,
+    )
+
     tokenDecls ++ List(
       fieldsDecls,
       allTokens,
+      byName,
     )
   }
 
@@ -146,22 +155,35 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     None,
   )
 
-  val body = definedTokens.collect { case '{ $token: DefinedToken[name, Ctx] } =>
-    ValDef(cls.fieldMember(typeToString[name]), Some(token.asTerm.changeOwner(cls.fieldMember(typeToString[name]))))
-  } ++ List(
-    TypeDef(cls.typeMember("Fields")),
-    ValDef(
-      cls.fieldMember("tokens"),
-      Some {
-        val declaredTokens =
-          cls.fieldMembers
-            .filter(_.typeRef.widen <:< TypeRepr.of[Token[?, Ctx]])
-            .map(This(cls).select(_).asExprOf[Token[?, Ctx]])
+  val body = {
+    val tokenVals = definedTokens.collect { case '{ $token: DefinedToken[name, Ctx] } =>
+      ValDef(cls.fieldMember(typeToString[name]), Some(token.asTerm.changeOwner(cls.fieldMember(typeToString[name]))))
+    }
+    tokenVals ++ List(
+      TypeDef(cls.typeMember("Fields")),
+      ValDef(
+        cls.fieldMember("tokens"),
+        Some {
+          val declaredTokens =
+            cls.fieldMembers
+              .filter(_.typeRef.widen <:< TypeRepr.of[Token[?, Ctx]])
+              .map(This(cls).select(_).asExprOf[Token[?, Ctx]])
 
-        Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
-      },
-    ),
-  )
+          Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
+        },
+      ),
+      ValDef(
+        cls.fieldMember("byName"),
+        Some {
+          val all = Expr.ofSeq {
+            tokenVals.map(valDef => Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[Token[?, Ctx]])))
+          }
+
+          '{ Map($all*) }.asTerm
+        },
+      ),
+    )
+  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
