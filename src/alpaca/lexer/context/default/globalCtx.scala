@@ -10,5 +10,7 @@ final case class DefaultGlobalCtx[LexemTpe <: Lexem[?]](
   var lastLexem: LexemTpe | Null = null,
   protected var _text: CharSequence = "",
   var position: Int = 0,
+  var line: Int = 0,
 ) extends GlobalCtx[LexemTpe]
     with PositionTracking
+    with LineTracking
