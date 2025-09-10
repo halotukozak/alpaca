@@ -1,6 +1,8 @@
 package alpaca.lexer.context
 package default
 
+import alpaca.core.BetweenStages
+
 trait LineTracking {
   this: GlobalCtx[?] =>
 

@@ -1,6 +1,8 @@
 package alpaca.lexer.context
 package default
 
+import alpaca.core.BetweenStages
+
 import scala.util.matching.Regex.Match
 
 trait PositionTracking {
