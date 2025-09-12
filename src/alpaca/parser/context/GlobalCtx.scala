@@ -8,7 +8,7 @@ import scala.util.matching.Regex.Match
 type AnyGlobalCtx = GlobalCtx
 
 object AnyGlobalCtx:
-  given BetweenStages[AnyGlobalCtx] = (m: Match, ctx: AnyGlobalCtx) => {
+  given BetweenStages[AnyGlobalCtx] = (name: String, m: Match, ctx: AnyGlobalCtx) => {
     ??? // todo: https://github.com/halotukozak/alpaca/issues/51
   }
 

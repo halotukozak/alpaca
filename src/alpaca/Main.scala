@@ -1,10 +1,18 @@
 package alpaca
+import alpaca.lexer.* 
 
 import alpaca.core.{Showable, show}
 import alpaca.parser.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 
 @main def main(): Unit = {
+  val Lexer = lexer {
+    case "[0-9]+" => Token["NUMBER"]
+    case "\\+" => Token["PLUS"]
+    case "\\s+" => Token.Ignored["WHITESPACE"]
+  }
+  val result = Lexer.tokenize("42 + 13")
+
   val productions: List[Production] = List(
     Production(NonTerminal("S'"), Vector(NonTerminal("S"))),
     Production(NonTerminal("S"), Vector(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
