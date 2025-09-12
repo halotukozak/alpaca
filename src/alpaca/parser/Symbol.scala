@@ -24,6 +24,7 @@ enum Symbol(val isTerminal: Boolean) {
 
 object Symbol {
   val EOF: Terminal = Terminal("$")
+  val Empty: Terminal = Terminal("ε")
 
   given Showable[Symbol] = _.name
 
