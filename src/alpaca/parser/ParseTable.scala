@@ -4,11 +4,11 @@ import scala.collection.mutable
 import scala.quoted.*
 import scala.annotation.publicInBinary
 
-final class ParseTable @publicInBinary private (private val underlying: Map[(Int, Symbol), Int | Production]) {
-  export underlying.get
-}
+opaque type ParseTable = Map[(Int, Symbol), Int | Production]
 
 object ParseTable {
+
+  extension (table: ParseTable) def get(key: (Int, Symbol)): Option[Int | Production] = table.get(key)
 
   def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)
@@ -37,7 +37,7 @@ object ParseTable {
 
       currStateId += 1
     }
-    new ParseTable(table.toMap)
+    table.toMap
   }
 
   given ToExpr[Int | Production] with
@@ -47,8 +47,8 @@ object ParseTable {
 
   given ToExpr[ParseTable] with
     def apply(x: ParseTable)(using Quotes): Expr[ParseTable] = {
-      val underlying = Expr(x.underlying.toList)
+      val underlying = Expr(x.toList)
 
-      '{ new ParseTable($underlying.toMap) }
+      '{ $underlying.toMap }
     }
 }

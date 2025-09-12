@@ -6,9 +6,20 @@ import scala.quoted.*
 
 enum Symbol(val isTerminal: Boolean) {
   val name: String
+  val isOptional: Boolean
+  val isRepeated: Boolean
 
-  case NonTerminal(name: String) extends Symbol(isTerminal = false)
-  case Terminal(name: String) extends Symbol(isTerminal = true)
+  case NonTerminal(
+    name: String,
+    isOptional: Boolean = false,
+    isRepeated: Boolean = false,
+  ) extends Symbol(isTerminal = false)
+
+  case Terminal(
+    name: String,
+    isOptional: Boolean = false,
+    isRepeated: Boolean = false,
+  ) extends Symbol(isTerminal = true)
 }
 
 object Symbol {
