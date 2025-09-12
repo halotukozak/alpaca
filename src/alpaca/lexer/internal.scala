@@ -3,6 +3,7 @@ package alpaca.lexer
 import alpaca.core.raiseShouldNeverBeCalled
 
 import scala.quoted.*
+import scala.reflect.NameTransformer
 
 // this util has bugs for sure https://github.com/halotukozak/alpaca/issues/51
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
@@ -27,7 +28,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         alternatives.flatMap(patternLoop).foldLeft("")(_ + "|" + _) :: Nil
       case x => raiseShouldNeverBeCalled(x.show)
 
-    def toResult(name: String, pattern: String) = (Expr(name).asExprOf[ValidName], Expr(pattern))
+    def toResult(name: String, pattern: String) = (Expr(NameTransformer.decode(name)).asExprOf[ValidName], Expr(pattern))
 
     TypeRepr.of[T] match
       case ConstantType(StringConstant(str)) =>

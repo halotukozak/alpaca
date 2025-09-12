@@ -57,8 +57,8 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       )
 
       def extractSimple(body: Expr[Token[?, Ctx]], ctxManipulation: Expr[CtxManipulation[Ctx]]) = body.matchOption:
-        case '{ type t <: ValidName; Token.Ignored[t](using $ctx) } =>
-          compileNameAndPattern[t](pattern).map:
+        case '{ Token.Ignored(using $ctx) } =>
+          compileNameAndPattern[Nothing](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
               '{ new IgnoredToken[name, Ctx]($name, $regex, $ctxManipulation) }
 
