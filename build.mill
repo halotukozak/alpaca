@@ -54,6 +54,10 @@ object `package` extends ScalaModule with ScoverageModule {
 
   def alpacaVersion = "0.1.0"
 
+  def mvnDeps = Seq(
+    mvn"dk.brics:automaton:1.12-4"
+  )
+
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
     def scalaTestVersion = "3.2.19"
   }
