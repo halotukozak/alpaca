@@ -19,10 +19,8 @@ sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx] {
 }
 
 object Token {
-
-  // todo: we'd like not to require the explicit name for Ignored tokens
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
+  def Ignored(using ctx: AnyGlobalCtx): Token[?, ctx.type] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
