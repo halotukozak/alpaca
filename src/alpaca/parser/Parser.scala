@@ -108,5 +108,5 @@ private def parserImpl[Ctx <: AnyGlobalCtx: Type](
 
   val table = Expr(ParseTable(productions))
 
-  '{ new Parser[Ctx]($table) }
+  '{ new Parser[Ctx]($table: ParseTable) }
 }
