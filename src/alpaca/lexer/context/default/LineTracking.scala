@@ -10,5 +10,7 @@ trait LineTracking {
 }
 
 object LineTracking:
-  given BetweenStages[LineTracking & AnyGlobalCtx] =
-    (m, ctx) => ??? // todo: https://github.com/halotukozak/alpaca/issues/51
+  given BetweenStages[LineTracking & AnyGlobalCtx] =  (name, m, ctx) => {
+    if m.matched == "\n" then
+      ctx.line += 1
+  }

@@ -6,7 +6,7 @@ import scala.quoted.*
 import scala.util.matching.Regex.Match
 
 // todo: i do not like this name
-trait BetweenStages[Ctx] extends ((Match, Ctx) => Unit)
+trait BetweenStages[Ctx] extends ((String, Match, Ctx) => Unit)
 
 object BetweenStages {
   inline given [Ctx]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
@@ -26,6 +26,6 @@ object BetweenStages {
         .collect { case Some(expr) => expr },
     )
 
-    '{ (m, ctx: Ctx) => $betweenStages.foreach(_.apply(m, ctx)) }
+    '{ (name, m, ctx: Ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
   }
 }

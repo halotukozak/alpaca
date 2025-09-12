@@ -12,5 +12,6 @@ trait PositionTracking {
 }
 
 object PositionTracking:
-  given BetweenStages[PositionTracking & AnyGlobalCtx] =
-    (m, ctx) => ??? // todo: https://github.com/halotukozak/alpaca/issues/51
+  given BetweenStages[PositionTracking & AnyGlobalCtx] =  (name, m, ctx) => {
+    ctx.position += m.matched.length
+  }

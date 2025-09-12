@@ -2,12 +2,12 @@ package alpaca.lexer.context
 package default
 
 final case class EmptyGlobalCtx[LexemTpe <: Lexem[?, ?]](
-  var lastLexem: LexemTpe | Null = null,
+  var lastLexem: Lexem[?, ?] | Null = null,
   protected var _text: CharSequence = "",
 ) extends GlobalCtx[LexemTpe]
 
 final case class DefaultGlobalCtx[LexemTpe <: Lexem[?, ?]](
-  var lastLexem: LexemTpe | Null = null,
+  var lastLexem: Lexem[?, ?] | Null = null,
   protected var _text: CharSequence = "",
   var position: Int = 0,
   var line: Int = 0,
