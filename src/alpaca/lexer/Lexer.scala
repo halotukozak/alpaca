@@ -9,8 +9,6 @@ import scala.NamedTuple.NamedTuple
 import scala.annotation.experimental
 import scala.quoted.*
 
-transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
-
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
 @experimental //for IJ  :/
