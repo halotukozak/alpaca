@@ -3,6 +3,8 @@ package alpaca
 import alpaca.core.{Showable, show}
 import alpaca.parser.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import alpaca.interpreter.Interpreter
+import alpaca.lexer.context.default.DefaultLexem
 
 @main def main(): Unit = {
   val productions: List[Production] = List(
@@ -10,12 +12,12 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
     Production(NonTerminal("S"), Vector(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
     Production(NonTerminal("S"), Vector(NonTerminal("R"))),
     Production(NonTerminal("L"), Vector(Terminal("*"), NonTerminal("R"))),
-    Production(NonTerminal("L"), Vector(Terminal("id"))),
+    Production(NonTerminal("L"), Vector(Terminal("ID"))),
     Production(NonTerminal("R"), Vector(NonTerminal("L"))),
   )
 
   val symbols = List(
-    Terminal("id"),
+    Terminal("ID"),
     Terminal("*"),
     Terminal("="),
     Terminal("$"),
@@ -26,7 +28,7 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
 
   val table = parseTable(productions)
 
-  print(centerText("S"))
+  print(centerText("State"))
   print("|")
   for (s <- symbols) {
     print(centerText(s.show))
@@ -42,6 +44,19 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
       print("|")
     }
   }
+  println("")
+
+  val code = List(
+    DefaultLexem("*", "*"),
+    DefaultLexem("ID", "a"),
+    DefaultLexem("=", "="),
+    DefaultLexem("ID", "b"),
+    DefaultLexem("$", "$"),
+  )
+
+  val interpreter = Interpreter(table)
+
+  interpreter.run(code)
 }
 
 def centerText(text: String, width: Int = 10): String = {
