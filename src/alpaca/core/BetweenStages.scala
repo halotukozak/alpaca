@@ -1,17 +1,17 @@
-package alpaca
-package lexer
-package context
+package alpaca.core
+
+import alpaca.lexer.context.AnyGlobalCtx
 
 import scala.quoted.*
 import scala.util.matching.Regex.Match
 
 // todo: i do not like this name
-trait BetweenStages[Ctx <: AnyGlobalCtx] extends ((Match, Ctx) => Unit)
+trait BetweenStages[Ctx] extends ((Match, Ctx) => Unit)
 
 object BetweenStages {
-  inline given [Ctx <: AnyGlobalCtx]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
+  inline given [Ctx]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
 
-  private def derivedImpl[Ctx <: AnyGlobalCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
+  private def derivedImpl[Ctx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
     import quotes.reflect.*
 
     // todo: should we add some filter?
@@ -20,7 +20,7 @@ object BetweenStages {
 
     val betweenStages = Expr.ofList(
       parents
-        .collect { case '[type ctx >: Ctx <: AnyGlobalCtx; ctx] =>
+        .collect { case '[type ctx >: Ctx; ctx] =>
           Expr.summon[BetweenStages[ctx]]
         }
         .collect { case Some(expr) => expr },

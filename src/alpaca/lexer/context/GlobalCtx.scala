@@ -1,6 +1,6 @@
 package alpaca.lexer.context
 
-import alpaca.core.Copyable
+import alpaca.core.{BetweenStages, Copyable}
 
 import scala.deriving.Mirror
 import scala.util.matching.Regex.Match
@@ -12,8 +12,8 @@ object AnyGlobalCtx:
     ??? // todo: https://github.com/halotukozak/alpaca/issues/51
   }
 
-trait GlobalCtx[LexemTpe <: Lexem[?]] {
-  val text: String = _text.toString
+trait GlobalCtx[LexemTpe <: Lexem[?, ?]] {
+  def text: String = _text.toString
   var lastLexem: LexemTpe | Null
   protected var _text: CharSequence
 
@@ -21,5 +21,5 @@ trait GlobalCtx[LexemTpe <: Lexem[?]] {
 }
 
 object GlobalCtx:
-  given [LexemTpe <: Lexem[?], Ctx <: GlobalCtx[LexemTpe] & Product: Mirror.ProductOf]: Copyable[Ctx] =
+  given [LexemTpe <: Lexem[?, ?], Ctx <: GlobalCtx[LexemTpe] & Product: Mirror.ProductOf]: Copyable[Ctx] =
     Copyable.derived

@@ -8,7 +8,7 @@ final class LexerTest extends AnyFunSuite {
   test("tokenize simple identifier") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
 
-    val result = Lexer.tokenize("hello")
+//    val result = Lexer.tokenize("hello")
     // todo: https://github.com/halotukozak/alpaca/issues/51
     //   assert(result == List(DefaultLexem("IDENTIFIER", "hello")))
   }
@@ -19,7 +19,7 @@ final class LexerTest extends AnyFunSuite {
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("42 + 13")
+//    val result = Lexer.tokenize("42 + 13")
 
     // todo: https://github.com/halotukozak/alpaca/issues/51
     // assert(
@@ -33,7 +33,7 @@ final class LexerTest extends AnyFunSuite {
 
   test("tokenize empty string") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
-    val result = Lexer.tokenize("")
+//    val result = Lexer.tokenize("")
 
     // todo: https://github.com/halotukozak/alpaca/issues/51
     // assert(result == List.empty)
@@ -60,7 +60,7 @@ final class LexerTest extends AnyFunSuite {
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
-    val result = Lexer.tokenize("(x + 42) * y - 1")
+    // val result = Lexer.tokenize("(x + 42) * y - 1")
 
     // todo: https://github.com/halotukozak/alpaca/issues/51
     // assert(

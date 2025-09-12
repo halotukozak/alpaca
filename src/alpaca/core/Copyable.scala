@@ -7,5 +7,5 @@ import scala.deriving.Mirror
 trait Copyable[T] extends (T => T)
 
 object Copyable {
-  def derived[T <: Product: Mirror.ProductOf as m]: Copyable[T] = t => m.fromTuple(Tuple.fromProductTyped(t))
+  given derived[T <: Product: Mirror.ProductOf as m]: Copyable[T] = t => m.fromTuple(Tuple.fromProductTyped(t))
 }
