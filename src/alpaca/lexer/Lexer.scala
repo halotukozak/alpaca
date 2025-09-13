@@ -49,7 +49,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   val createLambda = new CreateLambda[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
-  val tokens: List[Expr[Token[?, Ctx, ?]]] = cases.foldLeft(List.empty[Expr[Token[?, Ctx, ?]]]) {
+  val tokens: List[(token: Expr[Token[?, Ctx, ?]], pattern: Expr[String])] = cases.foldLeft(List.empty[(Expr[Token[?, Ctx, ?]], Expr[String])]) {
     case (tokens, CaseDef(pattern, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(
         (find = oldCtx.symbol, replace = newCtx),
@@ -60,17 +60,17 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         case '{ type t <: ValidName; Token.Ignored[t](using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
-              '{ new IgnoredToken[name, Ctx]($name, $regex, $ctxManipulation) }
+              '{ new IgnoredToken[name, Ctx]($name, $regex, $ctxManipulation) } -> regex
 
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
-              '{ new DefinedToken[name, Ctx, Unit]($name, $regex, $ctxManipulation, _ => ()) }
+              '{ new DefinedToken[name, Ctx, Unit]($name, $regex, $ctxManipulation, _ => ()) } -> regex
 
         case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } if value.asTerm.symbol == pattern.symbol =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
-              '{ new DefinedToken[name, Ctx, String]($name, $regex, $ctxManipulation, _.text) }
+              '{ new DefinedToken[name, Ctx, String]($name, $regex, $ctxManipulation, _.text) } -> regex
 
         case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
@@ -78,7 +78,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
               val remapping = createLambda[Ctx => v] { case (methSym, (newCtx: Term) :: Nil) =>
                 replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
               }
-              '{ new DefinedToken[name, Ctx, v]($name, $regex, $ctxManipulation, $remapping) }
+              '{ new DefinedToken[name, Ctx, v]($name, $regex, $ctxManipulation, $remapping) } -> regex
 
       val newTokens =
         extractSimple(body.asExprOf[Token[?, Ctx, ?]], '{ identity })
@@ -98,7 +98,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     case (tokens, CaseDef(pattern, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
   }
 
-  val (definedTokens, ignoredTokens) = tokens.partition(_.isExprOf[DefinedToken[?, Ctx, ?]]).runtimeChecked
+  RegexChecker.checkPatterns(tokens.map(_.pattern.valueOrAbort))
+
+  val (definedTokens, ignoredTokens) = tokens.map(_.token).partition(_.isExprOf[DefinedToken[?, Ctx, ?]]).runtimeChecked
 
   def decls(cls: Symbol): List[Symbol] = {
     val tokenDecls = definedTokens
