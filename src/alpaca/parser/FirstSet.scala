@@ -4,6 +4,7 @@ import alpaca.lexer.AlgorithmError
 import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
+import alpaca.core.raiseShouldNeverBeCalled
 
 opaque type FirstSet = Map[NonTerminal, Set[Terminal]]
 
@@ -12,41 +13,31 @@ object FirstSet {
 
   @tailrec
   private def loop(productions: List[Production], firstSet: FirstSet): FirstSet =
-    val newFirstSet = productions.foldLeft(firstSet)((acc, production) => addImports(acc, production))
+    val newFirstSet = productions.foldLeft(firstSet)(addImports)
     if firstSet == newFirstSet then newFirstSet else loop(productions, newFirstSet)
 
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
-    case Production(lhs, (head: Terminal) +: tail) =>
-      firstSet.union(lhs, head)
+    case Production(lhs, Seq(head: Terminal, tail*)) =>
+      firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production(lhs, (head: NonTerminal) +: tail) =>
-      val newFirstSet = firstSet.union(lhs, firstSet(head))
+    case Production(lhs, Seq(head: NonTerminal, tail*)) =>
+      val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
       if firstSet(head).contains(Symbol.Empty)
       then addImports(newFirstSet, Production(lhs, tail))
       else newFirstSet
 
-    case Production(lhs, _) =>
-      firstSet.union(lhs, Symbol.Empty)
+    case Production(lhs, Seq()) =>
+      firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+
+    case x =>
+      raiseShouldNeverBeCalled(x.toString())
   }
 
-  extension (firstSet: FirstSet) {
+  extension (firstSet: FirstSet)
     def first(symbol: Symbol): Set[Terminal] = symbol match {
       case t: Terminal => Set(t)
-      case nt: NonTerminal => firstSet.getOrElse(nt, Set.empty)
+      case nt: NonTerminal => firstSet(nt)
     }
-
-    def union(nt: NonTerminal, value: Terminal): FirstSet = {
-      val currentSet = firstSet.getOrElse(nt, Set.empty)
-      val newSet = currentSet + value
-      firstSet.updated(nt, newSet)
-    }
-
-    def union(nt: NonTerminal, values: Set[Terminal]): FirstSet = {
-      val currentSet = firstSet.getOrElse(nt, Set.empty)
-      val newSet = currentSet ++ (values - Symbol.Empty)
-      firstSet.updated(nt, newSet)
-    }
-  }
 }
