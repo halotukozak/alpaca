@@ -1,18 +1,19 @@
 package alpaca.lexer
 
-import dk.brics.automaton._
+import dregex.Regex
+import scala.jdk.CollectionConverters.*
 
 object RegexChecker {
-  def checkPatterns(patterns: List[String]): Option[(Int, Int)] = {
-    val pairs = for {
-      i <- patterns.indices
-      j <- (i + 1) until patterns.indices.end
-    } yield (i, j)
+  def checkPatterns(patterns: List[String]) = {
+    if patterns.isEmpty then 
+      Nil
+    else
+      val regexes = Regex.compile(patterns.asJava)
 
-    pairs.find { (i, j) => {
-      val reg1 = new RegExp(patterns(i)).toAutomaton()
-      val reg2 = new RegExp(patterns(j)).toAutomaton()
-      reg2.minus(reg1).isEmpty
-    }}
+      for {
+        i <- patterns.indices
+        j <- (i + 1) until regexes.size
+        if regexes.get(j).isSubsetOf(regexes.get(i))
+      } yield s"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
   }
 }

@@ -96,7 +96,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     case (tokens, CaseDef(pattern, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
   }
 
-  RegexChecker.checkPatterns(tokens.map(_.pattern.valueOrAbort))
+  RegexChecker.checkPatterns(tokens.reverse.map(_.pattern.valueOrAbort)).foreach(report.errorAndAbort)
 
   val (definedTokens, ignoredTokens) = tokens.map(_.token).partition(_.isExprOf[DefinedToken[?, Ctx, ?]]).runtimeChecked
 
