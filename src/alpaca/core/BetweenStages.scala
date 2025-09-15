@@ -3,33 +3,39 @@ package core
 
 import alpaca.lexer.context.AnyGlobalCtx
 
+import scala.annotation.experimental
 import scala.quoted.*
-
 import scala.util.matching.Regex.Match
 
+// marker for types which can be used as context
+trait CtxMarker
+
 // todo: i do not like this name
-trait BetweenStages[Ctx] extends ((String, Match, Ctx) => Unit)
+trait BetweenStages[Ctx <: CtxMarker] extends ((String, Match, Ctx) => Unit)
 
 object BetweenStages {
-  inline given [Ctx]: BetweenStages[Ctx & AnyGlobalCtx] = ${ derivedImpl[Ctx & AnyGlobalCtx] }
+  given BetweenStages[CtxMarker] = (name, m, ctx) => ()
 
-  private def derivedImpl[Ctx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx & AnyGlobalCtx]] = {
+  inline given [Ctx <: CtxMarker]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
+
+  private def derivedImpl[Ctx <: CtxMarker: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
     import quotes.reflect.*
 
-    // todo: should we add some filter?
-    // should we derive only for these, which has BetweenStages or for some marker trait?
-    val parents = TypeRepr.of[Ctx].baseClasses.map(_.typeRef.asType)
+    val parents = TypeRepr
+      .of[Ctx]
+      .baseClasses
+      .map(_.typeRef)
+      .filter(_ <:< TypeRepr.of[CtxMarker])
+      // we need to filter self type. Maybe I will change it in future since subtyping check does not work
+      // and by symbol is disgusting :/
+      .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
+      .map(_.asType)
 
-    val betweenStages = Expr.ofList(
-      '{AnyGlobalCtx.given_BetweenStages_AnyGlobalCtx}
-      ::
+    val betweenStages = Expr.ofList {
       parents
-        .map { case '[type ctx >: Ctx; ctx] =>
-          Expr.summon[BetweenStages[ctx & AnyGlobalCtx]]
-        }
-        .collect { case Some(expr) => expr },
-    )
+        .flatMap { case '[type ctx >: Ctx <: CtxMarker; ctx] => Expr.summon[BetweenStages[ctx]] }
+    }
 
-    '{ (name, m, ctx: Ctx & AnyGlobalCtx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
+    '{ (name, m, ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
   }
 }
