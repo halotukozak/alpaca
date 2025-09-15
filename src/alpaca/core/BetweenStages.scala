@@ -1,17 +1,19 @@
-package alpaca.core
+package alpaca
+package core
 
 import alpaca.lexer.context.AnyGlobalCtx
 
 import scala.quoted.*
+
 import scala.util.matching.Regex.Match
 
 // todo: i do not like this name
 trait BetweenStages[Ctx] extends ((String, Match, Ctx) => Unit)
 
 object BetweenStages {
-  inline given [Ctx]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
+  inline given [Ctx]: BetweenStages[Ctx & AnyGlobalCtx] = ${ derivedImpl[Ctx & AnyGlobalCtx] }
 
-  private def derivedImpl[Ctx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
+  private def derivedImpl[Ctx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx & AnyGlobalCtx]] = {
     import quotes.reflect.*
 
     // todo: should we add some filter?
@@ -19,13 +21,15 @@ object BetweenStages {
     val parents = TypeRepr.of[Ctx].baseClasses.map(_.typeRef.asType)
 
     val betweenStages = Expr.ofList(
+      '{AnyGlobalCtx.given_BetweenStages_AnyGlobalCtx}
+      ::
       parents
-        .collect { case '[type ctx >: Ctx; ctx] =>
-          Expr.summon[BetweenStages[ctx]]
+        .map { case '[type ctx >: Ctx; ctx] =>
+          Expr.summon[BetweenStages[ctx & AnyGlobalCtx]]
         }
         .collect { case Some(expr) => expr },
     )
 
-    '{ (name, m, ctx: Ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
+    '{ (name, m, ctx: Ctx & AnyGlobalCtx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
   }
 }

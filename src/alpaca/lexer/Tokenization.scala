@@ -30,12 +30,12 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
               throw new RuntimeException(s"Unexpected character ${globalCtx.text(0)}'") // todo: custom error handling
             case Some(m) =>
               tokens.find(token => m.group(token.name) ne null) match
-                case Some(IgnoredToken(name, _, modifyCtx)) =>
-                  betweenStages(name, m, globalCtx)
+                case Some(token @ IgnoredToken(name, _, modifyCtx)) =>
+                  betweenStages(token.name, m, globalCtx)
 
                   loop(globalCtx)(acc)
-                case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
-                  betweenStages(name, m, globalCtx)
+                case Some(token @ DefinedToken(name, _, modifyCtx, remapping)) =>
+                  betweenStages(token.name, m, globalCtx)
 
                   val value = remapping(globalCtx)
                   val lexem = globalCtx.lastLexem.nn // todo: for now
