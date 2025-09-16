@@ -2,8 +2,9 @@ package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.LoneElement
 
-class RegexCheckerTest extends AnyFunSuite with Matchers {
+class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement {
   test("checkPatterns should return None for non-overlapping patterns") {
     val patterns = List(
       "[a-zA-Z_][a-zA-Z0-9_]*", // identifier
@@ -22,7 +23,7 @@ class RegexCheckerTest extends AnyFunSuite with Matchers {
       "[a-zA-Z]+", // alphabetic strings (overlaps with identifier)
       "[ \\t\\n]+", // whitespace
     )
-    RegexChecker.checkPatterns(patterns).head shouldBe "Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
   }
 
   test("checkPatterns should report identical patterns as overlapping") {
@@ -33,7 +34,7 @@ class RegexCheckerTest extends AnyFunSuite with Matchers {
       "[a-zA-Z_][a-zA-Z0-9_]*", // identical to identifier
       "[ \\t\\n]+", // whitespace
     )
-    RegexChecker.checkPatterns(patterns).head shouldBe "Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
   }
 
   test("checkPatterns should not report patterns in proper order") {

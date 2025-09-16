@@ -4,10 +4,9 @@ import dregex.Regex
 import scala.jdk.CollectionConverters.*
 
 object RegexChecker {
-  def checkPatterns(patterns: List[String]) = {
-    if patterns.isEmpty then 
-      Nil
-    else
+  def checkPatterns(patterns: List[String]) = patterns match
+    case Nil => Nil
+    case _   => 
       val regexes = Regex.compile(patterns.asJava)
 
       for {
@@ -15,5 +14,4 @@ object RegexChecker {
         j <- (i + 1) until regexes.size
         if regexes.get(j).isSubsetOf(regexes.get(i))
       } yield s"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
-  }
 }
