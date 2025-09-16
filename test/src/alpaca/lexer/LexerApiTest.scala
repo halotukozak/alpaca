@@ -2,10 +2,16 @@ package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.lexer.context.default.DefaultGlobalCtx
+import alpaca.lexer.context.default.DefaultLexem
+import scala.annotation.nowarn
 
+@nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" | "'" | "," | ";") => Token[literal.type]
+    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" |
+        "'" | "," | ";") =>
+      Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -25,69 +31,67 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer recognizes basic tokens") {
-    // todo: should be in order of definition // https://github.com/halotukozak/alpaca/issues/51
-//    Lexer.tokens.map(_.pattern) shouldBe List(
+    Lexer.tokens.map(_.pattern) shouldBe List(
     //format: off
-    // https://github.com/halotukozak/alpaca/issues/51
-    // Lexer.tokens.map(_.pattern) should contain theSameElementsAs List(
-    //   "#.*",
-    //   "<", ">", "=", "+", "-", "*", "/", "(", ")", "[", "]", "{", "}", ":", "'", ",", ";",
-    //   raw"\.\+",
-    //   raw"\.\-",
-    //   raw"\.\*",
-    //   raw"\.\/",
-    //   "<=",
-    //   ">=",
-    //   "!=",
-    //   "==",
-    //   raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
-    //   "[0-9]+",
-    //   "[^\"]*",
-    //   "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
-    //   "[a-zA-Z_][a-zA-Z0-9_]*",
-    // )
+      "#.*",
+      "<", ">", "=", "+", "-", "*", "/", "(", ")", "[", "]", "{", "}", ":", "'", ",", ";",
+      raw"\.\+",
+      raw"\.\-",
+      raw"\.\*",
+      raw"\.\/",
+      "<=",
+      ">=",
+      "!=",
+      "==",
+      raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
+      "[0-9]+",
+      "[^\"]*",
+      "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
+      "[a-zA-Z_][a-zA-Z0-9_]*",
+    )
     //format: on
+    type Ctx = DefaultGlobalCtx[DefaultLexem[?, ?]]
 
     // we check if compiles and not crashes
-    Lexer.<
-    Lexer.>
-    Lexer.`=`
-    Lexer.`\\+`
-    Lexer.-
-    Lexer.`\\*`
-    Lexer./
-    Lexer.`\\(`
-    Lexer.`\\)`
-    Lexer.`\\[`
-    Lexer.`\\]`
-    Lexer.`{`
-    Lexer.`}`
-    Lexer.`:`
-    Lexer.`'`
-    Lexer.`,`
-    Lexer.`;`
-    Lexer.dotAdd
-    Lexer.dotSub
-    Lexer.dotMul
-    Lexer.dotDiv
-    Lexer.lessEqual
-    Lexer.greaterEqual
-    Lexer.notEqual
-    Lexer.equal
-    Lexer.float
-    Lexer.int
-    Lexer.string
-    Lexer.`if`
-    Lexer.`else`
-    Lexer.`for`
-    Lexer.`while`
-    Lexer.break
-    Lexer.continue
-    Lexer.`return`
-    Lexer.eye
-    Lexer.zeros
-    Lexer.ones
-    Lexer.print
-    Lexer.id
+    Lexer.< : Token["<", Ctx, Unit]
+    Lexer.> : Token[">", Ctx, Unit]
+    Lexer.`=`: Token["=", Ctx, Unit]
+    Lexer.`\\+`: Token["\\+", Ctx, Unit]
+    Lexer.- : Token["-", Ctx, Unit]
+    Lexer.`\\*`: Token["\\*", Ctx, Unit]
+    Lexer.`/`: Token["/", Ctx, Unit]
+    Lexer.`\\(`: Token["\\(", Ctx, Unit]
+    Lexer.`\\)`: Token["\\)", Ctx, Unit]
+    Lexer.`\\[`: Token["\\[", Ctx, Unit]
+    Lexer.`\\]`: Token["\\]", Ctx, Unit]
+    Lexer.`{`: Token["{", Ctx, Unit]
+    Lexer.`}`: Token["}", Ctx, Unit]
+    Lexer.`:`: Token[":", Ctx, Unit]
+    Lexer.`'`: Token["'", Ctx, Unit]
+    Lexer.`,`: Token[",", Ctx, Unit]
+    Lexer.`;`: Token[";", Ctx, Unit]
+    Lexer.dotAdd: Token["dotAdd", Ctx, Unit]
+    Lexer.dotSub: Token["dotSub", Ctx, Unit]
+    Lexer.dotMul: Token["dotMul", Ctx, Unit]
+    Lexer.dotDiv: Token["dotDiv", Ctx, Unit]
+    Lexer.lessEqual: Token["lessEqual", Ctx, Unit]
+    Lexer.greaterEqual: Token["greaterEqual", Ctx, Unit]
+    Lexer.notEqual: Token["notEqual", Ctx, Unit]
+    Lexer.equal: Token["equal", Ctx, Unit]
+    Lexer.float: Token["float", Ctx, Double]
+    Lexer.int: Token["int", Ctx, Int]
+    Lexer.string: Token["string", Ctx, String]
+    Lexer.`if`: Token["if", Ctx, Unit]
+    Lexer.`else`: Token["else", Ctx, Unit]
+    Lexer.`for`: Token["for", Ctx, Unit]
+    Lexer.`while`: Token["while", Ctx, Unit]
+    Lexer.break: Token["break", Ctx, Unit]
+    Lexer.continue: Token["continue", Ctx, Unit]
+    Lexer.`return`: Token["return", Ctx, Unit]
+    Lexer.eye: Token["eye", Ctx, Unit]
+    Lexer.zeros: Token["zeros", Ctx, Unit]
+    Lexer.ones: Token["ones", Ctx, Unit]
+    Lexer.print: Token["print", Ctx, Unit]
+    Lexer.id: Token["id", Ctx, String]
   }
 }
