@@ -79,7 +79,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
                   }
                   '{ DefinedToken[name, Ctx, result]($name, ${ Expr(regex) }, $ctxManipulation, $remapping) } -> regex
 
-      val newTokens = extractSimple('{ identity })
+      extractSimple('{ identity })
         .lift(body.asExprOf[ThisToken])
         .orElse {
           body match
@@ -91,10 +91,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
         }
         .getOrElse(raiseShouldNeverBeCalled(body.show))
-
-      newTokens.foldLeft((tokens, patterns)) { case ((tokens, patterns), (token, pattern)) =>
-        (tokens :+ token, patterns :+ pattern)
-      }
+        .foldLeft((tokens, patterns)) { case ((tokens, patterns), (token, pattern)) =>
+          (tokens :+ token, patterns :+ pattern)
+        }
 
     case (tokens, CaseDef(pattern, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
 

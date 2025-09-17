@@ -3,6 +3,7 @@ package lexer
 
 import alpaca.core.raiseShouldNeverBeCalled
 
+import scala.annotation.tailrec
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
@@ -12,28 +13,32 @@ def decodeName(name: String)(using quotes: Quotes): Expr[ValidName] =
     case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
     case other => Expr(other).asExprOf[ValidName]
 
-// this util has bugs for sure https://github.com/halotukozak/alpaca/issues/51
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
-  def apply[T: Type](pattern: Tree): List[(name: Expr[ValidName], pattern: String)] = (TypeRepr.of[T], pattern) match
-    case (ConstantType(StringConstant(str)), pattern) =>
-      // todo: @tailrec
-      def patternLoop(pattern: Tree): String = pattern match
-        case Bind(_, bind) => patternLoop(bind)
-        case Literal(StringConstant(str)) => str
-        case Alternatives(alternatives) => alternatives.map(patternLoop).reduce(_ + "|" + _)
-        case x => raiseShouldNeverBeCalled(x.show)
-
-      List(decodeName(str) -> patternLoop(pattern))
-    case (TermRef(qual, name), Bind(bind, pattern)) if name == bind =>
-      pattern match
-        case Literal(StringConstant(str)) => (decodeName(str), str) :: Nil
-        case Alternatives(alternatives) => alternatives.map {
+  @tailrec def apply[T: Type](pattern: Tree): List[(name: Expr[ValidName], pattern: String)] =
+    (TypeRepr.of[T], pattern) match
+      // for case x @ ... => Token["name"]
+      case (name @ ConstantType(StringConstant(str)), Bind(_, bind)) =>
+        apply[T](bind)
+      // for case x: "str" => Token["name"]
+      case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
+        List((decodeName(name), regex))
+      // for case x: "str1" | "str2" => Token["name"]
+      case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
+        List(decodeName(str) -> alternatives.foldLeft("") {
+          case (acc, Literal(StringConstant(str))) => s"$acc|$str"
+          case (_, x) => raiseShouldNeverBeCalled(x.show)
+        })
+      // case x: "str" => Token[x.type]
+      case (TermRef(qual, name), Bind(bind, Literal(StringConstant(str)))) if name == bind =>
+        List((decodeName(str), str))
+      // case x: "str1" | "str2" => Token[x.type]
+      case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
+        alternatives.map {
           case Literal(StringConstant(str)) => (decodeName(str), str)
           case x => raiseShouldNeverBeCalled(x.show)
         }
-        case x => raiseShouldNeverBeCalled(x.show)
-    case x =>
-      raiseShouldNeverBeCalled(x.toString)
+      case x =>
+        raiseShouldNeverBeCalled(x.toString)
 }
