@@ -16,13 +16,13 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   val CalcLexer = lexer {
     case " \\t" => Token.Ignored["ignore"]
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
-    case "+" => Token["PLUS"]
+    case "\\+" => Token["PLUS"]
     case "-" => Token["MINUS"]
-    case "*" => Token["TIMES"]
+    case "\\*" => Token["TIMES"]
     case "/" => Token["DIVIDE"]
     case "=" => Token["ASSIGN"]
     case "," => Token["COMMA"]
-    case parenthesis @ ("(" | ")") => Token[parenthesis.type]
+    case parenthesis @ ("\\(" | "\\)") => Token[parenthesis.type]
     case number @ "\\d+" => Token["NUMBER"](number.toInt)
     case "#.*" => Token.Ignored["ignoreComment"]
     case newline @ "\n+" =>
@@ -33,7 +33,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     lazy val Statement = rule {
       case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
         ctx.names(id.value) = expr
-      case (CalcLexer.ID(id), CalcLexer.`(`(_), arglist: Option[Expr.type], CalcLexer.`)`(_)) =>
+      case (CalcLexer.ID(id), CalcLexer.`\\(`(_), arglist: Option[Expr.type], CalcLexer.`\\)`(_)) =>
         (id, arglist)
       case (CalcLexer.ID(id), exprs: List[Expr.type]) =>
         id :: exprs
@@ -46,7 +46,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2
       case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2
       case (CalcLexer.MINUS(_), Expr(expr)) => -expr
-      case (CalcLexer.`(`(_), Expr(expr), CalcLexer.`)`(_)) => expr
+      case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr
       case Expr(CalcLexer.NUMBER(expr)) => expr
       case CalcLexer.ID(id) =>
         ctx.names.getOrElse(

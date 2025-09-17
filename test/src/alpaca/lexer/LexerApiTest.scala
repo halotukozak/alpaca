@@ -5,9 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
-    case literal @ ("<" | ">" | "=" | "+" | "-" | "*" | "/" | "(" | ")" | "[" | "]" | "{" | "}" | ":" | "'" | "," |
-        ";") =>
-      Token[literal.type]
+    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" | "'" | "," | ";") => Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -19,7 +17,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case "==" => Token["equal"]
     case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
     case x @ "[0-9]+" => Token["int"](x.toInt)
-    case x @ "[^\"]*" => Token["string"](x)
+    case x @ "\"[^\"]*\"" => Token["string"](x)
     case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
         "print") =>
       Token[keyword.type]
@@ -54,14 +52,14 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.<
     Lexer.>
     Lexer.`=`
-    Lexer.+
+    Lexer.`\\+`
     Lexer.-
-    Lexer.*
+    Lexer.`\\*`
     Lexer./
-    Lexer.`(`
-    Lexer.`)`
-    Lexer.`[`
-    Lexer.`]`
+    Lexer.`\\(`
+    Lexer.`\\)`
+    Lexer.`\\[`
+    Lexer.`\\]`
     Lexer.`{`
     Lexer.`}`
     Lexer.`:`

@@ -2,8 +2,9 @@ package alpaca.lexer
 
 import alpaca.lexer.context.default.DefaultLexem
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-final class LexerTest extends AnyFunSuite {
+final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize simple identifier") {
     val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
@@ -76,5 +77,12 @@ final class LexerTest extends AnyFunSuite {
     //     DefaultLexem("NUMBER", "1"),
     //   ),
     // )
+  }
+
+  test("throws on overlapping regex patterns") {
+    """val Lexer = lexer {
+      case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
+      case "[a-zA-Z]+" => Token["ALPHABETIC"]
+    }""" shouldNot compile
   }
 }
