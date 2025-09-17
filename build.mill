@@ -54,14 +54,18 @@ object `package` extends ScalaModule with ScoverageModule {
 
   def alpacaVersion = "0.1.0"
 
-  def mvnDeps = Seq(
-    mvn"com.github.marianobarrios:dregex:0.9.0",
-    mvn"org.jparsec:jparsec:3.1",
-    mvn"org.slf4j:slf4j-api:1.7.36",
-    mvn"org.slf4j:slf4j-simple:1.7.36"
-  )
+  def compileMvnDeps = Seq(
+      mvn"com.github.marianobarrios:dregex:0.9.0"
+    )
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
     def scalaTestVersion = "3.2.19"
+
+    def mvnDeps = Seq(
+      mvn"com.github.marianobarrios:dregex:0.9.0",
+      mvn"org.jparsec:jparsec:3.1",
+      mvn"org.slf4j:slf4j-api:1.7.36",
+      mvn"org.slf4j:slf4j-simple:1.7.36"
+    )
   }
 }
