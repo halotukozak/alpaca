@@ -4,7 +4,7 @@ import dregex.Regex
 import scala.jdk.CollectionConverters.*
 
 object RegexChecker {
-  def checkPatterns(patterns: List[String]) = patterns match
+  def checkPatterns(patterns: List[String]): Seq[String] = patterns match
     case Nil => Nil
     case _   => 
       val regexes = Regex.compile(patterns.asJava)
