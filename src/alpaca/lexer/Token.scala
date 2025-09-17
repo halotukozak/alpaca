@@ -27,15 +27,6 @@ object Token {
   def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = ???
-
-  // todo: reconsider using or removing
-  given Ordering[Token[?, ?, ?]] = {
-    // Ignored tokens are always less than any other token
-    case (x: IgnoredToken[?, ?], y: DefinedToken[?, ?, ?]) => -1
-    case (x: DefinedToken[?, ?, ?], y: IgnoredToken[?, ?]) => 1
-    case (x: DefinedToken[?, ?, ?], y: DefinedToken[?, ?, ?]) => x.index.compareTo(y.index)
-    case (x: IgnoredToken[?, ?], y: IgnoredToken[?, ?]) => x.pattern.compareTo(y.pattern)
-  }
 }
 
 //todo: may be invariant?

@@ -27,17 +27,13 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
 
       List(decodeName(str) -> patternLoop(pattern))
     case (TermRef(qual, name), Bind(bind, pattern)) if name == bind =>
-      // todo: @tailrec
-      def multipleLoop(pattern: Tree): List[(String, String)] = pattern match
-        case Literal(StringConstant(str)) => (str, str) :: Nil
-        case Alternatives(alternatives) =>
-          alternatives
-            .map(multipleLoop(_).reduce { case ((name, pattern), (altName, altPattern)) =>
-              s"${name}_or_$altName" -> s"$pattern|$altPattern"
-            })
+      pattern match
+        case Literal(StringConstant(str)) => (decodeName(str), str) :: Nil
+        case Alternatives(alternatives) => alternatives.map {
+          case Literal(StringConstant(str)) => (decodeName(str), str)
+          case x => raiseShouldNeverBeCalled(x.show)
+        }
         case x => raiseShouldNeverBeCalled(x.show)
-
-      multipleLoop(pattern).map { case (name, pattern) => (decodeName(name), pattern) }
     case x =>
       raiseShouldNeverBeCalled(x.toString)
 }

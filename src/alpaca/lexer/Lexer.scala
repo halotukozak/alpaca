@@ -170,8 +170,8 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       ValDef(
         cls.fieldMember("tokens"),
         Some {
-          val declaredTokens = cls.fieldMembers.collect {
-            case s if s.typeRef.widen <:< TypeRepr.of[ThisToken] => This(cls).select(s).asExprOf[ThisToken]
+          val declaredTokens = definedTokens.map { case '{ $token: DefinedToken[name, Ctx, ?] } =>
+            This(cls).select(cls.fieldMember(nameToString[name])).asExprOf[ThisToken]
           }
 
           Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
