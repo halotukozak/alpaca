@@ -13,8 +13,6 @@ trait GlobalCtx[LexemTpe <: Lexem[?, ?]] extends CtxMarker {
   def text: String = _text.toString
   var lastLexem: Lexem[?, ?] | Null
   var _text: CharSequence
-
-  def text_=(t: CharSequence): Unit = _text = t
 }
 
 object GlobalCtx:

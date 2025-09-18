@@ -28,6 +28,10 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
     this
   }
 
+  override def toString(): String = {
+    subSequence(0, length).toString()
+  }
+
   override def close(): Unit = reader.close()
 
   @tailrec

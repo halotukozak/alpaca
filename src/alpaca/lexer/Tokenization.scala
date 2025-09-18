@@ -21,13 +21,13 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
 
   final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?, ?]] = {
     @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?, ?]]): List[Lexem[?, ?]] =
-      globalCtx.text match
-        case "" =>
+      globalCtx._text.length() match
+        case 0 =>
           acc.reverse
         case _ =>
-          compiled.findPrefixMatchOf(globalCtx.text) match
+          compiled.findPrefixMatchOf(globalCtx._text) match
             case None =>
-              throw new RuntimeException(s"Unexpected character ${globalCtx.text(0)}'") // todo: custom error handling
+              throw new RuntimeException(s"Unexpected character: '${globalCtx._text.charAt(0)}'") // todo: custom error handling
             case Some(m) =>
               tokens.find(token => m.group(token.name) ne null) match
                 case Some(token @ IgnoredToken(name, _, modifyCtx)) =>
@@ -45,7 +45,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
                   throw new AlgorithmError(s"$m matched but no token defined for it")
 
     val initialContext = empty()
-    initialContext.text = input
+    initialContext._text = input
     loop(initialContext)(Nil)
   }
 }

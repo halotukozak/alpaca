@@ -12,4 +12,9 @@ trait PositionTracking extends CtxMarker {
 }
 
 object PositionTracking:
-  given BetweenStages[PositionTracking] = (name, m, ctx) => ctx.position += m.matched.length
+  given BetweenStages[PositionTracking] = (name, m, ctx) => {
+    if m.matched == "\n" then
+      ctx.position = 1
+    else
+      ctx.position += m.matched.length
+  }
