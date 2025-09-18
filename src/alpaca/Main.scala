@@ -33,7 +33,7 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
     NonTerminal("R"),
   )
 
-  val table = parseTable(productions)
+  val table = ParseTable(productions)
 
   print(centerText("S"))
   print("|")
