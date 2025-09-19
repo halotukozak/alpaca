@@ -19,7 +19,7 @@ object GlobalCtx:
   given [LexemTpe <: Lexem[?, ?], Ctx <: GlobalCtx[LexemTpe] & Product: Mirror.ProductOf]: Copyable[Ctx] =
     Copyable.derived
 
-  given BetweenStages[AnyGlobalCtx] = (name, m, ctx) => {
-    ctx.lastLexem = DefaultLexem(name, m.matched)
+  given BetweenStages[AnyGlobalCtx] = (token, m, ctx) => {
+    ctx.lastLexem = DefaultLexem(token.name, m.matched)
     ctx._text = ctx._text.from(m.end)
   }

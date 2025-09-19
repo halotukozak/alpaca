@@ -21,7 +21,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
 
   final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?, ?]] = {
     @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?, ?]]): List[Lexem[?, ?]] =
-      globalCtx._text.length() match
+      globalCtx._text.length match
         case 0 =>
           acc.reverse
         case _ =>
@@ -30,12 +30,12 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
               throw new RuntimeException(s"Unexpected character: '${globalCtx._text.charAt(0)}'") // todo: custom error handling
             case Some(m) =>
               tokens.find(token => m.group(token.name) ne null) match
-                case Some(token @ IgnoredToken(name, _, modifyCtx)) =>
-                  betweenStages(token.name, m, globalCtx)
+                case Some(token @ IgnoredToken(_, _, modifyCtx)) =>
+                  betweenStages(token, m, globalCtx)
 
                   loop(globalCtx)(acc)
-                case Some(token @ DefinedToken(name, _, modifyCtx, remapping)) =>
-                  betweenStages(token.name, m, globalCtx)
+                case Some(token @ DefinedToken(_, _, modifyCtx, remapping)) =>
+                  betweenStages(token, m, globalCtx)
 
                   val value = remapping(globalCtx)
                   val lexem = globalCtx.lastLexem.nn // todo: for now

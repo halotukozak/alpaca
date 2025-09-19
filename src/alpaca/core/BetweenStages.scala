@@ -2,6 +2,7 @@ package alpaca
 package core
 
 import alpaca.lexer.context.AnyGlobalCtx
+import alpaca.lexer.Token
 
 import scala.annotation.experimental
 import scala.quoted.*
@@ -11,10 +12,10 @@ import scala.util.matching.Regex.Match
 trait CtxMarker
 
 // todo: i do not like this name
-trait BetweenStages[Ctx <: CtxMarker] extends ((String, Match, Ctx) => Unit)
+trait BetweenStages[Ctx <: CtxMarker] extends ((Token[?, ?, ?], Match, Ctx) => Unit)
 
 object BetweenStages {
-  given BetweenStages[CtxMarker] = (name, m, ctx) => ()
+  given BetweenStages[CtxMarker] = (token, m, ctx) => ()
 
   inline given [Ctx <: CtxMarker]: BetweenStages[Ctx] = ${ derivedImpl[Ctx] }
 
@@ -36,6 +37,6 @@ object BetweenStages {
         .flatMap { case '[type ctx >: Ctx <: CtxMarker; ctx] => Expr.summon[BetweenStages[ctx]] }
     }
 
-    '{ (name, m, ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
+    '{ (token, m, ctx) => $betweenStages.foreach(_.apply(token, m, ctx)) }
   }
 }

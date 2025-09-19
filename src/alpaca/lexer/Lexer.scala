@@ -63,6 +63,11 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
             case ('{ type name <: ValidName; $name: name }, regex) =>
               '{ DefinedToken[name, Ctx, Unit]($name, ${ Expr(regex) }, $ctxManipulation, _ => ()) } -> regex
 
+        case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } if value.asTerm.symbol == pattern.symbol =>
+          compileNameAndPattern[t](pattern).map:
+            case ('{ type name <: ValidName; $name: name }, regex) =>
+              '{ DefinedToken[name, Ctx, String]($name, ${ Expr(regex) }, $ctxManipulation, _.text) } -> regex
+
         case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
