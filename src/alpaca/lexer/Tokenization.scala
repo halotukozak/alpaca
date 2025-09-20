@@ -32,8 +32,8 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
           val token = tokens.find(token => m.group(token.name) ne null) getOrElse {
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
-          val lexem = List(token).collect { case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem }
           betweenStages(token, m, globalCtx)
+          val lexem = List(token).collect { case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem }
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()
