@@ -48,7 +48,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     case ((tokens, patterns), CaseDef(pattern, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(
         (find = oldCtx.symbol, replace = newCtx),
-        (find = pattern.symbol, replace = '{ ${ newCtx.asExprOf[Ctx] }.lastRawMatched }.asTerm),
+        (find = pattern.symbol, replace = Select.unique(newCtx, "lastRawMatched")),
       )
 
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
