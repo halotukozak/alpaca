@@ -9,4 +9,4 @@ trait LineTracking extends GlobalCtx {
 }
 
 object LineTracking:
-  given BetweenStages[LineTracking] = (name, m, ctx) => if m.matched == "\n" then ctx.line += 1
+  given BetweenStages[LineTracking] = (token, m, ctx) => if m.matched == "\n" then ctx.line += 1
