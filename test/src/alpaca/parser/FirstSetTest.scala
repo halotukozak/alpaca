@@ -1,7 +1,7 @@
 package alpaca.parser
 
 import org.scalatest.funsuite.AnyFunSuite
-import alpaca.parser.Symbol.{Terminal, NonTerminal}
+import alpaca.parser.Symbol.{NonTerminal, Terminal}
 
 class FirstSetTest extends AnyFunSuite {
   test("FirstSet should correctly identify first sets for simple grammar") {
@@ -16,7 +16,7 @@ class FirstSetTest extends AnyFunSuite {
     val expected = Map(
       NonTerminal("S") -> Set(Terminal("1"), Terminal("2"), Terminal("3")),
       NonTerminal("L") -> Set(Terminal("1"), Terminal("2")),
-      NonTerminal("R") -> Set(Terminal("3"))
+      NonTerminal("R") -> Set(Terminal("3")),
     )
 
     assert(FirstSet(productions) == expected)
@@ -31,7 +31,7 @@ class FirstSetTest extends AnyFunSuite {
       Production(NonTerminal("T'"), Vector(Terminal("*"), NonTerminal("F"), NonTerminal("T'"))),
       Production(NonTerminal("T'"), Vector(Symbol.Empty)),
       Production(NonTerminal("F"), Vector(Terminal("("), NonTerminal("E"), Terminal(")"))),
-      Production(NonTerminal("F"), Vector(Terminal("id")))
+      Production(NonTerminal("F"), Vector(Terminal("id"))),
     )
 
     val expected = Map(
@@ -39,7 +39,7 @@ class FirstSetTest extends AnyFunSuite {
       NonTerminal("E'") -> Set(Terminal("+"), Symbol.Empty),
       NonTerminal("T") -> Set(Terminal("("), Terminal("id")),
       NonTerminal("T'") -> Set(Terminal("*"), Symbol.Empty),
-      NonTerminal("F") -> Set(Terminal("("), Terminal("id"))
+      NonTerminal("F") -> Set(Terminal("("), Terminal("id")),
     )
 
     assert(FirstSet(productions) == expected)

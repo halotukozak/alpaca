@@ -1,22 +1,22 @@
 package alpaca.lexer
 
-import alpaca.lexer.context.default.DefaultLexem
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import java.nio.file.Path
 import java.nio.file.Files
+import alpaca.lexer.context.Lexem
 
 final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize simple identifier") {
-    val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
+    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
     val result = Lexer.tokenize("hello")
-    assert(result == List(DefaultLexem("IDENTIFIER", "hello")))
+    assert(result == List(Lexem("IDENTIFIER", "hello")))
   }
 
   test("tokenize with whitespace ignored") {
     val Lexer = lexer {
-      case "[0-9]+" => Token["NUMBER"]
+      case number @ "[0-9]+" => Token["NUMBER"](number)
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored["WHITESPACE"]
     }
@@ -24,21 +24,21 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
     assert(
       result == List(
-        DefaultLexem("NUMBER", "42"),
-        DefaultLexem("PLUS", "+"),
-        DefaultLexem("NUMBER", "13"),
+        Lexem("NUMBER", "42"),
+        Lexem("PLUS", ()),
+        Lexem("NUMBER", "13"),
       ),
     )
   }
 
   test("tokenize empty string") {
-    val Lexer = lexer { case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"] }
+    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
     val result = Lexer.tokenize("")
     assert(result == List.empty)
   }
 
   test("throw exception for unexpected character") {
-    val Lexer = lexer { case "[0-9]+" => Token["NUMBER"] }
+    val Lexer = lexer { case number @ "[0-9]+" => Token["NUMBER"](number.toInt) }
 
     val exception = intercept[RuntimeException] {
       Lexer.tokenize("123abc")
@@ -48,8 +48,8 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize complex expression") {
     val Lexer = lexer {
-      case "[0-9]+" => Token["NUMBER"]
-      case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"]
+      case number @ "[0-9]+" => Token["NUMBER"](number)
+      case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
       case "-" => Token["MINUS"]
       case "\\*" => Token["MULTIPLY"]
@@ -61,15 +61,15 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
     assert(
       result == List(
-        DefaultLexem("LPAREN", "("),
-        DefaultLexem("IDENTIFIER", "x"),
-        DefaultLexem("PLUS", "+"),
-        DefaultLexem("NUMBER", "42"),
-        DefaultLexem("RPAREN", ")"),
-        DefaultLexem("MULTIPLY", "*"),
-        DefaultLexem("IDENTIFIER", "y"),
-        DefaultLexem("MINUS", "-"),
-        DefaultLexem("NUMBER", "1"),
+        Lexem("LPAREN", ()),
+        Lexem("IDENTIFIER", "x"),
+        Lexem("PLUS", ()),
+        Lexem("NUMBER", "42"),
+        Lexem("RPAREN", ()),
+        Lexem("MULTIPLY", ()),
+        Lexem("IDENTIFIER", "y"),
+        Lexem("MINUS", ()),
+        Lexem("NUMBER", "1"),
       ),
     )
   }
@@ -83,8 +83,8 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize file") {
     val Lexer = lexer {
-      case "[0-9]+" => Token["NUMBER"]
-      case "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"]
+      case number @ "[0-9]+" => Token["NUMBER"](number)
+      case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
       case "-" => Token["MINUS"]
       case "\\*" => Token["MULTIPLY"]
@@ -100,15 +100,15 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
     assert(
       result == List(
-        DefaultLexem("LPAREN", "("),
-        DefaultLexem("IDENTIFIER", "x"),
-        DefaultLexem("PLUS", "+"),
-        DefaultLexem("NUMBER", "42"),
-        DefaultLexem("RPAREN", ")"),
-        DefaultLexem("MULTIPLY", "*"),
-        DefaultLexem("IDENTIFIER", "y"),
-        DefaultLexem("MINUS", "-"),
-        DefaultLexem("NUMBER", "1"),
+        Lexem("LPAREN", ()),
+        Lexem("IDENTIFIER", "x"),
+        Lexem("PLUS", ()),
+        Lexem("NUMBER", "42"),
+        Lexem("RPAREN", ()),
+        Lexem("MULTIPLY", ()),
+        Lexem("IDENTIFIER", "y"),
+        Lexem("MINUS", ()),
+        Lexem("NUMBER", "1"),
       ),
     )
 

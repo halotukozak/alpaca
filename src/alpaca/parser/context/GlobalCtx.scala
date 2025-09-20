@@ -1,18 +1,14 @@
 package alpaca.parser.context
 
-import alpaca.core.{BetweenStages, Copyable, CtxMarker}
+import alpaca.core.Copyable
+import alpaca.lexer.BetweenStages
 
 import scala.deriving.Mirror
 import scala.util.matching.Regex.Match
 
 type AnyGlobalCtx = GlobalCtx
 
-object AnyGlobalCtx:
-  given BetweenStages[AnyGlobalCtx] = (name: String, m: Match, ctx: AnyGlobalCtx) => {
-    ??? // todo: https://github.com/halotukozak/alpaca/issues/51}
-  }
-
-trait GlobalCtx extends CtxMarker
+trait GlobalCtx
 
 object GlobalCtx:
   given [Ctx <: GlobalCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =

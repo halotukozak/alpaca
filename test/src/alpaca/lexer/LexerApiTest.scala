@@ -3,7 +3,6 @@ package alpaca.lexer
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import alpaca.lexer.context.default.DefaultGlobalCtx
-import alpaca.lexer.context.default.DefaultLexem
 import scala.annotation.nowarn
 
 @nowarn("msg=A pure expression")
@@ -50,7 +49,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       "[a-zA-Z_][a-zA-Z0-9_]*",
     )
     //format: on
-    type Ctx = DefaultGlobalCtx[DefaultLexem[?, ?]]
+    type Ctx = DefaultGlobalCtx
 
     // we check if compiles and not crashes
     Lexer.< : Token["<", Ctx, Unit]

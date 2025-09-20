@@ -2,8 +2,8 @@ package alpaca
 package lexer
 
 import alpaca.core.*
-import alpaca.lexer.context.AnyGlobalCtx
-import alpaca.lexer.context.default.{DefaultGlobalCtx, DefaultLexem}
+import alpaca.lexer.context.*
+import alpaca.lexer.context.default.DefaultGlobalCtx
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.experimental
@@ -13,7 +13,7 @@ type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx
 
 @experimental //for IJ  :/
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
-  using Ctx WithDefault DefaultGlobalCtx[DefaultLexem[?, ?]],
+  using Ctx WithDefault DefaultGlobalCtx,
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
@@ -48,7 +48,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     case ((tokens, patterns), CaseDef(pattern, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(
         (find = oldCtx.symbol, replace = newCtx),
-        (find = pattern.symbol, replace = Select.unique(newCtx, "text")),
+        (find = pattern.symbol, replace = '{ ${ newCtx.asExprOf[Ctx] }.lastRawMatched }.asTerm),
       )
 
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
@@ -62,6 +62,12 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
           compileNameAndPattern[t](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
               '{ DefinedToken[name, Ctx, Unit]($name, ${ Expr(regex) }, $ctxManipulation, _ => ()) } -> regex
+
+        case '{ type t <: ValidName; Token.apply[t]($value: String)(using $ctx) }
+            if value.asTerm.symbol == pattern.symbol =>
+          compileNameAndPattern[t](pattern).map:
+            case ('{ type name <: ValidName; $name: name }, regex) =>
+              '{ DefinedToken[name, Ctx, String]($name, ${ Expr(regex) }, $ctxManipulation, _.lastRawMatched) } -> regex
 
         case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } =>
           compileNameAndPattern[t](pattern).map:
@@ -80,7 +86,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
           body match
             case Block(statements, expr) =>
               val ctxManipulation = createLambda[CtxManipulation[Ctx]] { case (methSym, (newCtx: Term) :: Nil) =>
-                replaceWithNewCtx(newCtx).transformTerm(Block(statements.map(_.changeOwner(methSym)), newCtx))(methSym)
+                replaceWithNewCtx(newCtx).transformTerm(
+                  Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
+                )(methSym)
               }
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
