@@ -1,13 +1,12 @@
 package alpaca
 package lexer
 
-import alpaca.lexer.context.AnyGlobalCtx
+import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx}
+import alpaca.soft
 
 import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex.Match
-import alpaca.soft
-import alpaca.lexer.context.GlobalCtx
 
 // todo: i do not like this name
 trait BetweenStages[Ctx <: GlobalCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)

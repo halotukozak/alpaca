@@ -11,7 +11,6 @@ import scala.quoted.*
 
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
-@experimental //for IJ  :/
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,
 )(
@@ -22,9 +21,6 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 ): Tokenization[Ctx] =
   ${ lexerImpl[Ctx]('{ rules }, '{ summon }, '{ summon }) }
 
-//todo: ctxManipulation should work
-//todo: more complex expressions should be supported in remaping
-@experimental //for IJ  :/
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],

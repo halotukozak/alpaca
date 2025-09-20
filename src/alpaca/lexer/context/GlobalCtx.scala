@@ -6,8 +6,8 @@ import alpaca.lexer.BetweenStages
 import alpaca.lexer.context.Lexem
 
 import scala.deriving.Mirror
-import scala.util.matching.Regex.Match
 import scala.util.NotGiven
+import scala.util.matching.Regex.Match
 
 type AnyGlobalCtx = GlobalCtx
 

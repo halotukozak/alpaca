@@ -4,8 +4,6 @@ package default
 
 import alpaca.lexer.BetweenStages
 
-import scala.util.matching.Regex.Match
-
 trait PositionTracking extends GlobalCtx {
   var position: Int
 }

@@ -1,12 +1,10 @@
 package alpaca.lexer
 
-import alpaca.lexer.context.AnyGlobalCtx
+import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx, Lexem}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
-import context.Lexem
-import alpaca.lexer.context.GlobalCtx
 
 type ValidName = String & Singleton
 

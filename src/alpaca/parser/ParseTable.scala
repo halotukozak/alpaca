@@ -1,8 +1,8 @@
 package alpaca.parser
 
+import scala.annotation.publicInBinary
 import scala.collection.mutable
 import scala.quoted.*
-import scala.annotation.publicInBinary
 
 opaque type ParseTable = Map[(Int, Symbol), Int | Production]
 
