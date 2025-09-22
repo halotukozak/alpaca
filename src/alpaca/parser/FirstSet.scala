@@ -1,10 +1,9 @@
 package alpaca.parser
 
-import alpaca.lexer.AlgorithmError
+import alpaca.core.raiseShouldNeverBeCalled
 import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
-import alpaca.core.raiseShouldNeverBeCalled
 
 opaque type FirstSet = Map[NonTerminal, Set[Terminal]]
 
@@ -32,7 +31,7 @@ object FirstSet {
       firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
 
     case x =>
-      raiseShouldNeverBeCalled(x.toString())
+      raiseShouldNeverBeCalled(x.toString)
   }
 
   extension (firstSet: FirstSet)

@@ -2,11 +2,9 @@ package alpaca.lexer
 package context
 package default
 
-import alpaca.core.{BetweenStages, CtxMarker}
+import alpaca.lexer.BetweenStages
 
-trait LineTracking extends CtxMarker {
-  this: GlobalCtx[?] =>
-
+trait LineTracking extends GlobalCtx {
   var line: Int
 }
 

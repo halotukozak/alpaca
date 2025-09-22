@@ -5,7 +5,6 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
-
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
       case "\\s+" => Token.Ignored["WHITESPACE"]

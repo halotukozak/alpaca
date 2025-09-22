@@ -24,7 +24,6 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
-@experimental // for IJ
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
