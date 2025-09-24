@@ -53,8 +53,8 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
 
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
         : PartialFunction[Expr[ThisToken], List[(Expr[ThisToken], String)]] =
-        case '{ type t <: ValidName; Token.Ignored[t](using $ctx) } =>
-          compileNameAndPattern[t](pattern).map:
+        case '{ Token.Ignored(using $ctx) } =>
+          compileNameAndPattern[Nothing](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
               '{ IgnoredToken[name, Ctx]($name, ${ Expr(regex) }, $ctxManipulation) } -> regex
 

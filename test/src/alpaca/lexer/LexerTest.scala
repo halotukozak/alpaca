@@ -18,7 +18,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
     val Lexer = lexer {
       case "[0-9]+" => Token["NUMBER"]
       case "\\+" => Token["PLUS"]
-      case "\\s+" => Token.Ignored["WHITESPACE"]
+      case "\\s+" => Token.Ignored
     }
 //    val result = Lexer.tokenize("42 + 13")
 
@@ -59,7 +59,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\*" => Token["MULTIPLY"]
       case "\\(" => Token["LPAREN"]
       case "\\)" => Token["RPAREN"]
-      case "\\s+" => Token.Ignored["WHITESPACE"]
+      case "\\s+" => Token.Ignored
     }
     // val result = Lexer.tokenize("(x + 42) * y - 1")
 

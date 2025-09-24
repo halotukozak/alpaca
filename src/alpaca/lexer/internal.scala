@@ -5,7 +5,6 @@ import alpaca.core.raiseShouldNeverBeCalled
 
 import scala.annotation.tailrec
 import scala.quoted.*
-import scala.reflect.NameTransformer
 
 def decodeName(name: String)(using quotes: Quotes): Expr[ValidName] =
   import quotes.reflect.*
