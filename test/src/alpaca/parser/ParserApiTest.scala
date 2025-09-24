@@ -29,7 +29,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       ctx.line += newline.count(_ == '\n')
       Token.Ignored["newline"]
   }
-  val CalcParser = parser[CalcContext] {
+
+  object CalcParser extends Parser[CalcContext] {
     lazy val Statement = rule {
       case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
         ctx.names(id.value) = expr
@@ -80,11 +81,11 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       DefaultLexem("ID", "a") :: DefaultLexem("ASSIGN", ()) :: DefaultLexem("NUMBER", 3) :: DefaultLexem("PLUS", ()) ::
         DefaultLexem("NUMBER", 4) :: DefaultLexem("TIMES", ()) :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 5) ::
         DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 6) :: DefaultLexem(")", ()) :: Nil
-
+   
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
 
     // todo: // https://github.com/halotukozak/alpaca/issues/51
     val lexems2 =
@@ -94,8 +95,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
         DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 6) :: DefaultLexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems2) should matchPattern:
-//      case (_, Some(47)) =>
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, Some(47)) =>
   }
 
   test("ebnf") {
@@ -105,8 +106,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       DefaultLexem("ID", "a") :: DefaultLexem("(", ()) :: DefaultLexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (_, Some(('a', None))) =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (_, Some(('a', None))) =>
 
     val lexems1 =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
@@ -115,8 +116,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
         DefaultLexem("NUMBER", 3) :: DefaultLexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems1) should matchPattern:
-//      case (_, Some(('a', Some(Seq(5))))) =>
+    CalcParser.parse[R](lexems1) should matchPattern:
+      case (_, Some(('a', Some(Seq(5))))) =>
 
     val lexems2 =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
@@ -126,8 +127,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
         DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 5) :: DefaultLexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems2) should matchPattern:
-//      case (_, Some(('a', Some(Seq(5, 9))))) =>
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, Some(('a', Some(Seq(5, 9))))) =>
   }
 
   test("parse error") {
@@ -138,7 +139,19 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
         DefaultLexem("NUMBER", 5) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (ctx: CalcContext, Some(9)) if ctx.errors.toList == Seq(("NUMBER", 123)) =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (ctx: CalcContext, Some(9)) if ctx.errors.toList == Seq(("NUMBER", 123)) =>
   }
+
+  // test("always after") {
+  //   val Parser = parser {
+  //     lazy val Expr: Rule = rule { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) =>
+  //       a + b
+  //     }.alwaysAfter(Expr2)
+
+  //     lazy val Expr2 = rule { case (CalcLexer.PLUS(_), Expr(b)) =>
+  //       b
+  //     }.alwaysBefore(Expr)
+  //   }
+  // }
 }

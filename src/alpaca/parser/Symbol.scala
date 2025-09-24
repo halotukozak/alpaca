@@ -35,9 +35,9 @@ object Symbol {
 
   given ToExpr[NonTerminal] with
     def apply(x: NonTerminal)(using Quotes): Expr[NonTerminal] =
-      '{ NonTerminal(${ Expr(x.name) }) }
-
+      '{ NonTerminal(${ Expr(x.name) }, ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) }) }
+      
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] =
-      '{ Terminal(${ Expr(x.name) }) }
+      '{ Terminal(${ Expr(x.name) }, ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) }) }
 }
