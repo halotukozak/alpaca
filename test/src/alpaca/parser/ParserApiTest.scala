@@ -6,15 +6,16 @@ import alpaca.lexer.*
 import alpaca.lexer.context.default.*
 import alpaca.parser.Symbol.*
 import alpaca.parser.context.GlobalCtx
-import org.scalatest.LoneElement
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.mutable
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
+  type R = Unit | Int | List[Int] | (Char, Option[List[Int]])
+
   val CalcLexer = lexer {
-    case " \\t" => Token.Ignored["ignore"]
+    case " \\t" => Token.Ignored
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
     case "\\+" => Token["PLUS"]
     case "-" => Token["MINUS"]
@@ -24,11 +25,25 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     case "," => Token["COMMA"]
     case parenthesis @ ("\\(" | "\\)") => Token[parenthesis.type]
     case number @ "\\d+" => Token["NUMBER"](number.toInt)
-    case "#.*" => Token.Ignored["ignoreComment"]
+    case "#.*" => Token.Ignored
     case newline @ "\n+" =>
       ctx.line += newline.count(_ == '\n')
-      Token.Ignored["newline"]
+      Token.Ignored
   }
+
+  case class CalcContext(
+    names: mutable.Map[String, Int] = mutable.Map.empty,
+    errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
+  ) extends GlobalCtx derives Copyable
+
+  // class CalcParser(Parser):
+  //    tokens = CalcLexer.tokens
+  //
+  //    precedence = (
+  //        ('left', PLUS, MINUS),
+  //        ('left', TIMES, DIVIDE),
+  //        ('right', UMINUS),
+  //        )
 
   object CalcParser extends Parser[CalcContext] {
     lazy val Statement = rule {
@@ -58,22 +73,6 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     }
   }
 
-  case class CalcContext(
-    names: mutable.Map[String, Int] = mutable.Map.empty,
-    errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
-  ) extends GlobalCtx derives Copyable
-
-  // class CalcParser(Parser):
-  //    tokens = CalcLexer.tokens
-  //
-  //    precedence = (
-  //        ('left', PLUS, MINUS),
-  //        ('left', TIMES, DIVIDE),
-  //        ('right', UMINUS),
-  //        )
-
-  type R = Unit | Int | List[Int] | (Char, Option[List[Int]])
-
   test("basic recognition of various tokens and literals") {
     // todo: // https://github.com/halotukozak/alpaca/issues/51
     val lexems =
@@ -81,7 +80,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       DefaultLexem("ID", "a") :: DefaultLexem("ASSIGN", ()) :: DefaultLexem("NUMBER", 3) :: DefaultLexem("PLUS", ()) ::
         DefaultLexem("NUMBER", 4) :: DefaultLexem("TIMES", ()) :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 5) ::
         DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 6) :: DefaultLexem(")", ()) :: Nil
-   
+
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems) should matchPattern:
@@ -142,16 +141,4 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     CalcParser.parse[R](lexems) should matchPattern:
       case (ctx: CalcContext, Some(9)) if ctx.errors.toList == Seq(("NUMBER", 123)) =>
   }
-
-  // test("always after") {
-  //   val Parser = parser {
-  //     lazy val Expr: Rule = rule { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) =>
-  //       a + b
-  //     }.alwaysAfter(Expr2)
-
-  //     lazy val Expr2 = rule { case (CalcLexer.PLUS(_), Expr(b)) =>
-  //       b
-  //     }.alwaysBefore(Expr)
-  //   }
-  // }
 }

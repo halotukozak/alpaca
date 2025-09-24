@@ -9,8 +9,8 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
       case "\\s+" => Token.Ignored
-      case x @ "[0-9]+" => Token["int"](x.toInt)
-      case s @ "[a-z]+" => Token["id"](s.toUpperCase)
+      case x@"[0-9]+" => Token["int"](x.toInt)
+      case s@"[a-z]+" => Token["id"](s.toUpperCase)
     }
     // todo: https://github.com/halotukozak/alpaca/issues/51
 
