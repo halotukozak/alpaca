@@ -2,16 +2,11 @@ package alpaca
 package lexer
 
 import alpaca.core.raiseShouldNeverBeCalled
+import alpaca.lexer.CompileNameAndPattern.*
 
 import scala.annotation.tailrec
 import scala.quoted.*
 import scala.reflect.NameTransformer
-
-def decodeName(name: String)(using quotes: Quotes): Expr[ValidName] =
-  import quotes.reflect.*
-  NameTransformer.decode(name) match
-    case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
-    case other => Expr(other).asExprOf[ValidName]
 
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
@@ -59,4 +54,12 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           raiseShouldNeverBeCalled(x.toString)
 
     loop(TypeRepr.of[T], pattern)
+}
+
+private object CompileNameAndPattern {
+  private def decodeName(name: String)(using quotes: Quotes): Expr[ValidName] =
+    import quotes.reflect.*
+    NameTransformer.decode(name) match
+      case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
+      case other => Expr(other).asExprOf[ValidName]
 }

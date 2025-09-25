@@ -14,6 +14,8 @@ sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value] {
   val name: Name
   val pattern: String
   val ctxManipulation: CtxManipulation[Ctx @uv]
+
+  final val regexName = "token" + Token.counter.getAndIncrement()
 }
 
 object Token {
@@ -23,6 +25,8 @@ object Token {
   def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = ???
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = ???
+
+  private val counter = AtomicInteger(0)
 }
 
 //todo: may be invariant?

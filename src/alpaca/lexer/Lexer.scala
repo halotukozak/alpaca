@@ -47,9 +47,8 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         (find = pattern.symbol, replace = Select.unique(newCtx, "lastRawMatched")),
       )
 
-      def extractSimple(
-        ctxManipulation: Expr[CtxManipulation[Ctx]],
-      ): PartialFunction[Expr[ThisToken], List[(Expr[ThisToken], String)]] =
+      def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
+        : PartialFunction[Expr[ThisToken], List[(Expr[ThisToken], String)]] =
         case '{ Token.Ignored(using $ctx) } =>
           compileNameAndPattern[Nothing](pattern).map:
             case ('{ type name <: ValidName; $name: name }, regex) =>
