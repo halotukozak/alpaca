@@ -3,10 +3,9 @@ package alpaca.core
 import scala.deriving.Mirror
 
 trait Showable[T] {
-  def show(t: T): String
+  extension (t: T) def show: String
 }
 
-extension [T](t: T)(using show: Showable[T]) def show: String = show.show(t)
 extension (sc: StringContext) def show(args: Showable.Shown*): String = sc.s(args*)
 
 object Showable {

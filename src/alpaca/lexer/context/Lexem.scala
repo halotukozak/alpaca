@@ -1,7 +1,8 @@
-package alpaca.lexer
+package alpaca
+package lexer
 package context
 
-trait Lexem[Name <: ValidName, Value] {
-  val name: Name
-  val value: Value
-}
+import alpaca.lexer.BetweenStages
+
+final case class Lexem[+Name <: ValidName, +Value](name: Name, value: Value)
+//todo: (attributes: Map[String, Any] = Map.empty) extends Selectable

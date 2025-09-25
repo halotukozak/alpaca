@@ -2,6 +2,7 @@ package alpaca
 package parser
 
 import scala.annotation.compileTimeOnly
+import scala.quoted.{Expr, Quotes}
 
 type RuleDefinition = PartialFunction[Tuple, Any]
 

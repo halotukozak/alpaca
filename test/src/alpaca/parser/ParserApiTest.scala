@@ -8,6 +8,7 @@ import alpaca.parser.Symbol.*
 import alpaca.parser.context.GlobalCtx
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.lexer.context.Lexem
 
 import scala.collection.mutable
 
@@ -77,9 +78,9 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     // todo: // https://github.com/halotukozak/alpaca/issues/51
     val lexems =
 //      CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
-      DefaultLexem("ID", "a") :: DefaultLexem("ASSIGN", ()) :: DefaultLexem("NUMBER", 3) :: DefaultLexem("PLUS", ()) ::
-        DefaultLexem("NUMBER", 4) :: DefaultLexem("TIMES", ()) :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 5) ::
-        DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 6) :: DefaultLexem(")", ()) :: Nil
+      Lexem("ID", "a") :: Lexem("ASSIGN", ()) :: Lexem("NUMBER", 3) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 4) ::
+        Lexem("TIMES", ()) :: Lexem("(", ()) :: Lexem("NUMBER", 5) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 6) ::
+        Lexem(")", ()) :: Nil
 
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
@@ -89,9 +90,9 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     // todo: // https://github.com/halotukozak/alpaca/issues/51
     val lexems2 =
       // CalcLexer.tokenize("3 + 4 * (5 + 6)")
-      DefaultLexem("ID", "a") :: DefaultLexem("ASSIGN", ()) :: DefaultLexem("NUMBER", 3) :: DefaultLexem("PLUS", ()) ::
-        DefaultLexem("NUMBER", 4) :: DefaultLexem("TIMES", ()) :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 5) ::
-        DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 6) :: DefaultLexem(")", ()) :: Nil
+      Lexem("ID", "a") :: Lexem("ASSIGN", ()) :: Lexem("NUMBER", 3) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 4) ::
+        Lexem("TIMES", ()) :: Lexem("(", ()) :: Lexem("NUMBER", 5) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 6) ::
+        Lexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems2) should matchPattern:
@@ -102,7 +103,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
       // CalcLexer.tokenize("a()")
-      DefaultLexem("ID", "a") :: DefaultLexem("(", ()) :: DefaultLexem(")", ()) :: Nil
+      Lexem("ID", "a") :: Lexem("(", ()) :: Lexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems) should matchPattern:
@@ -111,8 +112,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems1 =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
       // CalcLexer.tokenize("a(2+3)")
-      DefaultLexem("ID", "a") :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 2) :: DefaultLexem("PLUS", ()) ::
-        DefaultLexem("NUMBER", 3) :: DefaultLexem(")", ()) :: Nil
+      Lexem("ID", "a") :: Lexem("(", ()) :: Lexem("NUMBER", 2) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 3) ::
+        Lexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems1) should matchPattern:
@@ -121,9 +122,9 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems2 =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
       // CalcLexer.tokenize("a(2+3,4+5)")
-      DefaultLexem("ID", "a") :: DefaultLexem("(", ()) :: DefaultLexem("NUMBER", 2) :: DefaultLexem("PLUS", ()) ::
-        DefaultLexem("NUMBER", 3) :: DefaultLexem(")", ()) :: DefaultLexem(",", ()) :: DefaultLexem("NUMBER", 4) ::
-        DefaultLexem("PLUS", ()) :: DefaultLexem("NUMBER", 5) :: DefaultLexem(")", ()) :: Nil
+      Lexem("ID", "a") :: Lexem("(", ()) :: Lexem("NUMBER", 2) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 3) ::
+        Lexem(")", ()) :: Lexem(",", ()) :: Lexem("NUMBER", 4) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 5) ::
+        Lexem(")", ()) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems2) should matchPattern:
@@ -134,8 +135,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems =
       // todo: // https://github.com/halotukozak/alpaca/issues/51
       // CalcLexer.tokenize("a 123 4 + 5")
-      DefaultLexem("ID", "a") :: DefaultLexem("NUMBER", 123) :: DefaultLexem("NUMBER", 4) :: DefaultLexem("PLUS", ()) ::
-        DefaultLexem("NUMBER", 5) :: Nil
+      Lexem("ID", "a") :: Lexem("NUMBER", 123) :: Lexem("NUMBER", 4) :: Lexem("PLUS", ()) :: Lexem("NUMBER", 5) :: Nil
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     CalcParser.parse[R](lexems) should matchPattern:

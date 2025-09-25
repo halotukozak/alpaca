@@ -1,6 +1,6 @@
 package alpaca.lexer
 
-import alpaca.lexer.context.{AnyGlobalCtx, Lexem}
+import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx, Lexem}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
@@ -8,8 +8,7 @@ import scala.annotation.unchecked.uncheckedVariance as uv
 
 type ValidName = String & Singleton
 
-type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Ctx
-type Remapping[Ctx <: AnyGlobalCtx, Value] = Ctx => Value
+type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
 
 sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value] {
   val name: Name
@@ -31,26 +30,14 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value](
   name: Name,
   pattern: String,
   ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: Remapping[Ctx @uv, Value],
+  remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value] {
-  val index: Int = DefinedToken.nextIndex()
-
-  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(())
+  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
   def unapply(lexem: Lexem[Name, Value]): Option[Lexem[Name, Value]] = Some(lexem)
 }
-
-object DefinedToken extends HasIndex
 
 final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
   name: Name,
   pattern: String,
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
-
-private object IgnoredToken extends HasIndex
-
-private sealed trait HasIndex {
-  private val index = new AtomicInteger(0)
-
-  def nextIndex(): Int = index.getAndIncrement()
-}

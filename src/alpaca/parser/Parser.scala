@@ -2,22 +2,23 @@ package alpaca
 package parser
 
 import alpaca.core.*
+import alpaca.lexer.Token
+import alpaca.lexer.context.Lexem
+import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
 import scala.annotation.experimental
 import scala.quoted.{Expr, Quotes, Type}
 
-import alpaca.lexer.context.Lexem
-import alpaca.lexer.Token
-import alpaca.parser.Symbol.NonTerminal
-import alpaca.parser.Symbol.Terminal
-import scala.collection.immutable.Range.Partial
-
 type ParserDefinition[Ctx <: AnyGlobalCtx] = Unit
 
 abstract class Parser[Ctx <: AnyGlobalCtx] {
-  protected given ctx: Ctx = ???
+  inline def parse[R](
+    lexems: List[Lexem[?, ?]],
+  )(using empty: Empty[Ctx],
+  ): (ctx: Ctx, result: Option[R]) =
+    parse[R](parseTable[this.type], lexems)
 
   private def parse[R](
     parseTable: ParseTable,
@@ -28,11 +29,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx] {
     (null.asInstanceOf[Ctx], None)
   }
 
-  inline def parse[R](
-    lexems: List[Lexem[?, ?]],
-  )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, result: Option[R]) =
-    parse[R](parseTable[this.type], lexems)
+  protected given ctx: Ctx = ???
 }
 
 inline def parseTable[P <: Parser[?]]: ParseTable = ${ parseTableImpl[P] }
