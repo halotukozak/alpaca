@@ -9,9 +9,11 @@ import scala.util.matching.Regex
 abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStages as betweenStages}]
   extends Selectable {
 
+  // protected def compiled: Regex
+
   private lazy val compiled: Regex =
     // todo: consider some quoting somewhere someday
-    tokens.view.map(tokenDef => s"(?<${tokenDef.regexName}>${tokenDef.pattern})").mkString("|").r
+    tokens.view.map(_.info).map(info => s"(?<${info.regexGroupName}>${info.pattern})").mkString("|").r
 
   def tokens: List[Token[?, Ctx, ?]]
   def byName: Map[String, DefinedToken[?, Ctx, ?]] // todo: reconsider if selectDynamic should be implemented with PM
@@ -29,7 +31,7 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
             // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
             throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           }
-          val token = tokens.find(token => m.group(token.regexName) ne null) getOrElse {
+          val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)

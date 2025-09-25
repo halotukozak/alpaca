@@ -22,12 +22,12 @@ object GlobalCtx:
     Copyable.derived
 
   given BetweenStages[AnyGlobalCtx] =
-    case (DefinedToken(name, _, modifyCtx, remapping), m, ctx) =>
+    case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched
-      ctx.lastLexem = Lexem(name, remapping(ctx))
+      ctx.lastLexem = Lexem(info.name, remapping(ctx))
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
-    case (IgnoredToken(name, _, modifyCtx), m, ctx) =>
+    case (IgnoredToken(_, modifyCtx), m, ctx) =>
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
