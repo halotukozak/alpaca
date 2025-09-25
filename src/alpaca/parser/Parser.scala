@@ -13,82 +13,90 @@ import scala.quoted.{Expr, Quotes, Type}
 
 type ParserDefinition[Ctx <: AnyGlobalCtx] = Unit
 
-class Parser[Ctx <: AnyGlobalCtx](parseTable: ParseTable) {
-  def parse[R](lexems: List[Lexem[?, ?]])(using empty: Empty[Ctx]): (ctx: Ctx, result: Option[R]) = {
+abstract class Parser[Ctx <: AnyGlobalCtx] {
+  inline def parse[R](
+    lexems: List[Lexem[?, ?]],
+  )(using empty: Empty[Ctx],
+  ): (ctx: Ctx, result: Option[R]) =
+    parse[R](parseTable[this.type], lexems)
+
+  private def parse[R](
+    parseTable: ParseTable,
+    lexems: List[Lexem[?, ?]],
+  )(using empty: Empty[Ctx],
+  ): (ctx: Ctx, result: Option[R]) = {
     println(parseTable)
     (null.asInstanceOf[Ctx], None)
   }
+
+  protected given ctx: Ctx = ???
 }
 
-inline def parser[Ctx <: AnyGlobalCtx & Product](
-  using Ctx WithDefault EmptyGlobalCtx,
-)(
-  inline rules: Ctx ?=> ParserDefinition[Ctx],
-)(using
-  copy: Copyable[Ctx],
-): Parser[Ctx] =
-  ${ parserImpl[Ctx]('{ rules }, '{ summon }) }
+inline def parseTable[P <: Parser[?]]: ParseTable = ${ parseTableImpl[P] }
 
-private def parserImpl[Ctx <: AnyGlobalCtx: Type](
-  rules: Expr[Ctx ?=> ParserDefinition[Ctx]],
-  copy: Expr[Copyable[Ctx]],
-)(using quotes: Quotes,
-): Expr[Parser[Ctx]] = {
+private def parseTableImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ParseTable] = {
   import quotes.reflect.*
 
-  val Lambda(oldCtx :: Nil, Block(statements, _)) = rules.asTerm.underlying.runtimeChecked
+  def extractProductions: PartialFunction[Tree, List[Production]] = {
+    case Apply(term, List(Lambda(_, Match(_, cases: List[CaseDef])))) =>
+      type SymbolExtractor = PartialFunction[Tree, alpaca.parser.Symbol]
 
-  type SymbolExtractor = PartialFunction[Tree, alpaca.parser.Symbol]
+      def extractName: PartialFunction[Tree, String] = { case Select(This(kupadupa), name) =>
+        name
+      }
 
-  val extractTerminalRef: SymbolExtractor = {
-    case TypedOrTest(
-          Unapply(
-            Select(
-              TypeApply(
-                Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
-                List(asInstanceOfType),
+      val extractTerminalRef: SymbolExtractor = {
+        case TypedOrTest(
+              Unapply(
+                Select(
+                  TypeApply(
+                    Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
+                    List(asInstanceOfType),
+                  ),
+                  "unapply",
+                ),
+                _,
+                List(bind),
               ),
-              "unapply",
-            ),
-            _,
-            List(bind),
-          ),
-          _,
-        ) =>
-      // (name, asInstanceOfType, bind) //available for future
-      Terminal(name)
-  }
+              _,
+            ) =>
+          // (name, asInstanceOfType, bind) //available for future
+          Terminal(name)
+      }
 
-  val extractNonTerminalRef: SymbolExtractor = { case Unapply(Select(Ident(name), "unapply"), Nil, List(bind)) =>
-    // (name, bind) //available for future
-    NonTerminal(name)
-  }
+      val extractNonTerminalRef: SymbolExtractor = {
+        case Unapply(Select(extractName(name), "unapply"), Nil, List(bind)) =>
+          // (name, bind) //available for future
+          NonTerminal(name)
+      }
 
-  val extractOptional: SymbolExtractor = {
-    case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(Ident(name)))))) if tpt.tpe <:< TypeRepr.of[Option] =>
-      if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isOptional = true)
-      else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isOptional = true)
-      else raiseShouldNeverBeCalled(arg.tpe.show)
-  }
+      val extractOptional: SymbolExtractor = {
+        case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
+            if tpt.tpe <:< TypeRepr.of[Option] =>
+          if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isOptional = true)
+          else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isOptional = true)
+          else raiseShouldNeverBeCalled(arg.tpe.show)
+      }
 
-  val extractRepeated: SymbolExtractor = {
-    case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(Ident(name)))))) if tpt.tpe <:< TypeRepr.of[Seq] =>
-      if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isRepeated = true)
-      else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isRepeated = true)
-      else raiseShouldNeverBeCalled(arg.tpe.show)
-  }
+      val extractRepeated: SymbolExtractor = {
+        case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
+            if tpt.tpe <:< TypeRepr.of[Seq] =>
+          if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isRepeated = true)
+          else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isRepeated = true)
+          else raiseShouldNeverBeCalled(arg.tpe.show)
+      }
 
-  val extractSymbol: SymbolExtractor = {
-    case extractTerminalRef(terminal) => terminal
-    case extractNonTerminalRef(nonterminal) => nonterminal
-    case extractOptional(optional) => optional
-    case extractRepeated(repeated) => repeated
-    case x => raiseShouldNeverBeCalled(x.toString)
-  }
+      val extractSymbol: SymbolExtractor = {
+        case extractTerminalRef(terminal) => terminal
+        case extractNonTerminalRef(nonterminal) => nonterminal
+        case extractOptional(optional) => optional
+        case extractRepeated(repeated) => repeated
+        case x => raiseShouldNeverBeCalled(x.toString)
+      }
 
-  val productions: List[Production] = statements.flatMap {
-    case ValDef(name, _, Some(Apply(Ident("rule"), List(Lambda(_, Match(_, cases: List[CaseDef])))))) =>
-      cases.map {
+      val name = Symbol.spliceOwner.name
+
+      val productions = cases.map {
         case CaseDef(pattern, Some(_), _) => throw new NotImplementedError("Guards are not supported yet")
         // todo: i hope we can abandon this case
         case CaseDef(pattern @ TypedOrTest(Unapply(_, _, List(_)), _), None, _) =>
@@ -98,10 +106,20 @@ private def parserImpl[Ctx <: AnyGlobalCtx: Type](
         case CaseDef(pattern, None, _) =>
           Production(NonTerminal(name), List(extractSymbol(pattern)))
       }
-    case x => raiseShouldNeverBeCalled(x.show)
+
+      productions
   }
 
-  val table = Expr(ParseTable(productions))
+  val rules =
+    TypeRepr
+      .of[P]
+      .typeSymbol
+      .declaredFields
+      .filter(_.typeRef <:< TypeRepr.of[Rule])
+      .map(_.tree.asInstanceOf[ValDef])
 
-  '{ new Parser[Ctx]($table: ParseTable) }
+  val productions = rules.flatMap:
+    case ValDef(name, _, Some(extractProductions(rule))) => rule
+
+  Expr(ParseTable(productions))
 }

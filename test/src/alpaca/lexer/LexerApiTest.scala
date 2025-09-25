@@ -16,7 +16,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case "\\.\\*" => Token["dotMul"]
     case "\\.\\/" => Token["dotDiv"]
     case "<=" => Token["lessEqual"]
-    case comment @ "#.*" => Token.Ignored[comment.type]
+    case comment @ "#.*" => Token.Ignored
     case ">=" => Token["greaterEqual"]
     case "!=" => Token["notEqual"]
     case "==" => Token["equal"]
