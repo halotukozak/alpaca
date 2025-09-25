@@ -13,7 +13,7 @@ import scala.util.matching.Regex
 import CompileNameAndPattern.Result
 import java.util.regex.Pattern
 
-type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
+type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String | Char, Token[?, Ctx, ?]]
 
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,

@@ -8,8 +8,9 @@ import scala.annotation.nowarn
 @nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" |
-        "'" | "," | ";") =>
+    case literal @ ('<' | '>' | '=' | '+' | '-' | '*' | '/' | '(' | ')' | '[' | ']' | '{' | '}' | ':') =>
+      Token[literal.type]
+    case literal @ ("'" | "," | ";") =>
       Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]

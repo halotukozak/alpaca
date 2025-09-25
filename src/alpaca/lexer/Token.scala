@@ -40,9 +40,6 @@ object Token {
 
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = ???
-
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = ???
 }
 
 //todo: may be invariant?

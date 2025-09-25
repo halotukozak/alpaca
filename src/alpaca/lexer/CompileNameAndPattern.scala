@@ -12,29 +12,32 @@ import java.util.concurrent.atomic.AtomicInteger
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
+  val extractLiteral: PartialFunction[Tree, String] =
+    case Literal(StringConstant(str)) => str
+    case Literal(CharConstant(c)) => c.toString
+
   def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
     @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
-        case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
+        case (TermRef(qual, name), Bind(bind, extractLiteral(regex))) if name == bind =>
           Result.unsafe(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          alternatives
-            .map {
-              case Literal(StringConstant(str)) => Result.unsafe(str, str)
-              case x => raiseShouldNeverBeCalled(x.show)
-            }
+          alternatives.map {
+            case extractLiteral(str) => Result.unsafe(str, str)
+            case x => raiseShouldNeverBeCalled(x.show)
+          }
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)
         // case x : "regex" => Token.Ignored
-        case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
+        case (tpe, extractLiteral(str)) if tpe =:= TypeRepr.of[Nothing] =>
           Result.unsafe(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
           alternatives.map {
-            case Literal(StringConstant(str)) => Result.unsafe(str, str)
+            case extractLiteral(str) => Result.unsafe(str, str)
             case x => raiseShouldNeverBeCalled(x.show)
           }
         // case x : "regex" => Token["name"]
