@@ -33,7 +33,7 @@ case class CalcContext(
   errors: mutable.ListBuffer[String] = mutable.ListBuffer.empty,
 ) extends GlobalCtx derives Copyable
 
-val CalcParser: Parser[CalcContext] = parser[CalcContext] {
+object CalcParser extends Parser[CalcContext] {
   def Statement = rule {
     case (CalcLexer.ID(id), CalcLexer.ASSIGN(()), Expr(expr)) =>
       pctx.names(id) = expr

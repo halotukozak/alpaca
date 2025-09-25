@@ -2,13 +2,13 @@ package alpaca.parser
 
 import scala.collection.mutable
 
-def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | Production] = {
+def parseTable(productions: List[Production]): Map[(Int, Symbol), Int | Production] = {
   val firstSet = FirstSet(productions)
   var currStateId = 0
   val states = mutable.ListBuffer(State.fromItem(State.empty, productions.head.toItem(), productions, firstSet))
   val table = mutable.Map.empty[(Int, Symbol), Int | Production]
 
-  while states.sizeIs > currStateId do
+  while states.sizeIs > currStateId do {
     val currState = states(currStateId)
 
     for (item <- currState if item.isLastItem) {
@@ -28,7 +28,7 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
     }
 
     currStateId += 1
-  end while
+  }
 
-  table
+  table.toMap
 }

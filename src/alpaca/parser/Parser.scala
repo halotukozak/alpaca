@@ -1,39 +1,53 @@
 package alpaca.parser
 
-import alpaca.core.{BetweenStages, Copyable, WithDefault}
+import alpaca.lexer.context.default.DefaultLexem
+import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
-import alpaca.parser.context.default.EmptyGlobalCtx
 
-import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, Type}
-
-import alpaca.lexer.context.Lexem
+import scala.annotation.tailrec
 
 type ParserDefinition[Ctx <: AnyGlobalCtx] = Unit
 
 //inline it with lexer ctx
 transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
 
-class Parser[Ctx <: AnyGlobalCtx] {
-  def parse[R](input: List[Lexem[?, ?]]): (ctx: Ctx, result: R) =
-    (null.asInstanceOf[Ctx], null.asInstanceOf[R])
+trait Dupa[T] extends ((DefaultLexem[?, ?], List[T]) => T)
+
+class Parser[Ctx <: AnyGlobalCtx](parseTable: Map[(Int, Symbol), Int | Production]) {
+
+  type R
+
+  given Ctx = ???
+
+  given create: Dupa[R] = ???
+
+  def parse(input: List[DefaultLexem[?, ?]]): R | Null = {
+    @tailrec def loop(input: List[DefaultLexem[?, ?]], stack: List[(state: Int, result: R | Null)]): R | Null = {
+      inline def handleReduction(production: Production): R | Null = {
+        val newStack = stack.drop(production.rhs.length)
+        val newState = newStack.head.state
+        val nextSymbol = production.lhs
+
+        if nextSymbol == NonTerminal("S'") && newState == 0 then {
+          stack.tail.head.result
+        } else {
+          parseTable.get((newState, nextSymbol)) match
+            case Some(gotoState: Int) =>
+              val children = stack.take(production.rhs.length).collect { case (_, r) if r != null => r.nn }
+              loop(input, (gotoState, null) :: newStack)
+            case _ => throw new Error("No transition found")
+        }
+      }
+
+      val lexem :: rest = input: @unchecked
+
+      parseTable.get((stack.head.state, Terminal(lexem.name))) match
+        case Some(nextState: Int) => loop(rest, (nextState, create(lexem, Nil)) :: stack)
+        case Some(production: Production) => handleReduction(production)
+        case None => throw new Error("No transition found")
+    }
+    loop(input, List((0, null)))
+  }
+
+  def this() = this(???)
 }
-
-@experimental //for IJ  :/
-transparent inline def parser[Ctx <: AnyGlobalCtx & Product](
-  using Ctx WithDefault EmptyGlobalCtx,
-)(
-  inline rules: Ctx ?=> ParserDefinition[Ctx],
-)(using
-  copy: Copyable[Ctx],
-): Parser[Ctx] =
-  ${ parserImpl[Ctx]('{ rules }, '{ summon }) }
-
-//todo: ctxManipulation should work
-//todo: more complex expressions should be supported in remaping
-@experimental //for IJ  :/
-private def parserImpl[Ctx <: AnyGlobalCtx: Type](
-  rules: Expr[Ctx ?=> ParserDefinition[Ctx]],
-  copy: Expr[Copyable[Ctx]],
-)(using quotes: Quotes,
-): Expr[Parser[Ctx]] = '{ new Parser[Ctx] }

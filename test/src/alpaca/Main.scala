@@ -1,10 +1,9 @@
 package alpaca
 
-import alpaca.core.{Showable, show}
+import alpaca.core.{show, Showable}
+import alpaca.lexer.context.default.DefaultLexem
 import alpaca.parser.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
-import alpaca.interpreter.Interpreter
-import alpaca.lexer.context.default.DefaultLexem
 
 @main def main(): Unit = {
   val productions: List[Production] = List(
@@ -54,9 +53,19 @@ import alpaca.lexer.context.default.DefaultLexem
     DefaultLexem("$", "$"),
   )
 
-  val interpreter = Interpreter(table)
+  val result = new Parser(table).parse(code)
+  // result.nn.display()
+}
 
-  interpreter.run(code)
+case class AST(value: Any, children: List[AST] = Nil) {
+  def display(indentSize: Int = 0): Unit = {
+    println(" " * indentSize + value)
+    children.foreach(_.display(indentSize + 2))
+  }
+}
+
+object AST {
+  given Dupa[AST] = AST.apply(_, _)
 }
 
 def centerText(text: String, width: Int = 10): String = {
