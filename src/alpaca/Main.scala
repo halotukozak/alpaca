@@ -56,7 +56,7 @@ import alpaca.lexer.context.default.DefaultLexem
 
   val interpreter = Interpreter(table)
 
-  interpreter.run(code)
+  println(interpreter.run(code))
 }
 
 def centerText(text: String, width: Int = 10): String = {
