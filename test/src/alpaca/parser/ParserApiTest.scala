@@ -84,7 +84,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     //   case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
 
     val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
-      
+
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     // CalcParser.parse[R](lexems2) should matchPattern:

@@ -25,7 +25,33 @@ abstract class Parser[Ctx <: AnyGlobalCtx] {
     lexems: List[Lexem[?, ?]],
   )(using empty: Empty[Ctx],
   ): (ctx: Ctx, result: Option[R]) = {
-    println(parseTable)
+    def parse(input: List[DefaultLexem[?, ?]]): R | Null = {
+      @tailrec def loop(input: List[DefaultLexem[?, ?]], stack: List[(state: Int, result: R | Null)]): R | Null = {
+        inline def handleReduction(production: Production): R | Null = {
+          val newStack = stack.drop(production.rhs.length)
+          val newState = newStack.head.state
+          val nextSymbol = production.lhs
+
+          if nextSymbol == NonTerminal("S'") && newState == 0 then {
+            stack.tail.head.result
+          } else {
+            parseTable.get((newState, nextSymbol)) match
+              case Some(gotoState: Int) =>
+                val children = stack.take(production.rhs.length).collect { case (_, r) if r != null => r.nn }
+                loop(input, (gotoState, null) :: newStack)
+              case _ => throw new Error("No transition found")
+          }
+        }
+
+        val lexem :: rest = input: @unchecked
+
+        parseTable.get((stack.head.state, Terminal(lexem.name))) match
+          case Some(nextState: Int) => loop(rest, (nextState, create(lexem, Nil)) :: stack)
+          case Some(production: Production) => handleReduction(production)
+          case None => throw new Error("No transition found")
+      }
+      loop(input, List((0, null)))
+    }
     (null.asInstanceOf[Ctx], None)
   }
 
