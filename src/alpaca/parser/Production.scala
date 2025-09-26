@@ -1,6 +1,6 @@
 package alpaca.parser
 
-import alpaca.core.{Showable, mkShow, show}
+import alpaca.core.{Showable, show}
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 
@@ -11,11 +11,9 @@ final case class Production(lhs: NonTerminal, rhs: Seq[Symbol]) {
 }
 
 object Production {
-  given Showable[Production] = production => show"${production.lhs} -> ${production.rhs.mkShow}"
+  given Showable[Production] = production => show"${production.lhs} -> ${production.rhs}"
 
   given ToExpr[Production] with
-    def apply(x: Production)(using Quotes): Expr[Production] = {
-      val Production(lhs, rhs) = x
-      '{ Production(${ Expr(lhs) }, ${ Expr(rhs) }) }
-    }
+    def apply(x: Production)(using Quotes): Expr[Production] =
+      '{ Production(${ Expr(x.lhs) }, ${ Expr(x.rhs) }) }
 }

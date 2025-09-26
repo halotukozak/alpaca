@@ -1,6 +1,6 @@
 package alpaca.parser
 
-import alpaca.core.{Showable, mkShow, show}
+import alpaca.core.{Showable, show}
 import alpaca.lexer.AlgorithmError
 import alpaca.parser.Production
 import alpaca.parser.Symbol.*
@@ -21,6 +21,6 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
       case None => Set(lookAhead)
 
 }
-
-given Showable[Item] = item =>
-  show"${item.production.lhs} -> ${item.production.rhs.take(item.dotPosition).mkShow}•${item.production.rhs.drop(item.dotPosition).mkShow}, ${item.lookAhead}"
+object Item:
+  given Showable[Item] = item =>
+    show"${item.production.lhs} -> ${item.production.rhs.take(item.dotPosition)}•${item.production.rhs.drop(item.dotPosition)}, ${item.lookAhead}"

@@ -3,18 +3,17 @@ package lexer
 
 import alpaca.core.*
 import alpaca.lexer.RegexChecker
+import alpaca.lexer.context.AnyGlobalCtx
 import alpaca.lexer.context.default.DefaultGlobalCtx
-import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx, Lexem}
 
-import scala.util.chaining.scalaUtilChainingOps
 import scala.NamedTuple.NamedTuple
+import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex
-import CompileNameAndPattern.Result
-import java.util.regex.Pattern
 
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
+@experimental
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,
 )(
@@ -25,6 +24,7 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 ): Tokenization[Ctx] =
   ${ lexerImpl[Ctx]('{ rules }, '{ summon }, '{ summon }) }
 
+@experimental
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],

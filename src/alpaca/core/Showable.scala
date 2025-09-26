@@ -2,9 +2,8 @@ package alpaca.core
 
 import scala.deriving.Mirror
 
-trait Showable[T] {
+trait Showable[T]:
   extension (t: T) def show: String
-}
 
 extension (sc: StringContext) def show(args: Showable.Shown*): String = sc.s(args*)
 
@@ -16,6 +15,8 @@ object Showable {
   given Showable[String] = x => x
   given Showable[Int] = _.toString
 
+  given [C[X] <: Iterable[X], T: Showable]: Showable[C[T]] = _.map(_.show).mkString
+
   inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
     val name = compiletime.constValue[m.MirroredLabel]
     val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
@@ -25,5 +26,3 @@ object Showable {
     val shown = showables.zip(values).map { case (s, v) => s.show(v) }
     s"$name(${fields.zip(shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
 }
-
-extension [C[X] <: Iterable[X], T: Showable](coll: C[T]) def mkShow: String = coll.map(_.show).mkString

@@ -58,19 +58,19 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
 }
 
 private object CompileNameAndPattern {
-  private def decodeName(name: String)(using quotes: Quotes): ValidName =
+  private def validateName(name: String)(using quotes: Quotes): ValidName =
     import quotes.reflect.*
-    NameTransformer.decode(name) match
+    name match
       case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
       case other => other
 
   object Result {
     def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] = {
       import quotes.reflect.*
-      val decodedName = decodeName(name)
-      ConstantType(StringConstant(decodedName)).asType match
+      val validatedName = validateName(name)
+      ConstantType(StringConstant(validatedName)).asType match
         case '[type nameTpe <: ValidName; nameTpe] =>
-          '{ TokenInfo[nameTpe](${ Expr(decodedName).asExprOf[nameTpe] }, ${ Expr(regex) }) }
+          '{ TokenInfo[nameTpe](${ Expr(validatedName).asExprOf[nameTpe] }, ${ Expr(regex) }) }
     }
   }
 }

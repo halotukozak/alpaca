@@ -6,19 +6,19 @@ import scala.quoted.*
 
 enum Symbol(val isTerminal: Boolean) {
   val name: String
-  val isOptional: Boolean
-  val isRepeated: Boolean
+  // val isOptional: Boolean
+  // val isRepeated: Boolean
 
   case NonTerminal(
     name: String,
-    isOptional: Boolean = false,
-    isRepeated: Boolean = false,
+    // isOptional: Boolean = false,
+    // isRepeated: Boolean = false,
   ) extends Symbol(isTerminal = false)
 
   case Terminal(
     name: String,
-    isOptional: Boolean = false,
-    isRepeated: Boolean = false,
+    // isOptional: Boolean = false,
+    // isRepeated: Boolean = false,
   ) extends Symbol(isTerminal = true)
 }
 
@@ -35,9 +35,19 @@ object Symbol {
 
   given ToExpr[NonTerminal] with
     def apply(x: NonTerminal)(using Quotes): Expr[NonTerminal] =
-      '{ NonTerminal(${ Expr(x.name) }, ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) }) }
-      
+      '{
+        NonTerminal(
+          ${ Expr(x.name) },
+          // ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) })
+        )
+      }
+
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] =
-      '{ Terminal(${ Expr(x.name) }, ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) }) }
+      '{
+        Terminal(
+          ${ Expr(x.name) },
+          // ${ Expr(x.isOptional) }, ${ Expr(x.isRepeated) })
+        )
+      }
 }

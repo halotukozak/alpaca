@@ -1,11 +1,8 @@
 package alpaca
 package core
 
-import scala.Tuple.Map
 import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, Type}
-
-inline given [Args <: Tuple, T[_]] => Args `Map` T = compiletime.summonAll[Args `Map` T]
+import scala.quoted.{Expr, Quotes, ToExpr, Type}
 
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
   throw new Exception(s"It should never happen. Got: $x")
@@ -24,6 +21,7 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
+@experimental
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
