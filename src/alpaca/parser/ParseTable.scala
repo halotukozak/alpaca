@@ -35,7 +35,16 @@ object ParseTable {
     import quotes.reflect.*
 
     def extractProductions: PartialFunction[Tree, List[Production]] = {
-      case ValDef(ruleName, _, Some(Apply(term, List(Lambda(_, Match(_, cases: List[CaseDef])))))) =>
+      case ValDef(
+            ruleName,
+            _,
+            Some(
+              Apply(
+                TypeApply(Select(_, "rule"), List(resultType)),
+                List(Lambda(oldCtx, Lambda(_, Match(_, cases: List[CaseDef])))),
+              ),
+            ),
+          ) =>
         type SymbolExtractor = PartialFunction[Tree, alpaca.parser.Symbol]
 
         def extractName: PartialFunction[Tree, String] = { case Select(This(kupadupa), name) =>
@@ -111,18 +120,30 @@ object ParseTable {
         .of[P]
         .typeSymbol
         .declaredFields
-        .filter(_.typeRef <:< TypeRepr.of[Rule])
+        .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
         .map(_.tree)
 
     val productions = rules.flatMap(extractProductions)
 
-    Expr(ParseTable(productions))
+    val root = productions.find(_.lhs.name == "root").get
+
+    Expr(ParseTable(Production(NonTerminal("S'"), List(root.lhs)) :: productions))
   }
 
   private def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0
-    val states = mutable.ListBuffer(State.fromItem(State.empty, productions.head.toItem(), productions, firstSet))
+    val states =
+      mutable.ListBuffer(
+        State.fromItem(
+          State.empty,
+          productions.collectFirst { case production @ Production(NonTerminal("S'"), rhs) =>
+            production.toItem()
+          }.get,
+          productions,
+          firstSet,
+        ),
+      )
     val table = mutable.Map.empty[(Int, Symbol), ParseAction]
 
     while states.sizeIs > currStateId do {

@@ -1,15 +1,23 @@
 package alpaca
 package parser
 
+import alpaca.core.WithDefault
 import alpaca.lexer.context.Lexem
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
+import alpaca.parser.context.default.EmptyGlobalCtx
 
-import scala.annotation.{experimental, tailrec}
+import scala.annotation.{compileTimeOnly, experimental, tailrec}
 
-type ParserDefinition[Ctx <: AnyGlobalCtx] = Unit
+abstract class Parser[Ctx <: AnyGlobalCtx](
+  using Ctx WithDefault EmptyGlobalCtx,
+) {
 
-abstract class Parser[Ctx <: AnyGlobalCtx] {
+  def root: Rule[?]
+
+  @compileTimeOnly("Should never be called outside the parser definition")
+  inline def rule[T](rules: Ctx ?=> RuleDefinition[T]): Rule[T] = null.asInstanceOf[Rule[T]]
+
   @experimental
   inline def parse[R](lexems: List[Lexem[?, ?]]): R | Null =
     parse[R](ParseTable[this.type], lexems :+ Lexem.EOF)
@@ -21,34 +29,24 @@ abstract class Parser[Ctx <: AnyGlobalCtx] {
     def doSth(symbol: Symbol, children: List[R | Null] = Nil): R = null.asInstanceOf[R]
 
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
-      inline def handleReduction(production: Production): R | Null = {
-        val newStack = stack.drop(production.rhs.length)
-        val newState = newStack.head
-        val nextSymbol = production.lhs
-
-        if nextSymbol == NonTerminal("S'") && newState.index == 0 then {
-          stack.head.node
-        } else {
-          parseTable.get((newState.index, nextSymbol)) match
-            case Some(ParseAction.Shift(gotoState)) =>
-              val children = stack.take(production.rhs.length).map(_.node)
-              loop(lexems, (gotoState, doSth(nextSymbol, children)) :: newStack)
-            case _ =>
-              throw new Error("No transition found")
-        }
-      }
-
       val nextSymbol = Terminal(lexems.head.name)
-      parseTable.get((stack.head.index, nextSymbol)) match
-        case Some(ParseAction.Shift(gotoState)) =>
+      parseTable((stack.head.index, nextSymbol)) match
+        case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, doSth(nextSymbol)) :: stack)
-        case Some(ParseAction.Reduction(production)) =>
-          handleReduction(production)
-        case None =>
-          throw new Error("No transition found")
+        case ParseAction.Reduction(production) =>
+          val newStack = stack.drop(production.rhs.length)
+          val newState = newStack.head
+          val nextSymbol = production.lhs
+
+          if nextSymbol == NonTerminal("S'") && newState.index == 0 then {
+            stack.head.node
+          } else {
+            val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
+            val children = stack.take(production.rhs.length).map(_.node)
+            loop(lexems, (gotoState, doSth(nextSymbol, children)) :: newStack)
+          }
     }
     loop(lexems, List((0, null)))
   }
 
-  protected given ctx: Ctx = ???
 }

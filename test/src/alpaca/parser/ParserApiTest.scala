@@ -3,18 +3,15 @@ package parser
 
 import alpaca.core.*
 import alpaca.lexer.*
+import alpaca.lexer.context.Lexem
 import alpaca.lexer.context.default.*
-import alpaca.parser.Symbol.*
 import alpaca.parser.context.GlobalCtx
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.lexer.context.Lexem
 
 import scala.collection.mutable
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
-  type R = Unit | Int | List[Int] | (Char, Option[List[Int]])
-
   val CalcLexer = lexer {
     case " " => Token.Ignored
     case " \\t" => Token.Ignored
@@ -48,30 +45,37 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   //        )
 
   object CalcParser extends Parser[CalcContext] {
-    lazy val Statement = rule {
-      case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
-        ctx.names(id.value) = expr
-      case (CalcLexer.ID(id), CalcLexer.`\\(`(_), arglist: Option[Expr.type], CalcLexer.`\\)`(_)) =>
-        (id, arglist)
-      case (CalcLexer.ID(id), exprs: List[Expr.type]) =>
-        id :: exprs
-      case Expr(expr) => expr
-    }
-
-    lazy val Expr: Rule = rule {
+    val Expr: Rule[Int] = rule {
       case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2
       case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2
       case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2
       case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2
       case (CalcLexer.MINUS(_), Expr(expr)) => -expr
       case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr
-      case Expr(CalcLexer.NUMBER(expr)) => expr
+      case Expr(CalcLexer.NUMBER(expr)) => expr.value
       case CalcLexer.ID(id) =>
         ctx.names.getOrElse(
           id.value, {
             ctx.errors.append(("undefined", id)); 0
           },
         )
+    }
+
+    val ArgList: Rule[List[Int]] = rule {
+      case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs
+      case Expr(expr) => expr :: Nil
+    }
+
+    val Statement: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] = rule {
+      case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
+        ctx.names(id.value) = expr
+      case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
+        (id.value, argList)
+      case Expr(expr) => expr
+    }
+
+    val root: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] = rule { case Statement(stmt) =>
+      stmt
     }
   }
 

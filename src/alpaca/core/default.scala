@@ -9,7 +9,6 @@ trait WithDefaultLowImplicitPriority {
   given useProvided[Provided, Default]: (Provided WithDefault Default) = new (Provided WithDefault Default)
 }
 object WithDefault extends WithDefaultLowImplicitPriority {
-
   /** Infer type argument to default */
   given useDefault[Default]: (Default WithDefault Default) = new (Default WithDefault Default)
 }

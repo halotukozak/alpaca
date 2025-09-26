@@ -2,21 +2,27 @@ package alpaca
 package parser
 
 import scala.annotation.compileTimeOnly
-import scala.quoted.{Expr, Quotes}
 
-type RuleDefinition = PartialFunction[Tuple, Any]
+type RuleDefinition[T] = PartialFunction[Tuple, T]
 
-trait Rule {
+trait Rule[+T] {
   @compileTimeOnly("Should never be called outside the parser definition")
-  def unapply(x: Any): Option[Int] = ???
+  def unapply(x: Any): Option[T] = ???
+
+  object List {
+    @compileTimeOnly("Should never be called outside the parser definition")
+    def unapply(x: Any): Option[List[T]] = ???
+  }
+
+  object Option {
+    @compileTimeOnly("Should never be called outside the parser definition")
+    def unapply(x: Any): Option[Option[T]] = ???
+  }
 }
 
-@compileTimeOnly("Should never be called outside the parser definition")
-inline def rule(rules: RuleDefinition): Rule = ???
-
 object Rule {
-  extension (rule: Rule) {
-    inline def alwaysAfter(rules: Rule*): Rule = ???
-    inline def alwaysBefore(rules: Rule*): Rule = ???
+  extension (rule: Rule[?]) {
+    inline def alwaysAfter(rules: Rule[?]*): rule.type = ???
+    inline def alwaysBefore(rules: Rule[?]*): rule.type = ???
   }
 }
