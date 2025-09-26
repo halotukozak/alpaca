@@ -5,8 +5,10 @@ import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 
 import scala.quoted.*
+import scala.runtime.FunctionXXL
+import compiletime.ops.boolean.&&
 
-final case class Production(lhs: NonTerminal, rhs: Seq[Symbol]) {
+final case class Production(lhs: NonTerminal, rhs: List[Symbol]) {
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 

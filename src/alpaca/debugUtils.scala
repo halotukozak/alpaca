@@ -122,5 +122,12 @@ inline def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
-  treeInfo(body.asTerm.underlyingArgument).dbg
+  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
+}
+
+inline def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
+  import quotes.reflect.*
+
+  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
 }

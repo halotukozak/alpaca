@@ -13,17 +13,19 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
   using Ctx WithDefault EmptyGlobalCtx,
 ) {
 
-  def ctx: Ctx = null.asInstanceOf[Ctx]
+  def ctx: Ctx = ???
 
   def root: Rule[Any]
 
   @experimental
-  inline def parse[R](lexems: List[Lexem[?, ?]]): R | Null =
-    parse[R](ParseTable[this.type], lexems :+ Lexem.EOF)
+  inline def parse[R](lexems: List[Lexem[?, ?]]): R | Null = {
+    val (parseTable, actionTable) = createTables[this.type]
+    parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
+  }
 
   @experimental
-  private def parse[R](parseTable: ParseTable, lexems: List[Lexem[?, ?]]): R | Null = {
-    type State = (index: Int, node: R | Null)
+  private def parse[R](parseTable: ParseTable, actionTable: ActionTable, lexems: List[Lexem[?, ?]]): R | Null = {
+    type State = (index: Int, node: R | Lexem[?, ?] | Null)
 
     def doSth(symbol: Symbol, children: List[R | Null] = Nil): R = null.asInstanceOf[R]
 
@@ -31,19 +33,19 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
       val nextSymbol = Terminal(lexems.head.name)
       parseTable((stack.head.index, nextSymbol)) match
         case ParseAction.Shift(gotoState) =>
-          loop(lexems.tail, (gotoState, doSth(nextSymbol)) :: stack)
-        case ParseAction.Reduction(production) =>
-          val newStack = stack.drop(production.rhs.length)
-          val newState = newStack.head
-          val nextSymbol = production.lhs
+          loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-          if nextSymbol == Symbol.Start && newState.index == 0 then {
-            stack.head.node
-          } else {
+        case ParseAction.Reduction(production @ Production(nextSymbol, rhs)) =>
+          val newStack = stack.drop(rhs.size)
+          val newState = newStack.head
+
+          if nextSymbol == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+          else {
             val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
-            val children = stack.take(production.rhs.length).map(_.node)
-            loop(lexems, (gotoState, doSth(nextSymbol, children)) :: newStack)
+            val children = stack.take(rhs.size).map(_.node)
+            loop(lexems, (gotoState, actionTable(production)(children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack)
           }
+
     }
     loop(lexems, (0, null) :: Nil)
   }

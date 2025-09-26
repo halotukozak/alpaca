@@ -12,6 +12,7 @@ import alpaca.parser.Rule.*
 import alpaca.parser.Rule.given
 
 import scala.collection.mutable
+import alpaca.lexer.context.ctx
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
   val CalcLexer = lexer {

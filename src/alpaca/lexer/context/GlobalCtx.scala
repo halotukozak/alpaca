@@ -11,6 +11,8 @@ import scala.util.matching.Regex.Match
 
 type AnyGlobalCtx = GlobalCtx
 
+transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
+
 trait GlobalCtx {
   var lastLexem: Lexem[?, ?] = compiletime.uninitialized
   var lastRawMatched: String = compiletime.uninitialized

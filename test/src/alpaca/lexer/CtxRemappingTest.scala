@@ -3,6 +3,7 @@ package lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.lexer.context.ctx
 
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
   test("remapping maps matched text to custom values using ctx.text") {
