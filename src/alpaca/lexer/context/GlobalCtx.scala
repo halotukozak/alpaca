@@ -1,25 +1,33 @@
-package alpaca.lexer.context
+package alpaca.lexer
+package context
 
-import alpaca.core.{BetweenStages, Copyable}
+import alpaca.core.Copyable
+import alpaca.lexer.BetweenStages
+import alpaca.lexer.context.Lexem
 
 import scala.deriving.Mirror
+import scala.util.NotGiven
 import scala.util.matching.Regex.Match
 
-type AnyGlobalCtx = GlobalCtx[?]
+type AnyGlobalCtx = GlobalCtx
 
-object AnyGlobalCtx:
-  given BetweenStages[AnyGlobalCtx] = (m: Match, ctx: AnyGlobalCtx) => {
-    ??? // todo: https://github.com/halotukozak/alpaca/issues/51
-  }
-
-trait GlobalCtx[LexemTpe <: Lexem[?, ?]] {
-  def text: String = _text.toString
-  var lastLexem: LexemTpe | Null
-  protected var _text: CharSequence
-
-  def text_=(t: CharSequence): Unit = _text = t
+trait GlobalCtx {
+  var lastLexem: Lexem[?, ?] = compiletime.uninitialized
+  var lastRawMatched: String = compiletime.uninitialized
+  var text: CharSequence
 }
 
 object GlobalCtx:
-  given [LexemTpe <: Lexem[?, ?], Ctx <: GlobalCtx[LexemTpe] & Product: Mirror.ProductOf]: Copyable[Ctx] =
+  given [Ctx <: GlobalCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
     Copyable.derived
+
+  given BetweenStages[AnyGlobalCtx] =
+    case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
+      ctx.lastRawMatched = m.matched
+      ctx.lastLexem = Lexem(info.name, remapping(ctx))
+      ctx.text = ctx.text.from(m.end)
+      modifyCtx(ctx)
+
+    case (IgnoredToken(_, modifyCtx), m, ctx) =>
+      ctx.text = ctx.text.from(m.end)
+      modifyCtx(ctx)

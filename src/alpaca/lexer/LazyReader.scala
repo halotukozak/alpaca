@@ -28,10 +28,12 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
     this
   }
 
+  override def toString: String = subSequence(0, length).toString
+
   override def close(): Unit = reader.close()
 
   @tailrec
-  private def ensure(pos: Int): Unit = {
+  private def ensure(pos: Int): Unit =
     if pos >= buffer.length then
       val charsRead = reader.read(chunk)
       if charsRead == -1 then
@@ -39,7 +41,6 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
       else
         buffer.appendAll(chunk.iterator.take(charsRead))
         ensure(pos)
-  }
 }
 
 object LazyReader {

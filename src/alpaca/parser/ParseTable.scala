@@ -1,9 +1,9 @@
 package alpaca.parser
 
+import scala.annotation.publicInBinary
 import scala.collection.mutable
 import alpaca.core.{Showable, show}
 import scala.quoted.*
-import scala.annotation.publicInBinary
 
 enum ParseAction {
   case Shift(newState: Int)
