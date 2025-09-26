@@ -5,24 +5,26 @@ import scala.collection.mutable
 import alpaca.parser.Production
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
-import alpaca.lexer.context.default.DefaultLexem
+import alpaca.lexer.context.Lexem
 import scala.annotation.tailrec
 import alpaca.parser.{ParseTable, ParseAction}
 
-class AST(val symbol: Symbol, val children: List[AST] = Nil) {
+final class AST(val symbol: Symbol, val children: List[AST] = Nil) {
   override def toString: String = {
     val childrenStr = children.map(_.toString.split("\n").map("  " + _).mkString("\n"))
     (List(symbol.show) ++ childrenStr).mkString("\n")
   }
 }
 
-class State(val nr: Int, val node: Option[AST])
+final class State(val nr: Int, val node: Option[AST]) {
+  override def toString: String = "State(" + nr + ")"
+}
 
-class Interpreter(parseTable: ParseTable) {
-  def run(code: List[DefaultLexem[?, String]]): AST = loop(code, List(State(0, None)))
+final class Interpreter(parseTable: ParseTable) {
+  def run(code: List[Lexem[?, ?]]): AST = loop(code ++ List(Lexem.EOF), List(State(0, None)))
 
   @tailrec
-  private def loop(code: List[DefaultLexem[?, String]], stack: List[State]): AST = {
+  private def loop(code: List[Lexem[?, ?]], stack: List[State]): AST = {
     inline def handleReduction(production: Production): AST = {
       val newStack = stack.drop(production.rhs.length)
       val newState = newStack.head
