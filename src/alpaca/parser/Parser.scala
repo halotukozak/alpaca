@@ -7,16 +7,15 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
-import scala.annotation.{compileTimeOnly, experimental, tailrec}
+import scala.annotation.{experimental, tailrec}
 
 abstract class Parser[Ctx <: AnyGlobalCtx](
   using Ctx WithDefault EmptyGlobalCtx,
 ) {
 
-  def root: Rule[?]
+  def ctx: Ctx = null.asInstanceOf[Ctx]
 
-  @compileTimeOnly("Should never be called outside the parser definition")
-  inline def rule[T](rules: Ctx ?=> RuleDefinition[T]): Rule[T] = null.asInstanceOf[Rule[T]]
+  def root: Rule[Any]
 
   @experimental
   inline def parse[R](lexems: List[Lexem[?, ?]]): R | Null =
@@ -38,7 +37,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
           val newState = newStack.head
           val nextSymbol = production.lhs
 
-          if nextSymbol == NonTerminal("S'") && newState.index == 0 then {
+          if nextSymbol == Symbol.Start && newState.index == 0 then {
             stack.head.node
           } else {
             val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
@@ -46,7 +45,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
             loop(lexems, (gotoState, doSth(nextSymbol, children)) :: newStack)
           }
     }
-    loop(lexems, List((0, null)))
+    loop(lexems, (0, null) :: Nil)
   }
 
 }

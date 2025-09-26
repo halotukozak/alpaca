@@ -52,7 +52,8 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value](
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value] {
   // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
-  def unapply(lexem: Lexem[Name, Value]): Option[Lexem[Name, Value]] = Some(lexem)
+  @compileTimeOnly("Should never be called outside the parser definition")
+  inline def unapply(lexem: Lexem[?, ?]): Option[Lexem[Name, Value]] = ???
 }
 
 final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](

@@ -23,6 +23,7 @@ enum Symbol(val isTerminal: Boolean) {
 }
 
 object Symbol {
+  val Start: NonTerminal = NonTerminal("S'")
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")
 

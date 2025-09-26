@@ -3,26 +3,23 @@ package parser
 
 import scala.annotation.compileTimeOnly
 
-type RuleDefinition[T] = PartialFunction[Tuple, T]
+import alpaca.lexer.context.Lexem
 
-trait Rule[+T] {
-  @compileTimeOnly("Should never be called outside the parser definition")
-  def unapply(x: Any): Option[T] = ???
-
-  object List {
-    @compileTimeOnly("Should never be called outside the parser definition")
-    def unapply(x: Any): Option[List[T]] = ???
-  }
-
-  object Option {
-    @compileTimeOnly("Should never be called outside the parser definition")
-    def unapply(x: Any): Option[Option[T]] = ???
-  }
-}
+// todo: can we make it opaque with conversion?
+type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]
 
 object Rule {
-  extension (rule: Rule[?]) {
-    inline def alwaysAfter(rules: Rule[?]*): rule.type = ???
-    inline def alwaysBefore(rules: Rule[?]*): rule.type = ???
+  extension [T](rule: Rule[T]) {
+    inline def alwaysAfter(rules: Rule[Any]*): Rule[T] = ???
+    inline def alwaysBefore(rules: Rule[Any]*): Rule[T] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def unapply(x: Any): Option[T] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def List: PartialFunction[Any, Option[List[T]]] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def Option: PartialFunction[Any, Option[T]] = ???
   }
 }

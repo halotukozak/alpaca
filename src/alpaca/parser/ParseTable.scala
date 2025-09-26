@@ -4,6 +4,8 @@ package parser
 import alpaca.core.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 
+import alpaca.parser.Symbol as AlapacaSymbol
+
 import java.io.FileWriter
 import scala.collection.mutable
 import scala.quoted.*
@@ -34,100 +36,85 @@ object ParseTable {
   private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ParseTable] = {
     import quotes.reflect.*
 
-    def extractProductions: PartialFunction[Tree, List[Production]] = {
-      case ValDef(
-            ruleName,
-            _,
-            Some(
-              Apply(
-                TypeApply(Select(_, "rule"), List(resultType)),
-                List(Lambda(oldCtx, Lambda(_, Match(_, cases: List[CaseDef])))),
-              ),
-            ),
-          ) =>
-        type SymbolExtractor = PartialFunction[Tree, alpaca.parser.Symbol]
+    def extractProductions: PartialFunction[Tree, List[Production]] =
+      case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
 
-        def extractName: PartialFunction[Tree, String] = { case Select(This(kupadupa), name) =>
-          name
-        }
+        type SymbolExtractor = PartialFunction[Tree, AlapacaSymbol]
 
-        val extractTerminalRef: SymbolExtractor = {
-          case TypedOrTest(
-                Unapply(
-                  Select(
-                    TypeApply(
-                      Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
-                      List(asInstanceOfType),
-                    ),
-                    "unapply",
+        def extractName: PartialFunction[Tree, String] =
+          case Select(This(kupadupa), name) => name
+
+        val extractTerminalRef: SymbolExtractor =
+          case Unapply(
+                Select(
+                  TypeApply(
+                    Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
+                    List(asInstanceOfType),
                   ),
-                  _,
-                  List(bind),
+                  "unapply",
                 ),
                 _,
+                List(bind),
               ) =>
             // (name, asInstanceOfType, bind) //available for future
             Terminal(NameTransformer.decode(name))
-        }
 
-        val extractNonTerminalRef: SymbolExtractor = {
-          case Unapply(Select(extractName(name), "unapply"), Nil, List(bind)) =>
+        val extractNonTerminalRef: SymbolExtractor =
+          case Unapply(Select(Select(_, name), "unapply"), Nil, List(bind)) =>
             // (name, bind) //available for future
             NonTerminal(name)
-        }
 
-        val extractOptional: SymbolExtractor = {
+        val extractOptional: SymbolExtractor =
           case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
               if tpt.tpe <:< TypeRepr.of[Option] =>
 
-            report.errorAndAbort("Optional symbols are not yet supported")
+            throw new NotImplementedError("Optional symbols are not yet supported")
           // if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isOptional = true)
           // else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isOptional = true)
           // else raiseShouldNeverBeCalled(arg.tpe.show)
-        }
 
-        val extractRepeated: SymbolExtractor = {
+        val extractRepeated: SymbolExtractor =
           case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
               if tpt.tpe <:< TypeRepr.of[Seq] =>
-            report.errorAndAbort("Repeated symbols are not yet supported")
+            throw new NotImplementedError("Repeated symbols are not yet supported")
           // if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isRepeated = true)
           // else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isRepeated = true)
           // else raiseShouldNeverBeCalled(arg.tpe.show)
-        }
 
-        val extractSymbol: SymbolExtractor = {
-          case extractTerminalRef(terminal) => terminal
-          case extractNonTerminalRef(nonterminal) => nonterminal
-          case extractOptional(optional) => optional
-          case extractRepeated(repeated) => repeated
-          case x => raiseShouldNeverBeCalled(x.toString)
-        }
+        val skipTypedOrTest: PartialFunction[Tree, Tree] =
+          case TypedOrTest(tree, _) => tree
+          case tree => tree
 
-        cases.map {
-          case CaseDef(pattern, Some(_), _) => throw new NotImplementedError("Guards are not supported yet")
+        val extractSymbol: SymbolExtractor = skipTypedOrTest.andThen:
+          case (extractTerminalRef(terminal)) => terminal
+          case (extractNonTerminalRef(nonterminal)) => nonterminal
+          case (extractOptional(optional)) => optional
+          case (extractRepeated(repeated)) => repeated
+
+        cases.map:
+          case CaseDef(pattern, Some(_), rhs) => throw new NotImplementedError("Guards are not supported yet")
           // todo: i hope we can abandon this case
-          case CaseDef(pattern @ TypedOrTest(Unapply(_, _, List(_)), _), None, _) =>
+          case CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs) =>
+            rhs.show.dbg
             Production(NonTerminal(ruleName), List(extractSymbol(pattern)))
-          case CaseDef(TypedOrTest(Unapply(_, _, patterns), _), None, _) =>
+          case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
             Production(NonTerminal(ruleName), patterns.map(extractSymbol))
-          case CaseDef(pattern, None, _) =>
+          case CaseDef(pattern, None, rhs) =>
             Production(NonTerminal(ruleName), List(extractSymbol(pattern)))
-        }
-    }
 
     val rules =
       TypeRepr
         .of[P]
         .typeSymbol
         .declaredFields
-        .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
+        .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
         .map(_.tree)
 
     val productions = rules.flatMap(extractProductions)
 
     val root = productions.find(_.lhs.name == "root").get
 
-    Expr(ParseTable(Production(NonTerminal("S'"), List(root.lhs)) :: productions))
+    Expr(ParseTable(Production(AlapacaSymbol.Start, List(root.lhs)) :: productions))
   }
 
   private def apply(productions: List[Production]): ParseTable = {
@@ -137,32 +124,29 @@ object ParseTable {
       mutable.ListBuffer(
         State.fromItem(
           State.empty,
-          productions.collectFirst { case production @ Production(NonTerminal("S'"), rhs) =>
-            production.toItem()
-          }.get,
+          productions.find(_.lhs == AlapacaSymbol.Start).get.toItem(),
           productions,
           firstSet,
         ),
       )
-    val table = mutable.Map.empty[(Int, Symbol), ParseAction]
+    val table = mutable.Map.empty[(Int, AlapacaSymbol), ParseAction]
 
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
 
-      for (item <- currState if item.isLastItem) {
+      for item <- currState if item.isLastItem do {
         table += ((currStateId, item.lookAhead) -> ParseAction.Reduction(item.production))
       }
 
-      for (stepSymbol <- currState.possibleSteps) {
+      for stepSymbol <- currState.possibleSteps do {
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
-        states.indexOf(newState) match {
+        states.indexOf(newState) match
           case -1 =>
             table += ((currStateId, stepSymbol) -> ParseAction.Shift(states.length))
             states += newState
           case stateId =>
             table += ((currStateId, stepSymbol) -> ParseAction.Shift(stateId))
-        }
       }
 
       currStateId += 1
