@@ -1,33 +1,32 @@
 package alpaca
 package parser
 
-import alpaca.core.WithDefault
+import alpaca.core.{Empty, WithDefault}
 import alpaca.lexer.context.Lexem
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import alpaca.parser.Symbol.Terminal
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
-import scala.annotation.{experimental, tailrec}
+import scala.annotation.{compileTimeOnly, experimental, tailrec}
 
-abstract class Parser[Ctx <: AnyGlobalCtx](
-  using Ctx WithDefault EmptyGlobalCtx,
-) {
-
-  def ctx: Ctx = ???
+abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
 
   def root: Rule[Any]
 
   @experimental
-  inline def parse[R](lexems: List[Lexem[?, ?]]): R | Null = {
-    val (parseTable, actionTable) = createTables[this.type]
+  inline def parse[R](lexems: List[Lexem[?, ?]]): (ctx: Ctx, result: R | Null) = {
+    val (parseTable, actionTable) = createTables[Ctx, R, this.type]
     parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
   }
 
   @experimental
-  private def parse[R](parseTable: ParseTable, actionTable: ActionTable, lexems: List[Lexem[?, ?]]): R | Null = {
+  private def parse[R](
+                        parseTable: ParseTable,
+                        actionTable: ActionTable[Ctx, R],
+                        lexems: List[Lexem[?, ?]],
+                      ): (ctx: Ctx, result: R | Null) = {
     type State = (index: Int, node: R | Lexem[?, ?] | Null)
-
-    def doSth(symbol: Symbol, children: List[R | Null] = Nil): R = null.asInstanceOf[R]
+    val ctx = empty()
 
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
@@ -43,11 +42,15 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
           else {
             val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
-            loop(lexems, (gotoState, actionTable(production)(children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack)
+            loop(
+              lexems,
+              (gotoState, actionTable(production)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack,
+            )
           }
-
     }
-    loop(lexems, (0, null) :: Nil)
+    ctx -> loop(lexems, (0, null) :: Nil)
   }
 
+  @compileTimeOnly("Should never be called outside the parser definition")
+  inline protected final def ctx: Ctx = ???
 }

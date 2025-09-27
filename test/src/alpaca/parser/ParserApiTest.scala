@@ -18,25 +18,25 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   val CalcLexer = lexer {
     case " " => Token.Ignored
     case " \\t" => Token.Ignored
-    case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
+    case id@"[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
     case "\\+" => Token["PLUS"]
     case "-" => Token["MINUS"]
     case "\\*" => Token["TIMES"]
     case "/" => Token["DIVIDE"]
     case "=" => Token["ASSIGN"]
     case "," => Token["COMMA"]
-    case parenthesis @ ("\\(" | "\\)") => Token[parenthesis.type]
-    case number @ "\\d+" => Token["NUMBER"](number.toInt)
+    case parenthesis@("\\(" | "\\)") => Token[parenthesis.type]
+    case number@"\\d+" => Token["NUMBER"](number.toInt)
     case "#.*" => Token.Ignored
-    case newline @ "\n+" =>
+    case newline@"\n+" =>
       ctx.line += newline.count(_ == '\n')
       Token.Ignored
   }
 
   case class CalcContext(
-    names: mutable.Map[String, Int] = mutable.Map.empty,
-    errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
-  ) extends GlobalCtx derives Copyable
+                          names: mutable.Map[String, Int] = mutable.Map.empty,
+                          errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
+                        ) extends GlobalCtx derives Copyable
 
   // class CalcParser(Parser):
   //    tokens = CalcLexer.tokens
@@ -59,7 +59,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       case CalcLexer.ID(id) =>
         ctx.names.getOrElse(
           id.value, {
-            ctx.errors.append(("undefined", id)); 0
+            ctx.errors.append(("undefined", id));
+            0
           },
         )
 

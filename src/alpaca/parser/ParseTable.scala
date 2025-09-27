@@ -3,20 +3,18 @@ package parser
 
 import alpaca.core.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import alpaca.parser.context.AnyGlobalCtx
 
 import java.io.FileWriter
+import scala.annotation.experimental
 import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
 import scala.util.Using
-import scala.runtime.FunctionXXL
-import alpaca.lexer.context.Lexem
-import scala.collection.MapView
 
-enum ParseAction {
+enum ParseAction:
   case Shift(newState: Int)
   case Reduction(production: Production)
-}
 
 object ParseAction {
   given Showable[ParseAction] =
@@ -32,20 +30,26 @@ object ParseAction {
 opaque type ParseTable <: Map[(state: Int, stepSymbol: Symbol), ParseAction] =
   Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
-type F = Seq[Any] => Any
+type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 
-opaque type ActionTable <: Map[Production, F] = Map[Production, F]
+opaque type ActionTable[Ctx <: AnyGlobalCtx, R] <: Map[Production, Action[Ctx, R]] = Map[Production, Action[Ctx, R]]
 
-inline def createTables[P <: Parser[?]]: (ParseTable, ActionTable) = ${ applyImpl[P] }
+@experimental
+inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, ActionTable[Ctx, R]) =
+  ${ applyImpl[Ctx, R, P] }
 
 //todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
-private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTable, ActionTable)] = {
+@experimental
+private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Type](
+                                                                                     using quotes: Quotes,
+                                                                                   ): Expr[(ParseTable, ActionTable[Ctx, R])] = {
   import quotes.reflect.*
 
+  val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
   val replaceRefs = new ReplaceRefs[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
-  def extractProductions: PartialFunction[Tree, List[(production: Production, lambda: Expr[F])]] =
+  def extractProductions: PartialFunction[Tree, List[(production: Production, lambda: Expr[Action[Ctx, R]])]] =
     case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
 
       type SymbolExtractor = PartialFunction[Tree, (symbol: parser.Symbol, bind: Option[Bind])]
@@ -77,22 +81,25 @@ private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTa
         case Unapply(Select(Select(_, name), "unapply"), Nil, List(extractBind(bind))) =>
           NonTerminal(name) -> bind
 
-      // val extractOptional: SymbolExtractor =
-      //   case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
-      //       if tpt.tpe <:< TypeRepr.of[Option] =>
+      val extractOptionalNonTerminal: SymbolExtractor =
+        case Unapply(
+        Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
+        Nil,
+        List(extractBind(bind)),
+        ) =>
+          // todo: https://github.com/halotukozak/alpaca/issues/24
+          report.error("Optional non-terminals are not supported yet")
+          NonTerminal(name, isOptional = true) -> bind
 
-      //     throw new NotImplementedError("Optional symbols are not yet supported")
-      //   // if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isOptional = true)
-      //   // else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isOptional = true)
-      //   // else raiseShouldNeverBeCalled(arg.tpe.show)
-
-      // val extractRepeated: SymbolExtractor =
-      //   case Bind(bind, Typed(_, Applied(tpt, List(arg @ Singleton(extractName(name))))))
-      //       if tpt.tpe <:< TypeRepr.of[Seq] =>
-      //     throw new NotImplementedError("Repeated symbols are not yet supported")
-      //   // if arg.tpe <:< TypeRepr.of[Rule] then NonTerminal(name, isRepeated = true)
-      //   // else if arg.tpe <:< TypeRepr.of[Token[?, ?, ?]] then Terminal(name, isRepeated = true)
-      //   // else raiseShouldNeverBeCalled(arg.tpe.show)
+      val extractRepeatedNonTerminal: SymbolExtractor =
+        case Unapply(
+        Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
+        Nil,
+        List(extractBind(bind)),
+        ) =>
+          // todo: https://github.com/halotukozak/alpaca/issues/23
+          report.error("Repeated non-terminals are not supported yet")
+          NonTerminal(name, isRepeated = true) -> bind
 
       val skipTypedOrTest: PartialFunction[Tree, Tree] =
         case TypedOrTest(tree, _) => tree
@@ -101,26 +108,23 @@ private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTa
       val extractSymbol: SymbolExtractor = skipTypedOrTest.andThen:
         case extractTerminalRef(terminal) => terminal
         case extractNonTerminalRef(nonterminal) => nonterminal
-        // case (extractOptional(optional)) => optional
-        // case (extractRepeated(repeated)) => repeated
+        case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
+        case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
 
-      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[F] { case (methSym, (param: Term) :: Nil) =>
-        val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
-        val seq = param.asExprOf[Seq[Any]]
+      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
+        case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
+          val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
+          val seq = param.asExprOf[Seq[Any]]
 
-        val replacements = binds.zipWithIndex
-          .collect:
-            case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
-          .map:
-            case ((bind, '[t]), idx) =>
-              (
-                find = bind,
-                replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm,
-              )
-            case x => raiseShouldNeverBeCalled(x.toString)
+          val replacements = (find = ctxSymbol, replace = ctx) ::
+            binds.zipWithIndex
+              .collect:
+                case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
+              .map:
+                case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm)
+                case x => raiseShouldNeverBeCalled(x.toString)
 
-        replaceRefs(replacements*).transformTerm(rhs)(methSym)
-      }
+          replaceRefs(replacements *).transformTerm(rhs)(methSym)
 
       cases
         .map:
@@ -142,7 +146,7 @@ private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTa
 
   val actions = rules.flatMap(extractProductions)
 
-  val root = actions.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
+  val root = actions.collectFirst { case (p@Production(NonTerminal("root", _, _), _), _) => p }.get
 
   val parseTable: Expr[ParseTable] = Expr(
     ParseTable(Production(parser.Symbol.Start, List(root.lhs)) :: actions.map(_.production)),

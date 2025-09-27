@@ -1,17 +1,16 @@
 package alpaca
 
-import alpaca.core.{show, Showable}
-import alpaca.lexer.{lexer, Token}
+import alpaca.core.{Showable, show}
+import alpaca.lexer.{Token, lexer}
 import alpaca.parser.{Parser, Rule}
 import org.scalatest.funsuite.AnyFunSuite
 
 @main def main(): Unit = {
-  val Lexer = lexer {
+  val Lexer = lexer:
     case "\\s+" => Token.Ignored
     case "=" => Token["="]
     case "\\*" => Token["*"]
     case id@"[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
-  }
 
   given Showable[Ast] = ast =>
     if ast.children.isEmpty then ast.name
@@ -37,7 +36,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
   val tokens = Lexer.tokenize("*A = **B")
 
-  val result = Parser.parse[Ast](tokens).nn
+  val result = Parser.parse[Ast](tokens).result.nn
   println(show"$result")
 }
 
