@@ -3,16 +3,14 @@ package parser
 
 import alpaca.core.*
 import alpaca.lexer.*
-import alpaca.lexer.context.Lexem
+import alpaca.lexer.context.{ctx, Lexem}
 import alpaca.lexer.context.default.*
 import alpaca.parser.context.GlobalCtx
+import alpaca.parser.Rule.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.parser.Rule.*
-import alpaca.parser.Rule.given
 
 import scala.collection.mutable
-import alpaca.lexer.context.ctx
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
   val CalcLexer = lexer {

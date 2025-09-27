@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.*
+import alpaca.core.{*, given}
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 
@@ -11,6 +11,7 @@ import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
 import scala.util.Using
+import scala.NamedTuple.NamedTuple
 
 enum ParseAction:
   case Shift(newState: Int)
@@ -245,5 +246,5 @@ object ParseTable {
 
   given ToExpr[ParseTable] with
     def apply(x: ParseTable)(using Quotes): Expr[ParseTable] =
-      '{ ${ Expr(x.map { case (k, v) => (k.toTuple, v) }.toList) }.toMap }
+      '{ ${ Expr(x.toList) }.toMap }
 }

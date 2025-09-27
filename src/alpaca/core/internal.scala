@@ -2,7 +2,8 @@ package alpaca
 package core
 
 import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, Type}
+import scala.quoted.{Expr, Quotes, ToExpr, Type}
+import scala.NamedTuple.NamedTuple
 
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
   throw new Exception(s"It should never happen. Got: $x")
@@ -37,3 +38,7 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     ).asExprOf[F]
   }
 }
+
+given [K <: Tuple, V <: Tuple : ToExpr]: ToExpr[NamedTuple[K, V]] with
+  override def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] =
+    Expr(x.toTuple)
