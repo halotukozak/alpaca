@@ -1,6 +1,6 @@
 package alpaca.parser
 
-import alpaca.core.{mkShow, show, Showable}
+import alpaca.core.{show, Showable}
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 

@@ -1,7 +1,7 @@
 package alpaca
 
-import alpaca.core.{Showable, show}
-import alpaca.lexer.{Token, lexer}
+import alpaca.core.{show, Showable}
+import alpaca.lexer.{lexer, Token}
 import alpaca.parser.{Parser, Rule}
 import org.scalatest.funsuite.AnyFunSuite
 

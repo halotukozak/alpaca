@@ -10,7 +10,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
       "[a-zA-Z_][a-zA-Z0-9_]*",
       "[+-]?[0-9]+",
       "=",
-      "[ \\t\\n]+"
+      "[ \\t\\n]+",
     )
     RegexChecker.checkPatterns(patterns) shouldBe empty
   }
@@ -21,7 +21,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
       "\\*",
       "=",
       "[a-zA-Z]+",
-      "[ \\t\\n]+"
+      "[ \\t\\n]+",
     )
     RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
   }
@@ -32,9 +32,10 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
       "\\*",
       "=",
       "[a-zA-Z_][a-zA-Z0-9_]*",
-      "[ \\t\\n]+"
+      "[ \\t\\n]+",
     )
-    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe
+      "Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
   }
 
   test("checkPatterns should not report patterns in proper order") {
@@ -44,7 +45,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
       "when",
       "=",
       "[a-zA-Z_][a-zA-Z0-9_]*",
-      "[ \\t\\n]+"
+      "[ \\t\\n]+",
     )
     RegexChecker.checkPatterns(patterns) shouldBe empty
   }
