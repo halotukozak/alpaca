@@ -1,8 +1,8 @@
 package alpaca
 
+import alpaca.core.{show, Showable}
 import alpaca.lexer.{lexer, Token}
-import alpaca.parser.Parser
-import alpaca.parser.Rule
+import alpaca.parser.{Parser, Rule}
 import org.scalatest.funsuite.AnyFunSuite
 
 @main def main(): Unit = {
@@ -10,8 +10,12 @@ import org.scalatest.funsuite.AnyFunSuite
     case "\\s+" => Token.Ignored
     case "=" => Token["="]
     case "\\*" => Token["*"]
-    case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"]
+    case id@"[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
   }
+
+  given Showable[Ast] = ast =>
+    if ast.children.isEmpty then ast.name
+    else show"${ast.name}${ast.children.map(given_Showable_Ast.show).mkString("(", ", ", ")")}"
 
   final case class Ast(name: String, children: Ast*)
 
@@ -21,7 +25,7 @@ import org.scalatest.funsuite.AnyFunSuite
       case (L(l), Lexer.`=`(_), R(r)) => Ast("S", l, r)
 
     val L: Rule[Ast] =
-      case Lexer.ID(id) => Ast("L", Ast(s"id: $id"))
+      case Lexer.ID(id) => Ast("L", Ast(s"id: ${id.value}"))
       case (Lexer.`*`(_), R(r)) => Ast("L", r)
 
     val R: Rule[Ast] =
@@ -32,8 +36,9 @@ import org.scalatest.funsuite.AnyFunSuite
   }
 
   val tokens = Lexer.tokenize("*A = **B")
-  val result = Parser.parse[Ast](tokens)
-  println(result)
+
+  val result = Parser.parse[Ast](tokens).nn
+  println(show"$result")
 }
 
 class MainTest extends AnyFunSuite:

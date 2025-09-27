@@ -106,6 +106,7 @@ private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTa
 
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[F] { case (methSym, (param: Term) :: Nil) =>
         val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
+        val seq = param.asExprOf[Seq[Any]]
 
         val replacements = binds.zipWithIndex
           .collect:
@@ -114,7 +115,7 @@ private def applyImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[(ParseTa
             case ((bind, '[t]), idx) =>
               (
                 find = bind,
-                replace = '{ ${ param.asExprOf[Seq[Any]] }.apply($idx).asInstanceOf[t] }.asTerm,
+                replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm,
               )
             case x => raiseShouldNeverBeCalled(x.toString)
 

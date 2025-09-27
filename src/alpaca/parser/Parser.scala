@@ -42,7 +42,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
           if nextSymbol == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
             val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
-            val children = stack.take(rhs.size).map(_.node)
+            val children = stack.take(rhs.size).map(_.node).reverse
             loop(lexems, (gotoState, actionTable(production)(children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack)
           }
 
