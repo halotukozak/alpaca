@@ -45,9 +45,9 @@ inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, 
 
 //todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
 @experimental
-private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Type](
-                                                                                     using quotes: Quotes,
-                                                                                   ): Expr[(ParseTable, ActionTable[Ctx, R])] = {
+private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
+  using quotes: Quotes,
+): Expr[(ParseTable, ActionTable[Ctx, R])] = {
   import quotes.reflect.*
 
   val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
@@ -88,20 +88,20 @@ private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Ty
 
       val extractOptionalNonTerminal: SymbolExtractor =
         case Unapply(
-        Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
-        Nil,
-        List(extractBind(bind)),
-        ) =>
+              Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
+              Nil,
+              List(extractBind(bind)),
+            ) =>
           // todo: https://github.com/halotukozak/alpaca/issues/24
           report.error("Optional non-terminals are not supported yet")
           NonTerminal(name, isOptional = true) -> bind
 
       val extractRepeatedNonTerminal: SymbolExtractor =
         case Unapply(
-        Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
-        Nil,
-        List(extractBind(bind)),
-        ) =>
+              Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
+              Nil,
+              List(extractBind(bind)),
+            ) =>
           // todo: https://github.com/halotukozak/alpaca/issues/23
           report.error("Repeated non-terminals are not supported yet")
           NonTerminal(name, isRepeated = true) -> bind
@@ -129,7 +129,7 @@ private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Ty
                 case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm)
                 case x => raiseShouldNeverBeCalled(x.toString)
 
-          replaceRefs(replacements *).transformTerm(rhs)(methSym)
+          replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
       cases
         .map:
@@ -151,7 +151,7 @@ private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Ty
 
   val actions = rules.flatMap(extractProductions)
 
-  val root = actions.collectFirst { case (p@Production(NonTerminal("root", _, _), _), _) => p }.get
+  val root = actions.collectFirst { case (p @ Production(NonTerminal("root", _, _), _), _) => p }.get
 
   val parseTable: Expr[ParseTable] = Expr(
     ParseTable(Production(parser.Symbol.Start, List(root.lhs)) :: actions.map(_.production)),
@@ -202,12 +202,7 @@ object ParseTable {
       currStateId += 1
     }
 
-    table.toMap.tap { (table: ParseTable) =>
-      // todo: remove hardcoded path
-      Using.resource(new FileWriter("/Users/bartlomiejkozak/IdeaProjects/alpaca/parser.dbg")) { writer =>
-        writer.write(table.show)
-      }
-    }
+    table.toMap
   }
 
   given Showable[ParseTable] = { table =>

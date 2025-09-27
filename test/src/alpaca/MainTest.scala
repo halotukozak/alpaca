@@ -10,7 +10,7 @@ import org.scalatest.funsuite.AnyFunSuite
     case "\\s+" => Token.Ignored
     case "=" => Token["="]
     case "\\*" => Token["*"]
-    case id@"[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
+    case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
 
   given Showable[Ast] = ast =>
     if ast.children.isEmpty then ast.name
