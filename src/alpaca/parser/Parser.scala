@@ -30,7 +30,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
 
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
-      parseTable((stack.head.index, nextSymbol)) match
+      parseTable(stack.head.index, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
@@ -40,7 +40,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
 
           if nextSymbol == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
-            val ParseAction.Shift(gotoState) = parseTable((newState.index, nextSymbol)).runtimeChecked
+            val ParseAction.Shift(gotoState) = parseTable(newState.index, nextSymbol).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
             loop(
               lexems,

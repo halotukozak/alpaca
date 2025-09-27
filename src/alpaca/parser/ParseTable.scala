@@ -27,12 +27,16 @@ object ParseAction {
       case ParseAction.Reduction(p) => '{ ParseAction.Reduction(${ Expr(p) }) }
 }
 
-opaque type ParseTable <: Map[(state: Int, stepSymbol: Symbol), ParseAction] =
-  Map[(state: Int, stepSymbol: Symbol), ParseAction]
+opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
 type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 
-opaque type ActionTable[Ctx <: AnyGlobalCtx, R] <: Map[Production, Action[Ctx, R]] = Map[Production, Action[Ctx, R]]
+opaque type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
+
+object ActionTable {
+  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
+    def apply(production: Production): Action[Ctx, R] = table(production)
+}
 
 @experimental
 inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, ActionTable[Ctx, R]) =
@@ -160,6 +164,8 @@ private def applyImpl[Ctx <: AnyGlobalCtx : Type, R: Type, P <: Parser[Ctx] : Ty
 }
 
 object ParseTable {
+  extension (table: ParseTable) def apply(state: Int, symbol: Symbol): ParseAction = table((state, symbol))
+
   def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0
@@ -172,7 +178,7 @@ object ParseTable {
           firstSet,
         ),
       )
-    val table = mutable.Map.empty[(Int, parser.Symbol), ParseAction]
+    val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
@@ -204,7 +210,8 @@ object ParseTable {
   }
 
   given Showable[ParseTable] = { table =>
-    val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
+    val symbols = table.keysIterator.map(_.stepSymbol).toSet
+    val states = table.keysIterator.map(_.state).to(collection.SortedSet)
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
@@ -223,7 +230,7 @@ object ParseTable {
       result.append("|")
     }
 
-    for (i <- 0 to 13) {
+    for (i <- states) {
       result.append('\n')
       result.append(centerText(i.toString))
       result.append("|")
@@ -236,10 +243,7 @@ object ParseTable {
     result.result()
   }
 
-  private given ToExpr[(state: Int, stepSymbol: Symbol)] with
-    def apply(x: (state: Int, stepSymbol: Symbol))(using Quotes): Expr[(state: Int, stepSymbol: Symbol)] =
-      Expr(x.toTuple)
-
   given ToExpr[ParseTable] with
-    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] = '{ ${ Expr(x.toList) }.toMap }
+    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] =
+      '{ ${ Expr(x.map { case (k, v) => (k.toTuple, v) }.toList) }.toMap }
 }
