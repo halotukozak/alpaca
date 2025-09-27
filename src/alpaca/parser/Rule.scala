@@ -1,9 +1,9 @@
 package alpaca
 package parser
 
-import scala.annotation.compileTimeOnly
-
 import alpaca.lexer.context.Lexem
+
+import scala.annotation.compileTimeOnly
 
 // todo: can we make it opaque with conversion?
 type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]

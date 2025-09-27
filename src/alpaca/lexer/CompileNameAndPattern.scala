@@ -6,8 +6,6 @@ import alpaca.lexer.CompileNameAndPattern.*
 
 import scala.annotation.tailrec
 import scala.quoted.*
-import scala.reflect.NameTransformer
-import java.util.concurrent.atomic.AtomicInteger
 
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*

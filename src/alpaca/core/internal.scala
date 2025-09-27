@@ -2,7 +2,7 @@ package alpaca
 package core
 
 import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, ToExpr, Type}
+import scala.quoted.{Expr, Quotes, Type}
 
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
   throw new Exception(s"It should never happen. Got: $x")

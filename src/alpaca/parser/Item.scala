@@ -1,10 +1,9 @@
 package alpaca.parser
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{Showable, show}
 import alpaca.lexer.AlgorithmError
 import alpaca.parser.Production
 import alpaca.parser.Symbol.*
-import Tuple.Elem
 
 final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   if production.rhs.size < dotPosition then
