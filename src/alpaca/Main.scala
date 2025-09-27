@@ -1,6 +1,6 @@
 package alpaca
 
-import alpaca.core.{Showable, show}
+import alpaca.core.{show, Showable}
 import alpaca.parser.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 
