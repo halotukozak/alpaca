@@ -3,14 +3,16 @@ package parser
 
 import alpaca.core.{*, given}
 import alpaca.ebnf.*
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import alpaca.parser.Symbol.NonTerminal
 import alpaca.parser.context.AnyGlobalCtx
+import alpaca.parser.ParseTable.given_Showable_ParseTable
 
+import java.io.FileWriter
 import scala.annotation.experimental
 import scala.collection.mutable
 import scala.quoted.*
-import scala.reflect.NameTransformer
 import scala.NamedTuple.NamedTuple
+import scala.util.Using
 
 enum ParseAction:
   case Shift(newState: Int)
@@ -38,80 +40,27 @@ object ActionTable {
     def apply(production: Production): Action[Ctx, R] = table(production)
 }
 
-@experimental
-inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, ActionTable[Ctx, R]) =
+inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]
+  : (parseTable: ParseTable, actionTable: ActionTable[Ctx, R], debug: () => Unit) =
   ${ applyImpl[Ctx, R, P] }
 
 //todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
-@experimental
+
 private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
   using quotes: Quotes,
-): Expr[(ParseTable, ActionTable[Ctx, R])] = {
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx, R], debug: () => Unit)] = {
   import quotes.reflect.*
+
+  val debug = mutable.ListBuffer.empty[Expr[Unit]]
 
   val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
   val replaceRefs = new ReplaceRefs[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
+  val EBNFExtractors = new EBNFExtractors[quotes.type]
+  import EBNFExtractors.*
 
   def extractEBNF: PartialFunction[Tree, List[(definition: EBNF.Definition, lambda: Expr[Action[Ctx, R]])]] =
     case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
-
-      type EBNFExtractor = PartialFunction[Tree, (ebnf: EBNF, bind: Option[Bind])]
-
-      val extractName: PartialFunction[Tree, String] =
-        case Select(This(_), name) => name
-        case Ident(name) => name
-
-      val extractBind: PartialFunction[Tree, Option[Bind]] =
-        case bind: Bind => Some(bind)
-        case Ident("_") => None
-        case x => raiseShouldNeverBeCalled(x.show)
-
-      val extractTerminalRef: EBNFExtractor =
-        case Unapply(
-              Select(
-                TypeApply(
-                  Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
-                  List(asInstanceOfType),
-                ),
-                "unapply",
-              ),
-              _,
-              List(extractBind(bind)),
-            ) =>
-          EBNF.Identifier(Terminal(NameTransformer.decode(name))) -> bind
-
-      val extractNonTerminalRef: EBNFExtractor =
-        case Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind))) =>
-          EBNF.Identifier(NonTerminal(name)) -> bind
-
-      val extractOptionalNonTerminal: EBNFExtractor =
-        case Unapply(
-              Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
-              Nil,
-              List(extractBind(bind)),
-            ) =>
-          EBNF.Optional(EBNF.Identifier(NonTerminal(name))) -> bind
-
-      val extractRepeatedNonTerminal: EBNFExtractor =
-        case Unapply(
-              Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
-              Nil,
-              List(extractBind(bind)),
-            ) =>
-          EBNF.ZeroOrMore(EBNF.Identifier(NonTerminal(name))) -> bind
-
-      val skipTypedOrTest: PartialFunction[Tree, Tree] =
-        case TypedOrTest(tree, _) => tree
-        case tree => tree
-
-      val extractRhs: EBNFExtractor = skipTypedOrTest.andThen:
-        case extractTerminalRef(terminal) => terminal
-        case extractNonTerminalRef(nonterminal) => nonterminal
-        case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
-        case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
-        case x => raiseShouldNeverBeCalled(x.toString)
-
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
           val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
@@ -122,7 +71,7 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .map:
-                case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm)
+                case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm)
                 case x => raiseShouldNeverBeCalled(x.toString)
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
@@ -136,6 +85,7 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
           case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
             val (ebnf, binds) = patterns.map(extractRhs).unzip(using _.toTuple)
             EBNF.Definition(NonTerminal(ruleName), EBNF.Concatenation(ebnf)) -> createAction(binds, rhs)
+    case ValDef(_, _, rhs) => raiseShouldNeverBeCalled(rhs.toString)
 
   val rules =
     TypeRepr
@@ -145,24 +95,39 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
       .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
       .map(_.tree)
 
-  val ebnfTable = rules.flatMap(extractEBNF)
+  val ebnfTable =
+    rules.flatMap(extractEBNF).tap { table =>
+      val x = Expr(table.map(_.definition).mkString("\n"))
+      debug += '{ writeToFile("ebnfTable.dbg")($x) }
+    }
 
-  val actions: List[(production: Production, lambda: Expr[Action[Ctx, R]])] = for
-    (ebnf, lambda) <- ebnfTable
-    production <- ebnf.toBNF
-  yield production -> lambda
+  val actions: List[(production: Production, lambda: Expr[Action[Ctx, R]])] = {
+    for
+      (ebnf, lambda) <- ebnfTable
+      production <- ebnf.toBNF
+    yield production -> lambda
+  }.tap { table =>
+    val x = Expr(
+      table
+        .map { case (production, lambda) => show"$production => ${lambda.asTerm.show(using Printer.TreeShortCode)}" }
+        .mkString("\n"),
+    )
+    debug += '{ writeToFile("actionTable.dbg")($x) }
+  }
 
   val root = actions.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
-  val parseTable: Expr[ParseTable] = Expr(
+  val parseTable = Expr[ParseTable](
     ParseTable(Production(parser.Symbol.Start, List(root.lhs)) :: actions.map(_.production)),
-  )
-
-  val actionTable = Expr.ofList {
-    actions.map { case (production, lambda) => Expr.ofTuple((Expr(production), lambda)) }
+  ).tap { table =>
+    debug += '{ writeToFile("parseTable.dbg")(given_Showable_ParseTable.show($table)) }
   }
 
-  '{ ($parseTable, $actionTable.toMap) }
+  val actionTable = Expr.ofList[(Production, Action[Ctx, R])] {
+    actions.map { case (production, lambda) => Expr.ofTuple(Expr(production) -> lambda) }
+  }
+
+  '{ ($parseTable, $actionTable.toMap, () => ${ Expr.block(debug.toList, '{}) }) }
 }
 
 object ParseTable {
@@ -241,6 +206,5 @@ object ParseTable {
   }
 
   given ToExpr[ParseTable] with
-    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] =
-      '{ ${ Expr(x.toList) }.toMap }
+    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] = '{ ${ Expr(x.toList) }.toMap }
 }

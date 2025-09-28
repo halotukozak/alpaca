@@ -1,7 +1,8 @@
 package alpaca
 
+import java.io.FileWriter
 import scala.quoted.*
-import scala.util.Try
+import scala.util.{Try, Using}
 
 def symbolInfo(
   using quotes: Quotes,
@@ -131,3 +132,6 @@ private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = 
 
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
 }
+
+def writeToFile(path: String)(content: String): Unit =
+  Using.resource(new FileWriter("/Users/bartlomiejkozak/IdeaProjects/alpaca/" + path))(_.write(content))

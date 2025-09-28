@@ -1,7 +1,8 @@
 package alpaca
 package parser
 
-import alpaca.core.{Empty, WithDefault}
+import alpaca.core.{show, Empty, WithDefault}
+import alpaca.lexer.DefinedToken
 import alpaca.lexer.context.Lexem
 import alpaca.parser.Symbol.Terminal
 import alpaca.parser.context.AnyGlobalCtx
@@ -34,16 +35,26 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     inline def Option: PartialFunction[Any, Option[T]] = ???
   }
 
-  def root: Rule[Any]
+  extension (token: DefinedToken[?, ?, ?]) {
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def unapply(x: Any): Option[token.LexemTpe] = ???
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = ???
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = ???
+  }
 
+  def root: Rule[Any]
   @experimental
   inline def parse[R](
     lexems: List[Lexem[?, ?]],
   )(using settings: ParserSettings = ParserSettings(),
   ): (ctx: Ctx, result: R | Null) = {
-    val (parseTable, actionTable) = createTables[Ctx, R, this.type]
+    val (parseTable, actionTable, debug) = createTables[Ctx, R, this.type]
 
-    if settings.debug then Using.resource(new FileWriter(settings.debugFileName))(_.write(parseTable.show))
+    if settings.debug then {
+      debug()
+    }
     parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
   }
 

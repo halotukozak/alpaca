@@ -1,12 +1,14 @@
 package alpaca
 
 import alpaca.core.{show, Showable}
-import alpaca.ebnf.EBNF.*
 import alpaca.lexer.{lexer, Token}
 import alpaca.parser.Parser
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.annotation.experimental
+
+@experimental
 @main def main(): Unit = {
   val Lexer = lexer:
     case "\\s+" => Token.Ignored
@@ -19,8 +21,6 @@ import org.scalatest.funsuite.AnyFunSuite
     else show"${ast.name}${ast.children.map(given_Showable_Ast.show).mkString("(", ", ", ")")}"
 
   final case class Ast(name: String, children: Ast*)
-
- 
 
   object Parser extends Parser {
     val S: Rule[Ast] =

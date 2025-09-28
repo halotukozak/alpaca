@@ -1,6 +1,6 @@
 package alpaca.lexer
 
-import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx, Lexem}
+import alpaca.lexer.context.{AnyGlobalCtx, Lexem}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
@@ -51,9 +51,12 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value](
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value] {
-  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
-  @compileTimeOnly("Should never be called outside the parser definition")
-  inline def unapply(lexem: Lexem[?, ?]): Option[Lexem[Name, Value]] = ???
+
+  type LexemTpe = Lexem[Name, Value]
+
+//  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
+//  @compileTimeOnly("Should never be called outside the parser definition")
+//  inline def unapply(lexem: Lexem[?, ?]): Option[Lexem[Name, Value]] = ???
 }
 
 final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](

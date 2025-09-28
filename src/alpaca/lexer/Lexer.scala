@@ -43,7 +43,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
-  val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
+  val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying: @unchecked
   val (tokens, infos) = cases.foldLeft((tokens = List.empty[Expr[ThisToken]], infos = List.empty[TokenInfo[?]])):
     case ((tokens, infos), CaseDef(tree, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(
@@ -124,9 +124,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
             ) =>
           (Type.of[name *: names], Type.of[Token[name, Ctx, value] *: types])
         case _ => raiseShouldNeverBeCalled()
-      }
-      .runtimeChecked match
+      } match
       case ('[type names <: Tuple; names], '[type types <: Tuple; types]) => TypeRepr.of[NamedTuple[names, types]]
+      case _ => raiseShouldNeverBeCalled()
 
     val fieldsDecls = Symbol.newTypeAlias(
       parent = cls,

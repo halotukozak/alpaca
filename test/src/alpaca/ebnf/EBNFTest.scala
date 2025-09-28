@@ -64,10 +64,10 @@ final class EBNFTest extends AnyFunSuite with Matchers with Inside {
       Definition(NonTerminal("S"), Identifier(NonTerminal("R"))),
       Definition(
         NonTerminal("S"),
-        Alternation(Set(Identifier(NonTerminal("L")), Identifier(Terminal("=")), Identifier(NonTerminal("R")))),
+        Concatenation(List(Identifier(NonTerminal("L")), Identifier(Terminal("=")), Identifier(NonTerminal("R")))),
       ),
       Definition(NonTerminal("L"), Identifier(Terminal("ID"))),
-      Definition(NonTerminal("L"), Alternation(Set(Identifier(Terminal("*")), Identifier(NonTerminal("R"))))),
+      Definition(NonTerminal("L"), Concatenation(List(Identifier(Terminal("*")), Identifier(NonTerminal("R"))))),
       Definition(NonTerminal("R"), Identifier(NonTerminal("L"))),
       Definition(NonTerminal("root"), Identifier(NonTerminal("S"))),
     ).flatMap(_.toBNF) should contain theSameElementsAs Set(
