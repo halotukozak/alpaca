@@ -33,10 +33,11 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
               tokens.find(token => m.group(token.name) ne null) match
                 case Some(IgnoredToken(name, _, modifyCtx)) =>
                   betweenStages(m, globalCtx)
-
+                  modifyCtx(globalCtx)
                   loop(globalCtx)(acc)
                 case Some(DefinedToken(name, _, modifyCtx, remapping)) =>
                   betweenStages(m, globalCtx)
+                  modifyCtx(globalCtx)
 
                   val value = remapping(globalCtx)
                   val lexem = globalCtx.lastLexem.nn // todo: for now
