@@ -18,6 +18,22 @@ final case class ParserSettings(
 
 abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
 
+  type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]
+
+  extension [T](rule: Rule[T]) {
+    inline def alwaysAfter(rules: Rule[Any]*): Rule[T] = ???
+    inline def alwaysBefore(rules: Rule[Any]*): Rule[T] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def unapply(x: Any): Option[T] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def List: PartialFunction[Any, Option[List[T]]] = ???
+
+    @compileTimeOnly("Should never be called outside the parser definition")
+    inline def Option: PartialFunction[Any, Option[T]] = ???
+  }
+
   def root: Rule[Any]
 
   @experimental

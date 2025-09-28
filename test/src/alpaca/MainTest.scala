@@ -1,8 +1,10 @@
 package alpaca
 
 import alpaca.core.{show, Showable}
+import alpaca.ebnf.EBNF.*
 import alpaca.lexer.{lexer, Token}
-import alpaca.parser.{Parser, Rule}
+import alpaca.parser.Parser
+import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 
 @main def main(): Unit = {
@@ -17,6 +19,8 @@ import org.scalatest.funsuite.AnyFunSuite
     else show"${ast.name}${ast.children.map(given_Showable_Ast.show).mkString("(", ", ", ")")}"
 
   final case class Ast(name: String, children: Ast*)
+
+ 
 
   object Parser extends Parser {
     val S: Rule[Ast] =

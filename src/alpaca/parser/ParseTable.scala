@@ -2,15 +2,14 @@ package alpaca
 package parser
 
 import alpaca.core.{*, given}
+import alpaca.ebnf.*
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 
-import java.io.FileWriter
 import scala.annotation.experimental
 import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
-import scala.util.Using
 import scala.NamedTuple.NamedTuple
 
 enum ParseAction:
@@ -54,20 +53,21 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
   val replaceRefs = new ReplaceRefs[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
-  def extractProductions: PartialFunction[Tree, List[(production: Production, lambda: Expr[Action[Ctx, R]])]] =
+  def extractEBNF: PartialFunction[Tree, List[(definition: EBNF.Definition, lambda: Expr[Action[Ctx, R]])]] =
     case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
 
-      type SymbolExtractor = PartialFunction[Tree, (symbol: parser.Symbol, bind: Option[Bind])]
+      type EBNFExtractor = PartialFunction[Tree, (ebnf: EBNF, bind: Option[Bind])]
 
-      def extractName: PartialFunction[Tree, String] =
-        case Select(This(kupadupa), name) => name
+      val extractName: PartialFunction[Tree, String] =
+        case Select(This(_), name) => name
+        case Ident(name) => name
 
-      def extractBind: PartialFunction[Tree, Option[Bind]] =
+      val extractBind: PartialFunction[Tree, Option[Bind]] =
         case bind: Bind => Some(bind)
         case Ident("_") => None
         case x => raiseShouldNeverBeCalled(x.show)
 
-      val extractTerminalRef: SymbolExtractor =
+      val extractTerminalRef: EBNFExtractor =
         case Unapply(
               Select(
                 TypeApply(
@@ -79,42 +79,38 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
               _,
               List(extractBind(bind)),
             ) =>
-          // (name, asInstanceOfType, bind) //available for future
-          Terminal(NameTransformer.decode(name)) -> bind
+          EBNF.Identifier(Terminal(NameTransformer.decode(name))) -> bind
 
-      val extractNonTerminalRef: SymbolExtractor =
-        case Unapply(Select(Select(_, name), "unapply"), Nil, List(extractBind(bind))) =>
-          NonTerminal(name) -> bind
+      val extractNonTerminalRef: EBNFExtractor =
+        case Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind))) =>
+          EBNF.Identifier(NonTerminal(name)) -> bind
 
-      val extractOptionalNonTerminal: SymbolExtractor =
+      val extractOptionalNonTerminal: EBNFExtractor =
         case Unapply(
               Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
               Nil,
               List(extractBind(bind)),
             ) =>
-          // todo: https://github.com/halotukozak/alpaca/issues/24
-          report.error("Optional non-terminals are not supported yet")
-          NonTerminal(name, isOptional = true) -> bind
+          EBNF.Optional(EBNF.Identifier(NonTerminal(name))) -> bind
 
-      val extractRepeatedNonTerminal: SymbolExtractor =
+      val extractRepeatedNonTerminal: EBNFExtractor =
         case Unapply(
               Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
               Nil,
               List(extractBind(bind)),
             ) =>
-          // todo: https://github.com/halotukozak/alpaca/issues/23
-          report.error("Repeated non-terminals are not supported yet")
-          NonTerminal(name, isRepeated = true) -> bind
+          EBNF.ZeroOrMore(EBNF.Identifier(NonTerminal(name))) -> bind
 
       val skipTypedOrTest: PartialFunction[Tree, Tree] =
         case TypedOrTest(tree, _) => tree
         case tree => tree
 
-      val extractSymbol: SymbolExtractor = skipTypedOrTest.andThen:
+      val extractRhs: EBNFExtractor = skipTypedOrTest.andThen:
         case extractTerminalRef(terminal) => terminal
         case extractNonTerminalRef(nonterminal) => nonterminal
         case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
         case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
+        case x => raiseShouldNeverBeCalled(x.toString)
 
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
@@ -135,23 +131,28 @@ private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type
         .map:
           case CaseDef(pattern, Some(_), rhs) => throw new NotImplementedError("Guards are not supported yet")
           case CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs) =>
-            val (symbol, bind) = extractSymbol(pattern)
-            Production(NonTerminal(ruleName), symbol :: Nil) -> createAction(List(bind), rhs)
+            val (ebnf, bind) = extractRhs(pattern)
+            EBNF.Definition(NonTerminal(ruleName), ebnf) -> createAction(List(bind), rhs)
           case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
-            val (symbols, binds) = patterns.map(extractSymbol).unzip(using _.toTuple)
-            Production(NonTerminal(ruleName), symbols) -> createAction(binds, rhs)
+            val (ebnf, binds) = patterns.map(extractRhs).unzip(using _.toTuple)
+            EBNF.Definition(NonTerminal(ruleName), EBNF.Concatenation(ebnf)) -> createAction(binds, rhs)
 
   val rules =
     TypeRepr
       .of[P]
       .typeSymbol
-      .declaredFields
+      .declarations
       .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
       .map(_.tree)
 
-  val actions = rules.flatMap(extractProductions)
+  val ebnfTable = rules.flatMap(extractEBNF)
 
-  val root = actions.collectFirst { case (p @ Production(NonTerminal("root", _, _), _), _) => p }.get
+  val actions: List[(production: Production, lambda: Expr[Action[Ctx, R]])] = for
+    (ebnf, lambda) <- ebnfTable
+    production <- ebnf.toBNF
+  yield production -> lambda
+
+  val root = actions.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
   val parseTable: Expr[ParseTable] = Expr(
     ParseTable(Production(parser.Symbol.Start, List(root.lhs)) :: actions.map(_.production)),
