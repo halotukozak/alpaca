@@ -51,7 +51,3 @@ def centerText(text: String, width: Int = 10): String = {
   val rightPad = padding - leftPad
   (" " * leftPad) + text + (" " * rightPad)
 }
-
-given Showable[Int | Production] =
-  case i: Int => i.show
-  case p: Production => p.show

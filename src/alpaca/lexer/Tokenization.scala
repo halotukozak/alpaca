@@ -19,10 +19,12 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
     byName(scala.reflect.NameTransformer.decode(fieldName))
 
   final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?]] = {
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?]]): List[Lexem[?]] =
+    import scala.collection.mutable.ListBuffer
+    
+    @tailrec def loop(globalCtx: Ctx)(acc: ListBuffer[Lexem[?]]): List[Lexem[?]] =
       globalCtx.text match
         case "" =>
-          acc.reverse
+          acc.toList
         case _ =>
           compiled.findPrefixMatchOf(globalCtx.text) match
             case None =>
@@ -39,12 +41,13 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
                   val value = remapping(globalCtx)
                   val lexem = globalCtx.lastLexem.nn // todo: for now
 
-                  loop(globalCtx)(lexem :: acc)
+                  acc += lexem
+                  loop(globalCtx)(acc)
                 case None =>
                   throw new AlgorithmError(s"$m matched but no token defined for it")
 
     val initialContext = empty()
     initialContext.text = input
-    loop(initialContext)(Nil)
+    loop(initialContext)(ListBuffer.empty)
   }
 }
