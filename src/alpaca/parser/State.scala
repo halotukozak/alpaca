@@ -17,13 +17,14 @@ object State {
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
     if !item.isLastItem && !item.nextSymbol.isTerminal then
       val lookAheads = item.nextTerminals(firstSet)
+      val newState = state + item
 
       productions.view
         .filter(_.lhs == item.nextSymbol)
-        .foldLeft(state + item) { (acc, production) =>
+        .foldLeft(newState) { (acc, production) =>
           lookAheads.foldLeft(acc) { (acc, lookAhead) =>
-            val item = production.toItem(lookAhead)
-            if state.contains(item) then acc else fromItem(acc, item, productions, firstSet)
+            val newItem = production.toItem(lookAhead)
+            if acc.contains(newItem) then acc else fromItem(acc, newItem, productions, firstSet)
           }
         }
     else state + item

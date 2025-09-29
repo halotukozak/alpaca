@@ -14,7 +14,7 @@ final class FirstSet(productions: List[Production]) {
   }
 
   private def dependenciesGraph(productions: List[Production]): Map[NonTerminal, FirstSet.Meta] =
-    productions.foldLeft(Map.empty[NonTerminal, FirstSet.Meta].withDefaultValue(FirstSet.Meta.empty)) {
+    productions.view.foldLeft(Map.empty[NonTerminal, FirstSet.Meta].withDefaultValue(FirstSet.Meta.empty)) {
       case (acc, Production(lhs, head +: _)) =>
         acc.updated(lhs, acc(lhs).including(head))
 
@@ -25,7 +25,7 @@ final class FirstSet(productions: List[Production]) {
   @tailrec
   private def resolveGraph(graph: Map[NonTerminal, FirstSet.Meta]): Map[NonTerminal, FirstSet.Meta] = {
     val newGraph =
-      graph.map((nt, meta) => (nt, meta.importsFrom.foldLeft(meta)((acc, nt) => acc.including(graph(nt).first))))
+      graph.view.map((nt, meta) => (nt, meta.importsFrom.foldLeft(meta)((acc, nt) => acc.including(graph(nt).first)))).toMap
     if graph == newGraph then newGraph else resolveGraph(newGraph)
   }
 }

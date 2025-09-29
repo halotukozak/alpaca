@@ -11,7 +11,7 @@ def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | 
   while states.sizeIs > currStateId do
     val currState = states(currStateId)
 
-    for (item <- currState if item.isLastItem) {
+    for (item <- currState.view if item.isLastItem) {
       table += ((currStateId, item.lookAhead) -> item.production)
     }
 
