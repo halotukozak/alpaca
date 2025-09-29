@@ -4,13 +4,25 @@ import alpaca.lexer.AlgorithmError
 import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
-final class FirstSet(productions: List[Production]) {
-  private val firstSet = resolveGraph(dependenciesGraph(productions))
+private val firstSetCache = mutable.Map.empty[List[Production], FirstSet]
 
+final class FirstSet private (private val firstSet: Map[NonTerminal, FirstSet.Meta]) {
   def first(symbol: Symbol): Set[Terminal] = symbol match {
     case t: Terminal => Set(t)
     case nt: NonTerminal => firstSet.getOrElse(nt, FirstSet.Meta.empty).first
+  }
+}
+
+object FirstSet {
+  /** Memoized FirstSet creation to avoid recomputation */
+  def apply(productions: List[Production]): FirstSet = {
+    firstSetCache.getOrElseUpdate(productions, {
+      val graph = dependenciesGraph(productions)
+      val resolved = resolveGraph(graph)
+      new FirstSet(resolved)
+    })
   }
 
   private def dependenciesGraph(productions: List[Production]): Map[NonTerminal, FirstSet.Meta] =

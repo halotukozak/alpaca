@@ -2,7 +2,14 @@ package alpaca.parser
 
 import scala.collection.mutable
 
+private val parseTableCache = mutable.Map.empty[List[Production], mutable.Map[(Int, Symbol), Int | Production]]
+
+/** Memoized parseTable function to avoid recomputing tables for the same productions */
 def parseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | Production] = {
+  parseTableCache.getOrElseUpdate(productions, computeParseTable(productions))
+}
+
+private def computeParseTable(productions: List[Production]): mutable.Map[(Int, Symbol), Int | Production] = {
   val firstSet = FirstSet(productions)
   var currStateId = 0
   val states = mutable.ListBuffer(State.fromItem(State.empty, productions.head.toItem(), productions, firstSet))
