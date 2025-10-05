@@ -206,8 +206,8 @@ object ParseTable {
   }
 
   given Showable[ParseTable] = { table =>
-    val symbols = table.keysIterator.map(_.stepSymbol).to(collection.SortedSet)
-    val states = table.keysIterator.map(_.state).to(collection.SortedSet)
+    val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
+    val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
