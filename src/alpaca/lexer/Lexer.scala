@@ -43,7 +43,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
-  val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying: @unchecked
+  val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
   val (tokens, infos) = cases.foldLeft((tokens = List.empty[Expr[ThisToken]], infos = List.empty[TokenInfo[?]])):
     case ((tokens, infos), CaseDef(tree, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(

@@ -50,11 +50,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     lexems: List[Lexem[?, ?]],
   )(using settings: ParserSettings = ParserSettings(),
   ): (ctx: Ctx, result: R | Null) = {
-    val (parseTable, actionTable, debug) = createTables[Ctx, R, this.type]
-
-    if settings.debug then {
-      debug()
-    }
+    val (parseTable, actionTable) = createTables[Ctx, R, this.type]
     parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
   }
 
@@ -73,7 +69,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(production @ Production(nextSymbol, rhs)) =>
+        case ParseAction.Reduction(production @ Production(nextSymbol, rhs*)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 

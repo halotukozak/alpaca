@@ -6,11 +6,11 @@ import alpaca.parser.Symbol.{NonTerminal, Terminal}
 class FirstSetTest extends AnyFunSuite {
   test("FirstSet should correctly identify first sets for simple grammar") {
     val productions: List[Production] = List(
-      Production(NonTerminal("S"), List(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
-      Production(NonTerminal("S"), List(NonTerminal("R"))),
-      Production(NonTerminal("L"), List(Terminal("1"), NonTerminal("R"))),
-      Production(NonTerminal("L"), List(Terminal("2"))),
-      Production(NonTerminal("R"), List(Terminal("3"), NonTerminal("L"))),
+      Production(NonTerminal("S"), NonTerminal("L"), Terminal("="), NonTerminal("R")),
+      Production(NonTerminal("S"), NonTerminal("R")),
+      Production(NonTerminal("L"), Terminal("1"), NonTerminal("R")),
+      Production(NonTerminal("L"), Terminal("2")),
+      Production(NonTerminal("R"), Terminal("3"), NonTerminal("L")),
     )
 
     val expected = Map(
@@ -24,14 +24,14 @@ class FirstSetTest extends AnyFunSuite {
 
   test("FirstSet should handle epsilon productions") {
     val productions: List[Production] = List(
-      Production(NonTerminal("E"), List(NonTerminal("T"), NonTerminal("E'"))),
-      Production(NonTerminal("E'"), List(Terminal("+"), NonTerminal("T"), NonTerminal("E'"))),
-      Production(NonTerminal("E'"), List(Symbol.Empty)),
-      Production(NonTerminal("T"), List(NonTerminal("F"), NonTerminal("T'"))),
-      Production(NonTerminal("T'"), List(Terminal("*"), NonTerminal("F"), NonTerminal("T'"))),
-      Production(NonTerminal("T'"), List(Symbol.Empty)),
-      Production(NonTerminal("F"), List(Terminal("("), NonTerminal("E"), Terminal(")"))),
-      Production(NonTerminal("F"), List(Terminal("id"))),
+      Production(NonTerminal("E"), NonTerminal("T"), NonTerminal("E'")),
+      Production(NonTerminal("E'"), Terminal("+"), NonTerminal("T"), NonTerminal("E'")),
+      Production(NonTerminal("E'"), Symbol.Empty),
+      Production(NonTerminal("T"), NonTerminal("F"), NonTerminal("T'")),
+      Production(NonTerminal("T'"), Terminal("*"), NonTerminal("F"), NonTerminal("T'")),
+      Production(NonTerminal("T'"), Symbol.Empty),
+      Production(NonTerminal("F"), Terminal("("), NonTerminal("E"), Terminal(")")),
+      Production(NonTerminal("F"), Terminal("id")),
     )
 
     val expected = Map(

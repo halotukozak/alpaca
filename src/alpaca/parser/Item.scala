@@ -4,6 +4,7 @@ import alpaca.core.{show, Showable}
 import alpaca.lexer.AlgorithmError
 import alpaca.parser.Production
 import alpaca.parser.Symbol.*
+import alpaca.core.Showable.mkShow
 
 final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   if production.rhs.size < dotPosition then
@@ -25,4 +26,4 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
 object Item:
   given Showable[Item] = item =>
     val (left, right) = item.production.rhs.splitAt(item.dotPosition)
-    show"${item.production.lhs} -> $left•$right, ${item.lookAhead}"
+    show"${item.production.lhs} -> ${left.mkShow}•${right.mkShow}, ${item.lookAhead}"

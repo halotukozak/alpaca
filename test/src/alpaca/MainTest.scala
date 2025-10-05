@@ -6,21 +6,23 @@ import alpaca.parser.Parser
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 
+import alpaca.core.Showable.mkShow
+
 import scala.annotation.experimental
 
-@experimental
-@main def main(): Unit = {
+final case class Ast(name: String, children: Ast*)
+object Ast:
+  given Showable[Ast] = ast =>
+    if ast.children.isEmpty then ast.name
+    else show"${ast.name}${ast.children.mkShow("(", ", ", ")")}"
+
+@experimental @main
+def main(): Unit = {
   val Lexer = lexer:
     case "\\s+" => Token.Ignored
     case "=" => Token["="]
     case "\\*" => Token["*"]
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
-
-  given Showable[Ast] = ast =>
-    if ast.children.isEmpty then ast.name
-    else show"${ast.name}${ast.children.map(given_Showable_Ast.show).mkString("(", ", ", ")")}"
-
-  final case class Ast(name: String, children: Ast*)
 
   object Parser extends Parser {
     val S: Rule[Ast] =

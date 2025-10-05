@@ -4,6 +4,7 @@ package parser
 import alpaca.core.Showable
 
 import scala.quoted.*
+import scala.util.Random
 
 enum Symbol(val isTerminal: Boolean) {
   val name: String
@@ -13,6 +14,9 @@ enum Symbol(val isTerminal: Boolean) {
 }
 
 object Symbol {
+  object NonTerminal:
+    def fresh(name: String): NonTerminal = NonTerminal(s"$name${Random.alphanumeric.take(8).mkString}")
+
   val Start: NonTerminal = NonTerminal("S'")
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")

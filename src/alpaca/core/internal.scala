@@ -2,7 +2,7 @@ package alpaca
 package core
 
 import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, ToExpr, Type}
+import scala.quoted.*
 import scala.NamedTuple.NamedTuple
 
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
@@ -22,14 +22,13 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
-
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
   def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] = {
     require(TypeRepr.of[F].isFunctionType, s"Expected a function type, but got: ${TypeRepr.of[F]}")
 
-    val params :+ r = TypeRepr.of[F].typeArgs: @unchecked
+    val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
 
     Lambda(
       Symbol.spliceOwner,
