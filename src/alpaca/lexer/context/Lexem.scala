@@ -1,7 +1,9 @@
-package alpaca.lexer
+package alpaca
+package lexer
 package context
 
-trait Lexem[Name <: ValidName] {
-  val name: Name
-  val value: Any
+final case class Lexem[+Name <: ValidName, +Value](name: Name, value: Value)
+//todo: (attributes: Map[String, Any] = Map.empty) extends Selectable
+object Lexem {
+  val EOF: Lexem["$", String] = Lexem("$", "")
 }

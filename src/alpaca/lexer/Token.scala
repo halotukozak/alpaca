@@ -1,67 +1,62 @@
 package alpaca.lexer
 
-import alpaca.lexer.context.AnyGlobalCtx
+import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx, Lexem}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
+import scala.quoted.*
 
 type ValidName = String & Singleton
 
-type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Ctx
+type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
 
-type Remapping[Ctx <: AnyGlobalCtx] = Ctx => Any
+final case class TokenInfo[+Name <: ValidName] private (name: Name, regexGroupName: String, pattern: String)
 
-sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx] {
-  val name: Name
-  val pattern: String
+object TokenInfo {
+  private val counter = AtomicInteger(0)
+
+  def apply[Name <: ValidName](name: Name, pattern: String): TokenInfo[Name] =
+    TokenInfo(name, s"token${counter.getAndIncrement()}", pattern)
+
+  given FromExpr[TokenInfo[?]] with
+    def unapply(x: Expr[TokenInfo[?]])(using Quotes): Option[TokenInfo[?]] = x match
+      case '{ TokenInfo($name: ValidName, $pattern: String) } =>
+        for
+          name <- name.value
+          pattern <- pattern.value
+        yield TokenInfo(name, pattern)
+      case _ => None
+}
+
+sealed trait Token[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value] {
+  val info: TokenInfo[Name]
   val ctxManipulation: CtxManipulation[Ctx @uv]
 }
 
 object Token {
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: AnyGlobalCtx): Token[?, ctx.type] = ???
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
-  @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type] = ???
+  def Ignored(using ctx: AnyGlobalCtx): Token[?, ctx.type, Nothing] = ???
 
-  // todo: reconsider using or removing
-  given Ordering[Token[?, ?]] = {
-    case (x: IgnoredToken[?, ?], y: DefinedToken[?, ?]) => -1 // Ignored tokens are always less than any other token
-    case (x: DefinedToken[?, ?], y: IgnoredToken[?, ?]) => 1
-    case (x: DefinedToken[?, ?], y: DefinedToken[?, ?]) => x.index.compareTo(y.index)
-    case (x: IgnoredToken[?, ?], y: IgnoredToken[?, ?]) => x.pattern.compareTo(y.pattern)
-  }
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = ???
+
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = ???
 }
 
-final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
-  name: Name,
-  pattern: String,
+//todo: may be invariant?
+final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value](
+  info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: Remapping[Ctx @uv],
-) extends Token[Name, Ctx] {
-  val index: Int = TokenImpl.nextIndex()
-
-  override def toString: String =
-    s"TokenImpl(name = $name, pattern = $pattern, index = $index, remapping = $remapping, ctxManipulation = $ctxManipulation)"
+  remapping: (Ctx @uv) => Value,
+) extends Token[Name, Ctx, Value] {
+  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
+  @compileTimeOnly("Should never be called outside the parser definition")
+  inline def unapply(lexem: Lexem[?, ?]): Option[Lexem[Name, Value]] = ???
 }
-
-private object TokenImpl extends HasIndex
 
 final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](
-  name: Name,
-  pattern: String,
+  info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
-) extends Token[Name, Ctx] {
-  override def toString: String =
-    s"IgnoredToken(pattern = $pattern, ctxManipulation = $ctxManipulation)"
-}
-
-private object IgnoredToken extends HasIndex
-
-private sealed trait HasIndex {
-  private val index = new AtomicInteger(0)
-
-  def nextIndex(): Int = index.getAndIncrement()
-}
+) extends Token[Name, Ctx, Nothing]

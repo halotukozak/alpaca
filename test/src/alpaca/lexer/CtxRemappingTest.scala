@@ -1,10 +1,11 @@
-package alpaca.lexer
+package alpaca
+package lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.lexer.context.ctx
 
 final class CtxRemappingTest extends AnyFunSuite with Matchers {
-
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
       case "\\s+" => Token.Ignored
@@ -13,10 +14,8 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers {
     }
 
     val res = L.tokenize("12 abc 7")
-
-    // todo: https://github.com/halotukozak/alpaca/issues/51
-    // res.map(_.name) shouldBe List("int", "id", "int")
-    // res.map(_.value) shouldBe List(12, "ABC", 7)
+    res.map(_.name) shouldBe List("int", "id", "int")
+    res.map(_.value) shouldBe List(12, "ABC", 7)
   }
 
   test("ctx manipulation influences error position after ignored token") {

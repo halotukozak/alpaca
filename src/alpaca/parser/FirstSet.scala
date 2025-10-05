@@ -1,46 +1,42 @@
 package alpaca.parser
 
-import alpaca.lexer.AlgorithmError
+import alpaca.core.raiseShouldNeverBeCalled
 import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
 
-final class FirstSet(productions: List[Production]) {
-  private val firstSet = resolveGraph(dependenciesGraph(productions))
-
-  def first(symbol: Symbol): Set[Terminal] = symbol match {
-    case t: Terminal => Set(t)
-    case nt: NonTerminal => firstSet.getOrElse(nt, FirstSet.Meta.empty).first
-  }
-
-  private def dependenciesGraph(productions: List[Production]): Map[NonTerminal, FirstSet.Meta] =
-    productions.foldLeft(Map.empty[NonTerminal, FirstSet.Meta].withDefaultValue(FirstSet.Meta.empty)) {
-      case (acc, Production(lhs, head +: _)) =>
-        acc.updated(lhs, acc(lhs).including(head))
-
-      case (acc, production) =>
-        throw AlgorithmError("Serving empty productions is not implemented yet")
-    }
-
-  @tailrec
-  private def resolveGraph(graph: Map[NonTerminal, FirstSet.Meta]): Map[NonTerminal, FirstSet.Meta] = {
-    val newGraph =
-      graph.map((nt, meta) => (nt, meta.importsFrom.foldLeft(meta)((acc, nt) => acc.including(graph(nt).first))))
-    if graph == newGraph then newGraph else resolveGraph(newGraph)
-  }
-}
+opaque type FirstSet = Map[NonTerminal, Set[Terminal]]
 
 object FirstSet {
-  private final case class Meta(first: Set[Terminal], importsFrom: Set[NonTerminal]) {
-    def including(symbol: Symbol): Meta = symbol match
-      case t: Terminal => Meta(first + t, importsFrom)
-      case nt: NonTerminal => Meta(first, importsFrom + nt)
+  def apply(productions: List[Production]): FirstSet = loop(productions, Map.empty.withDefaultValue(Set.empty))
 
-    def including(terminals: Set[Terminal]): Meta =
-      Meta(first ++ terminals, importsFrom)
+  @tailrec
+  private def loop(productions: List[Production], firstSet: FirstSet): FirstSet =
+    val newFirstSet = productions.foldLeft(firstSet)(addImports)
+    if firstSet == newFirstSet then newFirstSet else loop(productions, newFirstSet)
+
+  @tailrec
+  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
+    case Production(lhs, (head: Terminal) :: tail) =>
+      firstSet.updated(lhs, firstSet(lhs) + head)
+
+    case Production(lhs, (head: NonTerminal) :: tail) =>
+      val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
+
+      if firstSet(head).contains(Symbol.Empty)
+      then addImports(newFirstSet, Production(lhs, tail))
+      else newFirstSet
+
+    case Production(lhs, Seq()) =>
+      firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+
+    case x =>
+      raiseShouldNeverBeCalled(x.toString)
   }
 
-  private object Meta {
-    val empty = Meta(Set.empty, Set.empty)
-  }
+  extension (firstSet: FirstSet)
+    def first(symbol: Symbol): Set[Terminal] = symbol match
+      case t: Terminal => Set(t)
+      case nt: NonTerminal => firstSet(nt)
+
 }

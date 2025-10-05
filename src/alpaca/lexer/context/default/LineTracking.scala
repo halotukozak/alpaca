@@ -1,12 +1,12 @@
-package alpaca.lexer.context
+package alpaca.lexer
+package context
 package default
 
-trait LineTracking {
-  this: GlobalCtx[?] =>
+import alpaca.lexer.BetweenStages
 
+trait LineTracking extends GlobalCtx {
   var line: Int
 }
 
 object LineTracking:
-  given BetweenStages[LineTracking & AnyGlobalCtx] =
-    (m, ctx) => ??? // todo: https://github.com/halotukozak/alpaca/issues/51
+  given BetweenStages[LineTracking] = (token, m, ctx) => if m.matched == "\n" then ctx.line += 1
