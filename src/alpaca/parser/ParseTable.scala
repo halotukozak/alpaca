@@ -206,7 +206,7 @@ object ParseTable {
   }
 
   given Showable[ParseTable] = { table =>
-    val symbols = table.keysIterator.map(_.stepSymbol).toSet
+    val symbols = table.keysIterator.map(_.stepSymbol).to(collection.SortedSet)
     val states = table.keysIterator.map(_.state).to(collection.SortedSet)
 
     def centerText(text: String, width: Int = 10): String =
