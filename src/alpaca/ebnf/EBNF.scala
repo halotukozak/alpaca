@@ -1,11 +1,9 @@
 package alpaca.ebnf
 
-import alpaca.core.raiseShouldNeverBeCalled
-import alpaca.parser.{Production as BNF, Symbol}
-import alpaca.parser.Symbol.*
-import alpaca.core.Showable
-import alpaca.core.show
+import alpaca.core.{raiseShouldNeverBeCalled, show, Showable}
 import alpaca.core.Showable.mkShow
+import alpaca.parser.{Symbol, Production as BNF}
+import alpaca.parser.Symbol.*
 
 import scala.util.Random
 

@@ -4,7 +4,6 @@ package lexer
 import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx}
 import alpaca.soft
 
-import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex.Match
 

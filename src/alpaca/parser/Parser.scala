@@ -1,16 +1,14 @@
 package alpaca
 package parser
 
-import alpaca.core.{show, Empty, WithDefault}
+import alpaca.core.{Empty, WithDefault}
 import alpaca.lexer.DefinedToken
 import alpaca.lexer.context.Lexem
 import alpaca.parser.Symbol.Terminal
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
-import java.io.FileWriter
-import scala.annotation.{compileTimeOnly, experimental, tailrec}
-import scala.util.Using
+import scala.annotation.{compileTimeOnly, tailrec}
 
 final case class ParserSettings(
   debug: Boolean = true,
@@ -45,7 +43,6 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
   }
 
   def root: Rule[Any]
-  @experimental
   inline def parse[R](
     lexems: List[Lexem[?, ?]],
   )(using settings: ParserSettings = ParserSettings(),
@@ -54,7 +51,6 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
   }
 
-  @experimental
   private def parse[R](
     parseTable: ParseTable,
     actionTable: ActionTable[Ctx, R],

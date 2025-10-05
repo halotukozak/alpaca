@@ -1,7 +1,7 @@
 package alpaca.parser
 
-import org.scalatest.funsuite.AnyFunSuite
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
+import org.scalatest.funsuite.AnyFunSuite
 
 class FirstSetTest extends AnyFunSuite {
   test("FirstSet should correctly identify first sets for simple grammar") {

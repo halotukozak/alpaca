@@ -7,13 +7,11 @@ import alpaca.lexer.context.AnyGlobalCtx
 import alpaca.lexer.context.default.DefaultGlobalCtx
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex
 
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
-@experimental
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,
 )(
@@ -24,7 +22,6 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 ): Tokenization[Ctx] =
   ${ lexerImpl[Ctx]('{ rules }, '{ summon }, '{ summon }) }
 
-@experimental
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
@@ -160,7 +157,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       privateWithin = Symbol.noSymbol,
     )
 
-    tokenDecls.toList ++ List(fieldsDecls, allTokens, byName)
+    tokenDecls ++ List(fieldsDecls, allTokens, byName)
   }
 
   val cls = Symbol.newClass(
@@ -212,7 +209,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         },
       ),
     )
-  }.toList
+  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 

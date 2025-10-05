@@ -1,9 +1,9 @@
 package alpaca.parser
 
 import alpaca.core.{show, Showable}
+import alpaca.core.Showable.mkShow
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
-import alpaca.core.Showable.mkShow
 
 import scala.quoted.*
 

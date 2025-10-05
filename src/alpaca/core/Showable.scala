@@ -1,9 +1,9 @@
 package alpaca.core
 
+import alpaca.core.Showable.*
+
 import scala.deriving.Mirror
-import Showable.*
-import scala.quoted.Quotes
-import scala.quoted.Expr
+import scala.quoted.{Expr, Quotes}
 import scala.NamedTuple.NamedTuple
 
 trait Showable[-T]:

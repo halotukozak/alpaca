@@ -14,14 +14,14 @@ enum Symbol(val isTerminal: Boolean) {
 }
 
 object Symbol {
-  object NonTerminal:
-    def fresh(name: String): NonTerminal = NonTerminal(s"$name${Random.alphanumeric.take(8).mkString}")
-
   val Start: NonTerminal = NonTerminal("S'")
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")
 
   given Showable[Symbol] = _.name
+
+  object NonTerminal:
+    def fresh(name: String): NonTerminal = NonTerminal(s"$name${Random.alphanumeric.take(8).mkString}")
 
   given ToExpr[Symbol] with
     def apply(x: Symbol)(using Quotes): Expr[Symbol] = x match

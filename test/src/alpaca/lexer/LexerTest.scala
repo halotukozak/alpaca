@@ -1,10 +1,10 @@
 package alpaca.lexer
 
+import alpaca.lexer.context.Lexem
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import java.nio.file.Path
-import java.nio.file.Files
-import alpaca.lexer.context.Lexem
+
+import java.nio.file.{Files, Path}
 
 final class LexerTest extends AnyFunSuite with Matchers {
 

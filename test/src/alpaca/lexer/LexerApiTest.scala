@@ -1,8 +1,9 @@
 package alpaca.lexer
 
+import alpaca.lexer.context.default.DefaultGlobalCtx
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.lexer.context.default.DefaultGlobalCtx
+
 import scala.annotation.nowarn
 
 @nowarn("msg=A pure expression")

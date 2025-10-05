@@ -2,9 +2,6 @@ package alpaca.ebnf
 
 import alpaca.lexer.*
 
-import scala.annotation.experimental
-
-@experimental
 val Lexer = lexer {
   case letter @ ("A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" |
       "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" |

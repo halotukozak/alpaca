@@ -1,9 +1,10 @@
 package alpaca
 
+import alpaca.core.Showable.Shown
+
 import java.io.FileWriter
 import scala.quoted.*
 import scala.util.{Try, Using}
-import alpaca.core.Showable.Shown
 
 def symbolInfo(
   using quotes: Quotes,

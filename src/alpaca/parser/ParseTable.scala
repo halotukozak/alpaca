@@ -2,19 +2,10 @@ package alpaca
 package parser
 
 import alpaca.core.{*, given}
-import alpaca.ebnf.*
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
-import alpaca.parser.context.AnyGlobalCtx
-import alpaca.parser.ParseTable.given_Showable_ParseTable
 
-import java.io.FileWriter
-import scala.annotation.experimental
 import scala.collection.mutable
 import scala.quoted.*
 import scala.NamedTuple.NamedTuple
-import scala.util.Using
-import alpaca.core.Showable.mkShow
-import scala.reflect.NameTransformer
 
 opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 

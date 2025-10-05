@@ -2,9 +2,6 @@ package alpaca.ebnf
 
 import alpaca.parser.*
 
-import scala.annotation.experimental
-
-@experimental
 object Parser extends Parser {
 
   val terminator: Rule[EBNF] =

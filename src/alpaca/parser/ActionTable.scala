@@ -1,10 +1,10 @@
 package alpaca
 package parser
 
+import alpaca.core.{show, Showable}
 import alpaca.parser.context.AnyGlobalCtx
-import alpaca.core.Showable
+
 import scala.quoted.*
-import alpaca.core.show
 
 type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 

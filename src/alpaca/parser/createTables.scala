@@ -1,19 +1,16 @@
 package alpaca
 package parser
 
-import alpaca.core.raiseShouldNeverBeCalled
+import alpaca.core.*
+import alpaca.core.Showable.mkShow
 import alpaca.ebnf.EBNF
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
-
-import scala.quoted.Quotes
-import scala.reflect.NameTransformer
-import scala.quoted.*
-import scala.collection.mutable
-import alpaca.writeToFile
-import alpaca.core.Showable.mkShow
-
 import alpaca.parser.context.AnyGlobalCtx
-import alpaca.core.*
+import alpaca.writeToFile
+
+import scala.collection.mutable
+import scala.quoted.*
+import scala.reflect.NameTransformer
 
 inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
   using settings: ParserSettings,

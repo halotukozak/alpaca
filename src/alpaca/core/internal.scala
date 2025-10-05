@@ -1,7 +1,6 @@
 package alpaca
 package core
 
-import scala.annotation.experimental
 import scala.quoted.*
 import scala.NamedTuple.NamedTuple
 

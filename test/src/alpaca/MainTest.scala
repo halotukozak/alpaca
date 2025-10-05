@@ -1,14 +1,11 @@
 package alpaca
 
 import alpaca.core.{show, Showable}
+import alpaca.core.Showable.mkShow
 import alpaca.lexer.{lexer, Token}
 import alpaca.parser.Parser
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
-
-import alpaca.core.Showable.mkShow
-
-import scala.annotation.experimental
 
 final case class Ast(name: String, children: Ast*)
 object Ast:
@@ -16,8 +13,7 @@ object Ast:
     if ast.children.isEmpty then ast.name
     else show"${ast.name}${ast.children.mkShow("(", ", ", ")")}"
 
-@experimental @main
-def main(): Unit = {
+@main def main(): Unit = {
   val Lexer = lexer:
     case "\\s+" => Token.Ignored
     case "=" => Token["="]
