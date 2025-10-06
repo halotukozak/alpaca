@@ -4,7 +4,6 @@ import alpaca.core.{show, Showable}
 import alpaca.core.Showable.mkShow
 import alpaca.lexer.{lexer, Token}
 import alpaca.parser.Parser
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 
 final case class Ast(name: String, children: Ast*)

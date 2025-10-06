@@ -136,4 +136,4 @@ private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = 
 }
 
 def writeToFile(path: String)(content: Shown): Unit =
-  Using.resource(new FileWriter(path))(_.write(content))
+  Using.resource(new FileWriter(s"/Users/bartlomiejkozak/IdeaProjects/alpaca/$path"))(_.write(content))

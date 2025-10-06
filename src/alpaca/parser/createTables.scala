@@ -3,7 +3,6 @@ package parser
 
 import alpaca.core.*
 import alpaca.core.Showable.mkShow
-import alpaca.ebnf.EBNF
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.writeToFile
@@ -11,6 +10,7 @@ import alpaca.writeToFile
 import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
+import alpaca.core.NonEmptyList as NEL
 
 inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
   using settings: ParserSettings,
@@ -34,7 +34,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
   val createLambda = new CreateLambda[quotes.type]
 
   // todo: it's extremally too long
-  def extractEBNF: PartialFunction[Tree, List[(production: Production, action: Expr[Action[Ctx, R]])]] =
+  def extractEBNF: Tree => List[(production: Production, action: Expr[Action[Ctx, R]])] = {
     case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
@@ -54,9 +54,16 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       type EBNFExtractor =
         PartialFunction[(pattern: Tree, rhs: Tree), List[(production: Production, action: Expr[Action[Ctx, R]])]]
 
-      val extractName: PartialFunction[Tree, String] =
-        case Select(This(_), name) => name
-        case Ident(name) => name
+      object extractName:
+        def unapply(tree: Tree): Option[String] = Some(
+          NameTransformer.decode {
+            tree match
+              case Select(This(_), name) => name
+              case Ident(name) => name
+              case Literal(StringConstant(name)) => name
+              case _ => raiseShouldNeverBeCalled(tree.toString)
+          },
+        )
 
       val extractBind: PartialFunction[Tree, Option[Bind]] =
         case bind: Bind => Some(bind)
@@ -68,7 +75,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
               Unapply(
                 Select(
                   TypeApply(
-                    Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
+                    Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                     List(asInstanceOfType),
                   ),
                   "unapply",
@@ -80,7 +87,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             ) =>
           List(
             (
-              production = Production(NonTerminal(name), Terminal(NameTransformer.decode(name))),
+              production = Production(NonTerminal(ruleName), NonEmptyList(Terminal(name))),
               action = createAction(List(bind), rhs),
             ),
           )
@@ -89,7 +96,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
         case (Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind))), rhs: Term) =>
           List(
             (
-              production = Production(NonTerminal(name), NonTerminal(NameTransformer.decode(name))),
+              production = Production(NonTerminal(ruleName), NonEmptyList(NonTerminal(name))),
               action = createAction(List(bind), rhs),
             ),
           )
@@ -106,11 +113,15 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
           val fresh = NonTerminal.fresh(name)
           List(
             (
-              production = Production(fresh, NonTerminal(NameTransformer.decode(name))),
-              action = createAction(bind :: Nil, rhs),
+              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+              action = '{ (_, _) => None },
             ),
             (
-              production = Production(NonTerminal(name), fresh),
+              production = Production(fresh, NEL(NonTerminal(name))),
+              action = '{ (_, children) => Some(children.head) },
+            ),
+            (
+              production = Production(NonTerminal(ruleName), NEL(fresh)),
               action = createAction(bind :: Nil, rhs),
             ),
           )
@@ -127,11 +138,18 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
           val fresh = NonTerminal.fresh(name)
           List(
             (
-              production = Production(fresh, NonTerminal(NameTransformer.decode(name))),
-              action = createAction(bind :: Nil, rhs),
+              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+              action = '{ (_, _) => Nil },
             ),
             (
-              production = Production(NonTerminal(name), fresh),
+              production = Production(fresh, NEL(NonTerminal(name), fresh)),
+              action = '{ (ctx, children) =>
+                println(children)
+                ???
+              },
+            ),
+            (
+              production = Production(NonTerminal(ruleName), NEL(fresh)),
               action = createAction(bind :: Nil, rhs),
             ),
           )
@@ -143,7 +161,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
                   Select(_, "unapply"),
                   List(
                     TypeApply(
-                      Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
+                      Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                       List(asInstanceOfType),
                     ),
                   ),
@@ -156,11 +174,15 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
           val fresh = NonTerminal.fresh(name)
           List(
             (
-              production = Production(fresh, Terminal(NameTransformer.decode(name))),
-              action = createAction(bind :: Nil, rhs),
+              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+              action = '{ (_, _) => None },
             ),
             (
-              production = Production(NonTerminal(name), fresh),
+              production = Production(fresh, NEL(Terminal(name))),
+              action = '{ (_, children) => Some(children.head) },
+            ),
+            (
+              production = Production(NonTerminal(name), NEL(fresh)),
               action = createAction(bind :: Nil, rhs),
             ),
           )
@@ -188,7 +210,9 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             extractEBNFAndAction((pattern, rhs))
           case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
             patterns.flatMap(pattern => extractEBNFAndAction((pattern, rhs)))
+
     case ValDef(_, _, rhs) => raiseShouldNeverBeCalled(rhs.toString)
+  }
 
   val rules =
     TypeRepr
@@ -198,21 +222,18 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
       .map(_.tree)
 
-  val table = rules.flatMap(extractEBNF).tap { table =>
-    addToDebug('{ writeToFile("actionTable.dbg")(${ Expr(table.mkShow("\n")) }) })
-  }
+  val table = rules.flatMap(extractEBNF).tap(table => writeToFile("actionTable.dbg")(table.mkShow("\n")))
 
   val root = table.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
-  val parseTable = Expr[ParseTable](
-    ParseTable(Production(parser.Symbol.Start, root.lhs) :: table.map(_.production)),
-  ).tap { parseTable =>
-    addToDebug('{ writeToFile("parseTable.dbg")(($parseTable: ParseTable).show) })
+  val parseTable = Expr {
+    ParseTable(Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
+      .tap(parseTable => writeToFile("parseTable.dbg")(show"$parseTable"))
   }
 
   val actionTable = Expr.ofList[(Production, Action[Ctx, R])] {
     table.map { case (production, action) => Expr.ofTuple(Expr(production) -> action) }
   }
 
-  Expr.block(debug.toList, '{ ($parseTable, ActionTable($actionTable.toMap)) })
+  Expr.block(debug.toList, '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) })
 }

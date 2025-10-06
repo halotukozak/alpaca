@@ -2,12 +2,13 @@ package alpaca.parser
 
 import alpaca.core.{show, Showable}
 import alpaca.core.Showable.mkShow
+import alpaca.core.NonEmptyList
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 
 import scala.quoted.*
 
-final case class Production(lhs: NonTerminal, rhs: Symbol*) {
+final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 
@@ -16,5 +17,5 @@ object Production {
 
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] =
-      '{ Production(${ Expr(x.lhs) }, ${ Expr(x.rhs) }*) }
+      '{ Production(${ Expr(x.lhs) }, ${ Expr(x.rhs) }) }
 }

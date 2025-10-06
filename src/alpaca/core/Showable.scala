@@ -26,7 +26,7 @@ object Showable {
     import quotes.reflect.*
     expr.asTerm.show(using Printer.TreeShortCode)
 
-  given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a -> $b"
+  given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
 
   extension [C[X] <: Iterable[X], T: Showable](c: C[T])
     def mkShow(start: String, sep: String, end: String): Shown =
