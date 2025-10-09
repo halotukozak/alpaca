@@ -188,40 +188,19 @@ object ParseTable {
       table.get((currStateId, symbol)) match
         case None => table += ((currStateId, symbol) -> action)
         case Some(existingAction) =>
+          val path = toPath(currStateId, if symbol.name == "$" then Nil else List(symbol.name))
           (existingAction, action) match
-            case (Reduction(prod1), Reduction(prod2)) => throwReduceReduceConflict(symbol, prod1, prod2)
-            case (Shift(_), Reduction(prod)) => throwShiftReduceConflict(symbol, prod)
-            case (Reduction(prod), Shift(_)) => throwShiftReduceConflict(symbol, prod)
+            case (Reduction(prod1), Reduction(prod2)) => throw ReduceReduceConflict(prod1, prod2, path)
+            case (Shift(_), Reduction(prod)) => throw ShiftReduceConflict(symbol, prod, path)
+            case (Reduction(prod), Shift(_)) => throw ShiftReduceConflict(symbol, prod, path)
             case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
     @tailrec
-    def pathToState(stateId: Int, acc: List[String] = Nil): String =
+    def toPath(stateId: Int, acc: List[String] = Nil): String =
       if stateId == 0 then acc.mkString("", " ", " ...")
       else
-        val (sourceStateId, symbol) = table.collectFirst {
-          case ((sourceStateId, symbol), Shift(newState)) if newState == stateId => (sourceStateId, symbol)
-        }.get
-        pathToState(sourceStateId, symbol.name :: acc)
-
-    def throwReduceReduceConflict(symbol: Symbol, prod1: Production, prod2: Production): Nothing =
-      val path = pathToState(currStateId, if symbol.name == "$" then Nil else List(symbol.name))
-      throw new IllegalStateException(show"""
-        Reduce-Reduce Conflict:
-        Reduce ${prod1.rhs} -> ${prod1.lhs} vs Reduce ${prod2.rhs} -> ${prod2.lhs}
-        In situation like:
-        $path
-        Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
-      """)
-
-    def throwShiftReduceConflict(symbol: Symbol, prod: Production): Nothing =
-      val path = pathToState(currStateId, if symbol.name == "$" then Nil else List(symbol.name))
-      throw new IllegalStateException(show"""
-        Shift-Reduce Conflict:
-        Shift \"${symbol.name}\" vs Reduce ${prod.rhs} -> ${prod.lhs}
-        In situation like:
-        $path
-        Consider marking production ${prod.show} to be alwaysBefore or alwaysAfter "${symbol.name}"
-      """)
+        val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
+        toPath(sourceStateId, symbol.name :: acc)
 
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)

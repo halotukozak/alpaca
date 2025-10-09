@@ -6,8 +6,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import alpaca.lexer.context.Lexem
 import org.scalatest.Assertions.assertDoesNotCompile
+import scala.compiletime.testing.typeCheckErrors
+import org.scalatest.LoneElement
 
-final class ParseTableTest extends AnyFunSuite with Matchers {
+final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   val CalcLexer = lexer {
     case "\\+" => Token["+"]
     case value @ "[1-9][0-9]*" => Token["Num"](value.toInt)
@@ -25,7 +27,12 @@ final class ParseTableTest extends AnyFunSuite with Matchers {
         case Expr(expr) => expr
     }
 
-    assertDoesNotCompile("CalcParser.parse[Int](Nil)")
+    typeCheckErrors("CalcParser.parse[Int](Nil)").loneElement.message should include("""
+      Shift "+" vs Reduce Expr+Expr -> Expr
+      In situation like:
+      Expr + Expr + ...
+      Consider marking production Expr -> Expr+Expr to be alwaysBefore or alwaysAfter "+"
+    """)
   }
 
   test("parse table Reduce-Reduce conflict") {
@@ -45,6 +52,11 @@ final class ParseTableTest extends AnyFunSuite with Matchers {
         case Expr(expr) => expr
     }
 
-    assertDoesNotCompile("CalcParser.parse[Int](Nil)")
+    typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should include("""
+      Reduce Num -> Float vs Reduce Num -> Integer
+      In situation like:
+      Num ...
+      Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+    """)
   }
 }
