@@ -28,11 +28,11 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
     }
 
     typeCheckErrors("CalcParser.parse[Int](Nil)").loneElement.message should include("""
-      Shift "+" vs Reduce Expr+Expr -> Expr
-      In situation like:
-      Expr + Expr + ...
-      Consider marking production Expr -> Expr+Expr to be alwaysBefore or alwaysAfter "+"
-    """)
+      |Shift "+" vs Reduce Expr -> Expr+Expr
+      |In situation like:
+      |Expr + Expr + ...
+      |Consider marking production Expr -> Expr+Expr to be alwaysBefore or alwaysAfter "+"
+      |""".stripMargin)
   }
 
   test("parse table Reduce-Reduce conflict") {
@@ -53,10 +53,10 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
     }
 
     typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should include("""
-      Reduce Num -> Float vs Reduce Num -> Integer
-      In situation like:
-      Num ...
-      Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
-    """)
+      |Reduce Float -> Num vs Reduce Integer -> Num
+      |In situation like:
+      |Num ...
+      |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+      |""".stripMargin)
   }
 }

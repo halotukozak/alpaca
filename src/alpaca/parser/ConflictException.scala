@@ -1,19 +1,21 @@
 package alpaca.parser
 
 import alpaca.core.show
+import alpaca.core.Showable.*
+import alpaca.parser.ParseAction.Reduction
 
-sealed class ConflictException(message: String) extends Exception(message)
+sealed class ConflictException(message: Shown) extends Exception(message)
 
-final class ShiftReduceConflict(symbol: Symbol, production: Production, path: String) extends ConflictException(show"""
-  Shift \"${symbol.name}\" vs Reduce ${production.rhs} -> ${production.lhs}
-  In situation like:
-  $path
-  Consider marking production ${production.show} to be alwaysBefore or alwaysAfter "${symbol.name}"
-""")
+final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbol]) extends ConflictException(show"""
+  |Shift \"$symbol\" vs Reduce $red
+  |In situation like:
+  |${path.filter(_ != Symbol.EOF).mkShow("", " ", " ...")}
+  |Consider marking production ${red.production} to be alwaysBefore or alwaysAfter "$symbol"
+  |""".stripMargin)
 
-final class ReduceReduceConflict(production1: Production, production2: Production, path: String) extends ConflictException(show"""
-  Reduce ${production1.rhs} -> ${production1.lhs} vs Reduce ${production2.rhs} -> ${production2.lhs}
-  In situation like:
-  $path
-  Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
-""")
+final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Symbol]) extends ConflictException(show"""
+  |Reduce $red1 vs Reduce $red2
+  |In situation like:
+  |${path.filter(_ != Symbol.EOF).mkShow("", " ", " ...")}
+  |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+  |""".stripMargin)

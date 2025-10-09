@@ -15,6 +15,7 @@ import scala.NamedTuple.NamedTuple
 import ParseAction.*
 import alpaca.lexer.AlgorithmError
 import scala.annotation.tailrec
+import alpaca.core.Showable.mkShow
 
 enum ParseAction:
   case Shift(newState: Int)
@@ -23,7 +24,7 @@ enum ParseAction:
 object ParseAction {
   given Showable[ParseAction] =
     case ParseAction.Shift(newState) => show"S$newState"
-    case ParseAction.Reduction(production) => show"$production"
+    case ParseAction.Reduction(Production(lhs, rhs)) => show"$lhs -> ${rhs.mkShow}"
 
   given ToExpr[ParseAction] with
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
@@ -188,19 +189,19 @@ object ParseTable {
       table.get((currStateId, symbol)) match
         case None => table += ((currStateId, symbol) -> action)
         case Some(existingAction) =>
-          val path = toPath(currStateId, if symbol.name == "$" then Nil else List(symbol.name))
+          val path = toPath(currStateId, List(symbol))
           (existingAction, action) match
-            case (Reduction(prod1), Reduction(prod2)) => throw ReduceReduceConflict(prod1, prod2, path)
-            case (Shift(_), Reduction(prod)) => throw ShiftReduceConflict(symbol, prod, path)
-            case (Reduction(prod), Shift(_)) => throw ShiftReduceConflict(symbol, prod, path)
+            case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
+            case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
+            case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
             case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
     @tailrec
-    def toPath(stateId: Int, acc: List[String] = Nil): String =
-      if stateId == 0 then acc.mkString("", " ", " ...")
+    def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+      if stateId == 0 then acc
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
-        toPath(sourceStateId, symbol.name :: acc)
+        toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
