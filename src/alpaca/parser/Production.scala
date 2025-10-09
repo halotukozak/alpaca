@@ -12,7 +12,7 @@ final case class Production(lhs: NonTerminal, rhs: List[Symbol]) {
 }
 
 object Production {
-  given Showable[Production] = 
+  given Showable[Production] =
     case Production(lhs, rhs) => show"$lhs -> ${rhs.mkShow}"
 
   given ToExpr[Production] with

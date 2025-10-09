@@ -16,10 +16,10 @@ object Showable {
   given Showable[Int] = _.toString
 
   extension [C[X] <: Iterable[X], T: Showable](c: C[T])
-      def mkShow(start: String, sep: String, end: String): Shown =
-        c.map(_.show).mkString(start, sep, end)
-      def mkShow(sep: String): Shown = mkShow("", sep, "")
-      def mkShow: Shown = mkShow("")
+    def mkShow(start: String, sep: String, end: String): Shown =
+      c.map(_.show).mkString(start, sep, end)
+    def mkShow(sep: String): Shown = mkShow("", sep, "")
+    def mkShow: Shown = mkShow("")
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
     val name = compiletime.constValue[m.MirroredLabel]
