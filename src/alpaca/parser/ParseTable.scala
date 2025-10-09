@@ -12,6 +12,10 @@ import scala.quoted.*
 import scala.reflect.NameTransformer
 import scala.util.Using
 import scala.NamedTuple.NamedTuple
+import ParseAction.*
+import alpaca.lexer.AlgorithmError
+import scala.annotation.tailrec
+import alpaca.core.Showable.mkShow
 
 enum ParseAction:
   case Shift(newState: Int)
@@ -20,7 +24,7 @@ enum ParseAction:
 object ParseAction {
   given Showable[ParseAction] =
     case ParseAction.Shift(newState) => show"S$newState"
-    case ParseAction.Reduction(production) => show"$production"
+    case ParseAction.Reduction(Production(lhs, rhs)) => show"$lhs -> ${rhs.mkShow}"
 
   given ToExpr[ParseAction] with
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
@@ -181,11 +185,29 @@ object ParseTable {
       )
     val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 
+    def addToTable(symbol: Symbol, action: ParseAction): Unit =
+      table.get((currStateId, symbol)) match
+        case None => table += ((currStateId, symbol) -> action)
+        case Some(existingAction) =>
+          val path = toPath(currStateId, List(symbol))
+          (existingAction, action) match
+            case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
+            case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
+            case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
+            case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
+
+    @tailrec
+    def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+      if stateId == 0 then acc
+      else
+        val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
+        toPath(sourceStateId, symbol :: acc)
+
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
 
       for item <- currState if item.isLastItem do {
-        table += ((currStateId, item.lookAhead) -> ParseAction.Reduction(item.production))
+        addToTable(item.lookAhead, Reduction(item.production))
       }
 
       for stepSymbol <- currState.possibleSteps do {
@@ -193,10 +215,10 @@ object ParseTable {
 
         states.indexOf(newState) match
           case -1 =>
-            table += ((currStateId, stepSymbol) -> ParseAction.Shift(states.length))
+            addToTable(stepSymbol, Shift(states.length))
             states += newState
           case stateId =>
-            table += ((currStateId, stepSymbol) -> ParseAction.Shift(stateId))
+            addToTable(stepSymbol, Shift(stateId))
       }
 
       currStateId += 1

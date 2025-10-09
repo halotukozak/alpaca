@@ -8,14 +8,18 @@ trait Showable[T]:
 extension (sc: StringContext) def show(args: Showable.Shown*): String = sc.s(args*)
 
 object Showable {
-  opaque type Shown = String
+  opaque type Shown <: String = String
 
   given [T: Showable]: Conversion[T, Shown] = _.show
 
   given Showable[String] = x => x
   given Showable[Int] = _.toString
 
-  given [C[X] <: Iterable[X], T: Showable]: Showable[C[T]] = _.map(_.show).mkString
+  extension [C[X] <: Iterable[X], T: Showable](c: C[T])
+    def mkShow(start: String, sep: String, end: String): Shown =
+      c.map(_.show).mkString(start, sep, end)
+    def mkShow(sep: String): Shown = mkShow("", sep, "")
+    def mkShow: Shown = mkShow("")
 
   inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
     val name = compiletime.constValue[m.MirroredLabel]
