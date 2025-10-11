@@ -38,5 +38,4 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 }
 
 given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
-  override def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] =
-    Expr(x.toTuple)
+  def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)

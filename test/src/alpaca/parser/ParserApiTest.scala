@@ -12,6 +12,8 @@ import org.scalatest.matchers.should.Matchers
 import scala.collection.mutable
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
+  type R = Unit | Int | List[Int] | (String, Option[List[Int]])
+
   val CalcLexer = lexer {
     case " " => Token.Ignored
     case " \\t" => Token.Ignored
@@ -65,14 +67,14 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs
       case Expr(expr) => expr :: Nil
 
-    val Statement: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] =
+    val Statement: Rule[R] =
       case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
         ctx.names(id.value) = expr
       case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
         (id.value, argList)
       case Expr(expr) => expr
 
-    val root: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] =
+    val root: Rule[R] =
       case Statement(stmt) => stmt
   }
 
@@ -82,7 +84,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     // todo https://github.com/halotukozak/alpaca/pull/65
     // todo https://github.com/halotukozak/alpaca/pull/51
     // CalcParser.parse[R](lexems) should matchPattern:
-    //   case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
+    // case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
 
     val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
 
