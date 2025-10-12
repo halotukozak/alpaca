@@ -1,3 +1,3 @@
 package alpaca.lexer
 
-final class AlgorithmError(message: String) extends Exception(message)
+private[alpaca] final class AlgorithmError(message: String) extends Exception(message)

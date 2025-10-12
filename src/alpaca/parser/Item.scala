@@ -6,7 +6,7 @@ import alpaca.lexer.AlgorithmError
 import alpaca.parser.Production
 import alpaca.parser.Symbol.*
 
-final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
+private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   if production.rhs.size < dotPosition then
     throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
 
@@ -23,7 +23,7 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
       case None => Set(lookAhead)
 }
 
-object Item:
+private[parser] object Item:
   given Showable[Item] = item =>
     val (left, right) = item.production.rhs.splitAt(item.dotPosition)
     show"${item.production.lhs} -> ${left.mkShow}•${right.mkShow}, ${item.lookAhead}"

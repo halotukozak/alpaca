@@ -3,9 +3,9 @@ package core
 
 import scala.quoted.*
 
-trait Empty[T] extends (() => T)
+private[alpaca] trait Empty[T] extends (() => T)
 
-object Empty {
+private[alpaca] object Empty {
 
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
@@ -47,5 +47,4 @@ object Empty {
       }
     }
   }
-
 }

@@ -7,11 +7,11 @@ import alpaca.parser.Symbol.*
 
 import scala.quoted.*
 
-final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
+private[parser] final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 
-object Production {
+private[parser] object Production {
   given Showable[Production] =
     case Production(lhs, rhs) => show"$lhs -> ${rhs.mkShow(" ")}"
 

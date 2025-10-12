@@ -1,14 +1,13 @@
 package alpaca.parser
 
-import alpaca.core.raiseShouldNeverBeCalled
+import alpaca.core.{raiseShouldNeverBeCalled, NonEmptyList}
 import alpaca.parser.Symbol.*
 
 import scala.annotation.tailrec
-import alpaca.core.NonEmptyList
 
-opaque type FirstSet = Map[NonTerminal, Set[Terminal]]
+opaque private[parser] type FirstSet = Map[NonTerminal, Set[Terminal]]
 
-object FirstSet {
+private[parser] object FirstSet {
   def apply(productions: List[Production]): FirstSet = loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec

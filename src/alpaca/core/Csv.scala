@@ -5,12 +5,12 @@ import alpaca.core.Showable.{mkShow, mkShowTuple, Shown}
 import scala.NamedTuple.NamedTuple
 
 //todo: internal, unsafe, make it Tuple based
-final case class Csv(
+private[alpaca] final case class Csv(
   headers: List[Shown],
   rows: List[List[Shown]],
 )
 
-object Csv {
+private[alpaca] object Csv {
   given Showable[Csv] = csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")

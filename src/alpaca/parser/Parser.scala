@@ -9,7 +9,6 @@ import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
 import scala.annotation.{compileTimeOnly, tailrec}
-import alpaca.core.NonEmptyList
 
 final case class ParserSettings(
   debug: Boolean = true,

@@ -1,18 +1,18 @@
 package alpaca.parser
 
-opaque type State <: Set[Item] = Set[Item]
+opaque private[parser] type State <: Set[Item] = Set[Item]
 
-extension (items: Set[Item]) {
-  def possibleSteps: Set[Symbol] = items.view.filterNot(_.isLastItem).map(_.nextSymbol).toSet
-
-  def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet): State =
-    items.view
-      .filter(item => !item.isLastItem && item.nextSymbol == step)
-      .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
-}
-
-object State {
+private[parser] object State {
   val empty: State = Set.empty
+
+  extension (state: State) {
+    def possibleSteps: Set[Symbol] = state.view.filterNot(_.isLastItem).map(_.nextSymbol).toSet
+
+    def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet): State =
+      state.view
+        .filter(item => !item.isLastItem && item.nextSymbol == step)
+        .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
+  }
 
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
     if !item.isLastItem && !item.nextSymbol.isTerminal then
