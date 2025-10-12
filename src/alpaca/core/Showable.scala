@@ -5,11 +5,12 @@ import alpaca.core.Showable.*
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes}
 import scala.NamedTuple.NamedTuple
+import scala.annotation.meta.companionObject
 
 trait Showable[-T]:
   extension (t: T) def show: Shown
 
-extension (sc: StringContext) def show(args: Showable.Shown*): String = sc.s(args*)
+extension (sc: StringContext) def show(args: Showable.Shown*): Showable.Shown = sc.s(args*)
 
 object Showable {
   opaque type Shown <: String = String
@@ -24,9 +25,16 @@ object Showable {
 
   given [T](using quotes: Quotes): Showable[Expr[T]] = expr =>
     import quotes.reflect.*
-    expr.asTerm.show(using Printer.TreeShortCode)
+    expr.asTerm.show
+
+  given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
 
   given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
+
+  inline def mkShowTuple[T <: Tuple]: Tuple = inline compiletime.erasedValue[T] match
+    case _: EmptyTuple => EmptyTuple
+    case _: (h *: t) =>
+      compiletime.summonInline[Showable[h]].show(compiletime.constValue[h]) *: mkShowTuple[t]
 
   extension [C[X] <: Iterable[X], T: Showable](c: C[T])
     def mkShow(start: String, sep: String, end: String): Shown =

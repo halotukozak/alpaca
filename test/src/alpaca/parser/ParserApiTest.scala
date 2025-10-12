@@ -81,39 +81,62 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   test("basic recognition of various tokens and literals") {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems) should matchPattern:
-    // case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
 
     val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems2) should matchPattern:
-    //   case (_, Some(47)) =>
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, 47) =>
   }
 
   test("ebnf") {
     val lexems = CalcLexer.tokenize("a()")
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems) should matchPattern:
-    //   case (_, Some(('a', None))) =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (_, ('a', None)) =>
 
     val lexems1 = CalcLexer.tokenize("a(2+3)")
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems1) should matchPattern:
-    //   case (_, Some(('a', Some(Seq(5))))) =>
+    CalcParser.parse[R](lexems1) should matchPattern:
+      case (_, ("a", Some(Seq(5)))) =>
 
     val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems2) should matchPattern:
-    //   case (_, Some(('a', Some(Seq(5, 9))))) =>
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, ("a", Some(Seq(5, 9)))) =>
+  }
+
+  test("api") {
+    object TestParser extends Parser[CalcContext] {
+      val Expr: Rule[Unit] =
+        case CalcLexer.NUMBER(expr) =>
+          val _ = expr
+        case (CalcLexer.NUMBER(expr), Test(r)) =>
+          val _ = r
+          val _ = expr
+
+      val Test: Rule[Unit] =
+        case CalcLexer.NUMBER.Option(num) =>
+          val _ = num
+        case CalcLexer.NUMBER.List(num) =>
+          val _ = num
+        case (CalcLexer.NUMBER.Option(num), CalcLexer.NUMBER.List(numList)) =>
+          val _ = num
+          val _ = numList
+        case Expr.Option(expr) =>
+          val _ = expr
+        case Expr.List(exprList) =>
+          val _ = exprList
+        case (Expr.Option(expr), Expr.List(exprList)) =>
+          val _ = expr
+          val _ = exprList
+
+      val root: Rule[Unit] =
+        case Expr(stmt) => ???
+    }
+
+    // we test compilation only here
+    TestParser.parse[R](Nil)
   }
 
   test("parse error") {

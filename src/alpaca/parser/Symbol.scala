@@ -18,10 +18,12 @@ object Symbol {
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")
 
-  given Showable[Symbol] = _.name
+  given Showable[Symbol] =
+    case NonTerminal(name) => name
+    case Terminal(name) => s"\"$name\""
 
   object NonTerminal:
-    def fresh(name: String): NonTerminal = NonTerminal(s"$name${Random.alphanumeric.take(8).mkString}")
+    def fresh(name: String): NonTerminal = NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
 
   given ToExpr[Symbol] with
     def apply(x: Symbol)(using Quotes): Expr[Symbol] = x match

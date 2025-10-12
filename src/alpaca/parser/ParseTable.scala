@@ -2,6 +2,7 @@ package alpaca
 package parser
 
 import alpaca.core.{*, given}
+import alpaca.lexer.AlgorithmError
 
 import scala.collection.mutable
 import scala.quoted.*
@@ -10,7 +11,20 @@ import scala.NamedTuple.NamedTuple
 opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
 object ParseTable {
-  extension (table: ParseTable) def apply(state: Int, symbol: Symbol): ParseAction = table((state, symbol))
+  extension (table: ParseTable)
+    def apply(state: Int, symbol: Symbol): ParseAction =
+      try table((state, symbol))
+      catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
+
+    def toCsv: Csv = {
+      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
+      val states = table.keysIterator.map(_.state).distinct.toList.sorted
+
+      val headers = show"State" :: symbols.map(_.show)
+      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Showable.Shown]("")(_.show)))
+
+      Csv(headers, rows)
+    }
 
   def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)

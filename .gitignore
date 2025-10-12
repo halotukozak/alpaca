@@ -46,4 +46,4 @@ build/
 .bloop/
 .metals/
 
-*.dbg
+debug/

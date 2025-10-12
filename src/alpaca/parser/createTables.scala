@@ -1,16 +1,16 @@
 package alpaca
 package parser
 
-import alpaca.core.*
-import alpaca.core.Showable.mkShow
+import alpaca.core.{NonEmptyList as NEL, *}
+import alpaca.core.Csv.toCsv
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.writeToFile
+import alpaca.core.Showable.mkShow
 
 import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
-import alpaca.core.NonEmptyList as NEL
 
 inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
   using settings: ParserSettings,
@@ -30,6 +30,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
     debug += '{ if $settings.debug then $expr else {} } // todo make it compiletime if
 
   val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
+  val parserName = TypeRepr.of[P].typeSymbol.name.stripSuffix("$")
   val replaceRefs = new ReplaceRefs[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -51,27 +52,31 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      type EBNFExtractor =
-        PartialFunction[(pattern: Tree, rhs: Tree), List[(production: Production, action: Expr[Action[Ctx, R]])]]
-
-      object extractName:
-        def unapply(tree: Tree): Option[String] = Some(
-          NameTransformer.decode {
-            tree match
-              case Select(This(_), name) => name
-              case Ident(name) => name
-              case Literal(StringConstant(name)) => name
-              case _ => raiseShouldNeverBeCalled(tree.toString)
-          },
-        )
+      val extractName: PartialFunction[Tree, String] =
+        case Select(This(_), name) => NameTransformer.decode(name)
+        case Ident(name) => NameTransformer.decode(name)
+        case Literal(StringConstant(name)) => NameTransformer.decode(name)
 
       val extractBind: PartialFunction[Tree, Option[Bind]] =
         case bind: Bind => Some(bind)
         case Ident("_") => None
         case x => raiseShouldNeverBeCalled(x.show)
 
+      val skipTypedOrTest: PartialFunction[Tree, Tree] =
+        case TypedOrTest(tree, _) => tree
+        case tree => tree
+
+      type EBNFExtractor = PartialFunction[
+        Tree,
+        (
+          symbol: alpaca.parser.Symbol,
+          bind: Option[Bind],
+          others: List[(production: Production, action: Expr[Action[Ctx, R]])],
+        ),
+      ]
+
       val extractTerminalRef: EBNFExtractor =
-        case (
+        case skipTypedOrTest(
               Unapply(
                 Select(
                   TypeApply(
@@ -80,82 +85,16 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
                   ),
                   "unapply",
                 ),
-                _,
-                List(extractBind(bind)),
-              ),
-              rhs: Term,
-            ) =>
-          List(
-            (
-              production = Production(NonTerminal(ruleName), NonEmptyList(Terminal(name))),
-              action = createAction(List(bind), rhs),
-            ),
-          )
-
-      val extractNonTerminalRef: EBNFExtractor =
-        case (Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind))), rhs: Term) =>
-          List(
-            (
-              production = Production(NonTerminal(ruleName), NonEmptyList(NonTerminal(name))),
-              action = createAction(List(bind), rhs),
-            ),
-          )
-
-      val extractOptionalNonTerminal: EBNFExtractor =
-        case (
-              Unapply(
-                Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
                 Nil,
                 List(extractBind(bind)),
               ),
-              rhs: Term,
             ) =>
-          val fresh = NonTerminal.fresh(name)
-          List(
-            (
-              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
-              action = '{ (_, _) => None },
-            ),
-            (
-              production = Production(fresh, NEL(NonTerminal(name))),
-              action = '{ (_, children) => Some(children.head) },
-            ),
-            (
-              production = Production(NonTerminal(ruleName), NEL(fresh)),
-              action = createAction(bind :: Nil, rhs),
-            ),
+          (
+            symbol = Terminal(name),
+            bind = bind,
+            others = Nil,
           )
-
-      val extractRepeatedNonTerminal: EBNFExtractor =
-        case (
-              Unapply(
-                Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
-                Nil,
-                List(extractBind(bind)),
-              ),
-              rhs: Term,
-            ) =>
-          val fresh = NonTerminal.fresh(name)
-          List(
-            (
-              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
-              action = '{ (_, _) => Nil },
-            ),
-            (
-              production = Production(fresh, NEL(NonTerminal(name), fresh)),
-              action = '{ (ctx, children) =>
-                println(children)
-                ???
-              },
-            ),
-            (
-              production = Production(NonTerminal(ruleName), NEL(fresh)),
-              action = createAction(bind :: Nil, rhs),
-            ),
-          )
-
-      val extractOptionalTerminal: EBNFExtractor =
-        case (
+        case skipTypedOrTest(
               Unapply(
                 Apply(
                   Select(_, "unapply"),
@@ -169,47 +108,189 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
                 Nil,
                 List(extractBind(bind)),
               ),
-              rhs: Term,
             ) =>
+          (
+            symbol = Terminal(name),
+            bind = bind,
+            others = Nil,
+          )
+
+      val extractOptionalTerminal: EBNFExtractor =
+        case skipTypedOrTest(
+              Unapply(
+                Select(
+                  Apply(
+                    Select(_, "Option"),
+                    List(
+                      TypeApply(
+                        Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                        List(asInstanceOfType),
+                      ),
+                    ),
+                  ),
+                  "unapply",
+                ),
+                Nil,
+                List(extractBind(bind)),
+              ),
+            ) =>
+
           val fresh = NonTerminal.fresh(name)
-          List(
-            (
-              production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
-              action = '{ (_, _) => None },
-            ),
-            (
-              production = Production(fresh, NEL(Terminal(name))),
-              action = '{ (_, children) => Some(children.head) },
-            ),
-            (
-              production = Production(NonTerminal(name), NEL(fresh)),
-              action = createAction(bind :: Nil, rhs),
+          (
+            symbol = fresh,
+            bind = bind,
+            others = List(
+              (
+                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                action = '{ (_, _) => None },
+              ),
+              (
+                production = Production(fresh, NEL(Terminal(name))),
+                action = '{ (_, children) => Some(children.head) },
+              ),
             ),
           )
 
-      val skipTypedOrTest: PartialFunction[Tree, Tree] =
-        case (TypedOrTest(tree, _)) => tree
-        case tree => tree
+      val extractRepeatedTerminal: EBNFExtractor =
+        case skipTypedOrTest(
+              Unapply(
+                Select(
+                  Apply(
+                    Select(_, "List"),
+                    List(
+                      TypeApply(
+                        Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                        List(asInstanceOfType),
+                      ),
+                    ),
+                  ),
+                  "unapply",
+                ),
+                Nil,
+                List(extractBind(bind)),
+              ),
+            ) =>
 
-      val skipTypedOrTest2: PartialFunction[(pattern: Tree, rhs: Tree), (pattern: Tree, rhs: Tree)] =
-        case (TypedOrTest(tree, _), rhs) => (tree, rhs)
-        case (tree, rhs) => (tree, rhs)
+          val fresh = NonTerminal.fresh(name)
+          (
+            symbol = fresh,
+            bind = bind,
+            others = List(
+              (
+                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                action = '{ (_, _) => Nil },
+              ),
+              (
+                production = Production(fresh, NEL(NonTerminal(name), fresh)),
+                action = '{ (ctx, children) =>
+                  println(children)
+                  ???
+                },
+              ),
+            ),
+          )
 
-      val extractEBNFAndAction: EBNFExtractor = skipTypedOrTest2.andThen:
-        case extractTerminalRef(terminal) => terminal
+      val extractNonTerminalRef: EBNFExtractor =
+        case skipTypedOrTest(Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind)))) =>
+          (
+            symbol = NonTerminal(name),
+            bind = bind,
+            others = Nil,
+          )
+
+      val extractOptionalNonTerminal: EBNFExtractor =
+        case skipTypedOrTest(
+              Unapply(
+                Select(
+                  Apply(
+                    TypeApply(Select(_, "Option"), List(asInstanceOfType)),
+                    List(extractName(name)),
+                  ),
+                  unapply,
+                ),
+                Nil,
+                List(extractBind(bind)),
+              ),
+            ) =>
+          val fresh = NonTerminal.fresh(name)
+          (
+            symbol = fresh,
+            bind = bind,
+            others = List(
+              (
+                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                action = '{ (_, _) => None },
+              ),
+              (
+                production = Production(fresh, NEL(NonTerminal(name))),
+                action = '{ (_, children) => Some(children.head) },
+              ),
+            ),
+          )
+
+      val extractRepeatedNonTerminal: EBNFExtractor =
+        case skipTypedOrTest(
+              Unapply(
+                Select(
+                  Apply(
+                    TypeApply(Select(_, "List"), List(asInstanceOfType)),
+                    List(extractName(name)),
+                  ),
+                  unapply,
+                ),
+                Nil,
+                List(extractBind(bind)),
+              ),
+            ) =>
+          val fresh = NonTerminal.fresh(name)
+          (
+            symbol = fresh,
+            bind = bind,
+            others = List(
+              (
+                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                action = '{ (_, _) => Nil },
+              ),
+              (
+                production = Production(fresh, NEL(NonTerminal(name), fresh)),
+                action = '{ (ctx, children) =>
+                  println(children)
+                  ???
+                },
+              ),
+            ),
+          )
+
+      val extractEBNFAndAction: EBNFExtractor =
         case extractNonTerminalRef(nonterminal) => nonterminal
         case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
         case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
+        case extractTerminalRef(terminal) => terminal
         case extractOptionalTerminal(optionalTerminal) => optionalTerminal
+        case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
         case x => raiseShouldNeverBeCalled(x.toString)
 
       cases
         .flatMap:
-          case CaseDef(pattern, Some(_), rhs) => throw new NotImplementedError("Guards are not supported yet")
+          case CaseDef(pattern, Some(_), rhs) =>
+            throw new NotImplementedError("Guards are not supported yet")
+          // Tuple1
           case CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs) =>
-            extractEBNFAndAction((pattern, rhs))
-          case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
-            patterns.flatMap(pattern => extractEBNFAndAction((pattern, rhs)))
+            val (symbol, bind, others) = extractEBNFAndAction(pattern)
+            (
+              production = Production(NonTerminal(ruleName), NEL(symbol)),
+              action = createAction(List(bind), rhs),
+            ) :: others
+
+          // TupleN, N > 1
+          case CaseDef(skipTypedOrTest(p @ Unapply(_, _, patterns)), None, rhs) =>
+            val (symbols, binds, others) = patterns.map(extractEBNFAndAction).unzip3(using _.toTuple)
+            (
+              production = Production(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*)),
+              action = createAction(binds, rhs),
+            ) :: others.flatten
+          case x =>
+            raiseShouldNeverBeCalled(x.toString)
 
     case ValDef(_, _, rhs) => raiseShouldNeverBeCalled(rhs.toString)
   }
@@ -222,13 +303,16 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
       .map(_.tree)
 
-  val table = rules.flatMap(extractEBNF).tap(table => writeToFile("actionTable.dbg")(table.mkShow("\n")))
+  val table = rules.flatMap(extractEBNF).tap { table =>
+    writeToFile(s"$parserName/productions.dbg")(table.map(_.production).mkShow("\n"))
+    writeToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
+  }
 
   val root = table.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
   val parseTable = Expr {
     ParseTable(Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
-      .tap(parseTable => writeToFile("parseTable.dbg")(show"$parseTable"))
+      .tap(parseTable => writeToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 
   val actionTable = Expr.ofList[(Production, Action[Ctx, R])] {

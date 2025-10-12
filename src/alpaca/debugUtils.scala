@@ -5,6 +5,9 @@ import alpaca.core.Showable.Shown
 import java.io.FileWriter
 import scala.quoted.*
 import scala.util.{Try, Using}
+import alpaca.core.Showable
+import alpaca.core.show
+import java.io.File
 
 def symbolInfo(
   using quotes: Quotes,
@@ -101,39 +104,74 @@ def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
      |""".stripMargin
 }
 
-extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
-  def error: tree.type = {
-    quotes.reflect.report.errorAndAbort(tree.show)
-    tree
+opaque type DebugPosition = Int
+
+object DebugPosition {
+
+  inline given here: DebugPosition = ${ hereImpl }
+
+  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
+    import quotes.reflect.*
+    val pos = Position.ofMacroExpansion
+    Expr(pos.startLine + 1)
   }
-  def info: tree.type = {
-    quotes.reflect.report.info(tree.show)
-    tree
-  }
 
-extension (using quotes: Quotes)(msg: String)
-  def error: Nothing = quotes.reflect.report.errorAndAbort(msg)
-  def info: Unit = quotes.reflect.report.info(msg)
+  given ToExpr[DebugPosition] with
+    def apply(x: DebugPosition)(using quotes: Quotes) =
+      ToExpr.IntToExpr(x)
 
-extension (using quotes: Quotes)(e: Any)
-  def dbg: Nothing = quotes.reflect.report.errorAndAbort(e.toString)
-  def soft: e.type =
-    quotes.reflect.report.info(e.toString)
-    e
-
-inline def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
-private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
-  import quotes.reflect.*
-
-  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
+  given FromExpr[DebugPosition] with
+    def unapply(x: Expr[DebugPosition])(using Quotes): Option[DebugPosition] =
+      FromExpr.IntFromExpr.unapply(x)
 }
 
-inline def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
-private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = {
+extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
+  def error(using pos: DebugPosition): tree.type = {
+    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
+    tree
+  }
+  def info(using pos: DebugPosition): tree.type = {
+    quotes.reflect.report.info(show"$tree at line $pos")
+    tree
+  }
+
+extension (using quotes: Quotes)(expr: Expr[?])
+
+  def error(using pos: DebugPosition): expr.type =
+    import quotes.reflect.*
+    expr.asTerm.error
+    expr
+
+  def info(using pos: DebugPosition): expr.type =
+    import quotes.reflect.*
+    expr.asTerm.info
+    expr
+
+extension (using quotes: Quotes)(msg: String)
+  def error(using pos: DebugPosition): Nothing = quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+  def info(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+
+extension (using quotes: Quotes)(e: Any)
+  def dbg(using pos: DebugPosition): Nothing = quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+  def soft(using pos: DebugPosition): e.type =
+    quotes.reflect.report.info(show"${e.toString} at line $pos")
+    e
+
+inline def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
+private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
-  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
+  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
+}
+
+inline def showRawAst(inline body: Any)(using pos: DebugPosition) = ${ showRawAstImpl('{ body }, '{ pos }) }
+private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] = {
+  import quotes.reflect.*
+
+  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
 }
 
 def writeToFile(path: String)(content: Shown): Unit =
-  Using.resource(new FileWriter(s"/Users/bartlomiejkozak/IdeaProjects/alpaca/$path"))(_.write(content))
+  val file = new File(s"/Users/bartlomiejkozak/IdeaProjects/alpaca/debug/$path")
+  file.getParentFile.mkdirs()
+  Using.resource(new FileWriter(file))(_.write(content))

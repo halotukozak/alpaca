@@ -13,7 +13,7 @@ final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
 }
 
 object Production {
-  given Showable[Production] = production => show"${production.lhs} -> ${production.rhs.mkShow}"
+  given Showable[Production] = production => show"${production.lhs} -> ${production.rhs.mkShow(" ")}"
 
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] =
