@@ -18,9 +18,7 @@ object Symbol {
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")
 
-  given Showable[Symbol] =
-    case NonTerminal(name) => name
-    case Terminal(name) => s"\"$name\""
+  given Showable[Symbol] = _.name
 
   object NonTerminal:
     def fresh(name: String): NonTerminal = NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")

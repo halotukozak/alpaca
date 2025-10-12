@@ -1,8 +1,7 @@
 package alpaca.parser
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{show, NonEmptyList, Showable}
 import alpaca.core.Showable.mkShow
-import alpaca.core.NonEmptyList
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 
@@ -13,7 +12,8 @@ final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
 }
 
 object Production {
-  given Showable[Production] = production => show"${production.lhs} -> ${production.rhs.mkShow(" ")}"
+  given Showable[Production] =
+    case Production(lhs, rhs) => show"$lhs -> ${rhs.mkShow(" ")}"
 
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] =
