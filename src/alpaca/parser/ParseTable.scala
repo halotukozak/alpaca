@@ -57,10 +57,12 @@ opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 /** Type alias for semantic action functions.
   *
   * These functions are called when reducing by a production to compute
-  * the semantic value of the non-terminal.
+  * the semantic value of the non-terminal. The return type is Any because
+  * different productions may produce different types, which are later
+  * type-checked and cast appropriately by the parser.
   *
   * @tparam Ctx the global context type
-  * @tparam R the result type
+  * @tparam R the overall result type of the parser (used for type tracking)
   */
 type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 
