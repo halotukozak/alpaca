@@ -17,10 +17,25 @@ import alpaca.lexer.AlgorithmError
 import scala.annotation.tailrec
 import alpaca.core.Showable.mkShow
 
+/** Represents an action the parser can take in a given state.
+  *
+  * The parser uses a parse table to determine what action to take based
+  * on the current state and lookahead symbol.
+  */
 enum ParseAction:
+  /** Shift a symbol onto the parse stack and transition to a new state.
+    *
+    * @param newState the state to transition to
+    */
   case Shift(newState: Int)
+  
+  /** Reduce by applying a production rule.
+    *
+    * @param production the production to reduce by
+    */
   case Reduction(production: Production)
 
+/** Companion object for ParseAction. */
 object ParseAction {
   given Showable[ParseAction] =
     case ParseAction.Shift(newState) => show"S$newState"
@@ -32,17 +47,49 @@ object ParseAction {
       case ParseAction.Reduction(p) => '{ ParseAction.Reduction(${ Expr(p) }) }
 }
 
+/** An opaque type representing the LR parse table.
+  *
+  * The parse table maps from (state, symbol) pairs to parse actions.
+  * This table is generated at compile time from the grammar.
+  */
 opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
+/** Type alias for semantic action functions.
+  *
+  * These functions are called when reducing by a production to compute
+  * the semantic value of the non-terminal.
+  *
+  * @tparam Ctx the global context type
+  * @tparam R the result type
+  */
 type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 
+/** An opaque type representing the action table.
+  *
+  * The action table maps from productions to their semantic actions.
+  * These actions are executed when the parser reduces by a production.
+  *
+  * @tparam Ctx the global context type
+  * @tparam R the result type
+  */
 opaque type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
 
+/** Companion object for ActionTable. */
 object ActionTable {
   extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
     def apply(production: Production): Action[Ctx, R] = table(production)
 }
 
+/** Creates parse and action tables from a parser definition.
+  *
+  * This is a compile-time macro that analyzes the parser's rules and
+  * generates the LR parse table and associated action table.
+  *
+  * @tparam Ctx the global context type
+  * @tparam R the result type
+  * @tparam P the parser type
+  * @return a tuple of (ParseTable, ActionTable)
+  */
 @experimental
 inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, ActionTable[Ctx, R]) =
   ${ applyImpl[Ctx, R, P] }
