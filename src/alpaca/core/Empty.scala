@@ -3,10 +3,26 @@ package core
 
 import scala.quoted.*
 
+/** A type class for creating empty instances of types.
+  *
+  * This trait provides a way to create default instances of Product types (case classes)
+  * by using their default parameter values. It extends Function0 to act as a factory.
+  *
+  * @tparam T the type to create empty instances of
+  */
 trait Empty[T] extends (() => T)
 
+/** Companion object providing automatic derivation for the Empty type class. */
 object Empty {
 
+  /** Automatically derives an Empty instance for any Product type with default parameters.
+    *
+    * This macro-based derivation uses the default values of constructor parameters
+    * to create a factory for the type.
+    *
+    * @tparam T the Product type to derive Empty for
+    * @return an Empty instance that creates default instances
+    */
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
