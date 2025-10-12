@@ -6,14 +6,14 @@ import alpaca.core.Showable
 import scala.quoted.*
 import scala.util.Random
 
-enum Symbol(val isTerminal: Boolean) {
+private[parser] enum Symbol(val isTerminal: Boolean) {
   val name: String
 
   case NonTerminal(name: String) extends Symbol(isTerminal = false)
   case Terminal(name: String) extends Symbol(isTerminal = true)
 }
 
-object Symbol {
+private[parser] object Symbol {
   val Start: NonTerminal = NonTerminal("S'")
   val EOF: Terminal = Terminal("$")
   val Empty: Terminal = Terminal("ε")

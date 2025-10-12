@@ -6,22 +6,22 @@ import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*
 
-type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
+private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 
-opaque type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
+opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
 
-object ActionTable {
-  private[parser] def apply[Ctx <: AnyGlobalCtx, R](table: Map[Production, Action[Ctx, R]]): ActionTable[Ctx, R] = table
+private[parser] object ActionTable {
+  def apply[Ctx <: AnyGlobalCtx, R](table: Map[Production, Action[Ctx, R]]): ActionTable[Ctx, R] = table
 
   extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
     def apply(production: Production): Action[Ctx, R] = table(production)
 }
 
-enum ParseAction:
+private[parser] enum ParseAction:
   case Shift(newState: Int)
   case Reduction(production: Production)
 
-object ParseAction {
+private[parser] object ParseAction {
   given Showable[ParseAction] =
     case ParseAction.Shift(newState) => show"S$newState"
     case ParseAction.Reduction(production) => show"$production"

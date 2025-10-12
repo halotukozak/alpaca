@@ -3,16 +3,16 @@ package parser
 
 import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
+import alpaca.core.Showable.mkShow
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.writeToFile
-import alpaca.core.Showable.mkShow
 
 import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
-inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
+inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
   using settings: ParserSettings,
 ): (parseTable: ParseTable, actionTable: ActionTable[Ctx, R]) =
   ${ createTablesImpl[Ctx, R, P]('{ settings }) }

@@ -7,12 +7,17 @@ import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.quoted.*
 
-type ValidName = String & Singleton
+private[lexer] type ValidName = String & Singleton
 
-type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
+private[lexer] type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
 
-final case class TokenInfo[+Name <: ValidName] private (name: Name, regexGroupName: String, pattern: String)
+private[lexer] final case class TokenInfo[+Name <: ValidName] private (
+  name: Name,
+  regexGroupName: String,
+  pattern: String,
+)
 
+//todo: why it cannot be private[lexer]
 object TokenInfo {
   private val counter = AtomicInteger(0)
 
@@ -51,12 +56,7 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: AnyGlobalCtx, Value](
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value] {
-
   type LexemTpe = Lexem[Name, Value]
-
-//  // todo: find a better way to handle Value = Unit to avoid CalcLexer.PLUS(()) or CalcLexer.PLUS(_)
-//  @compileTimeOnly("Should never be called outside the parser definition")
-//  inline def unapply(lexem: Lexem[?, ?]): Option[Lexem[Name, Value]] = ???
 }
 
 final case class IgnoredToken[Name <: ValidName, +Ctx <: AnyGlobalCtx](

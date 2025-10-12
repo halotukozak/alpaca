@@ -1,15 +1,13 @@
 package alpaca
 
+import alpaca.core.{show, Showable}
 import alpaca.core.Showable.Shown
 
-import java.io.FileWriter
+import java.io.{File, FileWriter}
 import scala.quoted.*
 import scala.util.{Try, Using}
-import alpaca.core.Showable
-import alpaca.core.show
-import java.io.File
 
-def symbolInfo(
+private[alpaca] def symbolInfo(
   using quotes: Quotes,
 )(
   symbol: quotes.reflect.Symbol,
@@ -68,7 +66,7 @@ def symbolInfo(
      |termRef: ${Try(symbol.termRef.show).getOrElse("no termRef")}
      |""".stripMargin
 
-def typeReprInfo(
+private[alpaca] def typeReprInfo(
   using quotes: Quotes,
 )(
   tpe: quotes.reflect.TypeRepr,
@@ -95,7 +93,7 @@ def typeReprInfo(
      |typeArgs: ${tpe.typeArgs}
      |""".stripMargin
 
-def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
+private[alpaca] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
   import quotes.reflect.*
 
   s"""
@@ -104,9 +102,9 @@ def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
      |""".stripMargin
 }
 
-opaque type DebugPosition = Int
+opaque private[alpaca] type DebugPosition = Int
 
-object DebugPosition {
+private[alpaca] object DebugPosition {
 
   inline given here: DebugPosition = ${ hereImpl }
 
@@ -117,7 +115,7 @@ object DebugPosition {
   }
 
   given ToExpr[DebugPosition] with
-    def apply(x: DebugPosition)(using quotes: Quotes) =
+    def apply(x: DebugPosition)(using quotes: Quotes): Expr[DebugPosition] =
       ToExpr.IntToExpr(x)
 
   given FromExpr[DebugPosition] with
@@ -126,52 +124,56 @@ object DebugPosition {
 }
 
 extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
-  def error(using pos: DebugPosition): tree.type = {
+  private[alpaca] def error(using pos: DebugPosition): tree.type = {
     quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
   }
-  def info(using pos: DebugPosition): tree.type = {
+  private[alpaca] def info(using pos: DebugPosition): tree.type = {
     quotes.reflect.report.info(show"$tree at line $pos")
     tree
   }
 
 extension (using quotes: Quotes)(expr: Expr[?])
 
-  def error(using pos: DebugPosition): expr.type =
+  private[alpaca] def error(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
     expr.asTerm.error
     expr
 
-  def info(using pos: DebugPosition): expr.type =
+  private[alpaca] def info(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
     expr.asTerm.info
     expr
 
 extension (using quotes: Quotes)(msg: String)
-  def error(using pos: DebugPosition): Nothing = quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
-  def info(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+  private[alpaca] def error(using pos: DebugPosition): Nothing =
+    quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+  private[alpaca] def info(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
 
 extension (using quotes: Quotes)(e: Any)
-  def dbg(using pos: DebugPosition): Nothing = quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
-  def soft(using pos: DebugPosition): e.type =
+  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
+    quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+  private[alpaca] def soft(using pos: DebugPosition): e.type =
     quotes.reflect.report.info(show"${e.toString} at line $pos")
     e
 
-inline def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
+inline private[alpaca] def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
 private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
   Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
 }
 
-inline def showRawAst(inline body: Any)(using pos: DebugPosition) = ${ showRawAstImpl('{ body }, '{ pos }) }
+inline private[alpaca] def showRawAst(inline body: Any)(using pos: DebugPosition) = ${
+  showRawAstImpl('{ body }, '{ pos })
+}
 private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] = {
   import quotes.reflect.*
 
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
 }
 
-def writeToFile(path: String)(content: Shown): Unit =
+private[alpaca] def writeToFile(path: String)(content: Shown): Unit =
   val file = new File(s"/Users/bartlomiejkozak/IdeaProjects/alpaca/debug/$path")
   file.getParentFile.mkdirs()
   Using.resource(new FileWriter(file))(_.write(content))

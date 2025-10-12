@@ -8,9 +8,9 @@ import scala.collection.mutable
 import scala.quoted.*
 import scala.NamedTuple.NamedTuple
 
-opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
+opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
-object ParseTable {
+private[parser] object ParseTable {
   extension (table: ParseTable)
     def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))

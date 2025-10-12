@@ -5,14 +5,13 @@ import alpaca.core.Showable.*
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes}
 import scala.NamedTuple.NamedTuple
-import scala.annotation.meta.companionObject
 
-trait Showable[-T]:
+private[alpaca] trait Showable[-T]:
   extension (t: T) def show: Shown
 
-extension (sc: StringContext) def show(args: Showable.Shown*): Showable.Shown = sc.s(args*)
+extension (sc: StringContext) private[alpaca] def show(args: Showable.Shown*): Showable.Shown = sc.s(args*)
 
-object Showable {
+private[alpaca] object Showable {
   opaque type Shown <: String = String
 
   given [T: Showable]: Conversion[T, Shown] = _.show
