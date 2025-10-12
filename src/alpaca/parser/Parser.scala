@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.{Empty, WithDefault}
+import alpaca.core.{DebugSettings, Empty, WithDefault}
 import alpaca.lexer.DefinedToken
 import alpaca.lexer.context.Lexem
 import alpaca.parser.Symbol.Terminal
@@ -9,11 +9,6 @@ import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
 import scala.annotation.{compileTimeOnly, tailrec}
-
-final case class ParserSettings(
-  debug: Boolean = true,
-  debugFileName: String = "parser.dbg",
-)
 
 abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
 
@@ -45,7 +40,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
   def root: Rule[Any]
   inline def parse[R](
     lexems: List[Lexem[?, ?]],
-  )(using settings: ParserSettings = ParserSettings(),
+  )(using inline debugSettings: DebugSettings[?, ?],
   ): (ctx: Ctx, result: R | Null) = {
     val (parseTable, actionTable) = createTables[Ctx, R, this.type]
     parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)

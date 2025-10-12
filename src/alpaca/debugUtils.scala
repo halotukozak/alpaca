@@ -1,6 +1,6 @@
 package alpaca
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{show, DebugSettings, Showable}
 import alpaca.core.Showable.Shown
 
 import java.io.{File, FileWriter}
@@ -124,7 +124,7 @@ private[alpaca] object DebugPosition {
 }
 
 extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
-  private[alpaca] def error(using pos: DebugPosition): tree.type = {
+  private[alpaca] def dbg(using pos: DebugPosition): tree.type = {
     quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
   }
@@ -135,20 +135,20 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
 
 extension (using quotes: Quotes)(expr: Expr[?])
 
-  private[alpaca] def error(using pos: DebugPosition): expr.type =
+  private[alpaca] def dbg(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
-    expr.asTerm.error
+    expr.asTerm.dbg
     expr
 
-  private[alpaca] def info(using pos: DebugPosition): expr.type =
+  private[alpaca] def soft(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
     expr.asTerm.info
     expr
 
 extension (using quotes: Quotes)(msg: String)
-  private[alpaca] def error(using pos: DebugPosition): Nothing =
+  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
     quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
-  private[alpaca] def info(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+  private[alpaca] def soft(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
 
 extension (using quotes: Quotes)(e: Any)
   private[alpaca] def dbg(using pos: DebugPosition): Nothing =
@@ -173,7 +173,8 @@ private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quot
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
 }
 
-private[alpaca] def writeToFile(path: String)(content: Shown): Unit =
-  val file = new File(s"/Users/bartlomiejkozak/IdeaProjects/alpaca/debug/$path")
-  file.getParentFile.mkdirs()
-  Using.resource(new FileWriter(file))(_.write(content))
+private[alpaca] def debugToFile(path: String)(content: Shown)(using debugSettings: DebugSettings[?, ?]): Unit =
+  if debugSettings.enabled then
+    val file = new File(s"${debugSettings.directory}$path")
+    file.getParentFile.mkdirs()
+    Using.resource(new FileWriter(file))(_.write(content))

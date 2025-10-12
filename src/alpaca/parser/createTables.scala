@@ -4,30 +4,27 @@ package parser
 import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
+import alpaca.debugToFile
 import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
-import alpaca.writeToFile
 
-import scala.collection.mutable
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
 inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
-  using settings: ParserSettings,
+  using inline debugSettings: DebugSettings[?, ?],
 ): (parseTable: ParseTable, actionTable: ActionTable[Ctx, R]) =
-  ${ createTablesImpl[Ctx, R, P]('{ settings }) }
+  ${ createTablesImpl[Ctx, R, P]('{ debugSettings }) }
 
 //todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
 private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
-  settings: Expr[ParserSettings],
-)(using quotes: Quotes,
+  using quotes: Quotes,
+)(
+  debugSettings: Expr[DebugSettings[?, ?]],
 ): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx, R])] = {
   import quotes.reflect.*
 
-  // todo: find a way to debug at compile time (how to avoid sandboxing?)
-  val debug = mutable.ListBuffer.empty[Expr[Unit]]
-  def addToDebug(expr: Expr[Unit]): Unit =
-    debug += '{ if $settings.debug then $expr else {} } // todo make it compiletime if
+  given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
 
   val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
   val parserName = TypeRepr.of[P].typeSymbol.name.stripSuffix("$")
@@ -304,20 +301,20 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       .map(_.tree)
 
   val table = rules.flatMap(extractEBNF).tap { table =>
-    writeToFile(s"$parserName/productions.dbg")(table.map(_.production).mkShow("\n"))
-    writeToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
+    debugToFile(s"$parserName/productions.dbg")(table.map(_.production).mkShow("\n"))
+    debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
   }
 
   val root = table.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
   val parseTable = Expr {
     ParseTable(Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
-      .tap(parseTable => writeToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
+      .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 
   val actionTable = Expr.ofList[(Production, Action[Ctx, R])] {
     table.map { case (production, action) => Expr.ofTuple(Expr(production) -> action) }
   }
 
-  Expr.block(debug.toList, '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) })
+  '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
 }
