@@ -135,8 +135,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
         case Expr(stmt) => ???
     }
 
-    // we test compilation only here
-    TestParser.parse[R](Nil)
+    assertCompiles("""TestParser.parse[R](Nil)""")
   }
 
   test("parse error") {
