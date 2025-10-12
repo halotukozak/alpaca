@@ -1,7 +1,7 @@
 package alpaca.parser
 
 import alpaca.core.{show, Showable}
-import alpaca.core.Showable.mkShow
+import alpaca.core.Showable.*
 import alpaca.lexer.AlgorithmError
 import alpaca.parser.Production
 import alpaca.parser.Symbol.*

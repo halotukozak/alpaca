@@ -1,7 +1,7 @@
 package alpaca.parser
 
 import alpaca.core.{show, NonEmptyList, Showable}
-import alpaca.core.Showable.mkShow
+import alpaca.core.Showable.*
 import alpaca.parser.Symbol
 import alpaca.parser.Symbol.*
 
