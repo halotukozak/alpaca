@@ -178,7 +178,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
                 action = '{ (_, _) => Nil },
               ),
               (
-                production = Production(fresh, NEL(NonTerminal(name), fresh)),
+                production = Production(fresh, NEL(fresh, NonTerminal(name))),
                 action = '{ (ctx, children) =>
                   println(children)
                   ???
@@ -249,7 +249,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
                 action = '{ (_, _) => Nil },
               ),
               (
-                production = Production(fresh, NEL(NonTerminal(name), fresh)),
+                production = Production(fresh, NEL(fresh, NonTerminal(name))),
                 action = '{ (ctx, children) =>
                   println(children)
                   ???

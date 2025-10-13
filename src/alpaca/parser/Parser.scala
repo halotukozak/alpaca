@@ -2,11 +2,12 @@ package alpaca
 package parser
 
 import alpaca.core.{DebugSettings, Empty, WithDefault}
-import alpaca.lexer.DefinedToken
+import alpaca.lexer.{DefinedToken, Token}
 import alpaca.lexer.context.Lexem
 import alpaca.parser.Symbol.Terminal
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
+import alpaca.parser.Parser.RuleOnly
 
 import scala.annotation.{compileTimeOnly, tailrec}
 
@@ -15,29 +16,33 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
   type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]
 
   extension [T](rule: Rule[T]) {
-    inline def alwaysAfter(rules: Rule[Any]*): Rule[T] = ???
-    inline def alwaysBefore(rules: Rule[Any]*): Rule[T] = ???
+    @compileTimeOnly(RuleOnly)
+    inline def alwaysAfter(rules: (Token[?, ?, ?] | Rule[Any])*): Rule[T] = ???
+    @compileTimeOnly(RuleOnly)
+    inline def alwaysBefore(rules: (Token[?, ?, ?] | Rule[Any])*): Rule[T] = ???
 
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def unapply(x: Any): Option[T] = ???
 
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def List: PartialFunction[Any, List[T]] = ???
 
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def Option: PartialFunction[Any, Option[T]] = ???
   }
 
   extension (token: DefinedToken[?, ?, ?]) {
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def unapply(x: Any): Option[token.LexemTpe] = ???
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = ???
-    @compileTimeOnly("Should never be called outside the parser definition")
+    @compileTimeOnly(RuleOnly)
     inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = ???
   }
 
   def root: Rule[Any]
+
+  // todo: make it not inlined
   inline def parse[R](
     lexems: List[Lexem[?, ?]],
   )(using inline debugSettings: DebugSettings[?, ?],
@@ -77,6 +82,10 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     ctx -> loop(lexems, (0, null) :: Nil)
   }
 
-  @compileTimeOnly("Should never be called outside the parser definition")
+  @compileTimeOnly(RuleOnly)
   inline protected final def ctx: Ctx = ???
+}
+
+object Parser {
+  private final val RuleOnly = "Should never be called outside the parser definition"
 }

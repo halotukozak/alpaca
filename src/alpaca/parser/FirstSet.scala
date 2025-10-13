@@ -17,10 +17,10 @@ private[parser] object FirstSet {
 
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
-    case Production(lhs, NonEmptyList((head: Terminal), tail)) =>
+    case Production(lhs, NonEmptyList(head: Terminal, tail)) =>
       firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production(lhs, NonEmptyList((head: NonTerminal), tail)) =>
+    case Production(lhs, NonEmptyList(head: NonTerminal, tail)) =>
       val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
       if firstSet(head).contains(Symbol.Empty)
