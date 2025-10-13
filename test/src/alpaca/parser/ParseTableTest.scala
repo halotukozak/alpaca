@@ -4,10 +4,9 @@ import alpaca.lexer.*
 import alpaca.parser.context.GlobalCtx
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.lexer.context.Lexem
-import org.scalatest.Assertions.assertDoesNotCompile
-import scala.compiletime.testing.typeCheckErrors
 import org.scalatest.LoneElement
+
+import scala.compiletime.testing.typeCheckErrors
 
 final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   val CalcLexer = lexer {
@@ -29,10 +28,10 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
     typeCheckErrors("CalcParser.parse[Int](Nil)").loneElement.message should
       include("""
-                |Shift "+" vs Reduce Expr -> Expr+Expr
+                |Shift "+" vs Reduce Expr -> Expr + Expr
                 |In situation like:
                 |Expr + Expr + ...
-                |Consider marking production Expr -> Expr+Expr to be alwaysBefore or alwaysAfter "+"
+                |Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
                 |""".stripMargin)
   }
 
@@ -55,7 +54,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
     typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should
       include("""
-                |Reduce Float -> Num vs Reduce Integer -> Num
+                |Reduce Integer -> Num vs Reduce Float -> Num
                 |In situation like:
                 |Num ...
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other

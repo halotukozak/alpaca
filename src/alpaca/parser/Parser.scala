@@ -22,7 +22,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     inline def unapply(x: Any): Option[T] = ???
 
     @compileTimeOnly("Should never be called outside the parser definition")
-    inline def List: PartialFunction[Any, Option[List[T]]] = ???
+    inline def List: PartialFunction[Any, List[T]] = ???
 
     @compileTimeOnly("Should never be called outside the parser definition")
     inline def Option: PartialFunction[Any, Option[T]] = ???
