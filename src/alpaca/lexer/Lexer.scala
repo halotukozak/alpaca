@@ -11,8 +11,35 @@ import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex
 
+/** Type alias for lexer rule definitions.
+  *
+  * A lexer definition is a partial function that maps string patterns
+  * (as regex literals) to token definitions.
+  *
+  * @tparam Ctx the global context type
+  */
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
+/** Creates a lexer from a DSL-based definition.
+  *
+  * This is the main entry point for defining a lexer. It uses a macro to
+  * compile the lexer definition into efficient tokenization code.
+  *
+  * Example:
+  * {{{
+  * val myLexer = lexer {
+  *   case "\\d+" => Token["number"]
+  *   case "[a-zA-Z]+" => Token["identifier"]
+  *   case "\\s+" => Token.Ignored
+  * }
+  * }}}
+  *
+  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
+  * @param rules the lexer rules as a partial function
+  * @param copy implicit Copyable instance for the context
+  * @param betweenStages implicit BetweenStages for context updates
+  * @return a Tokenization instance that can tokenize input strings
+  */
 @experimental
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,
