@@ -13,7 +13,6 @@ import scala.annotation.tailrec
   */
 opaque type FirstSet = Map[NonTerminal, Set[Terminal]]
 
-/** Companion object for FirstSet construction. */
 object FirstSet {
   
   /** Computes the FIRST sets for all non-terminals in a grammar.

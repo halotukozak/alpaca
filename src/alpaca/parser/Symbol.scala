@@ -48,7 +48,6 @@ enum Symbol(val isTerminal: Boolean) {
   ) extends Symbol(isTerminal = true)
 }
 
-/** Companion object for Symbol. */
 object Symbol {
   
   /** The augmented start symbol used internally by the parser. */

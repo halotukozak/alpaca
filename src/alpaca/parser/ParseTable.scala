@@ -35,7 +35,6 @@ enum ParseAction:
     */
   case Reduction(production: Production)
 
-/** Companion object for ParseAction. */
 object ParseAction {
   given Showable[ParseAction] =
     case ParseAction.Shift(newState) => show"S$newState"
@@ -76,7 +75,6 @@ type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
   */
 opaque type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
 
-/** Companion object for ActionTable. */
 object ActionTable {
   extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
     def apply(production: Production): Action[Ctx, R] = table(production)

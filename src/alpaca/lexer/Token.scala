@@ -33,7 +33,6 @@ type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
   */
 final case class TokenInfo[+Name <: ValidName] private (name: Name, regexGroupName: String, pattern: String)
 
-/** Companion object for TokenInfo. */
 object TokenInfo {
   private val counter = AtomicInteger(0)
 

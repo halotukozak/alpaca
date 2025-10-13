@@ -31,7 +31,6 @@ trait GlobalCtx {
   var text: CharSequence
 }
 
-/** Companion object providing default instances. */
 object GlobalCtx:
   
   /** Automatic Copyable instance for any GlobalCtx that is a Product (case class).

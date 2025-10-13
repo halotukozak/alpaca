@@ -33,10 +33,8 @@ extension (items: Set[Item]) {
       .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
 }
 
-/** Companion object for State construction. */
 object State {
   
-  /** The empty state. */
   val empty: State = Set.empty
 
   /** Constructs a state closure from a single item.

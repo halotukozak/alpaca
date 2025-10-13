@@ -15,7 +15,6 @@ package context
 final case class Lexem[+Name <: ValidName, +Value](name: Name, value: Value)
 //todo: (attributes: Map[String, Any] = Map.empty) extends Selectable
 
-/** Companion object for Lexem. */
 object Lexem {
   
   /** A special end-of-file lexem used to signal the end of input.

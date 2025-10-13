@@ -16,10 +16,8 @@ import scala.annotation.compileTimeOnly
 // todo: can we make it opaque with conversion?
 type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]
 
-/** Companion object providing extension methods for rules. */
 object Rule {
   
-  /** Extension methods for Rule instances. */
   extension [T](rule: Rule[T]) {
     
     /** Specifies that this rule should always come after the given rules.

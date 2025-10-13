@@ -46,7 +46,6 @@ final case class Item(production: Production, dotPosition: Int, lookAhead: Termi
       case None => Set(lookAhead)
 }
 
-/** Companion object for Item. */
 object Item:
   given Showable[Item] = item =>
     val (left, right) = item.production.rhs.splitAt(item.dotPosition)

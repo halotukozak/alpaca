@@ -22,7 +22,6 @@ trait Showable[T]:
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) def show(args: Showable.Shown*): String = sc.s(args*)
 
-/** Companion object providing Showable instances and utilities. */
 object Showable {
   
   /** An opaque type representing a string that has been shown.

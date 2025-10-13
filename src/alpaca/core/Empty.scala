@@ -12,7 +12,6 @@ import scala.quoted.*
   */
 trait Empty[T] extends (() => T)
 
-/** Companion object providing automatic derivation for the Empty type class. */
 object Empty {
 
   /** Automatically derives an Empty instance for any Product type with default parameters.

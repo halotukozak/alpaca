@@ -15,7 +15,6 @@ trait PositionTracking extends GlobalCtx {
   var position: Int
 }
 
-/** Companion object providing the BetweenStages implementation for position tracking. */
 object PositionTracking:
   
   /** BetweenStages instance that updates the position after each match.

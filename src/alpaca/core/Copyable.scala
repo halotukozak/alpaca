@@ -13,7 +13,6 @@ import scala.deriving.Mirror
 @implicitNotFound("${T} should be a case class.")
 trait Copyable[T] extends (T => T)
 
-/** Companion object providing automatic derivation for the Copyable type class. */
 object Copyable {
   
   /** Automatically derives a Copyable instance for any Product type (case class).

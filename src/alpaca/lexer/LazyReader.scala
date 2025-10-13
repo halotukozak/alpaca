@@ -77,7 +77,6 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
         ensure(pos)
 }
 
-/** Companion object for LazyReader construction. */
 object LazyReader {
   
   /** Creates a LazyReader from a file path.

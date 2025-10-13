@@ -19,7 +19,6 @@ import scala.util.matching.Regex.Match
 // todo: i do not like this name
 trait BetweenStages[Ctx <: GlobalCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)
 
-/** Companion object providing automatic derivation of BetweenStages instances. */
 object BetweenStages {
   
   /** Automatically derives a BetweenStages instance for a context type.

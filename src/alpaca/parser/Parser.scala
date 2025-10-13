@@ -28,12 +28,14 @@ final case class ParserSettings(
   *
   * Example:
   * {{{
-  * class MyParser extends Parser[EmptyGlobalCtx] {
-  *   val expr: Rule[Int] = {
-  *     case (left: Int, MyLexer.PLUS(_), right: Int) => left + right
-  *     case MyLexer.NUMBER(n) => n.toInt
-  *   }
-  *   def root = expr
+  * object CalcParser extends Parser[CalcContext] {
+  *   val Expr: Rule[Int] =
+  *     case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2
+  *     case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2
+  *     case CalcLexer.NUMBER(n) => n.value
+  *
+  *   val root: Rule[Int] =
+  *     case Expr(expr) => expr
   * }
   * }}}
   *

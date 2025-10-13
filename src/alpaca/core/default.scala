@@ -11,7 +11,6 @@ package alpaca.core
 //todo: better name
 infix private[alpaca] class WithDefault[T, Q]
 
-/** Low priority implicits for WithDefault resolution. */
 trait WithDefaultLowImplicitPriority {
 
   /** Ignore default - use the provided type when explicitly specified.
@@ -22,7 +21,6 @@ trait WithDefaultLowImplicitPriority {
   given useProvided[Provided, Default]: (Provided WithDefault Default) = new (Provided WithDefault Default)
 }
 
-/** Companion object for WithDefault with higher priority implicits. */
 object WithDefault extends WithDefaultLowImplicitPriority {
 
   /** Infer type argument to default when no type is explicitly provided.

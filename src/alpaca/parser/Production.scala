@@ -26,7 +26,6 @@ final case class Production(lhs: NonTerminal, rhs: List[Symbol]) {
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 
-/** Companion object for Production. */
 object Production {
   given Showable[Production] =
     case Production(lhs, rhs) => show"$lhs -> ${rhs.mkShow}"

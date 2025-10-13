@@ -14,7 +14,6 @@ trait LineTracking extends GlobalCtx {
   var line: Int
 }
 
-/** Companion object providing the BetweenStages implementation for line tracking. */
 object LineTracking:
   
   /** BetweenStages instance that increments the line number on newlines.
