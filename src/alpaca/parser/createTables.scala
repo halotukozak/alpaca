@@ -308,7 +308,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
   val root = table.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
 
   val parseTable = Expr {
-    ParseTable(Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
+    ParseTable(
+      Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
+      new PrecedenceTable {
+        def apply(action1: ParseAction, action2: ParseAction)(onSymbol: alpaca.parser.Symbol): Option[ParseAction] =
+          None
+      },
+    )
       .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 

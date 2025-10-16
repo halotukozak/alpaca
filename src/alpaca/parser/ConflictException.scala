@@ -2,7 +2,6 @@ package alpaca.parser
 
 import alpaca.core.show
 import alpaca.core.Showable.*
-import alpaca.parser.ParseAction.Reduction
 
 sealed class ConflictException(message: Shown) extends Exception(message)
 

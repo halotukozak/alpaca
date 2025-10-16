@@ -16,23 +16,23 @@ private[parser] object FirstSet {
     if firstSet == newFirstSet then newFirstSet else loop(productions, newFirstSet)
 
   @tailrec
-  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
-    case Production(lhs, NonEmptyList((head: Terminal), tail)) =>
+  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match
+    case Production(lhs, NonEmptyList(head: Terminal, tail)) =>
       firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production(lhs, NonEmptyList((head: NonTerminal), tail)) =>
+    case Production(lhs, NonEmptyList(head: NonTerminal, tail)) =>
       val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
       if firstSet(head).contains(Symbol.Empty)
-      then addImports(newFirstSet, Production(lhs, tail))
+      then
+        tail match
+          case Nil => firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+          case head :: tail =>
+            addImports(newFirstSet, Production(lhs, NonEmptyList(head, tail*)))
       else newFirstSet
-
-    case Production(lhs, Seq()) =>
-      firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
 
     case x =>
       raiseShouldNeverBeCalled(x.toString)
-  }
 
   extension (firstSet: FirstSet)
     def first(symbol: Symbol): Set[Terminal] = symbol match

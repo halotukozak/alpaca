@@ -43,26 +43,38 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   //
   //    precedence = (
   //        ('left', PLUS, MINUS),
-  //        ('left', TIMES, DIVIDE),
+  //        ('left', TIMES, DIVIDE),``
   //        ('right', UMINUS),
   //        )
 
+  //  "moja udpa produckja" alwaysBeforeShift  Token.`+``
+  //  "moja kupa produckja" alwaysBefore "moja kupa produckja"
+
+//   + aftet *
+//   - after *
+//   * after ^
+
   object CalcParser extends Parser[CalcContext] {
-    val Expr: Rule[Int] =
-      case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2
-      case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2
-      case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2
-      case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2
-      case (CalcLexer.MINUS(_), Expr(expr)) => -expr
-      case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr
-      case CalcLexer.NUMBER(expr) => expr.value
-      case CalcLexer.ID(id) =>
+
+    val Expr: Rule[Int] = someFunction(
+      rule(Expr, CalcLexer.PLUS, Expr) { case (expr1, _, expr2) => expr1 + expr2 },
+      rule["moja udpa produckja"](Expr, CalcLexer.MINUS, Expr) { case (expr1, _, expr2) => expr1 - expr2 },
+      rule(Expr, CalcLexer.TIMES, Expr) { case (expr1, _, expr2) => expr1 * expr2 },
+      rule(Expr, CalcLexer.DIVIDE, Expr) { case (expr1, _, expr2) => expr1 / expr2 },
+      rule(CalcLexer.MINUS, Expr) { case (_, expr) => -expr },
+      rule(CalcLexer.`\\(`, Expr, CalcLexer.`\\)`) { case (_, expr, _) => expr },
+      rule(CalcLexer.NUMBER)(expr => expr.value),
+      rule(CalcLexer.ID) { id =>
         ctx.names.getOrElse(
           id.value, {
             ctx.errors.append(("undefined", id));
             0
           },
         )
+      },
+    )
+
+    def someFunction(x: Rule[Int]*): Rule[Int] = ???
 
     val ArgList: Rule[List[Int]] =
       case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs
@@ -83,8 +95,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
     // todo https://github.com/halotukozak/alpaca/issues/69
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
 //
 //    val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
 //

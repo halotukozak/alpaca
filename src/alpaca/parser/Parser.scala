@@ -57,16 +57,16 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
       parseTable(stack.head.index, nextSymbol) match
-        case ParseAction.Shift(gotoState) =>
+        case Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(production @ Production(nextSymbol, rhs)) =>
+        case Reduction(production @ Production(nextSymbol, rhs)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
           if nextSymbol == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
-            val ParseAction.Shift(gotoState) = parseTable(newState.index, nextSymbol).runtimeChecked
+            val Shift(gotoState) = parseTable(newState.index, nextSymbol).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
             loop(
               lexems,
@@ -76,6 +76,8 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
     }
     ctx -> loop(lexems, (0, null) :: Nil)
   }
+
+  def rule[T](x: Any*)(f: Function[Tuple, T]): Rule[T] = ???
 
   @compileTimeOnly("Should never be called outside the parser definition")
   inline protected final def ctx: Ctx = ???

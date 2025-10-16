@@ -5,6 +5,6 @@ extension [A](self: A) {
     f(self)
     self
   }
-
+  
   inline def |>[B](inline f: A => B): B = f(self)
 }

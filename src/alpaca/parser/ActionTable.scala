@@ -17,17 +17,29 @@ private[parser] object ActionTable {
     def apply(production: Production): Action[Ctx, R] = table(production)
 }
 
-private[parser] enum ParseAction:
-  case Shift(newState: Int)
-  case Reduction(production: Production)
+private[parser] sealed trait ParseAction
+final case class Shift(newState: Int) extends ParseAction
+final case class Reduction(production: Production) extends ParseAction {
+  def isBefore(other: Reduction): Boolean =
+    production.isBefore(other.production)
+    
+  def isAfter(other: Reduction): Boolean =
+    production.isAfter(other.production)
+    
+  def isBefore(other: Symbol): Boolean =
+    production.isBefore(other)
+    
+  def isAfter(other: Symbol): Boolean =
+    production.isAfter(other)
+}
 
 private[parser] object ParseAction {
   given Showable[ParseAction] =
-    case ParseAction.Shift(newState) => show"S$newState"
-    case ParseAction.Reduction(production) => show"$production"
+    case Shift(newState) => show"S$newState"
+    case Reduction(production) => show"$production"
 
   given ToExpr[ParseAction] with
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
-      case ParseAction.Shift(i) => '{ ParseAction.Shift(${ Expr(i) }) }
-      case ParseAction.Reduction(p) => '{ ParseAction.Reduction(${ Expr(p) }) }
+      case Shift(newState) => '{ Shift(${ Expr(newState) }) }
+      case Reduction(production) => '{ Reduction(${ Expr(production) }) }
 }
