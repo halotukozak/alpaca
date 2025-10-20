@@ -251,8 +251,8 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
               (
                 production = Production(fresh, NEL(fresh, NonTerminal(name))),
                 action = '{ (ctx, children) =>
-                  println(children)
-                  ???
+                  children match
+                    case Seq(currList: List[Any], newElem) => currList.appended(newElem)
                 },
               ),
             ),

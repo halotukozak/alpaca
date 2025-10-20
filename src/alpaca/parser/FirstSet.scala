@@ -23,12 +23,13 @@ private[parser] object FirstSet {
     case Production(lhs, NonEmptyList(head: NonTerminal, tail)) =>
       val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
-      if firstSet(head).contains(Symbol.Empty)
-      then addImports(newFirstSet, Production(lhs, tail))
-      else newFirstSet
+      val nonEmptyTail = tail match
+        case head :: next => NonEmptyList(head, next*)
+        case Nil => NonEmptyList(Symbol.Empty)
 
-    case Production(lhs, Seq()) =>
-      firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+      if firstSet(head).contains(Symbol.Empty)
+      then addImports(newFirstSet, Production(lhs, nonEmptyTail))
+      else newFirstSet
 
     case x =>
       raiseShouldNeverBeCalled(x.toString)

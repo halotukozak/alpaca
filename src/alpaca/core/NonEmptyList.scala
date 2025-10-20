@@ -7,7 +7,7 @@ opaque type NonEmptyList[+A] <: List[A] = List[A]
 object NonEmptyList {
   def apply[A](head: A, tail: A*): NonEmptyList[A] = head :: tail.toList
 
-  def unapply[A](list: NonEmptyList[A]): Option[(A, NonEmptyList[A])] = list match
+  def unapply[A](list: NonEmptyList[A]): Option[(A, List[A])] = list match
     case head :: tail => Some((head, tail))
     case _ => None
 

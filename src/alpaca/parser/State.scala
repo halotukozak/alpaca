@@ -6,7 +6,7 @@ private[parser] object State {
   val empty: State = Set.empty
 
   extension (state: State) {
-    def possibleSteps: Set[Symbol] = state.view.filterNot(_.isLastItem).map(_.nextSymbol).toSet
+    def possibleSteps: Set[Symbol] = state.view.filterNot(_.isLastItem).map(_.nextSymbol).toSet.excl(Symbol.Empty)
 
     def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet): State =
       state.view

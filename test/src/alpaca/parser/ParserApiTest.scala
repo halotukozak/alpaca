@@ -122,16 +122,16 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     }
 
     ApiParser.parse[R](CalcLexer.tokenize("1,,")) should matchPattern:
-      case (_, (0, None, Nil)) =>
+      case (_, (1, None, Nil)) =>
 
     ApiParser.parse[R](CalcLexer.tokenize("1,2,")) should matchPattern:
-      case (_, (0, Some(2), Nil)) =>
+      case (_, (1, Some(2), Nil)) =>
 
     ApiParser.parse[R](CalcLexer.tokenize("1,2,3")) should matchPattern:
-      case (_, (0, Some(2), List(3))) =>
+      case (_, (1, Some(2), List(3))) =>
 
     ApiParser.parse[R](CalcLexer.tokenize("1,,3")) should matchPattern:
-      case (_, (0, None, List(3))) =>
+      case (_, (1, None, List(3))) =>
   }
 
   test("parse error") {

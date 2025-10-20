@@ -7,7 +7,7 @@ import alpaca.parser.Production
 import alpaca.parser.Symbol.*
 
 private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
-  if production.rhs.size < dotPosition then
+  if production.rhsSize < dotPosition then
     throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
 
   lazy val nextSymbol: Symbol = production.rhs.lift(dotPosition).getOrElse(lookAhead)
@@ -15,7 +15,8 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
     if isLastItem then throw AlgorithmError(s"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
 
-  val isLastItem: Boolean = production.rhs.size == dotPosition
+  val isLastItem: Boolean = production.rhsSize == dotPosition
+  val isEmpty: Boolean = production.rhsSize == 0
 
   def nextTerminals(firstSet: FirstSet): Set[Terminal] =
     production.rhs.lift(dotPosition + 1) match

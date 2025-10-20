@@ -65,7 +65,7 @@ private[parser] object ParseTable {
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
 
-      for item <- currState if item.isLastItem do {
+      for item <- currState if item.isLastItem || item.isEmpty do {
         addToTable(item.lookAhead, Reduction(item.production))
       }
 

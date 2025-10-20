@@ -8,6 +8,7 @@ import alpaca.parser.Symbol.*
 import scala.quoted.*
 
 private[parser] final case class Production(lhs: NonTerminal, rhs: NonEmptyList[Symbol]) {
+  def rhsSize: Int = if rhs == List(Symbol.Empty) then 0 else rhs.size
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 

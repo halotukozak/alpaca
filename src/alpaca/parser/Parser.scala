@@ -65,14 +65,14 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(production @ Production(nextSymbol, rhs)) =>
-          val newStack = stack.drop(rhs.size)
+        case ParseAction.Reduction(production: Production) =>
+          val newStack = stack.drop(production.rhsSize)
           val newState = newStack.head
 
-          if nextSymbol == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+          if production.lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
-            val ParseAction.Shift(gotoState) = parseTable(newState.index, nextSymbol).runtimeChecked
-            val children = stack.take(rhs.size).map(_.node).reverse
+            val ParseAction.Shift(gotoState) = parseTable(newState.index, production.lhs).runtimeChecked
+            val children = stack.take(production.rhsSize).map(_.node).reverse
             loop(
               lexems,
               (gotoState, actionTable(production)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack,
