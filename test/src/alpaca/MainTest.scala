@@ -36,7 +36,7 @@ object Ast:
   }
 
   val tokens = Lexer.tokenize("*A = **B")
-  
+
   val result = Parser.parse[Ast](tokens).result.nn
   println(show"$result")
 }

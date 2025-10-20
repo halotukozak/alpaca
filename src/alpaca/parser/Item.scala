@@ -10,7 +10,10 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
   if production.rhsSize < dotPosition then
     throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
 
-  lazy val nextSymbol: Symbol = production.rhs.lift(dotPosition).getOrElse(lookAhead)
+  lazy val nextSymbol: Symbol =
+    if isLastItem then throw AlgorithmError(s"$this is the last item, has no next symbol")
+    else production.rhs(dotPosition)
+
   lazy val nextItem: Item =
     if isLastItem then throw AlgorithmError(s"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
