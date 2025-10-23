@@ -14,6 +14,10 @@ import scala.quoted.*
  * Actions define how to build the abstract syntax tree or other output
  * from the parsed input.
  *
+ * Note: The return type is Any for flexibility during compilation, but
+ * the actual return value should match the expected result type for the
+ * production rule being reduced.
+ *
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
