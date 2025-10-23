@@ -23,6 +23,6 @@ private[parser] object Production {
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs) =>
-        '{ NonEmpty(${ Expr(lhs) }, ${ Expr[NonEmptyList[Symbol]](rhs).asExprOf[NonEmptyList[Symbol.NonEmpty]] }) }
+        '{ NonEmpty(${ Expr(lhs) }, ${ Expr[NonEmptyList[Symbol]](rhs) }.asInstanceOf[NonEmptyList[Symbol.NonEmpty]]) }
       case Empty(lhs) => '{ Empty(${ Expr(lhs) }) }
 }
