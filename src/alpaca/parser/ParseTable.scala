@@ -22,10 +22,26 @@ opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), P
 
 private[parser] object ParseTable {
   extension (table: ParseTable)
+    /**
+     * Gets the parse action for a given state and symbol.
+     *
+     * @param state the current parser state
+     * @param symbol the symbol being processed
+     * @return the parse action to take
+     * @throws AlgorithmError if no action is defined for this state/symbol combination
+     */
     def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
       catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
 
+    /**
+     * Converts the parse table to CSV format for debugging.
+     *
+     * Creates a table with states as rows and symbols as columns,
+     * showing the action for each state/symbol combination.
+     *
+     * @return a Csv representation of the parse table
+     */
     def toCsv: Csv = {
       val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
@@ -36,6 +52,17 @@ private[parser] object ParseTable {
       Csv(headers, rows)
     }
 
+  /**
+   * Constructs the LR(1) parse table from a list of productions.
+   *
+   * This implements the LR(1) parser construction algorithm. It builds
+   * states by computing closures of item sets and constructs the parse
+   * table that maps (state, symbol) pairs to actions (shift or reduce).
+   *
+   * @param productions the grammar productions
+   * @return the constructed parse table
+   * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
+   */
   def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0

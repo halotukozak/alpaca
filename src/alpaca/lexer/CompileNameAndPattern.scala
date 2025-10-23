@@ -7,9 +7,29 @@ import alpaca.lexer.CompileNameAndPattern.*
 import scala.annotation.tailrec
 import scala.quoted.*
 
+/**
+ * Compiler for lexer token patterns during macro expansion.
+ *
+ * This class extracts token names and patterns from pattern match trees
+ * in lexer definitions. It handles various pattern forms including simple
+ * patterns, alternatives, and bindings.
+ *
+ * @tparam Q the Quotes type
+ * @param quotes the Quotes instance
+ */
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
+  /**
+   * Compiles a pattern tree into token information.
+   *
+   * Extracts the token name and regex pattern from various forms of
+   * pattern matching trees, handling bindings and alternatives.
+   *
+   * @tparam T the type of the pattern
+   * @param pattern the pattern tree to compile
+   * @return a list of TokenInfo expressions
+   */
   def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
     @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
       (tpe, pattern) match
@@ -56,6 +76,16 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
 }
 
 private object CompileNameAndPattern {
+  /**
+   * Validates a token name during macro expansion.
+   *
+   * Token names must not be underscore (_) as that would be invalid.
+   *
+   * @param name the token name to validate
+   * @param quotes the Quotes instance
+   * @return the validated name
+   * @throws compilation error if the name is invalid
+   */
   private def validateName(name: String)(using quotes: Quotes): ValidName =
     import quotes.reflect.*
     name match
@@ -63,6 +93,17 @@ private object CompileNameAndPattern {
       case other => other
 
   object Result {
+    /**
+     * Creates a TokenInfo expression from a name and regex pattern.
+     *
+     * This validates the name and constructs an expression that will
+     * create a TokenInfo at runtime.
+     *
+     * @param name the token name
+     * @param regex the regex pattern
+     * @param quotes the Quotes instance
+     * @return a TokenInfo expression
+     */
     def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] = {
       import quotes.reflect.*
       val validatedName = validateName(name)
