@@ -1,16 +1,19 @@
 package alpaca.parser
 
 import org.scalatest.funsuite.AnyFunSuite
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
+
+import Production.NonEmpty as NEP
+
+import alpaca.core.NonEmptyList as NEL
 
 class FirstSetTest extends AnyFunSuite {
   test("FirstSet should correctly identify first sets for simple grammar") {
     val productions: List[Production] = List(
-      Production(NonTerminal("S"), List(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
-      Production(NonTerminal("S"), List(NonTerminal("R"))),
-      Production(NonTerminal("L"), List(Terminal("1"), NonTerminal("R"))),
-      Production(NonTerminal("L"), List(Terminal("2"))),
-      Production(NonTerminal("R"), List(Terminal("3"), NonTerminal("L"))),
+      NEP(NonTerminal("S"), NEL(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
+      NEP(NonTerminal("S"), NEL(NonTerminal("R"))),
+      NEP(NonTerminal("L"), NEL(Terminal("1"), NonTerminal("R"))),
+      NEP(NonTerminal("L"), NEL(Terminal("2"))),
+      NEP(NonTerminal("R"), NEL(Terminal("3"), NonTerminal("L"))),
     )
 
     val expected = Map(
@@ -24,14 +27,14 @@ class FirstSetTest extends AnyFunSuite {
 
   test("FirstSet should handle epsilon productions") {
     val productions: List[Production] = List(
-      Production(NonTerminal("E"), List(NonTerminal("T"), NonTerminal("E'"))),
-      Production(NonTerminal("E'"), List(Terminal("+"), NonTerminal("T"), NonTerminal("E'"))),
-      Production(NonTerminal("E'"), List(Symbol.Empty)),
-      Production(NonTerminal("T"), List(NonTerminal("F"), NonTerminal("T'"))),
-      Production(NonTerminal("T'"), List(Terminal("*"), NonTerminal("F"), NonTerminal("T'"))),
-      Production(NonTerminal("T'"), List(Symbol.Empty)),
-      Production(NonTerminal("F"), List(Terminal("("), NonTerminal("E"), Terminal(")"))),
-      Production(NonTerminal("F"), List(Terminal("id"))),
+      NEP(NonTerminal("E"), NEL(NonTerminal("T"), NonTerminal("E'"))),
+      NEP(NonTerminal("E'"), NEL(Terminal("+"), NonTerminal("T"), NonTerminal("E'"))),
+      Production.Empty(NonTerminal("E'")),
+      NEP(NonTerminal("T"), NEL(NonTerminal("F"), NonTerminal("T'"))),
+      NEP(NonTerminal("T'"), NEL(Terminal("*"), NonTerminal("F"), NonTerminal("T'"))),
+      Production.Empty(NonTerminal("T'")),
+      NEP(NonTerminal("F"), NEL(Terminal("("), NonTerminal("E"), Terminal(")"))),
+      NEP(NonTerminal("F"), NEL(Terminal("id"))),
     )
 
     val expected = Map(

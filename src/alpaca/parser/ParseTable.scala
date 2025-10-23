@@ -2,221 +2,39 @@ package alpaca
 package parser
 
 import alpaca.core.{*, given}
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
-import alpaca.parser.context.AnyGlobalCtx
+import alpaca.lexer.AlgorithmError
 
-import java.io.FileWriter
-import scala.annotation.experimental
 import scala.collection.mutable
 import scala.quoted.*
-import scala.reflect.NameTransformer
-import scala.util.Using
 import scala.NamedTuple.NamedTuple
 import ParseAction.*
 import alpaca.lexer.AlgorithmError
 import scala.annotation.tailrec
 import alpaca.core.Showable.mkShow
 
-/** Represents an action the parser can take in a given state.
-  *
-  * The parser uses a parse table to determine what action to take based
-  * on the current state and lookahead symbol.
-  */
-enum ParseAction:
-  /** Shift a symbol onto the parse stack and transition to a new state.
-    *
-    * @param newState the state to transition to
-    */
-  case Shift(newState: Int)
-  
-  /** Reduce by applying a production rule.
-    *
-    * @param production the production to reduce by
-    */
-  case Reduction(production: Production)
+/**
+ * An opaque type representing the LR parse table.
+ *
+ * The parse table maps from (state, symbol) pairs to parse actions.
+ * This table is generated at compile time from the grammar.
+ */
+opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
-object ParseAction {
-  given Showable[ParseAction] =
-    case ParseAction.Shift(newState) => show"S$newState"
-    case ParseAction.Reduction(Production(lhs, rhs)) => show"$lhs -> ${rhs.mkShow}"
+private[parser] object ParseTable {
+  extension (table: ParseTable)
+    def apply(state: Int, symbol: Symbol): ParseAction =
+      try table((state, symbol))
+      catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
 
-  given ToExpr[ParseAction] with
-    def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
-      case ParseAction.Shift(i) => '{ ParseAction.Shift(${ Expr(i) }) }
-      case ParseAction.Reduction(p) => '{ ParseAction.Reduction(${ Expr(p) }) }
-}
+    def toCsv: Csv = {
+      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
+      val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
-/** An opaque type representing the LR parse table.
-  *
-  * The parse table maps from (state, symbol) pairs to parse actions.
-  * This table is generated at compile time from the grammar.
-  */
-opaque type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
+      val headers = show"State" :: symbols.map(_.show)
+      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Showable.Shown]("")(_.show)))
 
-/** Type alias for semantic action functions.
-  *
-  * These functions are called when reducing by a production to compute
-  * the semantic value of the non-terminal. The return type is Any because
-  * different productions may produce different types, which are later
-  * type-checked and cast appropriately by the parser.
-  *
-  * @tparam Ctx the global context type
-  * @tparam R the overall result type of the parser (used for type tracking)
-  */
-type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
-
-/** An opaque type representing the action table.
-  *
-  * The action table maps from productions to their semantic actions.
-  * These actions are executed when the parser reduces by a production.
-  *
-  * @tparam Ctx the global context type
-  * @tparam R the result type
-  */
-opaque type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
-
-object ActionTable {
-  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
-    def apply(production: Production): Action[Ctx, R] = table(production)
-}
-
-/** Creates parse and action tables from a parser definition.
-  *
-  * This is a compile-time macro that analyzes the parser's rules and
-  * generates the LR parse table and associated action table.
-  *
-  * @tparam Ctx the global context type
-  * @tparam R the result type
-  * @tparam P the parser type
-  * @return a tuple of (ParseTable, ActionTable)
-  */
-@experimental
-inline def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]]: (ParseTable, ActionTable[Ctx, R]) =
-  ${ applyImpl[Ctx, R, P] }
-
-//todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
-@experimental
-private def applyImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
-  using quotes: Quotes,
-): Expr[(ParseTable, ActionTable[Ctx, R])] = {
-  import quotes.reflect.*
-
-  val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
-  val replaceRefs = new ReplaceRefs[quotes.type]
-  val createLambda = new CreateLambda[quotes.type]
-
-  def extractProductions: PartialFunction[Tree, List[(production: Production, lambda: Expr[Action[Ctx, R]])]] =
-    case ValDef(ruleName, _, Some(Lambda(_, Match(_, cases: List[CaseDef])))) =>
-
-      type SymbolExtractor = PartialFunction[Tree, (symbol: parser.Symbol, bind: Option[Bind])]
-
-      def extractName: PartialFunction[Tree, String] =
-        case Select(This(kupadupa), name) => name
-
-      def extractBind: PartialFunction[Tree, Option[Bind]] =
-        case bind: Bind => Some(bind)
-        case Ident("_") => None
-        case x => raiseShouldNeverBeCalled(x.show)
-
-      val extractTerminalRef: SymbolExtractor =
-        case Unapply(
-              Select(
-                TypeApply(
-                  Select(Apply(Select(_, "selectDynamic"), List(Literal(StringConstant(name)))), "$asInstanceOf$"),
-                  List(asInstanceOfType),
-                ),
-                "unapply",
-              ),
-              _,
-              List(extractBind(bind)),
-            ) =>
-          // (name, asInstanceOfType, bind) //available for future
-          Terminal(NameTransformer.decode(name)) -> bind
-
-      val extractNonTerminalRef: SymbolExtractor =
-        case Unapply(Select(Select(_, name), "unapply"), Nil, List(extractBind(bind))) =>
-          NonTerminal(name) -> bind
-
-      val extractOptionalNonTerminal: SymbolExtractor =
-        case Unapply(
-              Select(Apply(TypeApply(Ident("Option"), List(tTpe)), List(extractName(name))), "unapply"),
-              Nil,
-              List(extractBind(bind)),
-            ) =>
-          // todo: https://github.com/halotukozak/alpaca/issues/24
-          report.error("Optional non-terminals are not supported yet")
-          NonTerminal(name, isOptional = true) -> bind
-
-      val extractRepeatedNonTerminal: SymbolExtractor =
-        case Unapply(
-              Select(Apply(TypeApply(Ident("List"), List(tTpe)), List(extractName(name))), "unapply"),
-              Nil,
-              List(extractBind(bind)),
-            ) =>
-          // todo: https://github.com/halotukozak/alpaca/issues/23
-          report.error("Repeated non-terminals are not supported yet")
-          NonTerminal(name, isRepeated = true) -> bind
-
-      val skipTypedOrTest: PartialFunction[Tree, Tree] =
-        case TypedOrTest(tree, _) => tree
-        case tree => tree
-
-      val extractSymbol: SymbolExtractor = skipTypedOrTest.andThen:
-        case extractTerminalRef(terminal) => terminal
-        case extractNonTerminalRef(nonterminal) => nonterminal
-        case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
-        case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
-
-      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
-        case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
-          val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
-          val seq = param.asExprOf[Seq[Any]]
-
-          val replacements = (find = ctxSymbol, replace = ctx) ::
-            binds.zipWithIndex
-              .collect:
-                case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
-              .map:
-                case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq.apply($idx).asInstanceOf[t] }.asTerm)
-                case x => raiseShouldNeverBeCalled(x.toString)
-
-          replaceRefs(replacements*).transformTerm(rhs)(methSym)
-
-      cases
-        .map:
-          case CaseDef(pattern, Some(_), rhs) => throw new NotImplementedError("Guards are not supported yet")
-          case CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs) =>
-            val (symbol, bind) = extractSymbol(pattern)
-            Production(NonTerminal(ruleName), symbol :: Nil) -> createAction(List(bind), rhs)
-          case CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs) =>
-            val (symbols, binds) = patterns.map(extractSymbol).unzip(using _.toTuple)
-            Production(NonTerminal(ruleName), symbols) -> createAction(binds, rhs)
-
-  val rules =
-    TypeRepr
-      .of[P]
-      .typeSymbol
-      .declaredFields
-      .filter(_.typeRef <:< TypeRepr.of[PartialFunction[Tuple, Any]])
-      .map(_.tree)
-
-  val actions = rules.flatMap(extractProductions)
-
-  val root = actions.collectFirst { case (p @ Production(NonTerminal("root", _, _), _), _) => p }.get
-
-  val parseTable: Expr[ParseTable] = Expr(
-    ParseTable(Production(parser.Symbol.Start, List(root.lhs)) :: actions.map(_.production)),
-  )
-
-  val actionTable = Expr.ofList {
-    actions.map { case (production, lambda) => Expr.ofTuple((Expr(production), lambda)) }
-  }
-
-  '{ ($parseTable, $actionTable.toMap) }
-}
-
-object ParseTable {
-  extension (table: ParseTable) def apply(state: Int, symbol: Symbol): ParseAction = table((state, symbol))
+      Csv(headers, rows)
+    }
 
   def apply(productions: List[Production]): ParseTable = {
     val firstSet = FirstSet(productions)
@@ -309,6 +127,5 @@ object ParseTable {
   }
 
   given ToExpr[ParseTable] with
-    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] =
-      '{ ${ Expr(x.toList) }.toMap }
+    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] = '{ ${ Expr(x.toList) }.toMap }
 }

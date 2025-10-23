@@ -45,3 +45,6 @@ build/
 
 .bloop/
 .metals/
+
+debug/
+src/alpaca/local.scala

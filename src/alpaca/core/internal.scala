@@ -1,8 +1,7 @@
 package alpaca
 package core
 
-import scala.annotation.experimental
-import scala.quoted.{Expr, Quotes, ToExpr, Type}
+import scala.quoted.*
 import scala.NamedTuple.NamedTuple
 
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
@@ -22,7 +21,6 @@ private[alpaca] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
   }
 }
 
-@experimental
 private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
@@ -39,6 +37,5 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   }
 }
 
-given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
-  override def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] =
-    Expr(x.toTuple)
+private[alpaca] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
+  def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)

@@ -14,40 +14,44 @@ type AnyGlobalCtx = GlobalCtx
 
 transparent inline given ctx(using c: AnyGlobalCtx): c.type = c
 
-/** Base trait for lexer global context.
-  *
-  * The global context maintains state during lexing, including the current
-  * position in the input, the last matched token, and the remaining text to process.
-  * Users can extend this trait to add custom state tracking.
-  */
+/**
+ * Base trait for lexer global context.
+ *
+ * The global context maintains state during lexing, including the current
+ * position in the input, the last matched token, and the remaining text to process.
+ * Users can extend this trait to add custom state tracking.
+ */
 trait GlobalCtx {
+
   /** The last lexem that was created. */
   var lastLexem: Lexem[?, ?] = compiletime.uninitialized
-  
+
   /** The raw string that was matched for the last token. */
   var lastRawMatched: String = compiletime.uninitialized
-  
+
   /** The remaining text to be tokenized. */
   var text: CharSequence
 }
 
 object GlobalCtx:
-  
-  /** Automatic Copyable instance for any GlobalCtx that is a Product (case class).
-    *
-    * @tparam Ctx the context type
-    */
+
+  /**
+   * Automatic Copyable instance for any GlobalCtx that is a Product (case class).
+   *
+   * @tparam Ctx the context type
+   */
   given [Ctx <: GlobalCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
     Copyable.derived
 
-  /** Default BetweenStages implementation that updates the context after each match.
-    *
-    * This implementation:
-    * - Updates lastRawMatched with the matched text
-    * - Creates a new Lexem for defined tokens
-    * - Advances the text position
-    * - Applies any context modifications
-    */
+  /**
+   * Default BetweenStages implementation that updates the context after each match.
+   *
+   * This implementation:
+   * - Updates lastRawMatched with the matched text
+   * - Creates a new Lexem for defined tokens
+   * - Advances the text position
+   * - Applies any context modifications
+   */
   given BetweenStages[AnyGlobalCtx] =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched

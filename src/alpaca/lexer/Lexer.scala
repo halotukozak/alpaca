@@ -7,40 +7,40 @@ import alpaca.lexer.context.AnyGlobalCtx
 import alpaca.lexer.context.default.DefaultGlobalCtx
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.experimental
 import scala.quoted.*
 import scala.util.matching.Regex
 
-/** Type alias for lexer rule definitions.
-  *
-  * A lexer definition is a partial function that maps string patterns
-  * (as regex literals) to token definitions.
-  *
-  * @tparam Ctx the global context type
-  */
+/**
+ * Type alias for lexer rule definitions.
+ *
+ * A lexer definition is a partial function that maps string patterns
+ * (as regex literals) to token definitions.
+ *
+ * @tparam Ctx the global context type
+ */
 type LexerDefinition[Ctx <: AnyGlobalCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
-/** Creates a lexer from a DSL-based definition.
-  *
-  * This is the main entry point for defining a lexer. It uses a macro to
-  * compile the lexer definition into efficient tokenization code.
-  *
-  * Example:
-  * {{{
-  * val myLexer = lexer {
-  *   case "\\d+" => Token["number"]
-  *   case "[a-zA-Z]+" => Token["identifier"]
-  *   case "\\s+" => Token.Ignored
-  * }
-  * }}}
-  *
-  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
-  * @param rules the lexer rules as a partial function
-  * @param copy implicit Copyable instance for the context
-  * @param betweenStages implicit BetweenStages for context updates
-  * @return a Tokenization instance that can tokenize input strings
-  */
-@experimental
+/**
+ * Creates a lexer from a DSL-based definition.
+ *
+ * This is the main entry point for defining a lexer. It uses a macro to
+ * compile the lexer definition into efficient tokenization code.
+ *
+ * Example:
+ * {{{
+ * val myLexer = lexer {
+ *   case "\\d+" => Token["number"]
+ *   case "[a-zA-Z]+" => Token["identifier"]
+ *   case "\\s+" => Token.Ignored
+ * }
+ * }}}
+ *
+ * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
+ * @param rules the lexer rules as a partial function
+ * @param copy implicit Copyable instance for the context
+ * @param betweenStages implicit BetweenStages for context updates
+ * @return a Tokenization instance that can tokenize input strings
+ */
 transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
   using Ctx WithDefault DefaultGlobalCtx,
 )(
@@ -51,7 +51,6 @@ transparent inline def lexer[Ctx <: AnyGlobalCtx & Product](
 ): Tokenization[Ctx] =
   ${ lexerImpl[Ctx]('{ rules }, '{ summon }, '{ summon }) }
 
-@experimental
 private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
@@ -151,9 +150,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
             ) =>
           (Type.of[name *: names], Type.of[Token[name, Ctx, value] *: types])
         case _ => raiseShouldNeverBeCalled()
-      }
-      .runtimeChecked match
+      } match
       case ('[type names <: Tuple; names], '[type types <: Tuple; types]) => TypeRepr.of[NamedTuple[names, types]]
+      case _ => raiseShouldNeverBeCalled()
 
     val fieldsDecls = Symbol.newTypeAlias(
       parent = cls,
@@ -187,7 +186,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       privateWithin = Symbol.noSymbol,
     )
 
-    tokenDecls.toList ++ List(fieldsDecls, allTokens, byName)
+    tokenDecls ++ List(fieldsDecls, allTokens, byName)
   }
 
   val cls = Symbol.newClass(
@@ -239,7 +238,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         },
       ),
     )
-  }.toList
+  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 

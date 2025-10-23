@@ -3,16 +3,17 @@ package parser
 
 import alpaca.core.*
 import alpaca.lexer.*
-import alpaca.lexer.context.{ctx, Lexem}
+import alpaca.lexer.context.ctx
 import alpaca.lexer.context.default.*
 import alpaca.parser.context.GlobalCtx
-import alpaca.parser.Rule.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.mutable
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
+  type R = Unit | Int | List[Int] | (String, Option[List[Int]])
+
   val CalcLexer = lexer {
     case " " => Token.Ignored
     case " \\t" => Token.Ignored
@@ -36,6 +37,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
   ) extends GlobalCtx derives Copyable
 
+  // todo https://github.com/halotukozak/alpaca/issues/69
   // class CalcParser(Parser):
   //    tokens = CalcLexer.tokens
   //
@@ -66,53 +68,70 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs
       case Expr(expr) => expr :: Nil
 
-    val Statement: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] =
+    val Statement: Rule[R] =
       case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
         ctx.names(id.value) = expr
       case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
         (id.value, argList)
       case Expr(expr) => expr
 
-    val root: Rule[Unit | Int | List[Int] | (String, Option[List[Int]])] =
+    val root: Rule[R] =
       case Statement(stmt) => stmt
   }
 
   test("basic recognition of various tokens and literals") {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems) should matchPattern:
-    //   case (ctx: CalcContext, None) if ctx.names("a") == 47 =>
-
-    val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
-
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems2) should matchPattern:
-    //   case (_, Some(47)) =>
+    // todo https://github.com/halotukozak/alpaca/issues/69
+//    CalcParser.parse[R](lexems) should matchPattern:
+//      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
+//
+//    val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
+//
+//    CalcParser.parse[R](lexems2) should matchPattern:
+//      case (_, 47) =>
   }
 
   test("ebnf") {
     val lexems = CalcLexer.tokenize("a()")
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems) should matchPattern:
-    //   case (_, Some(('a', None))) =>
 
-    val lexems1 = CalcLexer.tokenize("a(2+3)")
+    // todo https://github.com/halotukozak/alpaca/issues/69
+//    CalcParser.parse[R](lexems) should matchPattern:
+//      case (_, ('a', None)) =>
+//
+//    val lexems1 = CalcLexer.tokenize("a(2+3)")
+//
+//    CalcParser.parse[R](lexems1) should matchPattern:
+//      case (_, ("a", Some(Seq(5)))) =>
+//
+//    val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
+//
+//    CalcParser.parse[R](lexems2) should matchPattern:
+//      case (_, ("a", Some(Seq(5, 9)))) =>
+  }
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems1) should matchPattern:
-    //   case (_, Some(('a', Some(Seq(5))))) =>
+  test("api") {
+    type R = (Int, Option[Int], List[Int])
+    object ApiParser extends Parser[CalcContext] {
+      val Num: Rule[Int] =
+        case CalcLexer.NUMBER(n) => n.value
 
-    val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
+      val root: Rule[R] =
+        case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
+          (n, numOpt, numList)
+    }
 
-    // todo https://github.com/halotukozak/alpaca/pull/65
-    // todo https://github.com/halotukozak/alpaca/pull/51
-    // CalcParser.parse[R](lexems2) should matchPattern:
-    //   case (_, Some(('a', Some(Seq(5, 9))))) =>
+    ApiParser.parse[R](CalcLexer.tokenize("1,,")) should matchPattern:
+      case (_, (1, None, Nil)) =>
+
+    ApiParser.parse[R](CalcLexer.tokenize("1,2,")) should matchPattern:
+      case (_, (1, Some(2), Nil)) =>
+
+    ApiParser.parse[R](CalcLexer.tokenize("1,2,1 2 3")) should matchPattern:
+      case (_, (1, Some(2), List(1, 2, 3))) =>
+
+    ApiParser.parse[R](CalcLexer.tokenize("1,,3")) should matchPattern:
+      case (_, (1, None, List(3))) =>
   }
 
   test("parse error") {
