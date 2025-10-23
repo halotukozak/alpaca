@@ -10,11 +10,40 @@ import alpaca.parser.context.AnyGlobalCtx
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
+/**
+ * Creates the parse table and action table for a parser at compile time.
+ *
+ * This inline function is called by the Parser.parse method to generate
+ * the tables needed for parsing. It extracts the grammar from the parser's
+ * rule definitions and constructs the LR parse table and action table.
+ *
+ * @tparam Ctx the parser context type
+ * @tparam R the result type of the parser
+ * @tparam P the parser type
+ * @param debugSettings debug configuration for generating debug output
+ * @return a tuple of (parse table, action table)
+ */
 inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
   using inline debugSettings: DebugSettings[?, ?],
 ): (parseTable: ParseTable, actionTable: ActionTable[Ctx, R]) =
   ${ createTablesImpl[Ctx, R, P]('{ debugSettings }) }
 
+/**
+ * Macro implementation that builds parse and action tables at compile time.
+ *
+ * This is a complex macro that:
+ * 1. Extracts grammar rules from the parser definition
+ * 2. Converts them to productions with semantic actions
+ * 3. Constructs the LR parse table
+ * 4. Generates debug output if enabled
+ *
+ * @tparam Ctx the parser context type
+ * @tparam R the result type
+ * @tparam P the parser type
+ * @param quotes the Quotes instance
+ * @param debugSettings debug configuration
+ * @return an expression containing the parse and action tables
+ */
 //todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
 private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
   using quotes: Quotes,
