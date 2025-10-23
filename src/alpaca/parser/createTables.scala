@@ -37,6 +37,10 @@ inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]
  * 3. Constructs the LR parse table
  * 4. Generates debug output if enabled
  *
+ * Note: This implementation uses various collection types (List, Map, etc.).
+ * Future optimizations may consider View, Iterator, or Vector to improve
+ * compile-time performance and memory usage for large grammars.
+ *
  * @tparam Ctx the parser context type
  * @tparam R the result type
  * @tparam P the parser type
@@ -44,7 +48,6 @@ inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]
  * @param debugSettings debug configuration
  * @return an expression containing the parse and action tables
  */
-//todo: there are many collections here, consider View, Iterator, Vector etc to optimize time and memory usage
 private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
   using quotes: Quotes,
 )(
