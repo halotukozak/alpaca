@@ -54,7 +54,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
     typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should
       include("""
-                |Reduce Float -> Num vs Reduce Integer -> Num
+                |Reduce Integer -> Num vs Reduce Float -> Num
                 |In situation like:
                 |Num ...
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
