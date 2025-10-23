@@ -1,33 +1,48 @@
-package alpaca.parser
+package alpaca
+package parser
 
-import alpaca.core.{show, Showable}
 import alpaca.core.Showable.*
+import alpaca.core.{show, Showable}
 import alpaca.lexer.AlgorithmError
-import alpaca.parser.Production
-import alpaca.parser.Symbol.*
+import alpaca.parser.{FirstSet, Symbol}
 
 private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
-  if production.rhsSize < dotPosition then
-    throw AlgorithmError(s"Cannot initialize $production with dotPosition equal $dotPosition")
+  production match
+    case NonEmptyProduction(lhs, rhs) if dotPosition < 0 || rhs.sizeIs < dotPosition =>
+      throw AlgorithmError(s"dotPosition $dotPosition out of bounds for production $production")
+    case EmptyProduction(lhs) if dotPosition != 0 =>
+      throw AlgorithmError(s"dotPosition for empty production must be 0, got $dotPosition")
+    case _ =>
 
-  lazy val nextSymbol: Symbol =
-    if isLastItem then throw AlgorithmError(s"$this is the last item, has no next symbol")
-    else production.rhs(dotPosition)
+  lazy val nextSymbol: Symbol = production match
+    case NonEmptyProduction(lhs, rhs) => rhs(dotPosition)
+    case EmptyProduction(lhs) => throw AlgorithmError(s"$this is the last item, has no next symbol")
 
   lazy val nextItem: Item =
     if isLastItem then throw AlgorithmError(s"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
 
-  val isLastItem: Boolean = production.rhsSize == dotPosition
-  val isEmpty: Boolean = production.rhsSize == 0
+  val isLastItem: Boolean = production match
+    case NonEmptyProduction(lhs, rhs) => rhs.sizeIs == dotPosition
+    case EmptyProduction(lhs) => true
 
-  def nextTerminals(firstSet: FirstSet): Set[Terminal] =
-    production.rhs.lift(dotPosition + 1) match
-      case Some(symbol: Symbol) => firstSet.first(symbol)
-      case None => Set(lookAhead)
+  val isEmpty: Boolean = production match
+    case EmptyProduction(lhs) => true
+    case NonEmptyProduction(lhs, rhs) => false
+
+  def nextTerminals(firstSet: FirstSet): Set[Terminal] = production match
+    case EmptyProduction(lhs) => ???
+    case NonEmptyProduction(lhs, rhs) =>
+      rhs.lift(dotPosition + 1) match
+        case Some(symbol: Symbol) => firstSet.first(symbol)
+        case None => Set(lookAhead)
 }
 
 private[parser] object Item:
   given Showable[Item] = item =>
-    val (left, right) = item.production.rhs.splitAt(item.dotPosition)
-    show"${item.production.lhs} -> ${left.mkShow}•${right.mkShow}, ${item.lookAhead}"
+    item.production match
+      case NonEmptyProduction(lhs, rhs) =>
+        val (left, right) = rhs.splitAt(item.dotPosition)
+        show"$lhs -> ${left.mkShow}•${right.mkShow}, ${item.lookAhead}"
+      case EmptyProduction(lhs) =>
+        show"$lhs -> •${Symbol.Empty}, ${item.lookAhead}"

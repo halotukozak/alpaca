@@ -15,7 +15,7 @@ private[parser] object State {
   }
 
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
-    if !item.isLastItem && !item.nextSymbol.isTerminal then
+    if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
       val lookAheads = item.nextTerminals(firstSet)
 
       productions.view
