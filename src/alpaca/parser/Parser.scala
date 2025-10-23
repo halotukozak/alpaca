@@ -81,9 +81,6 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
             )
           }
 
-        case ParseAction.Reduction(Production.Empty(Symbol.Start)) if stack.head.index == 0 =>
-          stack.head.node.asInstanceOf[R | Null]
-
         case ParseAction.Reduction(Production.Empty(lhs)) =>
           val ParseAction.Shift(gotoState) = parseTable(stack.head.index, lhs).runtimeChecked
           loop(

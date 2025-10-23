@@ -26,10 +26,6 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
     case Production.NonEmpty(_, rhs) => rhs.sizeIs == dotPosition
     case _: Production.Empty => true
 
-  val isEmpty: Boolean = production match
-    case _: Production.NonEmpty => false
-    case _: Production.Empty => true
-
   def nextTerminals(firstSet: FirstSet): Set[Terminal] = production match
     case Production.NonEmpty(lhs, rhs) =>
       rhs.lift(dotPosition + 1) match

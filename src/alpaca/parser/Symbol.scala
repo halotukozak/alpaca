@@ -11,7 +11,7 @@ private[parser] trait Symbol {
   def name: String
 }
 
-private[parser] sealed class NonTerminal(override val name: String) extends Symbol {
+sealed class NonTerminal(override val name: String) extends Symbol {
   type IsEmpty = false
 
   override def equals(that: Any): Boolean = that match
@@ -21,12 +21,12 @@ private[parser] sealed class NonTerminal(override val name: String) extends Symb
   override def hashCode(): Int = name.hashCode
 }
 
-private[parser] object NonTerminal:
+object NonTerminal:
   def fresh(name: String): NonTerminal =
     NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
   def unapply(nonTerminal: NonTerminal): Some[String] = Some(nonTerminal.name)
 
-private[parser] sealed class Terminal(override val name: String) extends Symbol {
+sealed class Terminal(override val name: String) extends Symbol {
   override def equals(that: Any): Boolean = that match
     case that: Terminal => this.name == that.name
     case _ => false
