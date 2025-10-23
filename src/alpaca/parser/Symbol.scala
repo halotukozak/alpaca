@@ -6,12 +6,12 @@ import alpaca.core.Showable
 import scala.quoted.*
 import scala.util.Random
 
-trait Symbol {
+private[parser] trait Symbol {
   type IsEmpty <: Boolean
   def name: String
 }
 
-class NonTerminal(override val name: String) extends Symbol {
+private[parser] sealed class NonTerminal(override val name: String) extends Symbol {
   type IsEmpty = false
 
   override def equals(that: Any): Boolean = that match
@@ -21,12 +21,11 @@ class NonTerminal(override val name: String) extends Symbol {
   override def hashCode(): Int = name.hashCode
 }
 
-object NonTerminal:
+private[parser] object NonTerminal:
   def fresh(name: String): NonTerminal =
     NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
   def unapply(nonTerminal: NonTerminal): Some[String] = Some(nonTerminal.name)
-
-class Terminal(override val name: String) extends Symbol {
+private[parser] sealed class Terminal(override val name: String) extends Symbol {
   override def equals(that: Any): Boolean = that match
     case that: Terminal => this.name == that.name
     case _ => false
@@ -34,7 +33,7 @@ class Terminal(override val name: String) extends Symbol {
   override def hashCode(): Int = name.hashCode
 }
 
-object Terminal:
+private[parser] object Terminal:
   def apply(name: String): Terminal { type IsEmpty = false } = new Terminal(name) { type IsEmpty = false }
   def unapply(terminal: Terminal): Some[String] = Some(terminal.name)
 

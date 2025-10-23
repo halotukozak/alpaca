@@ -6,14 +6,15 @@ import alpaca.parser.Symbol
 
 import scala.quoted.*
 
-sealed trait Production {
+private[parser] sealed trait Production {
   val lhs: NonTerminal
   val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.Empty.type
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 }
 
-final case class NonEmptyProduction(lhs: NonTerminal, rhs: NonEmptyList[Symbol.NonEmpty]) extends Production
-final case class EmptyProduction(lhs: NonTerminal) extends Production {
+private[parser] final case class NonEmptyProduction(lhs: NonTerminal, rhs: NonEmptyList[Symbol.NonEmpty])
+  extends Production
+private[parser] final case class EmptyProduction(lhs: NonTerminal) extends Production {
   val rhs: Symbol.Empty.type = Symbol.Empty
 }
 
