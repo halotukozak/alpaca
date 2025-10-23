@@ -6,25 +6,23 @@ import alpaca.parser.Symbol
 
 import scala.quoted.*
 
-private[parser] sealed trait Production {
+private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.Empty.type) {
   val lhs: NonTerminal
-  val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.Empty.type
-  def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
-}
 
-private[parser] final case class NonEmptyProduction(lhs: NonTerminal, rhs: NonEmptyList[Symbol.NonEmpty])
-  extends Production
-private[parser] final case class EmptyProduction(lhs: NonTerminal) extends Production {
-  val rhs: Symbol.Empty.type = Symbol.Empty
+  def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
+
+  case NonEmpty(lhs: NonTerminal, override val rhs: NonEmptyList[Symbol.NonEmpty]) extends Production(rhs)
+  case Empty(lhs: NonTerminal) extends Production(Symbol.Empty)
 }
 
 private[parser] object Production {
   given Showable[Production] =
-    case NonEmptyProduction(lhs, rhs: NonEmptyList[Symbol.NonEmpty]) => show"$lhs -> ${rhs.mkShow(" ")}"
-    case EmptyProduction(lhs) => show"$lhs -> ${Symbol.Empty}"
+    case NonEmpty(lhs, rhs) => show"$lhs -> ${rhs.mkShow(" ")}"
+    case Empty(lhs) => show"$lhs -> ${Symbol.Empty}"
 
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
-      case NonEmptyProduction(lhs, rhs) => '{ NonEmptyProduction(${ Expr(lhs) }, ${ Expr(rhs) }) }
-      case EmptyProduction(lhs) => '{ EmptyProduction(${ Expr(lhs) }) }
+      case NonEmpty(lhs, rhs) =>
+        '{ NonEmpty(${ Expr(lhs) }, ${ Expr[NonEmptyList[Symbol]](rhs).asExprOf[NonEmptyList[Symbol.NonEmpty]] }) }
+      case Empty(lhs) => '{ Empty(${ Expr(lhs) }) }
 }

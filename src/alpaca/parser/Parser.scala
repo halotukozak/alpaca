@@ -64,7 +64,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(NonEmptyProduction(lhs, rhs)) =>
+        case ParseAction.Reduction(Production.NonEmpty(lhs, rhs)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
@@ -76,19 +76,19 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
               lexems,
               (
                 gotoState,
-                actionTable(NonEmptyProduction(lhs, rhs))(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+                actionTable(Production.NonEmpty(lhs, rhs))(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
               ) :: newStack,
             )
           }
 
-        case ParseAction.Reduction(EmptyProduction(Symbol.Start)) if stack.head.index == 0 =>
+        case ParseAction.Reduction(Production.Empty(Symbol.Start)) if stack.head.index == 0 =>
           stack.head.node.asInstanceOf[R | Null]
 
-        case ParseAction.Reduction(EmptyProduction(lhs)) =>
+        case ParseAction.Reduction(Production.Empty(lhs)) =>
           val ParseAction.Shift(gotoState) = parseTable(stack.head.index, lhs).runtimeChecked
           loop(
             lexems,
-            (gotoState, actionTable(EmptyProduction(lhs))(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+            (gotoState, actionTable(Production.Empty(lhs))(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
           )
     }
     ctx -> loop(lexems, (0, null) :: Nil)

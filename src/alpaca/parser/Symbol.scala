@@ -25,6 +25,7 @@ private[parser] object NonTerminal:
   def fresh(name: String): NonTerminal =
     NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
   def unapply(nonTerminal: NonTerminal): Some[String] = Some(nonTerminal.name)
+
 private[parser] sealed class Terminal(override val name: String) extends Symbol {
   override def equals(that: Any): Boolean = that match
     case that: Terminal => this.name == that.name
@@ -38,25 +39,15 @@ private[parser] object Terminal:
   def unapply(terminal: Terminal): Some[String] = Some(terminal.name)
 
 private[parser] object Symbol {
-  case object Start extends NonTerminal("S'") {
-    type IsEmpty = false
-  }
-  case object EOF extends Terminal("$") {
-    type IsEmpty = false
-  }
-  case object Empty extends Terminal("ε") {
-    type IsEmpty = true
-  }
-
   type NonEmpty = Symbol { type IsEmpty = false }
 
-  given ToExpr[NonEmpty] with
-    def apply(x: NonEmpty)(using Quotes): Expr[NonEmpty] = given_ToExpr_Symbol(x).asExprOf[NonEmpty]
-
-  given ToExpr[Empty.type] with
-    def apply(x: Empty.type)(using Quotes): Expr[Empty.type] = '{ Symbol.Empty }
-
   given Showable[Symbol] = _.name
+
+  case object Start extends NonTerminal("S'") { type IsEmpty = false }
+
+  case object EOF extends Terminal("$") { type IsEmpty = false }
+
+  case object Empty extends Terminal("ε") { type IsEmpty = true }
 
   given ToExpr[Symbol] with
     def apply(x: Symbol)(using Quotes): Expr[Symbol] = x match

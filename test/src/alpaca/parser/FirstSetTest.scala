@@ -2,7 +2,7 @@ package alpaca.parser
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import NonEmptyProduction as NEP
+import Production.NonEmpty as NEP
 
 import alpaca.core.NonEmptyList as NEL
 
@@ -29,10 +29,10 @@ class FirstSetTest extends AnyFunSuite {
     val productions: List[Production] = List(
       NEP(NonTerminal("E"), NEL(NonTerminal("T"), NonTerminal("E'"))),
       NEP(NonTerminal("E'"), NEL(Terminal("+"), NonTerminal("T"), NonTerminal("E'"))),
-      EmptyProduction(NonTerminal("E'")),
+      Production.Empty(NonTerminal("E'")),
       NEP(NonTerminal("T"), NEL(NonTerminal("F"), NonTerminal("T'"))),
       NEP(NonTerminal("T'"), NEL(Terminal("*"), NonTerminal("F"), NonTerminal("T'"))),
-      EmptyProduction(NonTerminal("T'")),
+      Production.Empty(NonTerminal("T'")),
       NEP(NonTerminal("F"), NEL(Terminal("("), NonTerminal("E"), Terminal(")"))),
       NEP(NonTerminal("F"), NEL(Terminal("id"))),
     )
