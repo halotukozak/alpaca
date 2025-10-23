@@ -6,22 +6,48 @@ import alpaca.core.Showable
 import scala.quoted.*
 import scala.util.Random
 
-private[parser] enum Symbol(val isTerminal: Boolean) {
-  val name: String
-
-  case NonTerminal(name: String) extends Symbol(isTerminal = false)
-  case Terminal(name: String) extends Symbol(isTerminal = true)
+private[parser] trait Symbol {
+  type IsEmpty <: Boolean
+  def name: String
 }
 
+sealed class NonTerminal(override val name: String) extends Symbol {
+  type IsEmpty = false
+
+  override def equals(that: Any): Boolean = that match
+    case that: NonTerminal => this.name == that.name
+    case _ => false
+
+  override def hashCode(): Int = name.hashCode
+}
+
+object NonTerminal:
+  def fresh(name: String): NonTerminal =
+    NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
+  def unapply(nonTerminal: NonTerminal): Some[String] = Some(nonTerminal.name)
+
+sealed class Terminal(override val name: String) extends Symbol {
+  override def equals(that: Any): Boolean = that match
+    case that: Terminal => this.name == that.name
+    case _ => false
+
+  override def hashCode(): Int = name.hashCode
+}
+
+private[parser] object Terminal:
+  def apply(name: String): Terminal { type IsEmpty = false } = new Terminal(name) { type IsEmpty = false }
+  def unapply(terminal: Terminal): Some[String] = Some(terminal.name)
+
 private[parser] object Symbol {
-  val Start: NonTerminal = NonTerminal("S'")
-  val EOF: Terminal = Terminal("$")
-  val Empty: Terminal = Terminal("ε")
+  type NonEmpty = Symbol { type IsEmpty = false }
 
   given Showable[Symbol] = _.name
 
-  object NonTerminal:
-    def fresh(name: String): NonTerminal = NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
+  case object Start extends NonTerminal("S'") { type IsEmpty = false }
+
+  case object EOF extends Terminal("$") { type IsEmpty = false }
+
+  case object Empty extends Terminal("ε") { type IsEmpty = true }
 
   given ToExpr[Symbol] with
     def apply(x: Symbol)(using Quotes): Expr[Symbol] = x match

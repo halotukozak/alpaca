@@ -5,7 +5,6 @@ import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
 import alpaca.debugToFile
-import alpaca.parser.Symbol.{NonTerminal, Terminal}
 import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*
@@ -66,7 +65,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       type EBNFExtractor = PartialFunction[
         Tree,
         (
-          symbol: alpaca.parser.Symbol,
+          symbol: alpaca.parser.Symbol.NonEmpty,
           bind: Option[Bind],
           others: List[(production: Production, action: Expr[Action[Ctx, R]])],
         ),
@@ -138,11 +137,11 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             bind = bind,
             others = List(
               (
-                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                production = Production.Empty(fresh),
                 action = '{ (_, _) => None },
               ),
               (
-                production = Production(fresh, NEL(Terminal(name))),
+                production = Production.NonEmpty(fresh, NEL(Terminal(name))),
                 action = '{ (_, children) => Some(children.head) },
               ),
             ),
@@ -174,14 +173,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             bind = bind,
             others = List(
               (
-                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                production = Production.Empty(fresh),
                 action = '{ (_, _) => Nil },
               ),
               (
-                production = Production(fresh, NEL(fresh, NonTerminal(name))),
-                action = '{ (ctx, children) =>
-                  println(children)
-                  ???
+                production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+                action = '{
+                  { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }: Action[Ctx, R]
                 },
               ),
             ),
@@ -215,11 +213,11 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             bind = bind,
             others = List(
               (
-                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                production = Production.Empty(fresh),
                 action = '{ (_, _) => None },
               ),
               (
-                production = Production(fresh, NEL(NonTerminal(name))),
+                production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
                 action = '{ (_, children) => Some(children.head) },
               ),
             ),
@@ -245,14 +243,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
             bind = bind,
             others = List(
               (
-                production = Production(fresh, NEL(alpaca.parser.Symbol.Empty)),
+                production = Production.Empty(fresh),
                 action = '{ (_, _) => Nil },
               ),
               (
-                production = Production(fresh, NEL(fresh, NonTerminal(name))),
-                action = '{ (ctx, children) =>
-                  println(children)
-                  ???
+                production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+                action = '{
+                  { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }: Action[Ctx, R]
                 },
               ),
             ),
@@ -275,7 +272,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
           case CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
             (
-              production = Production(NonTerminal(ruleName), NEL(symbol)),
+              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol)),
               action = createAction(List(bind), rhs),
             ) :: others
 
@@ -283,7 +280,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
           case CaseDef(skipTypedOrTest(p @ Unapply(_, _, patterns)), None, rhs) =>
             val (symbols, binds, others) = patterns.map(extractEBNFAndAction).unzip3(using _.toTuple)
             (
-              production = Production(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*)),
+              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*)),
               action = createAction(binds, rhs),
             ) :: others.flatten
           case x =>
@@ -305,10 +302,10 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
     debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
   }
 
-  val root = table.collectFirst { case (p @ Production(NonTerminal("root"), _), _) => p }.get
+  val root = table.collectFirst { case (p @ Production.NonEmpty(NonTerminal("root"), _), _) => p }.get
 
   val parseTable = Expr {
-    ParseTable(Production(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
+    ParseTable(Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
       .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 

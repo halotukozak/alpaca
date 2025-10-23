@@ -1,44 +1,75 @@
 package alpaca
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{show, Copyable, Showable}
 import alpaca.core.Showable.mkShow
 import alpaca.lexer.{lexer, Token}
 import alpaca.parser.Parser
 import org.scalatest.funsuite.AnyFunSuite
-
-final case class Ast(name: String, children: Ast*)
-object Ast:
-  given Showable[Ast] = ast =>
-    if ast.children.isEmpty then ast.name
-    else show"${ast.name}${ast.children.mkShow("(", ", ", ")")}"
+import alpaca.parser.context.GlobalCtx
+import alpaca.parser.context.default.EmptyGlobalCtx
+import scala.quoted.Expr
+import java.nio.file.Path
+import alpaca.lexer.LazyReader
+import java.nio.file.Files
+import scala.util.Using
 
 @main def main(): Unit = {
-  val Lexer = lexer:
-    case "\\s+" => Token.Ignored
-    case "=" => Token["="]
-    case "\\*" => Token["*"]
-    case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
-
-  object Parser extends Parser {
-    val S: Rule[Ast] =
-      case R(r) => Ast("S", r)
-      case (L(l), Lexer.`=`(_), R(r)) => Ast("S", l, r)
-
-    val L: Rule[Ast] =
-      case Lexer.ID(id) => Ast("L", Ast(s"id: ${id.value}"))
-      case (Lexer.`*`(_), R(r)) => Ast("L", r)
-
-    val R: Rule[Ast] =
-      case L(l) => Ast("R", l)
-
-    val root: Rule[Ast] =
-      case S(s) => Ast("S'", s)
+  val CalcLexer = lexer {
+    case num @ "[0-9]+" => Token["NUM"](num.toDouble)
+    case "\\+" => Token["PLUS"]
+    case "-" => Token["MINUS"]
+    case "\\*" => Token["STAR"]
+    case "/" => Token["SLASH"]
+    case "\\(" => Token["LP"]
+    case "\\)" => Token["RP"]
+    case "[ \\t\\r\\n]+" => Token.Ignored
   }
 
-  val tokens = Lexer.tokenize("*A = **B")
-  
-  val result = Parser.parse[Ast](tokens).result.nn
-  println(show"$result")
+  object CalcParser extends Parser[EmptyGlobalCtx] {
+    val root: Rule[Double] =
+      case Expr(e) => e
+
+    val Expr: Rule[Double] =
+      case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b
+      case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b
+      case Term(t) => t
+
+    val Term: Rule[Double] =
+      case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b
+      case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b
+      case Factor(f) => f
+
+    val Factor: Rule[Double] =
+      case CalcLexer.NUM(n) => n.value
+      case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e
+  }
+
+  val input = "1 + 2"
+  val tokens = CalcLexer.tokenize(input)
+  val result = CalcParser.parse[Double](tokens)
+  assert(result.result == 3.0)
+
+  val tempFile = Files.createTempFile("test", ".txt")
+  try {
+    Files.write(
+      tempFile,
+      """
+        (12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5) 
+        * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
+        - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
+        + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
+      """.getBytes(),
+    )
+
+    Using(LazyReader.from(tempFile)) { input2 =>
+      val tokens2 = CalcLexer.tokenize(input2)
+      val result2 = CalcParser.parse[Double](tokens2)
+      assert(result2.result == 2096.0)
+    }
+  } finally {
+    Files.deleteIfExists(tempFile)
+  }
+
 }
 
 class MainTest extends AnyFunSuite:
