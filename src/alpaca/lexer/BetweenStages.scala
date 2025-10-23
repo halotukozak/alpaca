@@ -7,10 +7,29 @@ import alpaca.soft
 import scala.quoted.*
 import scala.util.matching.Regex.Match
 
+/**
+ * A hook for updating context between lexing stages.
+ *
+ * This trait defines a function that is called after each token match
+ * to update the global context. It can be used to track line numbers,
+ * column positions, or other custom state.
+ *
+ * @tparam Ctx the global context type
+ */
 // todo: i do not like this name
 trait BetweenStages[Ctx <: GlobalCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)
 
 object BetweenStages {
+
+  /**
+   * Automatically derives a BetweenStages instance for a context type.
+   *
+   * This macro combines BetweenStages instances from all parent traits
+   * of the context type to create a composite update function.
+   *
+   * @tparam Ctx the context type
+   * @return a BetweenStages instance
+   */
   inline given auto[Ctx <: GlobalCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
   private def autoImpl[Ctx <: GlobalCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {

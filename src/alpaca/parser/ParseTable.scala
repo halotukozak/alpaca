@@ -12,6 +12,12 @@ import alpaca.lexer.AlgorithmError
 import scala.annotation.tailrec
 import alpaca.core.Showable.mkShow
 
+/**
+ * An opaque type representing the LR parse table.
+ *
+ * The parse table maps from (state, symbol) pairs to parse actions.
+ * This table is generated at compile time from the grammar.
+ */
 opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
 private[parser] object ParseTable {

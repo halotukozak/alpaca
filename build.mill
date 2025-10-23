@@ -2,6 +2,7 @@
 //| mill-jvm-version: 21
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
+//| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
 import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._

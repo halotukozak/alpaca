@@ -6,6 +6,15 @@ import alpaca.core.Showable
 import scala.quoted.*
 import scala.util.Random
 
+/**
+ * Represents a grammar symbol (either terminal or non-terminal).
+ *
+ * In formal grammar theory, symbols are the basic building blocks of
+ * productions. Terminals represent tokens from the lexer, while
+ * non-terminals represent grammatical constructs.
+ *
+ * @param isTerminal whether this symbol is a terminal
+ */
 private[parser] trait Symbol {
   type IsEmpty <: Boolean
   def name: String
@@ -43,10 +52,13 @@ private[parser] object Symbol {
 
   given Showable[Symbol] = _.name
 
+  /** The augmented start symbol used internally by the parser. */
   case object Start extends NonTerminal("S'") { type IsEmpty = false }
 
+  /** The end-of-file terminal symbol. */
   case object EOF extends Terminal("$") { type IsEmpty = false }
 
+  /** The empty terminal symbol (epsilon). */
   case object Empty extends Terminal("ε") { type IsEmpty = true }
 
   given ToExpr[Symbol] with
