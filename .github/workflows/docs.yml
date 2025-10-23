@@ -37,7 +37,6 @@ jobs:
           path: |
             ~/.cache/coursier
             ~/.cache/mill
-            ${{ github.workspace }}/out
           key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
           restore-keys: |
             ${{ runner.os }}-mill-
