@@ -4,7 +4,6 @@ package parser
 import alpaca.core.{DebugSettings, Empty, WithDefault}
 import alpaca.lexer.{DefinedToken, Token}
 import alpaca.lexer.context.Lexem
-import alpaca.parser.Symbol.Terminal
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 import alpaca.parser.Parser.RuleOnly
@@ -65,19 +64,29 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(production: Production) =>
-          val newStack = stack.drop(production.rhsSize)
+        case ParseAction.Reduction(Production.NonEmpty(lhs, rhs)) =>
+          val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
-          if production.lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+          if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
-            val ParseAction.Shift(gotoState) = parseTable(newState.index, production.lhs).runtimeChecked
-            val children = stack.take(production.rhsSize).map(_.node).reverse
+            val ParseAction.Shift(gotoState) = parseTable(newState.index, lhs).runtimeChecked
+            val children = stack.take(rhs.size).map(_.node).reverse
             loop(
               lexems,
-              (gotoState, actionTable(production)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null]) :: newStack,
+              (
+                gotoState,
+                actionTable(Production.NonEmpty(lhs, rhs))(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+              ) :: newStack,
             )
           }
+
+        case ParseAction.Reduction(Production.Empty(lhs)) =>
+          val ParseAction.Shift(gotoState) = parseTable(stack.head.index, lhs).runtimeChecked
+          loop(
+            lexems,
+            (gotoState, actionTable(Production.Empty(lhs))(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+          )
     }
     ctx -> loop(lexems, (0, null) :: Nil)
   }

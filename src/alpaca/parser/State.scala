@@ -1,9 +1,11 @@
 package alpaca.parser
 
-opaque private[parser] type State <: Set[Item] = Set[Item]
+import scala.collection.immutable.SortedSet
+
+opaque private[parser] type State <: SortedSet[Item] = SortedSet[Item]
 
 private[parser] object State {
-  val empty: State = Set.empty
+  val empty: State = SortedSet.empty[Item](using Ordering.by(_.hashCode))
 
   extension (state: State) {
     def possibleSteps: Set[Symbol] = state.view.filterNot(_.isLastItem).map(_.nextSymbol).toSet.excl(Symbol.Empty)
@@ -15,7 +17,7 @@ private[parser] object State {
   }
 
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
-    if !item.isLastItem && !item.nextSymbol.isTerminal then
+    if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
       val lookAheads = item.nextTerminals(firstSet)
 
       productions.view
