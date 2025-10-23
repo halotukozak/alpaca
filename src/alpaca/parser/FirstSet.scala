@@ -33,7 +33,7 @@ private[parser] object FirstSet {
 
     case EmptyProduction(lhs) =>
       firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
-      
+
     case x =>
       raiseShouldNeverBeCalled(x.toString)
   }
