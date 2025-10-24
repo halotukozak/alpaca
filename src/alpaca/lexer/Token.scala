@@ -6,14 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.quoted.*
-
-/**
- * Type alias for valid token names.
- *
- * Token names must be singleton strings (string literals) to enable
- * compile-time type safety.
- */
-private[lexer] type ValidName = String & Singleton
+import alpaca.core.ValidName
 
 /**
  * Type alias for context manipulation functions.

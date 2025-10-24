@@ -8,7 +8,6 @@ import alpaca.lexer.context.default.*
 import alpaca.parser.context.GlobalCtx
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
 import scala.collection.mutable
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
@@ -48,48 +47,50 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   //        )
 
   object CalcParser extends Parser[CalcContext] {
-    val Expr: Rule[Int] =
-      case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2
-      case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2
-      case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2
-      case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2
-      case (CalcLexer.MINUS(_), Expr(expr)) => -expr
-      case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr
-      case CalcLexer.NUMBER(expr) => expr.value
-      case CalcLexer.ID(id) =>
+    val Expr: Rule.AUX[Int] = rule(
+      { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
+      { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
+      { case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2 }: @name("times"),
+      { case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2 },
+      { case (CalcLexer.MINUS(_), Expr(expr)) => -expr }: @name("uminus"),
+      { case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr },
+      { case CalcLexer.NUMBER(expr) => expr.value },
+      { case CalcLexer.ID(id) =>
         ctx.names.getOrElse(
           id.value, {
             ctx.errors.append(("undefined", id));
             0
           },
         )
+      },
+    )
 
-    val ArgList: Rule[List[Int]] =
-      case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs
-      case Expr(expr) => expr :: Nil
+    val ArgList: Rule.AUX[List[Int]] = rule(
+      { case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs },
+      { case Expr(expr) => expr :: Nil },
+    )
 
-    val Statement: Rule[R] =
-      case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
-        ctx.names(id.value) = expr
-      case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
+    val Statement: Rule.AUX[R] = rule(
+      { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) => ctx.names(id.value) = expr },
+      { case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
         (id.value, argList)
-      case Expr(expr) => expr
+      },
+      { case Expr(expr) => expr },
+    )
 
-    val root: Rule[R] =
-      case Statement(stmt) => stmt
+    val root = rule { case Statement(stmt) => stmt }
   }
 
   test("basic recognition of various tokens and literals") {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
-    // todo https://github.com/halotukozak/alpaca/issues/69
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
-//
-//    val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
-//
-//    CalcParser.parse[R](lexems2) should matchPattern:
-//      case (_, 47) =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
+
+    val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
+
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, 47) =>
   }
 
   test("ebnf") {
@@ -113,12 +114,11 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   test("api") {
     type R = (Int, Option[Int], List[Int])
     object ApiParser extends Parser[CalcContext] {
-      val Num: Rule[Int] =
-        case CalcLexer.NUMBER(n) => n.value
+      val Num = rule { case CalcLexer.NUMBER(n) => n.value }
 
-      val root: Rule[R] =
-        case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
-          (n, numOpt, numList)
+      val root = rule { case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
+        (n, numOpt, numList)
+      }
     }
 
     ApiParser.parse[R](CalcLexer.tokenize("1,,")) should matchPattern:

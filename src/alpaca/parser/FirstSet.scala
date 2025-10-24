@@ -34,10 +34,10 @@ private[parser] object FirstSet {
 
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
-    case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail)) =>
+    case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
       firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal, tail)) =>
+    case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal, tail), name) =>
       val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
       val production = tail match
@@ -48,7 +48,7 @@ private[parser] object FirstSet {
       then addImports(newFirstSet, production)
       else newFirstSet
 
-    case Production.Empty(lhs) =>
+    case Production.Empty(lhs, name) =>
       firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
 
     case x =>

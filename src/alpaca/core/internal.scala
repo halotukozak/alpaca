@@ -85,3 +85,8 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 
 private[alpaca] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
+
+private[alpaca] given [T: ToExpr]: ToExpr[T | Null] with
+  def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
+    case null => '{ null }
+    case value => Expr(value)

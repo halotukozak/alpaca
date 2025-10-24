@@ -12,6 +12,8 @@ import java.nio.file.Path
 import alpaca.lexer.LazyReader
 import java.nio.file.Files
 import scala.util.Using
+import alpaca.parser.Rule
+import alpaca.parser.rule
 
 @main def main(): Unit = {
   val CalcLexer = lexer {
@@ -26,22 +28,24 @@ import scala.util.Using
   }
 
   object CalcParser extends Parser[EmptyGlobalCtx] {
-    val root: Rule[Double] =
-      case Expr(e) => e
+    val root: Rule.AUX[Double] = rule { case Expr(e) => e }
 
-    val Expr: Rule[Double] =
-      case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b
-      case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b
-      case Term(t) => t
+    val Expr: Rule.AUX[Double] = rule(
+      { case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b },
+      { case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b },
+      { case Term(t) => t },
+    )
 
-    val Term: Rule[Double] =
-      case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b
-      case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b
-      case Factor(f) => f
+    val Term: Rule.AUX[Double] = rule(
+      { case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b },
+      { case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b },
+      { case Factor(f) => f },
+    )
 
-    val Factor: Rule[Double] =
-      case CalcLexer.NUM(n) => n.value
-      case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e
+    val Factor: Rule.AUX[Double] = rule(
+      { case CalcLexer.NUM(n) => n.value },
+      { case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e },
+    )
   }
 
   val input = "1 + 2"

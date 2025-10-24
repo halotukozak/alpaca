@@ -6,11 +6,9 @@ import alpaca.lexer.{DefinedToken, Token}
 import alpaca.lexer.context.Lexem
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.Parser.RuleOnly
+import alpaca.parser.Rule.RuleOnly
 
-import java.io.FileWriter
 import scala.annotation.{compileTimeOnly, experimental, tailrec}
-import scala.util.Using
 
 /**
  * Configuration settings for the parser.
@@ -46,22 +44,9 @@ final case class ParserSettings(
  */
 abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
 
-  type Rule[+T] = PartialFunction[Tuple | Lexem[?, ?], T]
-
-  extension [T](rule: Rule[T]) {
+  extension (str: String) {
     @compileTimeOnly(RuleOnly)
-    inline def alwaysAfter(rules: (Token[?, ?, ?] | Rule[Any])*): Rule[T] = ???
-    @compileTimeOnly(RuleOnly)
-    inline def alwaysBefore(rules: (Token[?, ?, ?] | Rule[Any])*): Rule[T] = ???
-
-    @compileTimeOnly(RuleOnly)
-    inline def unapply(x: Any): Option[T] = ???
-
-    @compileTimeOnly(RuleOnly)
-    inline def List: PartialFunction[Any, List[T]] = ???
-
-    @compileTimeOnly(RuleOnly)
-    inline def Option: PartialFunction[Any, Option[T]] = ???
+    infix inline def before(other: String): String = ???
   }
 
   extension (token: DefinedToken[?, ?, ?]) {
@@ -78,7 +63,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
    *
    * This is the starting point for parsing.
    */
-  def root: Rule[Any]
+  def root: Rule
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -113,7 +98,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
-        case ParseAction.Reduction(Production.NonEmpty(lhs, rhs)) =>
+        case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
@@ -125,19 +110,19 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
               lexems,
               (
                 gotoState,
-                actionTable(Production.NonEmpty(lhs, rhs))(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+                actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
               ) :: newStack,
             )
           }
 
-        case ParseAction.Reduction(Production.Empty(Symbol.Start)) if stack.head.index == 0 =>
+        case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
           stack.head.node.asInstanceOf[R | Null]
 
-        case ParseAction.Reduction(Production.Empty(lhs)) =>
+        case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
           val ParseAction.Shift(gotoState) = parseTable(stack.head.index, lhs).runtimeChecked
           loop(
             lexems,
-            (gotoState, actionTable(Production.Empty(lhs))(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+            (gotoState, actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
           )
     }
 
@@ -151,8 +136,4 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
    */
   @compileTimeOnly(RuleOnly)
   inline protected final def ctx: Ctx = ???
-}
-
-object Parser {
-  private final val RuleOnly = "Should never be called outside the parser definition"
 }

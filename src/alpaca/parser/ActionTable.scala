@@ -36,6 +36,7 @@ private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
 opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
 
 private[parser] object ActionTable {
+
   /**
    * Creates an ActionTable from a map of productions to actions.
    *
@@ -68,6 +69,7 @@ private[parser] enum ParseAction:
    * @param newState the state to transition to
    */
   case Shift(newState: Int)
+
   /**
    * Reduce action: apply a production rule to reduce symbols.
    *
