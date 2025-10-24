@@ -180,13 +180,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs
       .flatMap:
-        case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
+        case '{ (${ Expr(first) }: String).after(${ Varargs(befores) }*) } =>
           befores.map:
             case '{ $token: Token[name, ?, ?] } =>
               NSet((productionsByName(first), nameToString[name]: Production | String)) -> nameToString[name]
             case '{ ${ Expr(str) }: String } =>
               NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
-        case '{ (${ Expr(first) }: String).after(${ Varargs(befores) }*) } =>
+        case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
           befores.map:
             case '{ $token: Token[name, ?, ?] } =>
               NSet((productionsByName(first), nameToString[name]: Production | String)) -> productionsByName(first)
@@ -220,5 +220,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
     table.map { case (production, action) => Expr.ofTuple(Expr(production) -> action) }
   }
 
-  '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+  val res = '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+
+  res.show.dbg
 }
