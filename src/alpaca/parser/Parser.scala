@@ -26,22 +26,14 @@ final case class ParserSettings(
  * Users should extend this class and define their grammar rules as `Rule` instances.
  * The parser uses an LR parsing algorithm with automatic parse table generation.
  *
- * Example:
- * {{{
- * object CalcParser extends Parser[CalcContext] {
- *   val Expr: Rule[Int] =
- *     case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2
- *     case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2
- *     case CalcLexer.NUMBER(n) => n.value
- *
- *   val root: Rule[Int] =
- *     case Expr(expr) => expr
- * }
- * }}}
- *
  * @tparam Ctx the global context type, defaults to EmptyGlobalCtx
  */
-abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
+abstract class Parser[Ctx <: AnyGlobalCtx](
+  using Ctx WithDefault EmptyGlobalCtx,
+)(using
+  empty: Empty[Ctx],
+  tables: Tables[Ctx],
+) {
 
   extension (token: DefinedToken[?, ?, ?]) {
     @compileTimeOnly(RuleOnly)
@@ -72,25 +64,13 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse[R]( // todo: make it not inlined
-    lexems: List[Lexem[?, ?]],
-  )(using inline debugSettings: DebugSettings[?, ?],
-  ): (ctx: Ctx, result: R | Null) = {
-    val (parseTable, actionTable) = createTables[Ctx, R, this.type]
-    parse[R](parseTable, actionTable, lexems :+ Lexem.EOF)
-  }
-
-  private def parse[R](
-    parseTable: ParseTable,
-    actionTable: ActionTable[Ctx, R],
-    lexems: List[Lexem[?, ?]],
-  ): (ctx: Ctx, result: R | Null) = {
+  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings[?, ?]): (ctx: Ctx, result: R | Null) = {
     type State = (index: Int, node: R | Lexem[?, ?] | Null)
     val ctx = empty()
 
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
-      parseTable(stack.head.index, nextSymbol) match
+      tables.parseTable(stack.head.index, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
@@ -100,13 +80,13 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
 
           if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else {
-            val ParseAction.Shift(gotoState) = parseTable(newState.index, lhs).runtimeChecked
+            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
             loop(
               lexems,
               (
                 gotoState,
-                actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+                tables.actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
               ) :: newStack,
             )
           }
@@ -115,14 +95,14 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
           stack.head.node.asInstanceOf[R | Null]
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = parseTable(stack.head.index, lhs).runtimeChecked
+          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
           loop(
             lexems,
-            (gotoState, actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+            (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
           )
     }
 
-    ctx -> loop(lexems, (0, null) :: Nil)
+    ctx -> loop(lexems :+ Lexem.EOF, (0, null) :: Nil)
   }
 
   /**

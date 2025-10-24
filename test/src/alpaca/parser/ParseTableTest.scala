@@ -17,6 +17,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   case class CalcContext() extends GlobalCtx
 
   test("parse table Shift-Reduce conflict") {
+    typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
       val Expr: Rule[Int] = rule(
         { case (Expr(expr1), CalcLexer.`+`(_), Expr(expr2)) => expr1 + expr2 },
@@ -24,9 +25,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
       )
 
       val root = rule { case Expr(expr) => expr }
-    }
-
-    typeCheckErrors("CalcParser.parse[Int](Nil)").loneElement.message should
+    }""").loneElement.message should
       include("""
                 |Shift "+" vs Reduce Expr -> Expr + Expr
                 |In situation like:
@@ -36,7 +35,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   }
 
   test("parse table Reduce-Reduce conflict") {
-
+    typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
       val Integer = rule { case CalcLexer.Num(lexem) => lexem.value }
 
@@ -49,10 +48,9 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
       val root = rule { case Expr(expr) => expr }
     }
-
-    typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should
+    """).loneElement.message should
       include("""
-                |Reduce Float -> Num vs Reduce Integer -> Num
+                |Reduce Integer -> Num vs Reduce Float -> Num
                 |In situation like:
                 |Num ...
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other

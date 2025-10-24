@@ -21,10 +21,10 @@ import scala.quoted.*
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
+private[parser] type Action[Ctx <: AnyGlobalCtx] = (Ctx, Seq[Any]) => Any
 
 object Action:
-  def apply[Ctx <: AnyGlobalCtx, R](f: PartialFunction[(Ctx, Seq[Any]), R]): Action[Ctx, R] = (ctx, children) =>
+  def apply[Ctx <: AnyGlobalCtx](f: PartialFunction[(Ctx, Seq[Any]), Any]): Action[Ctx] = (ctx, children) =>
     f.applyOrElse(
       (ctx, children),
       x => raiseShouldNeverBeCalled(x.toString),
@@ -40,7 +40,7 @@ object Action:
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
+opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx] = Map[Production, Action[Ctx]]
 
 private[parser] object ActionTable {
 
@@ -50,16 +50,16 @@ private[parser] object ActionTable {
    * @param table the map of productions to their actions
    * @return an ActionTable
    */
-  def apply[Ctx <: AnyGlobalCtx, R](table: Map[Production, Action[Ctx, R]]): ActionTable[Ctx, R] = table
+  def apply[Ctx <: AnyGlobalCtx](table: Map[Production, Action[Ctx]]): ActionTable[Ctx] = table
 
-  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
+  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx])
     /**
      * Gets the action for a production.
      *
      * @param production the production to get the action for
      * @return the semantic action for that production
      */
-    def apply(production: Production): Action[Ctx, R] = table(production)
+    def apply(production: Production): Action[Ctx] = table(production)
 }
 
 /**

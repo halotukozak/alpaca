@@ -97,7 +97,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val lexems = CalcLexer.tokenize("a()")
 
     CalcParser.parse[R](lexems) should matchPattern:
-      case (_, ('a', None)) =>
+      case (_, ("a", None)) =>
 
     val lexems1 = CalcLexer.tokenize("a(2+3)")
 

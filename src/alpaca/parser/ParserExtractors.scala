@@ -6,7 +6,7 @@ import alpaca.parser.context.AnyGlobalCtx
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type, R: Type](using val quotes: Q) {
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type](using val quotes: Q) {
   import quotes.reflect.*
 
   type EBNFExtractor = PartialFunction[
@@ -14,7 +14,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
     (
       symbol: alpaca.parser.Symbol.NonEmpty,
       bind: Option[Bind],
-      others: List[(production: Production, action: Expr[Action[Ctx, R]])],
+      others: List[(production: Production, action: Expr[Action[Ctx]])],
     ),
   ]
 

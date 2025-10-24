@@ -5,32 +5,19 @@ import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
 import alpaca.debugToFile
-import alpaca.lexer.context.Lexem
 import alpaca.lexer.Token
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.ConflictResolution
-import alpaca.parser.ParseAction.{Reduction, Shift}
 
 import scala.quoted.*
-import scala.reflect.NameTransformer
 
-/**
- * Creates the parse table and action table for a parser at compile time.
- *
- * This inline function is called by the Parser.parse method to generate
- * the tables needed for parsing. It extracts the grammar from the parser's
- * rule definitions and constructs the LR parse table and action table.
- *
- * @tparam Ctx the parser context type
- * @tparam R the result type of the parser
- * @tparam P the parser type
- * @param debugSettings debug configuration for generating debug output
- * @return a tuple of (parse table, action table)
- */
-inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]](
-  using inline debugSettings: DebugSettings[?, ?],
-): (parseTable: ParseTable, actionTable: ActionTable[Ctx, R]) =
-  ${ createTablesImpl[Ctx, R, P]('{ debugSettings }) }
+opaque type Tables[Ctx <: AnyGlobalCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
+  (parseTable: ParseTable, actionTable: ActionTable[Ctx])
+
+object Tables:
+  inline given [Ctx <: AnyGlobalCtx](
+    using inline debugSettings: DebugSettings[?, ?],
+  ): Tables[Ctx] = ${ createTablesImpl[Ctx]('{ debugSettings }) }
 
 /**
  * Macro implementation that builds parse and action tables at compile time.
@@ -47,30 +34,32 @@ inline private[parser] def createTables[Ctx <: AnyGlobalCtx, R, P <: Parser[Ctx]
  *
  * @tparam Ctx the parser context type
  * @tparam R the result type
- * @tparam P the parser type
  * @param quotes the Quotes instance
  * @param debugSettings debug configuration
  * @return an expression containing the parse and action tables
  */
-private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx]: Type](
+private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
   using quotes: Quotes,
 )(
   debugSettings: Expr[DebugSettings[?, ?]],
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx, R])] = {
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = {
   import quotes.reflect.*
 
   given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
 
-  val ctxSymbol = TypeRepr.of[P].typeSymbol.methodMember("ctx").head
-  val parserName = TypeRepr.of[P].typeSymbol.name.stripSuffix("$")
+  val parserSymbol = Symbol.spliceOwner.owner.owner
+  val parserTpe = parserSymbol.typeRef
+
+  val ctxSymbol = parserSymbol.methodMember("ctx").head
+  val parserName = parserSymbol.name.stripSuffix("$")
   val replaceRefs = new ReplaceRefs[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
-  val parserExtractor = new ParserExtractors[quotes.type, Ctx, R]
+  val parserExtractor = new ParserExtractors[quotes.type, Ctx]
   import parserExtractor.*
 
-  def extractEBNF(ruleName: String): Expr[Rule[?]] => Seq[(production: Production, action: Expr[Action[Ctx, R]])] = {
+  def extractEBNF(ruleName: String): Expr[Rule[?]] => Seq[(production: Production, action: Expr[Action[Ctx]])] = {
     case '{ rule(${ Varargs(cases) }*) } =>
-      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
+      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
           val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
           val seq = param.asExprOf[Seq[Any]]
@@ -125,13 +114,9 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
     case x => raiseShouldNeverBeCalled(x.show)
   }
 
-  val rules =
-    TypeRepr
-      .of[P]
-      .typeSymbol
-      .declarations
-      .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
-      .map(_.tree)
+  val rules = parserTpe.typeSymbol.declarations
+    .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
+    .map(_.tree)
 
   val table = rules
     .flatMap:
@@ -158,13 +143,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
     .toMap
 
   val resolutionExprs = scala.util
-    .Try(
-      TypeRepr
-        .of[P]
-        .typeSymbol
-        .declaredField("resolutions")
-        .tree,
-    )
+    .Try(parserTpe.typeSymbol.declaredField("resolutions").tree)
     .map:
       case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
     .map:
@@ -216,11 +195,9 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 
-  val actionTable = Expr.ofList[(Production, Action[Ctx, R])] {
+  val actionTable = Expr.ofList[(Production, Action[Ctx])] {
     table.map { case (production, action) => Expr.ofTuple(Expr(production) -> action) }
   }
 
-  val res = '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
-
-  res.show.dbg
+  '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
 }
