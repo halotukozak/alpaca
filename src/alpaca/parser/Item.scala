@@ -20,7 +20,7 @@ import alpaca.parser.{FirstSet, Symbol}
  */
 private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
   production match
-    case Production.NonEmpty(_, rhs) =>
+    case Production.NonEmpty(_, rhs, name) =>
       if dotPosition < 0 || rhs.sizeIs < dotPosition then
         throw AlgorithmError(s"dotPosition $dotPosition out of bounds for production $production")
     case _: Production.Empty =>
@@ -29,7 +29,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
   /** The symbol immediately after the dot, or the lookahead if at the end. */
 
   lazy val nextSymbol: Symbol = production match
-    case Production.NonEmpty(_, rhs) => rhs(dotPosition)
+    case Production.NonEmpty(_, rhs, name) => rhs(dotPosition)
     case _: Production.Empty => throw AlgorithmError(s"$this is the last item, has no next symbol")
 
   /**
@@ -43,7 +43,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
 
   /** Whether the dot is at the end of the production. */
   val isLastItem: Boolean = production match
-    case Production.NonEmpty(_, rhs) => rhs.sizeIs == dotPosition
+    case Production.NonEmpty(_, rhs, name) => rhs.sizeIs == dotPosition
     case _: Production.Empty => true
 
   /**
@@ -53,7 +53,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
    * @return the set of terminals that could appear next
    */
   def nextTerminals(firstSet: FirstSet): Set[Terminal] = production match
-    case Production.NonEmpty(lhs, rhs) =>
+    case Production.NonEmpty(lhs, rhs, name) =>
       rhs.lift(dotPosition + 1) match
         case Some(symbol: Symbol) => firstSet.first(symbol)
         case None => Set(lookAhead)
@@ -62,8 +62,8 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
 
 private[parser] object Item:
   given Showable[Item] =
-    case Item(Production.NonEmpty(lhs, rhs), dotPosition, lookAhead) =>
+    case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"
-    case Item(Production.Empty(lhs), _, lookAhead) =>
+    case Item(Production.Empty(lhs, name), _, lookAhead) =>
       show"$lhs -> •${Symbol.Empty}, $lookAhead"

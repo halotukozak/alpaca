@@ -22,6 +22,7 @@ final case class DebugSettings[Enabled <: Boolean & Singleton, Directory <: Stri
 )
 
 private[alpaca] object DebugSettings {
+
   /**
    * Default debug settings with debugging disabled.
    *

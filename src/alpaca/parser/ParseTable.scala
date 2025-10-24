@@ -3,14 +3,12 @@ package parser
 
 import alpaca.core.{*, given}
 import alpaca.lexer.AlgorithmError
+import alpaca.parser.ParseAction.*
 
 import scala.collection.mutable
 import scala.quoted.*
 import scala.NamedTuple.NamedTuple
-import ParseAction.*
-import alpaca.lexer.AlgorithmError
 import scala.annotation.tailrec
-import alpaca.core.Showable.mkShow
 
 /**
  * An opaque type representing the LR parse table.
@@ -63,7 +61,10 @@ private[parser] object ParseTable {
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  def apply(productions: List[Production]): ParseTable = {
+  def apply(
+    productions: List[Production],
+    conflictResolutionTable: ConflictResolutionTable,
+  ): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0
     val states =
@@ -79,14 +80,18 @@ private[parser] object ParseTable {
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
       table.get((currStateId, symbol)) match
-        case None => table += ((currStateId, symbol) -> action)
+        case None => table.update((currStateId, symbol), action)
         case Some(existingAction) =>
-          val path = toPath(currStateId, List(symbol))
-          (existingAction, action) match
-            case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
-            case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
-            case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
-            case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
+          conflictResolutionTable.get(existingAction, action)(symbol) match
+            case Some(action) =>
+              table.update((currStateId, symbol), action)
+            case None =>
+              val path = toPath(currStateId, List(symbol))
+              (existingAction, action) match
+                case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
+                case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
+                case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
+                case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
     @tailrec
     def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =

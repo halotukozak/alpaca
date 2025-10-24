@@ -14,6 +14,7 @@ import scala.quoted.*
 opaque type NonEmptyList[+A] <: List[A] = List[A]
 
 object NonEmptyList {
+
   /**
    * Creates a non-empty list from a head element and optional tail elements.
    *

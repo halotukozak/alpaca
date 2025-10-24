@@ -49,6 +49,11 @@ private[alpaca] object Showable {
   /** Showable instance for Int. */
   given Showable[Int] = _.toString
 
+  /** Showable instance for nullable types. */
+  given [T: Showable]: Showable[T | Null] =
+    case null => ""
+    case value => show"$value"
+
   // todo: add names
   given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
 
