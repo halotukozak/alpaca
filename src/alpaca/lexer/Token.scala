@@ -1,12 +1,12 @@
 package alpaca.lexer
 
+import alpaca.core.{dummy, ValidName}
 import alpaca.lexer.context.{AnyGlobalCtx, Lexem}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.quoted.*
-import alpaca.core.ValidName
 
 /**
  * Type alias for context manipulation functions.
@@ -88,7 +88,7 @@ object Token {
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: AnyGlobalCtx): Token[?, ctx.type, Nothing] = ???
+  def Ignored(using ctx: AnyGlobalCtx): Token[?, ctx.type, Nothing] = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -100,7 +100,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = ???
+  def apply[Name <: ValidName](using ctx: AnyGlobalCtx): Token[Name, ctx.type, String] = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -113,7 +113,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = ???
+  def apply[Name <: ValidName](value: Any)(using ctx: AnyGlobalCtx): Token[Name, ctx.type, value.type] = dummy
 }
 
 /**

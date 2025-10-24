@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.{shoudNotBeCalled, DebugSettings, Empty, WithDefault}
+import alpaca.core.{dummy, DebugSettings, Empty, WithDefault}
 import alpaca.lexer.DefinedToken
 import alpaca.lexer.context.Lexem
 import alpaca.parser.context.AnyGlobalCtx
@@ -37,11 +37,11 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
 
   extension (token: DefinedToken[?, ?, ?]) {
     @compileTimeOnly(RuleOnly)
-    inline def unapply(x: Any): Option[token.LexemTpe] = shoudNotBeCalled
+    inline def unapply(x: Any): Option[token.LexemTpe] = dummy
     @compileTimeOnly(RuleOnly)
-    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = shoudNotBeCalled
+    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = dummy
     @compileTimeOnly(RuleOnly)
-    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = shoudNotBeCalled
+    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = dummy
   }
 
   /**
@@ -111,5 +111,5 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
    * This is compile-time only and can only be used inside parser rule definitions.
    */
   @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = shoudNotBeCalled
+  inline protected final def ctx: Ctx = dummy
 }

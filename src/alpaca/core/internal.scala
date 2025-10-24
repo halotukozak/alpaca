@@ -17,6 +17,8 @@ import scala.NamedTuple.NamedTuple
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
   throw new Exception(s"It should never happen. Got: $x")
 
+private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
+
 /**
  * A TreeMap that replaces symbol references in a tree.
  *

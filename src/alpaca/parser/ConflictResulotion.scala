@@ -1,21 +1,19 @@
 package alpaca
 package parser
 
-import scala.annotation.compileTimeOnly
-import alpaca.lexer.Token
-import alpaca.core.ValidName
-import alpaca.core.tap
-import alpaca.lexer.AlgorithmError
 import alpaca.core.*
 import alpaca.core.Showable.mkShow
+import alpaca.lexer.{AlgorithmError, Token}
+
+import scala.annotation.compileTimeOnly
 
 type ConflictResolution
 
 extension (str: String)
   @compileTimeOnly(RuleOnly)
-  inline infix def after(other: (String | Token[?, ?, ?])*): ConflictResolution = shoudNotBeCalled
+  inline infix def after(other: (String | Token[?, ?, ?])*): ConflictResolution = dummy
   @compileTimeOnly(RuleOnly)
-  inline infix def before(other: (String | Token[?, ?, ?])*): ConflictResolution = shoudNotBeCalled
+  inline infix def before(other: (String | Token[?, ?, ?])*): ConflictResolution = dummy
 
 final class ConflictResolutionTable(private val resolutions: Map[NSet[2, (Production | String)], (Production | String)]) {
   def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
