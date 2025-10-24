@@ -36,22 +36,12 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
   ) extends GlobalCtx derives Copyable
 
-  // todo https://github.com/halotukozak/alpaca/issues/69
-  // class CalcParser(Parser):
-  //    tokens = CalcLexer.tokens
-  //
-  //    precedence = (
-  //        ('left', PLUS, MINUS),
-  //        ('left', TIMES, DIVIDE),
-  //        ('right', UMINUS),
-  //        )
-
   object CalcParser extends Parser[CalcContext] {
-    val Expr: Rule.AUX[Int] = rule(
+    val Expr: Rule[Int] = rule(
       { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
       { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
       { case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2 }: @name("times"),
-      { case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2 },
+      { case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2 }: @name("divide"),
       { case (CalcLexer.MINUS(_), Expr(expr)) => -expr }: @name("uminus"),
       { case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr },
       { case CalcLexer.NUMBER(expr) => expr.value },
@@ -65,12 +55,12 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       },
     )
 
-    val ArgList: Rule.AUX[List[Int]] = rule(
+    val ArgList: Rule[List[Int]] = rule(
       { case (Expr(expr), CalcLexer.COMMA(_), ArgList(exprs)) => expr :: exprs },
       { case Expr(expr) => expr :: Nil },
     )
 
-    val Statement: Rule.AUX[R] = rule(
+    val Statement: Rule[R] = rule(
       { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) => ctx.names(id.value) = expr },
       { case (CalcLexer.ID(id), CalcLexer.`\\(`(_), ArgList.Option(argList), CalcLexer.`\\)`(_)) =>
         (id.value, argList)
@@ -79,13 +69,23 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     )
 
     val root = rule { case Statement(stmt) => stmt }
+
+    override val resolutions = Set(
+      "uminus".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      "divide".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      "times".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      "plus".before(CalcLexer.PLUS, CalcLexer.MINUS),
+      "plus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      "minus".before(CalcLexer.PLUS, CalcLexer.MINUS),
+      "minus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+    )
   }
 
   test("basic recognition of various tokens and literals") {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
     CalcParser.parse[R](lexems) should matchPattern:
-      case (ctx: CalcContext, ()) if ctx.names("a") == 47 =>
+      case (ctx: CalcContext, _) if ctx.names("a") == 47 =>
 
     val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
 
@@ -96,19 +96,18 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   test("ebnf") {
     val lexems = CalcLexer.tokenize("a()")
 
-    // todo https://github.com/halotukozak/alpaca/issues/69
-//    CalcParser.parse[R](lexems) should matchPattern:
-//      case (_, ('a', None)) =>
-//
-//    val lexems1 = CalcLexer.tokenize("a(2+3)")
-//
-//    CalcParser.parse[R](lexems1) should matchPattern:
-//      case (_, ("a", Some(Seq(5)))) =>
-//
-//    val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
-//
-//    CalcParser.parse[R](lexems2) should matchPattern:
-//      case (_, ("a", Some(Seq(5, 9)))) =>
+    CalcParser.parse[R](lexems) should matchPattern:
+      case (_, ('a', None)) =>
+
+    val lexems1 = CalcLexer.tokenize("a(2+3)")
+
+    CalcParser.parse[R](lexems1) should matchPattern:
+      case (_, ("a", Some(Seq(5)))) =>
+
+    val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
+
+    CalcParser.parse[R](lexems2) should matchPattern:
+      case (_, ("a", Some(Seq(5, 9)))) =>
   }
 
   test("api") {

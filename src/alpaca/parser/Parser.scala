@@ -1,12 +1,11 @@
 package alpaca
 package parser
 
-import alpaca.core.{DebugSettings, Empty, WithDefault}
-import alpaca.lexer.{DefinedToken, Token}
+import alpaca.core.{shoudNotBeCalled, DebugSettings, Empty, WithDefault}
+import alpaca.lexer.DefinedToken
 import alpaca.lexer.context.Lexem
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.Rule.RuleOnly
 
 import scala.annotation.{compileTimeOnly, experimental, tailrec}
 
@@ -44,18 +43,13 @@ final case class ParserSettings(
  */
 abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)(using empty: Empty[Ctx]) {
 
-  extension (str: String) {
-    @compileTimeOnly(RuleOnly)
-    infix inline def before(other: String): String = ???
-  }
-
   extension (token: DefinedToken[?, ?, ?]) {
     @compileTimeOnly(RuleOnly)
-    inline def unapply(x: Any): Option[token.LexemTpe] = ???
+    inline def unapply(x: Any): Option[token.LexemTpe] = shoudNotBeCalled
     @compileTimeOnly(RuleOnly)
-    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = ???
+    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = shoudNotBeCalled
     @compileTimeOnly(RuleOnly)
-    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = ???
+    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = shoudNotBeCalled
   }
 
   /**
@@ -63,7 +57,9 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
    *
    * This is the starting point for parsing.
    */
-  def root: Rule
+  def root: Rule[?]
+
+  def resolutions: Set[ConflictResolution] = Set.empty
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -135,5 +131,5 @@ abstract class Parser[Ctx <: AnyGlobalCtx](using Ctx WithDefault EmptyGlobalCtx)
    * This is compile-time only and can only be used inside parser rule definitions.
    */
   @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = ???
+  inline protected final def ctx: Ctx = shoudNotBeCalled
 }

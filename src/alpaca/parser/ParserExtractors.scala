@@ -1,20 +1,22 @@
 package alpaca.parser
 
-import scala.quoted.*
-import alpaca.core.NonEmptyList.*
-import alpaca.core.given
 import alpaca.core.{NonEmptyList as NEL, *}
-import alpaca.core.Csv.toCsv
-import alpaca.core.Showable.mkShow
-import alpaca.debugToFile
 import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*
 import scala.reflect.NameTransformer
-import alpaca.lexer.context.Lexem
 
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type, R: Type](using val quotes: Q) {
   import quotes.reflect.*
+
+  type EBNFExtractor = PartialFunction[
+    Tree,
+    (
+      symbol: alpaca.parser.Symbol.NonEmpty,
+      bind: Option[Bind],
+      others: List[(production: Production, action: Expr[Action[Ctx, R]])],
+    ),
+  ]
 
   val extractName: PartialFunction[Tree, String] =
     case Select(This(_), name) => NameTransformer.decode(name)
@@ -29,15 +31,6 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
   val skipTypedOrTest: PartialFunction[Tree, Tree] =
     case TypedOrTest(tree, _) => tree
     case tree => tree
-
-  type EBNFExtractor = PartialFunction[
-    Tree,
-    (
-      symbol: alpaca.parser.Symbol.NonEmpty,
-      bind: Option[Bind],
-      others: List[(production: Production, action: Expr[Action[Ctx, R]])],
-    ),
-  ]
 
   val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
@@ -147,7 +140,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
           (
             production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
             action = '{
-              { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }: Action[Ctx, R]
+              Action { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }
             },
           ),
         ),
@@ -205,7 +198,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
           (
             production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
             action = '{
-              { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }: Action[Ctx, R]
+              Action { case (ctx, Seq(currList: List[?], newElem)) => currList.appended(newElem) }
             },
           ),
         ),

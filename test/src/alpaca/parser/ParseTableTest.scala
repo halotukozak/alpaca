@@ -18,7 +18,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
   test("parse table Shift-Reduce conflict") {
     object CalcParser extends Parser[CalcContext] {
-      val Expr: Rule.AUX[Int] = rule(
+      val Expr: Rule[Int] = rule(
         { case (Expr(expr1), CalcLexer.`+`(_), Expr(expr2)) => expr1 + expr2 },
         { case CalcLexer.Num(lexem) => lexem.value },
       )

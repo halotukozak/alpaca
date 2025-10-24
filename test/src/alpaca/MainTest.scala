@@ -28,21 +28,21 @@ import alpaca.parser.rule
   }
 
   object CalcParser extends Parser[EmptyGlobalCtx] {
-    val root: Rule.AUX[Double] = rule { case Expr(e) => e }
+    val root: Rule[Double] = rule { case Expr(e) => e }
 
-    val Expr: Rule.AUX[Double] = rule(
+    val Expr: Rule[Double] = rule(
       { case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b },
       { case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b },
       { case Term(t) => t },
     )
 
-    val Term: Rule.AUX[Double] = rule(
+    val Term: Rule[Double] = rule(
       { case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b },
       { case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b },
       { case Factor(f) => f },
     )
 
-    val Factor: Rule.AUX[Double] = rule(
+    val Factor: Rule[Double] = rule(
       { case CalcLexer.NUM(n) => n.value },
       { case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e },
     )

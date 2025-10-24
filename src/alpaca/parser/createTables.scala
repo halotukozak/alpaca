@@ -6,7 +6,10 @@ import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
 import alpaca.debugToFile
 import alpaca.lexer.context.Lexem
+import alpaca.lexer.Token
 import alpaca.parser.context.AnyGlobalCtx
+import alpaca.parser.ConflictResolution
+import alpaca.parser.ParseAction.{Reduction, Shift}
 
 import scala.quoted.*
 import scala.reflect.NameTransformer
@@ -65,7 +68,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
   val parserExtractor = new ParserExtractors[quotes.type, Ctx, R]
   import parserExtractor.*
 
-  def extractEBNF(ruleName: String): Expr[Rule] => Seq[(production: Production, action: Expr[Action[Ctx, R]])] = {
+  def extractEBNF(ruleName: String): Expr[Rule[?]] => Seq[(production: Production, action: Expr[Action[Ctx, R]])] = {
     case '{ rule(${ Varargs(cases) }*) } =>
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx, R]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
@@ -127,21 +130,89 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
       .of[P]
       .typeSymbol
       .declarations
-      .filter(_.typeRef <:< TypeRepr.of[Rule])
+      .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
       .map(_.tree)
 
   val table = rules
     .flatMap:
-      case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule])
+      case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
       case x => raiseShouldNeverBeCalled(x.show)
     .tap: table =>
-      debugToFile(s"$parserName/productions.dbg")(table.map(_.production).mkShow("\n"))
       debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
+
+  val productions = table
+    .map:
+      _.production
+    .tap: table =>
+      debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
+
+  val productionsByName = productions
+    .collect:
+      case p if p.name.isDefined => p.name.get -> p
+    .toMap
+
+  // todo: use
+  val productionsByRhs = productions
+    .collect:
+      case p: Production.NonEmpty => p.rhs -> p
+    .toMap
+
+  val resolutionExprs = scala.util
+    .Try(
+      TypeRepr
+        .of[P]
+        .typeSymbol
+        .declaredField("resolutions")
+        .tree,
+    )
+    .map:
+      case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
+    .map:
+      case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
+    .getOrElse(Nil)
+
+  // todo: it shoud be extracted somewhere
+  def nameToString[Name <: ValidName: Type]: ValidName =
+    TypeRepr.of[Name] match
+      case ConstantType(StringConstant(str)) => str
+      case x => raiseShouldNeverBeCalled(x.show)
+
+  val conflictResolutionTable = ConflictResolutionTable(
+    resolutionExprs
+      .flatMap:
+        case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
+          befores.map:
+            case '{ $token: Token[name, ?, ?] } =>
+              NSet((productionsByName(first), nameToString[name]: Production | String)) -> nameToString[name]
+            case '{ ${ Expr(str) }: String } =>
+              NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
+        case '{ (${ Expr(first) }: String).after(${ Varargs(befores) }*) } =>
+          befores.map:
+            case '{ $token: Token[name, ?, ?] } =>
+              NSet((productionsByName(first), nameToString[name]: Production | String)) -> productionsByName(first)
+            case '{ ${ Expr(str) }: String } =>
+              NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(first)
+      .toMap
+      .tap: table =>
+        debugToFile(s"$parserName/conflictResolutions.dbg")(
+          table
+            .map: (k, v) =>
+              def show(x: Production | String): String = x match
+                case p: Production => show"$p"
+                case s: String => show"Token[$s]"
+
+              show"${show((k - v).head)} before ${show(v)}"
+            .mkShow("\n"),
+        ),
+  )
 
   val root = table.collectFirst { case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p }.get
 
   val parseTable = Expr {
-    ParseTable(Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production))
+    ParseTable(
+      Production.NonEmpty(alpaca.parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
+      conflictResolutionTable,
+    )
       .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
   }
 

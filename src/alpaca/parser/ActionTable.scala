@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{raiseShouldNeverBeCalled, show, Showable}
 import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*
@@ -22,6 +22,13 @@ import scala.quoted.*
  * @tparam R the result type
  */
 private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
+
+object Action:
+  def apply[Ctx <: AnyGlobalCtx, R](f: PartialFunction[(Ctx, Seq[Any]), R]): Action[Ctx, R] = (ctx, children) =>
+    f.applyOrElse(
+      (ctx, children),
+      x => raiseShouldNeverBeCalled(x.toString),
+    )
 
 /**
  * An opaque type representing the parser action table.
