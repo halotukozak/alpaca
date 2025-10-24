@@ -1,0 +1,184 @@
+\chapter{Metaprogramowanie w języku Scala}
+\label{ch:metaprogramowanie}
+
+
+\section{Wstęp: Czym jest metaprogramowanie?}
+Metaprogramowanie to praktyka pisania programów, które piszą lub manipulują innymi programami.
+Na pierwszy rzut oka koncepcja ta może przypominać działanie kompilatora, który tłumaczy kod czytelny dla człowieka na kod maszynowy.
+Zasadnicza różnica polega jednak na tym, że metaprogram nie jest ostatnim etapem przetwarzania kodu, lecz operuje na jego strukturze w trakcie samego procesu kompilacji.
+Zamiast biernie tłumaczyć kod, aktywnie go analizuje, modyfikuje i generuje, stając się integralną częścią cyklu budowania oprogramowania.
+W tym ujęciu metaprogramowanie jest potężnym narzędziem służącym do tworzenia zaawansowanych abstrakcji, optymalizacji wydajności oraz automatyzacji powtarzalnych zadań w nowoczesnym rozwoju oprogramowania.
+
+
+\section{Geneza i motywacje}
+Zanim zagłębimy się w techniczne aspekty metaprogramowania w języku Scala, kluczowe jest zrozumienie fundamentalnych motywacji, które stoją za jego wykorzystaniem.
+Zrozumienie \enquote{dlaczego} jest niezbędne, aby w pełni docenić \enquote{jak} i świadomie stosować te zaawansowane techniki.
+
+\subsection{Główne cele metaprogramowania}
+U podstaw metaprogramowania leży kilka kluczowych celów, które pozwalają programistom pisać kod bardziej wydajny, zwięzły i bezpieczny.
+\begin{itemize}
+    \item \textbf{Optymalizacja wydajności (Performance Optimization):}
+    Metaprogramowanie umożliwia przeniesienie części obliczeń z czasu wykonania (runtime) do czasu kompilacji (compile-time).
+    Kompilator, mając dostęp do stałych wartości, może wstępnie obliczyć wyniki i wstawić je bezpośrednio do kodu wynikowego, eliminując narzut związany z ich obliczaniem podczas działania aplikacji.
+    Klasycznym przykładem jest rozwijanie pętli (ang. loop unrolling).
+    Dla funkcji potęgującej \verb|power(x, 4)|, metaprogram może wygenerować zoptymalizowany kod \verb|x * x * x * x| zamiast standardowej pętli lub rekurencji, która byłaby wykonywana przy każdym wywołaniu.
+    \item \textbf{Redukcja powtarzalnego kodu (Boilerplate Reduction):}
+    Wiele zadań programistycznych wiąże się z pisaniem powtarzalnego, schematycznego kodu.
+    Metaprogramowanie pozwala zautomatyzować ten proces.
+    Typowe zastosowania obejmują automatyczne wyprowadzanie (derywację) instancji dla klas typów (np. serializatorów JSON, komparatorów równości) czy generowanie transformatorów danych między podobnymi strukturami (np. między modelem domenowym a obiektem transferu danych).
+    Zamiast ręcznie implementować te same schematy dla każdej klasy, programista może zlecić to zadanie metaprogramowi.
+    \item \textbf{Tworzenie języków specyficznych domenowo (DSLs):}
+    Metaprogramowanie jest potężnym narzędziem do rozszerzania języka o nowe konstrukcje, które są dopasowane do konkretnej dziedziny problemu.
+    Pozwala to na tworzenie bardziej czytelnego i ekspresyjnego kodu, który przypomina język naturalny używany przez ekspertów w danej dziedzinie.
+    Co więcej, makra mogą dokonać \enquote{reinterpretacji} zbioru definicji w ramach DSL, aby przeprowadzić optymalizacje.
+    Umożliwia to zachowanie czystej, wysokopoziomowej składni dla użytkownika, podczas gdy makro w czasie kompilacji przepisuje ją na wysoce zoptymalizowany kod niskopoziomowy.
+    \item \textbf{Zwiększenie bezpieczeństwa typów i poprawności (Enhanced Safety and Correctness):}
+    System typów języka, choć potężny, ma swoje ograniczenia.
+    Metaprogramowanie pozwala na wprowadzenie dodatkowych, niestandardowych weryfikacji na etapie kompilacji.
+    Możliwe jest na przykład stworzenie typu, który gwarantuje, że przechowywana w nim liczba jest różna od zera.
+    Próba utworzenia takiego obiektu z wartością 0 spowoduje błąd kompilacji, a nie błąd w czasie wykonania, co czyni program bardziej niezawodnym.
+\end{itemize}
+
+\subsection{Abstrakcyjne drzewo składni (AST) jako podstawa}
+Fundamentalną strukturą danych, na której operują wszystkie metaprogramy, jest Abstrakcyjne Drzewo Składni (ang. Abstract Syntax Tree, AST).
+Każdy fragment kodu źródłowego jest przez kompilator przekształcany w hierarchiczną strukturę drzewiastą, która oddaje jego logiczną budowę, pomijając detale takie jak białe znaki czy nawiasy.
+
+Dla przykładu, proste wyrażenie arytmetyczne \verb|5 + 7| może być reprezentowane przez następujące drzewo:
+\begin{lstlisting}[language=Scala,caption={Przykładowa reprezentacja AST i wyrażenia 5 + 7},label={lst:ast-example}]
+enum Tree:  case Num(value: Int)  case Add(lhs: Tree, rhs: Tree)// Reprezentacja AST dla `5 + 7`:Add(Num(5), Num(7))
+\end{lstlisting}
+
+Ta transformacja liniowego tekstu w ustrukturyzowane drzewo jest fundamentalnym krokiem każdego nowoczesnego kompilatora i to właśnie ta ustrukturyzowana reprezentacja jest obiektem manipulacji systemów metaprogramistycznych.
+W tym ujęciu wszystkie operacje, takie jak analiza, modyfikacja czy generowanie nowego kodu, są w istocie transformacjami na tej drzewiastej strukturze.
+Ewolucja metaprogramowania w Scali jest w dużej mierze historią o tym, jak język udostępniał programistom coraz bezpieczniejsze i bardziej przemyślane sposoby na przeprowadzanie tych transformacji.
+
+
+\section{Ewolucja metaprogramowania w Scali: od wersji 2 do 3}
+Aby w pełni docenić filozofię projektową i architekturę systemu metaprogramowania w Scali 3, niezbędne jest zrozumienie możliwości i, co ważniejsze, ograniczeń jego poprzednika.
+System makr w Scali 2 był niezwykle potężny, ale jego konstrukcja niosła ze sobą istotne wyzwania, które stały się główną motywacją do zaprojektowania wszystkiego od nowa.
+
+\subsection{Makra w Scali 2: potęga i pułapki}
+System makr w Scali 2 opierał się na bibliotece \texttt{scala.reflect}, która dawała bezpośredni dostęp do wewnętrznych struktur danych kompilatora.
+Do tworzenia fragmentów kodu służyły tzw. quasiquotes (quasi-cytaty), oznaczane jako \verb|q"..."|, które pozwalały na składanie drzew AST w sposób przypominający standardowy kod Scali.
+Kluczowe było rozróżnienie na makra typu \textit{blackbox}, które nie mogły zwracać typu bardziej szczegółowego niż zadeklarowany, oraz \textit{whitebox}, które miały taką możliwość, wpływając na dalsze wnioskowanie typów.
+
+Główną wadą tego systemu była jego kruchość.
+Bezpośrednie wystawienie wewnętrznych API kompilatora sprawiało, że implementacje makr były silnie powiązane z konkretną wersją kompilatora.
+To ścisłe powiązanie oznaczało, że makra często przestawały działać po drobnych aktualizacjach kompilatora, ponieważ zależały od wewnętrznych szczegółów implementacyjnych, których stabilność nigdy nie była gwarantowana.
+Czyniło to ich utrzymanie i przenoszenie między wersjami Scali niezwykle trudnym i kosztownym zadaniem.
+
+\subsection{Nowe podejście w Scali 3: w stronę bezpieczeństwa i przenośności}
+W odpowiedzi na te wyzwania, Scala 3 wprowadziła całkowicie przeprojektowany, oparty na solidnych fundamentach teoretycznych zestaw narzędzi do metaprogramowania.
+Jego głównymi celami projektowymi były bezpieczeństwo, skalowalność i przenośność.
+Zamiast chaotycznego dostępu do wewnętrznych mechanizmów kompilatora, nowy system oferuje warstwowe i dobrze zdefiniowane API, które zostaną szczegółowo omówione w kolejnych sekcjach.
+
+
+\section{Wielopoziomowy zestaw narzędzi metaprogramowania w Scali 3}
+Scala 3 podchodzi do metaprogramowania w sposób warstwowy, oferując programistom \enquote{stos} narzędzi o różnym stopniu zaawansowania i złożoności.
+Takie podejście pozwala na wybór odpowiedniego poziomu abstrakcji, adekwatnego do realizowanego zadania.
+Dzięki temu proste operacje można wykonać w sposób bezpieczny i zwięzły, podczas gdy bardziej skomplikowane scenariusze nadal są możliwe do zrealizowania, choć wymagają większej wiedzy i ostrożności.
+
+\subsection{Poziom 1: inline — fundament metaprogramowania}
+Najprostszym i najbezpieczniejszym punktem wejścia do świata metaprogramowania w Scali 3 jest słowo kluczowe \verb|inline|.
+Stanowi ono fundament, na którym zbudowane są bardziej zaawansowane mechanizmy.
+\begin{itemize}
+    \item \textbf{Definicje inline:}
+    Metoda zadeklarowana jako \verb|inline def| to gwarancja, że jej ciało zostanie w całości wstawione (ang. inlined) w miejscu jej wywołania.
+    Co istotne, jest to operacja zachowująca semantykę.
+    Aby ją zachować, argumenty metody \verb|inline| są powiązywane z tymczasowymi zmiennymi \verb|val| w miejscu wywołania, zanim zostaną użyte w rozwiniętym ciele.
+    Gwarantuje to, że wszelkie efekty uboczne w argumentach są wykonywane dokładnie raz, w odpowiedniej kolejności, tak jak w przypadku normalnego wywołania metody.
+    \item \textbf{Parametry i wyrażenia warunkowe inline:}
+    Oznaczenie parametru jako \verb|inline| sprawia, że w miejscu jego użycia wstawiana jest bezpośrednio przekazana wartość, a nie referencja.
+    W połączeniu z konstrukcjami \verb|inline if| oraz \verb|inline match| pozwala to kompilatorowi na ewaluację kodu w czasie kompilacji w oparciu o stałe, znane w tym momencie argumenty.
+    Gałęzie warunkowe, które nie zostaną spełnione, są całkowicie usuwane z wynikowego kodu.
+    \item \textbf{Operacje czasu kompilacji:}
+    Pakiet \verb|scala.compiletime| udostępnia narzędzia do interakcji z kompilatorem wewnątrz kodu \verb|inline|.
+    Funkcja \verb|constValue| pozwala na wyodrębnienie stałej wartości z typu, a \verb|error| umożliwia generowanie przyjaznych dla programisty, niestandardowych błędów kompilacji.
+    \item \textbf{transparent inline:}
+    Modyfikator \verb|transparent| rozszerza możliwości \verb|inline|, pozwalając funkcji zwrócić typ bardziej szczegółowy niż jej zadeklarowana sygnatura.
+    Dzięki temu wywołanie, np. \verb|nonZeroNum(5)|, może mieć typ bardziej precyzyjny niż wynikowy typ funkcji.
+    Pozwala to na wpływanie na dalsze procesy wnioskowania typów i rozwiązywania przeciążeń w miejscu wywołania, co czyni \emph{transparent inline} potężnym narzędziem do tworzenia bezpiecznych i precyzyjnych API.
+\end{itemize}
+
+\subsection{Poziom 2: programowanie wieloetapowe — cytaty i splice'y}
+Sercem nowoczesnego systemu makr w Scali 3 jest mechanizm oparty na zasadach programowania wieloetapowego (ang. multi-stage programming).
+To właśnie to pryncypialne podejście, zapewniające silne gwarancje statyczne, stanowi teoretyczną podstawę, która rozwiązuje problemy bezpieczeństwa i higieny, obecne w systemie makr Scali 2 opartym na doraźnej refleksji.
+Pozwala ono na bezpieczne tworzenie i składanie fragmentów kodu.
+\begin{itemize}
+    \item \textbf{Expr[T] — bezpieczna reprezentacja kodu:}
+    Typ \verb|Expr[T]| jest bezpiecznym opakowaniem dla fragmentu Abstrakcyjnego Drzewa Składni (AST), co do którego kompilator ma gwarancję, że po wykonaniu w czasie działania programu, wyprodukuje wartość typu \verb|T|.
+    W przeciwieństwie do nietypowanych drzew ze \verb|scala.reflect| w Scali 2, gdzie drzewo było po prostu typu \verb|Tree|, a poprawność typowa była weryfikowana dopiero po operacji \emph{splice}, w Scali 3 \verb|Expr[T]| czyni samo drzewo artefaktem typowanym.
+    Dzięki zastosowaniu tzw. typu fantomowego (ang. phantom type), \verb|Expr[T]| z zasady uniemożliwia konstruowanie niepoprawnych typowo programów.
+    \item \textbf{Cytaty \{\dots\}:}
+    Konstrukcja cytatu \verb|'{ ... }| służy do tworzenia wartości typu \verb|Expr[T]|.
+    Otoczenie kodu w \verb|'{ ... }| efektywnie \enquote{opóźnia} jego wykonanie i przekształca go w strukturę danych (AST), którą można analizować i przekazywać dalej.
+    \item \textbf{Splice'y \$\{\dots\}:}
+    Konstrukcja \verb|${ ... }| jest operacją odwrotną do cytatu.
+    Pozwala ona na wstawienie istniejącej wartości \verb|Expr[T]| do większego cytatu, umożliwiając dynamiczne komponowanie kodu z mniejszych, wcześniej przygotowanych fragmentów.
+    Wewnątrz cytatu, skrócona forma \verb|$zmienna| jest tożsama z \verb|${zmienna}|.
+    \item \textbf{Struktura makra:}
+    Kanoniczna struktura makra w Scali 3 składa się z dwóch części: (1) publicznej, frontowej metody \verb|inline def|, która zawiera \verb|${ ... }| na najwyższym poziomie; (2) prywatnej metody implementacyjnej, wywoływanej wewnątrz \verb|splice|.
+    Metoda ta musi działać w kontekście \verb|(using Quotes)| i operuje na argumentach typu \verb|Expr|, zwracając ostatecznie \verb|Expr| z wygenerowanym kodem.
+\end{itemize}
+
+Przykład analizy wyrażenia przy użyciu dopasowania wzorców cytatów:
+\begin{lstlisting}[language=Scala,caption={Analiza wyrażenia z użyciem wzorców cytatów},label={lst:quote-pattern}]
+expr match  case '{ $x + $y } => println("Znaleziono dodawanie")  // `x` i `y` są teraz zmiennymi typu `Expr`  case _ => println("Inne wyrażenie")
+\end{lstlisting}
+
+Mechanizm ten jest niezwykle użyteczny do implementacji optymalizacji.
+Na przykład, makro potęgujące może analizować swój argument i jeśli jest on wynikiem innego potęgowania, np. \verb|power(power(y, m), n)|, może zoptymalizować je do jednego wywołania z pomnożonymi wykładnikami: \verb|power(y, m * n)|.
+
+\subsection{Poziom 4: TASTy Reflect API — dostęp niskopoziomowy}
+U podstaw całego systemu metaprogramowania w Scali 3 leży TASTy (Typed Abstract Syntax Trees) — wysokopoziomowa, przenośna reprezentacja pośrednia skompilowanych programów.
+To właśnie format TASTy gwarantuje, że biblioteki oparte na makrach mogą działać z różnymi wersjami kompilatora.
+
+Dla najbardziej zaawansowanych zastosowań, Scala 3 udostępnia \verb|quotes.reflect| API, które daje bezpośredni, niskopoziomowy dostęp do drzew TASTy.
+API to operuje na fundamentalnych pojęciach, takich jak \verb|Term| (reprezentujący wyrażenia programistyczne), \verb|TypeRepr| (reprezentujący typy) oraz \verb|Symbol| (reprezentujący definicje).
+
+Ten poziom oferuje maksymalną moc — pozwala na przykład na programowe tworzenie zupełnie nowych definicji klas (\verb|ClassDef|) czy metod (\verb|DefDef|).
+Jednak ta elastyczność ma swoją cenę: rezygnujemy ze statycznych gwarancji bezpieczeństwa, które dają \verb|Expr[T]|.
+Jest to narzędzie przeznaczone dla ekspertów, do rozwiązywania problemów, które wykraczają poza możliwości bezpieczniejszych, wyższych poziomów abstrakcji.
+
+
+\section{Praktyczne zastosowanie: automatyczne wyprowadzanie typeclassów}
+Jednym z najważniejszych i najbardziej wartościowych zastosowań metaprogramowania jest automatyczna derywacja (wyprowadzanie) instancji klas typów (ang. typeclasses).
+Rozwiązuje to powszechny problem pisania dużej ilości powtarzalnego kodu dla generycznych funkcjonalności, takich jak serializacja, porównywanie czy drukowanie struktur danych.
+
+\subsection{Mechanizm \texttt{Mirror}}
+Scala 3 dostarcza wbudowany mechanizm do refleksji w czasie kompilacji, zwany \verb|Mirror|.
+Jest to standardowe API, które kompilator potrafi automatycznie wygenerować dla dowolnej klasy przypadku (jako \verb|Mirror.Product|) lub zapieczętowanej hierarchii (\verb|sealed trait| lub \verb|enum|) jako \verb|Mirror.Sum|.
+
+\verb|Mirror| udostępnia kluczowe informacje o strukturze typu w formie… typów.
+Na przykład \verb|MirroredElemTypes| to krotka typów reprezentująca typy wszystkich pól w klasie przypadku, a \verb|MirroredLabel| to typ literałowy reprezentujący nazwę samej klasy.
+Taka konstrukcja pozwala na operowanie na strukturze danych bez generowania jakiegokolwiek kodu w czasie wykonania.
+
+\subsection{Derywacja z użyciem \texttt{Mirror}}
+Wykorzystując \verb|Mirror| w połączeniu z podstawowymi narzędziami metaprogramowania, można w elegancki sposób zaimplementować automatyczną derywację.
+Proces ten opiera się na metodzie \verb|inline def|, która za pomocą \verb|summonInline[Mirror.Of[T]]| pozyskuje \verb|Mirror| dla danego typu \verb|T|.
+
+Następnie, używając \verb|inline match| na uzyskanym \verb|Mirror|, możemy rozróżnić, czy mamy do czynienia z typem produktowym (\emph{case class}) czy sumą (\verb|sealed trait|).
+\begin{itemize}
+    \item Dla produktu, implementacja rekurencyjnie wywołuje derywację dla każdego typu pola (\verb|MirroredElemTypes|), a następnie składa wyniki w jedną całość.
+    \item Dla sumy, logika rekurencyjnie przechodzi przez wszystkie możliwe warianty (\verb|MirroredElemTypes|) i generuje kod, który w czasie wykonania wybierze odpowiednią implementację.
+\end{itemize}
+
+Koncepcyjna implementacja derywacji dla klasy typu \verb|Eq|, która sprawdza równość:
+\begin{lstlisting}[language=Scala,caption={Koncepcyjny szkic derywacji Eq z użyciem Mirror},label={lst:eq-derived}]
+// Koncepcyjny kodinline def derived[T](using m: Mirror.Of[T]): Eq[T] =  inline m match    case s: Mirror.SumOf[T] =>      // Logika dla sumy: sprawdź, który wariant i użyj jego instancji Eq      derivedSum(s)    case p: Mirror.ProductOf[T] =>      // Logika dla produktu: porównaj każde pole używając jego instancji Eq      derivedProduct(p)
+\end{lstlisting}
+
+Co najważniejsze, cała ta potężna maszyneria działa w oparciu o najbezpieczniejsze, fundamentalne poziomy metaprogramowania (\verb|inline|, \verb|inline match|, \verb|summonInline|).
+Nie ma potrzeby sięgania po niskopoziomową manipulację AST, aby osiągnąć tak zaawansowany i praktyczny rezultat.
+
+
+\section{Podsumowanie}
+Metaprogramowanie w języku Scala przeszło fundamentalną ewolucję — od potężnych, lecz kruchych makr w Scali 2, do solidnego, warstwowego i opartego na silnych podstawach teoretycznych systemu w Scali 3.
+Nowe podejście zostało zbudowane wokół trzech kluczowych filarów.
+
+Po pierwsze, bezpieczeństwo, realizowane poprzez typowane reprezentacje kodu (\verb|Expr[T]|), które zapobiegają błędom typów w generowanym kodzie.
+Po drugie, skalowalność, która objawia się w wielopoziomowym zestawie narzędzi, pozwalającym programistom na wybór odpowiedniego poziomu abstrakcji — od prostych operacji z \verb|inline|, przez bezpieczne komponowanie kodu za pomocą cytatów, aż po pełną kontrolę z TASTy Reflect API.
+Po trzecie, przenośność, gwarantowana przez stabilny, pośredni format TASTy, który uniezależnia kod metaprogramistyczny od wewnętrznych zmian w kompilatorze.
+
+W rezultacie, metaprogramowanie w Scali 3 stało się dojrzałą i ugruntowaną teoretycznie cechą języka.
+Umożliwia ono deweloperom tworzenie wydajnych, bezpiecznych typowo i ergonomicznych bibliotek oraz języków specyficznych domenowo, przesuwając granice tego, co jest możliwe do osiągnięcia w sposób zautomatyzowany i niezawodny.
