@@ -9,7 +9,6 @@ package alpaca.core
  * @tparam T the provided type
  * @tparam Q the default type
  */
-//todo: better name
 infix private[alpaca] class WithDefault[T, Q]
 
 private[alpaca] trait WithDefaultLowImplicitPriority {

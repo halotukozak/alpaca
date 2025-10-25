@@ -14,6 +14,7 @@ import scala.quoted.*
 opaque type NonEmptyList[+A] <: List[A] = List[A]
 
 object NonEmptyList {
+
   /**
    * Creates a non-empty list from a head element and optional tail elements.
    *
@@ -49,8 +50,10 @@ object NonEmptyList {
     case head :: tail => list
     case Nil => throw IllegalArgumentException("Empty list cannot be converted to NonEmptyList")
 
+  // $COVERAGE-OFF$
   private[alpaca] given [A: {Type, ToExpr}]: ToExpr[NonEmptyList[A]] with
     def apply(x: NonEmptyList[A])(using Quotes): Expr[NonEmptyList[A]] =
       val list = x.map(Expr.apply)
       '{ NonEmptyList(${ list.head }, ${ Varargs(list.tail) }*) }
+  // $COVERAGE-ON$
 }

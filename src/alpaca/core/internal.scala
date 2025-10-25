@@ -1,3 +1,4 @@
+// $COVERAGE-OFF$
 package alpaca
 package core
 
@@ -85,3 +86,4 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 
 private[alpaca] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
+// $COVERAGE-ON$

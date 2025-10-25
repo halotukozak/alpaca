@@ -1,3 +1,4 @@
+// $COVERAGE-OFF$
 package alpaca
 
 import alpaca.core.{show, DebugSettings, Showable}
@@ -183,6 +184,7 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
     quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
   }
+
   /**
    * Prints the tree as an info message during compilation.
    *
@@ -229,6 +231,7 @@ extension (using quotes: Quotes)(msg: String)
    */
   private[alpaca] def dbg(using pos: DebugPosition): Nothing =
     quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+
   /**
    * Prints a debug message as an info during compilation.
    *
@@ -245,6 +248,7 @@ extension (using quotes: Quotes)(e: Any)
    */
   private[alpaca] def dbg(using pos: DebugPosition): Nothing =
     quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+
   /**
    * Prints any value's string representation as an info message.
    *
@@ -305,3 +309,4 @@ private[alpaca] def debugToFile(path: String)(content: Shown)(using debugSetting
     val file = new File(s"${debugSettings.directory}$path")
     file.getParentFile.mkdirs()
     Using.resource(new FileWriter(file))(_.write(content))
+// $COVERAGE-ON$

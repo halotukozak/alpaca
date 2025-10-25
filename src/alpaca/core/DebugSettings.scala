@@ -22,6 +22,7 @@ final case class DebugSettings[Enabled <: Boolean & Singleton, Directory <: Stri
 )
 
 private[alpaca] object DebugSettings {
+
   /**
    * Default debug settings with debugging disabled.
    *
@@ -43,6 +44,7 @@ private[alpaca] object DebugSettings {
     : DebugSettings[Enabled, Directory] =
     DebugSettings(compiletime.constValue[Enabled], compiletime.constValue[Directory])
 
+  // $COVERAGE-OFF$
   given FromExpr[DebugSettings[?, ?]] with
     def unapply(x: Expr[DebugSettings[?, ?]])(using quotes: Quotes): Option[DebugSettings[?, ?]] = {
       import quotes.reflect.*
@@ -55,5 +57,6 @@ private[alpaca] object DebugSettings {
           Some(DebugSettings(enabled, directory))
         case _ => None
     }
+  // $COVERAGE-ON$
 
 }

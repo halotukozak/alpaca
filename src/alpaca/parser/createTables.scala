@@ -1,3 +1,4 @@
+// $COVERAGE-OFF$
 package alpaca
 package parser
 
@@ -347,3 +348,4 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type, R: Type, P <: Parser[Ctx
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
 }
+// $COVERAGE-ON$

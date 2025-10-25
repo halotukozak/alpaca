@@ -1,3 +1,4 @@
+// $COVERAGE-OFF$
 package alpaca
 package lexer
 
@@ -262,3 +263,4 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
 }
+// $COVERAGE-ON$

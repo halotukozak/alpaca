@@ -7,6 +7,7 @@ import alpaca.lexer.CompileNameAndPattern.*
 import scala.annotation.tailrec
 import scala.quoted.*
 
+// $COVERAGE-OFF$
 /**
  * Compiler for lexer token patterns during macro expansion.
  *
@@ -74,8 +75,10 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
 
     loop(TypeRepr.of[T], pattern)
 }
+// $COVERAGE-ON$
 
 private object CompileNameAndPattern {
+
   /**
    * Validates a token name during macro expansion.
    *
@@ -93,6 +96,7 @@ private object CompileNameAndPattern {
       case other => other
 
   object Result {
+
     /**
      * Creates a TokenInfo expression from a name and regex pattern.
      *

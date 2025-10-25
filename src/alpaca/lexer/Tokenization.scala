@@ -58,11 +58,11 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
         case 0 =>
           acc.reverse
         case _ =>
-          val m = compiled.findPrefixMatchOf(globalCtx.text) getOrElse {
+          val m = compiled.findPrefixMatchOf(globalCtx.text).getOrElse {
             // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
             throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           }
-          val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
+          val token = tokens.find(token => m.group(token.info.regexGroupName) ne null).getOrElse {
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)

@@ -1,8 +1,7 @@
 package alpaca
 package lexer
 
-import alpaca.lexer.context.{AnyGlobalCtx, GlobalCtx}
-import alpaca.soft
+import alpaca.lexer.context.GlobalCtx
 
 import scala.quoted.*
 import scala.util.matching.Regex.Match
@@ -21,6 +20,7 @@ trait BetweenStages[Ctx <: GlobalCtx] extends ((Token[?, Ctx, ?], Match, Ctx) =>
 
 object BetweenStages {
 
+  // $COVERAGE-OFF$
   /**
    * Automatically derives a BetweenStages instance for a context type.
    *
@@ -58,4 +58,5 @@ object BetweenStages {
 
     '{ (name, m, ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
   }
+  // $COVERAGE-ON$
 }

@@ -25,6 +25,7 @@ private[alpaca] object Empty {
    * @return an Empty instance that creates default instances
    */
   // either way it must be inlined for generic classes
+  // $COVERAGE-OFF$
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
   private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
@@ -64,4 +65,5 @@ private[alpaca] object Empty {
       }
     }
   }
+  // $COVERAGE-ON$
 }
