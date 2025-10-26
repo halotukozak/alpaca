@@ -50,7 +50,7 @@ object `package` extends ScalaModule with ScoverageModule {
     "made with ❤️ and coffee",
     "-social-links:github::https://github.com/halotukozak/alpaca",
     "-snippet-compiler:compile",
-    "-source-links:github://halotukozak/alpaca",
+    s"-source-links:$moduleDir=github://halotukozak/alpaca/master",
     "-revision:master",
   )
 
