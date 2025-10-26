@@ -2,9 +2,9 @@ name: Deploy static content to Pages
 
 on:
   push:
-    branches:
-      - master
-      - fix-docs
+    branches: ["master"]
+
+  workflow_dispatch:
 
 permissions:
   contents: read

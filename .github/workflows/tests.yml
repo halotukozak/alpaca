@@ -2,9 +2,8 @@ name: Test
 
 on:
   push:
-    branches: [ "master" ]
-
-  workflow_dispatch:
+    branches:
+      - '*'
 
 jobs:
   test:
