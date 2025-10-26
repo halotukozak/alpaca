@@ -1,4 +1,4 @@
-//| mill-version: 1.0.5
+//| mill-version: 1.0.4
 //| mill-jvm-version: 21
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
@@ -50,7 +50,7 @@ object `package` extends ScalaModule with ScoverageModule {
     "made with ❤️ and coffee",
     "-social-links:github::https://github.com/halotukozak/alpaca",
     "-snippet-compiler:compile",
-    "-source-links:€{FILE_PATH_EXT}",
+    s"-source-links:$moduleDir=github://halotukozak/alpaca/master",
     "-revision:master",
   )
 
