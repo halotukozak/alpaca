@@ -10,6 +10,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import scala.collection.mutable
 
+import alpaca.parser.Production as P
+
 final class ParserApiTest extends AnyFunSuite with Matchers {
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])
 
@@ -71,13 +73,13 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val root = rule { case Statement(stmt) => stmt }
 
     override val resolutions = Set(
-      (CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      (Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      (Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      "plus".before(CalcLexer.PLUS, CalcLexer.MINUS),
-      "plus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-      "minus".before(CalcLexer.PLUS, CalcLexer.MINUS),
-      "minus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
     )
   }
 
