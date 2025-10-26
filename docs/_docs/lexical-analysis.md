@@ -74,6 +74,8 @@ ALPACA is a Scala-based lexer framework that provides an elegant DSL (Domain-Spe
 The fundamental syntax for defining a lexer in ALPACA is:
 
 ```scala
+import alpaca.api.*
+
 val myLexer = lexer:
   case pattern @ "regex" => Token["TOKEN_NAME"](value)
 ```
@@ -91,6 +93,8 @@ val myLexer = lexer:
 The most basic lexer recognizes a single token type:
 
 ```scala
+import alpaca.api.*
+
 val identifierLexer = lexer:
   case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
 
@@ -108,6 +112,8 @@ val result = identifierLexer.tokenize("hello")
 Real-world lexers need to skip whitespace and other irrelevant characters:
 
 ```scala
+import alpaca.api.*
+
 val calculatorLexer = lexer:
   case number @ "[0-9]+" => Token["NUMBER"](number)
   case "\\+" => Token["PLUS"]
@@ -131,6 +137,8 @@ val result = calculatorLexer.tokenize("42 + 13")
 A practical lexer for arithmetic expressions handles multiple token types:
 
 ```scala
+import alpaca.api.*
+
 val expressionLexer = lexer:
   case number @ "[0-9]+" => Token["NUMBER"](number)
   case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
@@ -160,6 +168,8 @@ val result = expressionLexer.tokenize("(x + 42) * y - 1")
 ALPACA allows you to transform matched text into typed values:
 
 ```scala
+import alpaca.api.*
+
 val typedLexer = lexer:
   case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
 
@@ -167,21 +177,16 @@ val result = typedLexer.tokenize("123")
 // The token value is Int, not String
 ```
 
-**Important:** When parsing fails, ALPACA throws a `RuntimeException`:
-
-```scala
-val exception = intercept[RuntimeException] {
-  typedLexer.tokenize("123abc")
-}
-// exception.getMessage contains "Unexpected character: 'a'"
-```
+**Important:** When parsing fails, ALPACA throws a `RuntimeException`.
 
 ## Example 5: Programming Language Lexer
 
 A comprehensive lexer for a full programming language:
 
 ```scala
-val programmingLangLexer = lexer {
+import alpaca.api.*
+
+val programmingLangLexer = lexer:
   // Comments (ignored)
   case comment @ "#.*" => Token.Ignored
   
@@ -195,7 +200,7 @@ val programmingLangLexer = lexer {
   case "\\.\\+" => Token["dotAdd"]
   case "\\.\\-" => Token["dotSub"]
   case "\\.\\*" => Token["dotMul"]
-  case "\\.\/" => Token["dotDiv"]
+  case "\\./" => Token["dotDiv"]
   case "<=" => Token["lessEqual"]
   case ">=" => Token["greaterEqual"]
   case "!=" => Token["notEqual"]
@@ -216,7 +221,6 @@ val programmingLangLexer = lexer {
   
   // Identifiers (must come after keywords!)
   case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
-}
 ```
 
 ## Key Features and Best Practices
@@ -225,7 +229,7 @@ val programmingLangLexer = lexer {
 
 Use the `|` operator to match multiple patterns with the same token type:
 
-```scala
+```scala sc:nocompile
 case literal @ ("<" | ">" | "=") => Token[literal.type]
 ```
 
@@ -236,6 +240,8 @@ The `literal.type` preserves the exact matched string as the token name.
 **Critical:** More specific patterns must come before general ones:
 
 ```scala
+import alpaca.api.*
+
 // CORRECT ORDER
 val validLexer = lexer:
     case "if" => Token["if"]           // Keyword first
@@ -252,7 +258,9 @@ val invalidLexer = lexer:
 
 ALPACA detects overlapping patterns at compile time:[
 
-```scala
+```scala sc:fail
+import alpaca.api.*
+
 // This will NOT compile - patterns overlap!
 val invalidLexer = lexer:
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
@@ -264,6 +272,8 @@ val invalidLexer = lexer:
 ALPACA generates type-safe accessors for all defined tokens:
 
 ```scala
+import alpaca.api.*
+
 val myLexer = lexer:
   case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
   case "\\+" => Token["PLUS"]
@@ -280,7 +290,9 @@ myLexer.tokens  // List[Token[?, DefaultGlobalCtx, ?]]
 
 ALPACA supports tokenizing from strings and files:
 
-```scala
+```scala sc:nocompile
+import alpaca.api.*
+import java.nio.file.Path
 // From string
 val result1 = myLexer.tokenize("42 + 13")
 
@@ -296,6 +308,7 @@ val result2 = myLexer.tokenize(reader)
 ALPACA supports stateful lexing with custom contexts, which can be accessed and modified with `ctx`:
 
 ```scala
+import alpaca.api.*
 import alpaca.lexer.context.*
 
 case class MyContext(var digitcounter: Int) extends GlobalCtx
@@ -311,6 +324,8 @@ val contextAwareLexer = lexer[MyContext]:
 You can execute code when a token is matched:
 
 ```scala
+import alpaca.api.*
+
 val statefulLexer = lexer:
   case number @ "[0-9]+" => 
     // Execute statements before creating token
@@ -324,10 +339,10 @@ val statefulLexer = lexer:
 Here's a complete lexer for a simple calculator language:
 
 ```scala
-import alpaca.lexer.*
-import alpaca.lexer.context.Lexem
+import alpaca.api.*
+import alpaca.lexer.context.*
 
-val calculatorLexer = lexer {
+val calculatorLexer = lexer:
   // Skip whitespace
   case "\\s+" => Token.Ignored
   
@@ -351,7 +366,6 @@ val calculatorLexer = lexer {
   
   // Variables
   case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["VAR"](id)
-}
 
 // Use the lexer
 val input = "2.5 + sin(x) * 3"
