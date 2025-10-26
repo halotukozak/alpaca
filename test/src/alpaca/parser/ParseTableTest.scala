@@ -17,16 +17,15 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   case class CalcContext() extends GlobalCtx
 
   test("parse table Shift-Reduce conflict") {
+    typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
-      val Expr: Rule[Int] =
-        case (Expr(expr1), CalcLexer.`+`(_), Expr(expr2)) => expr1 + expr2
-        case CalcLexer.Num(lexem) => lexem.value
+      val Expr: Rule[Int] = rule(
+        { case (Expr(expr1), CalcLexer.`+`(_), Expr(expr2)) => expr1 + expr2 },
+        { case CalcLexer.Num(lexem) => lexem.value },
+      )
 
-      val root: Rule[Int] =
-        case Expr(expr) => expr
-    }
-
-    typeCheckErrors("CalcParser.parse[Int](Nil)").loneElement.message should
+      val root = rule { case Expr(expr) => expr }
+    }""").loneElement.message should
       include("""
                 |Shift "+" vs Reduce Expr -> Expr + Expr
                 |In situation like:
@@ -36,25 +35,22 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   }
 
   test("parse table Reduce-Reduce conflict") {
-
+    typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
-      val Integer: Rule[Int] =
-        case CalcLexer.Num(lexem) => lexem.value
+      val Integer = rule { case CalcLexer.Num(lexem) => lexem.value }
 
-      val Float: Rule[Float] =
-        case CalcLexer.Num(lexem) => lexem.value.toFloat
+      val Float = rule { case CalcLexer.Num(lexem) => lexem.value.toFloat }
 
-      val Expr: Rule[Any] =
-        case Integer(value) => value
-        case Float(value) => value
+      val Expr = rule[Any](
+        { case Integer(value) => value },
+        { case Float(value) => value },
+      )
 
-      val root: Rule[Any] =
-        case Expr(expr) => expr
+      val root = rule { case Expr(expr) => expr }
     }
-
-    typeCheckErrors("CalcParser.parse[Any](Nil)").loneElement.message should
+    """).loneElement.message should
       include("""
-                |Reduce Float -> Num vs Reduce Integer -> Num
+                |Reduce Integer -> Num vs Reduce Float -> Num
                 |In situation like:
                 |Num ...
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other

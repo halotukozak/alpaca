@@ -22,6 +22,7 @@ private[alpaca] final case class Csv(
 )
 
 private[alpaca] object Csv {
+
   /**
    * Showable instance for Csv that formats it as a comma-separated value string.
    *

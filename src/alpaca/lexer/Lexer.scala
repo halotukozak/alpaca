@@ -61,11 +61,6 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
 
   type ThisToken = Token[?, Ctx, ?]
 
-  def nameToString[Name <: ValidName: Type]: ValidName =
-    TypeRepr.of[Name] match
-      case ConstantType(StringConstant(str)) => str
-      case x => raiseShouldNeverBeCalled(x.show)
-
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -135,7 +130,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
     val tokenDecls = definedTokens.map { case '{ $token: DefinedToken[name, Ctx, value] } =>
       Symbol.newVal(
         parent = cls,
-        name = nameToString[name],
+        name = ValidName.typeToString[name],
         tpe = token.asTerm.tpe,
         flags = Flags.Synthetic,
         privateWithin = Symbol.noSymbol,
@@ -199,7 +194,10 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
 
   val body = {
     val tokenVals = definedTokens.collect { case '{ $token: DefinedToken[name, Ctx, value] } =>
-      ValDef(cls.fieldMember(nameToString[name]), Some(token.asTerm.changeOwner(cls.fieldMember(nameToString[name]))))
+      ValDef(
+        cls.fieldMember(ValidName.typeToString[name]),
+        Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.typeToString[name]))),
+      )
     }
 
     tokenVals ++ Vector(
@@ -221,7 +219,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         cls.fieldMember("tokens"),
         Some {
           val declaredTokens = definedTokens.map { case '{ $token: DefinedToken[name, Ctx, ?] } =>
-            This(cls).select(cls.fieldMember(nameToString[name])).asExprOf[ThisToken]
+            This(cls).select(cls.fieldMember(ValidName.typeToString[name])).asExprOf[ThisToken]
           }
 
           Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
@@ -253,7 +251,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   definedTokens
     .foldLeft(TypeRepr.of[Tokenization[Ctx]]) {
       case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) =>
-        Refinement(tpe, nameToString[name], token.asTerm.tpe)
+        Refinement(tpe, ValidName.typeToString[name], token.asTerm.tpe)
       case _ => raiseShouldNeverBeCalled()
     }
     .asType match

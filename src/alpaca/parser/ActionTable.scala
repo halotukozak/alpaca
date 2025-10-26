@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{raiseShouldNeverBeCalled, show, Showable}
 import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*
@@ -21,7 +21,7 @@ import scala.quoted.*
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
+private[parser] type Action[-Ctx <: AnyGlobalCtx] = (Ctx, Seq[Any]) => Any
 
 /**
  * An opaque type representing the parser action table.
@@ -33,25 +33,26 @@ private[parser] type Action[Ctx <: AnyGlobalCtx, R] = (Ctx, Seq[Any]) => Any
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx, R] = Map[Production, Action[Ctx, R]]
+opaque private[parser] type ActionTable[Ctx <: AnyGlobalCtx] = Map[Production, Action[Ctx]]
 
 private[parser] object ActionTable {
+
   /**
    * Creates an ActionTable from a map of productions to actions.
    *
    * @param table the map of productions to their actions
    * @return an ActionTable
    */
-  def apply[Ctx <: AnyGlobalCtx, R](table: Map[Production, Action[Ctx, R]]): ActionTable[Ctx, R] = table
+  def apply[Ctx <: AnyGlobalCtx](table: Map[Production, Action[Ctx]]): ActionTable[Ctx] = table
 
-  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx, R])
+  extension [Ctx <: AnyGlobalCtx, R](table: ActionTable[Ctx])
     /**
      * Gets the action for a production.
      *
      * @param production the production to get the action for
      * @return the semantic action for that production
      */
-    def apply(production: Production): Action[Ctx, R] = table(production)
+    def apply(production: Production): Action[Ctx] = table(production)
 }
 
 /**
@@ -68,6 +69,7 @@ private[parser] enum ParseAction:
    * @param newState the state to transition to
    */
   case Shift(newState: Int)
+
   /**
    * Reduce action: apply a production rule to reduce symbols.
    *

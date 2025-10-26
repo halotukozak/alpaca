@@ -17,6 +17,8 @@ import scala.NamedTuple.NamedTuple
 private[alpaca] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
   throw new Exception(s"It should never happen. Got: $x")
 
+private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
+
 /**
  * A TreeMap that replaces symbol references in a tree.
  *
@@ -85,3 +87,8 @@ private[alpaca] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 
 private[alpaca] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
+
+private[alpaca] given [T: ToExpr]: ToExpr[T | Null] with
+  def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
+    case null => '{ null }
+    case value => Expr(value)
