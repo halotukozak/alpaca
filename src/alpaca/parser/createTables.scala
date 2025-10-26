@@ -9,6 +9,8 @@ import alpaca.lexer.Token
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.ConflictResolution
 
+import ValidName.typeToString
+
 import scala.quoted.*
 
 opaque type Tables[Ctx <: AnyGlobalCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
@@ -115,8 +117,10 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
   }
 
   val rules = parserTpe.typeSymbol.declarations
-    .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
-    .map(_.tree)
+    .filter:
+      _.typeRef <:< TypeRepr.of[Rule[?]]
+    .map:
+      _.tree
 
   val table = rules
     .flatMap:
@@ -131,73 +135,63 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
     .tap: table =>
       debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
-  val productionsByName = productions
-    .collect:
-      case p if p.name.isDefined => p.name.get -> p
-    .toMap
+  val productionsByName: Position ?=> String => Production =
+    val map = productions
+      .collect:
+        case p if p.name.isDefined => p.name.get -> p
+      .toMap
 
-  // todo: use
-  val productionsByRhs = productions
-    .collect:
-      case p: Production.NonEmpty => p.rhs -> p
-    .toMap
+    name => map.getOrElse(name, report.errorAndAbort(s"Production with name '$name' not found", summon[Position]))
 
   val resolutionExprs = scala.util
-    .Try(parserTpe.typeSymbol.declaredField("resolutions").tree)
+    .Try:
+      parserTpe.typeSymbol.declaredField("resolutions").tree
     .map:
       case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
     .map:
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
-  // todo: it shoud be extracted somewhere
-  def nameToString[Name <: ValidName: Type]: ValidName =
-    TypeRepr.of[Name] match
-      case ConstantType(StringConstant(str)) => str
-      case x => raiseShouldNeverBeCalled(x.show)
-
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs
-      .flatMap:
-        case '{ (${ Expr(first) }: String).after(${ Varargs(befores) }*) } =>
-          befores.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((productionsByName(first), nameToString[name]: Production | String)) -> nameToString[name]
-            case '{ ${ Expr(str) }: String } =>
-              NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
-        case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
-          befores.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((productionsByName(first), nameToString[name]: Production | String)) -> productionsByName(first)
-            case '{ ${ Expr(str) }: String } =>
-              NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(first)
-      .toMap
-      .tap: table =>
-        debugToFile(s"$parserName/conflictResolutions.dbg")(
-          table
-            .map: (k, v) =>
-              def show(x: Production | String): String = x match
-                case p: Production => show"$p"
-                case s: String => show"Token[$s]"
+      .flatMap: expr =>
+        // todo: should be resolved differently to provide better error messages
+        given Position = expr.asTerm.pos
 
-              show"${show((k - v).head)} before ${show(v)}"
-            .mkShow("\n"),
-        ),
-  )
+        expr match
+          case '{ (${ Expr(first) }: String).after(${ Varargs(afters) }*) } =>
+            afters.map:
+              case '{ $token: Token[name, ?, ?] } =>
+                NSet((productionsByName(first), typeToString[name]: Production | String)) -> typeToString[name]
+              case '{ ${ Expr(str) }: String } =>
+                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
+          case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
+            befores.map:
+              case '{ $token: Token[name, ?, ?] } =>
+                NSet((productionsByName(first), typeToString[name]: Production | String)) -> productionsByName(first)
+              case '{ ${ Expr(str) }: String } =>
+                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(first)
+      .toMap,
+  ).tap: table =>
+    debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
-  val root = table.collectFirst { case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p }.get
+  val root = table
+    .collectFirst:
+      case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
+    .get
 
-  val parseTable = Expr {
+  val parseTable = Expr(
     ParseTable(
       Production.NonEmpty(alpaca.parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
       conflictResolutionTable,
-    )
-      .tap(parseTable => debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv))
-  }
+    ).tap: parseTable =>
+      debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv),
+  )
 
-  val actionTable = Expr.ofList[(Production, Action[Ctx])] {
-    table.map { case (production, action) => Expr.ofTuple(Expr(production) -> action) }
-  }
+  val actionTable = Expr.ofList(
+    table.map:
+      case (production, action) => Expr.ofTuple(Expr(production) -> action),
+  )
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
 }

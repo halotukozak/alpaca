@@ -21,14 +21,7 @@ import scala.quoted.*
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-private[parser] type Action[Ctx <: AnyGlobalCtx] = (Ctx, Seq[Any]) => Any
-
-object Action:
-  def apply[Ctx <: AnyGlobalCtx](f: PartialFunction[(Ctx, Seq[Any]), Any]): Action[Ctx] = (ctx, children) =>
-    f.applyOrElse(
-      (ctx, children),
-      x => raiseShouldNeverBeCalled(x.toString),
-    )
+private[parser] type Action[-Ctx <: AnyGlobalCtx] = (Ctx, Seq[Any]) => Any
 
 /**
  * An opaque type representing the parser action table.

@@ -24,4 +24,9 @@ object ValidName {
     def apply(x: ValidName)(using Quotes): Expr[ValidName] =
       ToExpr.StringToExpr[ValidName].apply(x)
 
+  def typeToString[Name <: ValidName: Type](using quotes: Quotes): ValidName =
+    import quotes.reflect.*
+    TypeRepr.of[Name] match
+      case ConstantType(StringConstant(str)) => str
+      case x => raiseShouldNeverBeCalled(x.show)
 }
