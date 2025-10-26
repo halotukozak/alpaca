@@ -8,7 +8,7 @@ import scala.annotation.compileTimeOnly
 
 type ConflictResolution
 
-extension (str: String)
+extension (str: String | Tuple)
   @compileTimeOnly(RuleOnly)
   inline infix def after(other: (String | Token[?, ?, ?])*): ConflictResolution = dummy
   @compileTimeOnly(RuleOnly)
