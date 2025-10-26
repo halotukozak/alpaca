@@ -3,6 +3,7 @@
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
+//| - com.goyeau::mill-git::0.3.1
 package build
 import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._
@@ -50,7 +51,7 @@ object `package` extends ScalaModule with ScoverageModule {
     "made with ❤️ and coffee",
     "-social-links:github::https://github.com/halotukozak/alpaca",
     "-snippet-compiler:compile",
-    "-source-links:github://halotukozak/alpaca",
+    "-source-links:github://halotukozak/alpaca/master#docs",
     "-revision:master",
   )
 
