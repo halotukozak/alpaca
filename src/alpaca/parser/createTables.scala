@@ -170,27 +170,36 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
+  def parseConflictResolution(
+    acc: Map[Production | String, Set[Production | String]],
+    before: Expr[Production | Token[?, ?, ?]],
+    after: Expr[Production | Token[?, ?, ?]],
+  ): Map[Production | String, Set[Production | String]] =
+    val parsedBefore = before match
+      case '{ $prod: Production } => findProduction(prod)
+      case '{ $token: Token[name, ?, ?] } => typeToString[name]
+
+    val parsedAfter = after match
+      case '{ $prod: Production } => findProduction(prod)
+      case '{ $token: Token[name, ?, ?] } => typeToString[name]
+
+    acc.updatedWith(parsedBefore) {
+      case Some(set) => Some(set + parsedAfter)
+      case None => Some(Set(parsedAfter))
+    }
+
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs
-      .flatMap:
-        case '{ ($first: Production).after(${ Varargs(afters) }*) } =>
-          val firstProduction = findProduction(first)
-          afters.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((firstProduction, typeToString[name]: Production | String)) -> typeToString[name]
-            case '{ $second: Production } =>
-              val secondProduction = findProduction(second)
-              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
+      .foldLeft(Map.empty[Production | String, Set[Production | String]]):
+        case (acc, '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) }) =>
+          befores.foldLeft(acc): (acc, before) =>
+            parseConflictResolution(acc, before, after)
 
-        case '{ ($production: Production).before(${ Varargs(befores) }*) } =>
-          val firstProduction = findProduction(production)
-          befores.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((firstProduction, typeToString[name]: Production | String)) -> firstProduction
-            case '{ $production: Production } =>
-              val secondProduction = findProduction(production)
-              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
-      .toMap,
+        case (acc, '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) }) =>
+          afters.foldLeft(acc): (acc, after) =>
+            parseConflictResolution(acc, before, after)
+
+        case (acc, expr) => raiseShouldNeverBeCalled(expr.show),
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 

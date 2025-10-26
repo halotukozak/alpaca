@@ -48,7 +48,7 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
   ) extends Production(Symbol.Empty)
 }
 
-private[parser] object Production {
+object Production {
   @compileTimeOnly(ConflictResolutionOnly)
   inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
   @compileTimeOnly(ConflictResolutionOnly)
