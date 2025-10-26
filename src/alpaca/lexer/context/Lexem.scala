@@ -2,6 +2,8 @@ package alpaca
 package lexer
 package context
 
+import alpaca.core.ValidName
+
 /**
  * A lexem represents a token that has been matched and extracted from the input.
  *
