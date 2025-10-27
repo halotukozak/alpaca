@@ -161,7 +161,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       parent = cls,
       name = "compiled",
       tpe = TypeRepr.of[Regex],
-      flags = Flags.Protected | Flags.Synthetic,
+      flags = Flags.Protected | Flags.Synthetic | Flags.Override,
       privateWithin = Symbol.noSymbol,
     )
 
@@ -181,7 +181,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
       privateWithin = Symbol.noSymbol,
     )
 
-    tokenDecls ++ List(fieldsDecls, allTokens, byName)
+    tokenDecls ++ List(fieldsDecls, compiled, allTokens, byName)
   }
 
   val cls = Symbol.newClass(
@@ -202,19 +202,20 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
 
     tokenVals ++ Vector(
       TypeDef(cls.typeMember("Fields")),
-      // ValDef(
-      //   cls.fieldMember("compiled"),
-      //   Some {
-      //     val pattern = Expr {
-      //       infos
-      //         .map { case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)" }
-      //         .mkString("|")
-      //         .tap(Pattern.compile(_)) // compile-time check for regex validity
-      //     }
+      ValDef(
+        cls.fieldMember("compiled"),
+        Some {
+          val regex = Expr(
+            infos
+              .map { case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)" }
+              .mkString("|")
+              .r // we'd like to compile it here to fail in compile time if regex is invalid
+              .regex,
+          )
 
-      //     '{ new Regex($pattern) }.asTerm.changeOwner(cls.fieldMember("compiled"))
-      //   },
-      // ),
+          '{ Regex($regex) }.asTerm.changeOwner(cls.fieldMember("compiled"))
+        },
+      ),
       ValDef(
         cls.fieldMember("tokens"),
         Some {

@@ -9,7 +9,7 @@ import scala.annotation.nowarn
 @nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" |
+    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
         "'" | "," | ";") =>
       Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
@@ -63,8 +63,8 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.`\\)`: Token["\\)", DefaultGlobalCtx, Unit]
     Lexer.`\\[`: Token["\\[", DefaultGlobalCtx, Unit]
     Lexer.`\\]`: Token["\\]", DefaultGlobalCtx, Unit]
-    Lexer.`{`: Token["{", DefaultGlobalCtx, Unit]
-    Lexer.`}`: Token["}", DefaultGlobalCtx, Unit]
+    Lexer.`\\{`: Token["\\{", DefaultGlobalCtx, Unit]
+    Lexer.`\\}`: Token["\\}", DefaultGlobalCtx, Unit]
     Lexer.`:`: Token[":", DefaultGlobalCtx, Unit]
     Lexer.`'`: Token["'", DefaultGlobalCtx, Unit]
     Lexer.`,`: Token[",", DefaultGlobalCtx, Unit]
