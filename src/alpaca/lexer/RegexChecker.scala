@@ -25,7 +25,7 @@ private[lexer] object RegexChecker {
   def checkPatterns(patterns: Seq[String]): Seq[String] = patterns match
     case Nil => Nil
     case _ =>
-      val regexes = Regex.compile(patterns.asJava)
+      val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
       for
         i <- patterns.indices
