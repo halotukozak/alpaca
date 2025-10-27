@@ -34,7 +34,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.tokens.map(_.info.pattern) shouldBe List(
     //format: off
       "#.*",
-      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "{", "}", ":", "'", ",", ";",
+      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "\\{", "\\}", ":", "'", ",", ";",
       raw"\.\+",
       raw"\.\-",
       raw"\.\*",
