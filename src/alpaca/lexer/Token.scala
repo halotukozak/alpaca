@@ -27,7 +27,7 @@ private[lexer] type CtxManipulation[Ctx <: AnyGlobalCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-private[lexer] final case class TokenInfo[+Name <: ValidName] private (
+private[lexer] final case class TokenInfo[+Name <: ValidName](
   name: Name,
   regexGroupName: String,
   pattern: String,
@@ -37,23 +37,16 @@ private[lexer] final case class TokenInfo[+Name <: ValidName] private (
 object TokenInfo {
   private val counter = AtomicInteger(0)
 
-  /**
-   * Creates a new TokenInfo with an auto-generated regex group name.
-   *
-   * @param name the token name
-   * @param pattern the regex pattern
-   * @return a new TokenInfo instance
-   */
-  def apply[Name <: ValidName](name: Name, pattern: String): TokenInfo[Name] =
-    TokenInfo(name, s"token${counter.getAndIncrement()}", pattern)
+  private[lexer] def nextName(): String = s"token${counter.getAndIncrement()}"
 
   given FromExpr[TokenInfo[?]] with
     def unapply(x: Expr[TokenInfo[?]])(using Quotes): Option[TokenInfo[?]] = x match
-      case '{ TokenInfo($name: ValidName, $pattern: String) } =>
+      case '{ type name <: ValidName; TokenInfo($name: name, $regexGroupName: String, $pattern: String) } =>
         for
           name <- name.value
+          regexGroupName <- regexGroupName.value
           pattern <- pattern.value
-        yield TokenInfo(name, pattern)
+        yield TokenInfo(name, regexGroupName, pattern)
       case _ => None
 }
 

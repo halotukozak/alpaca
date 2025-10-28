@@ -112,7 +112,13 @@ private object CompileNameAndPattern {
       val validatedName = validateName(name)
       ConstantType(StringConstant(validatedName)).asType match
         case '[type nameTpe <: ValidName; nameTpe] =>
-          '{ TokenInfo[nameTpe](${ Expr(validatedName).asExprOf[nameTpe] }, ${ Expr(regex) }) }
+          '{
+            TokenInfo[nameTpe](
+              ${ Expr(validatedName).asExprOf[nameTpe] },
+              ${ Expr(TokenInfo.nextName()) },
+              ${ Expr(regex) },
+            )
+          }
     }
   }
 }
