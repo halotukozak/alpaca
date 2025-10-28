@@ -21,8 +21,8 @@ object ConflictResolutionTable {
 
   extension (table: ConflictResolutionTable)
     def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
-      val extractProdOrName: ParseAction => Production | String =
-        case ParseAction.Reduction(prod) => prod
+      def extractProdOrName(action: ParseAction): Production | String = action.runtimeChecked match
+        case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
 
       table

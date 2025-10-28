@@ -75,13 +75,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, Option[ValidName])] =
+      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
         case Typed(term, tpt) =>
           // todo: maybe it is possible to pattern match on TypeTree
           val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
           val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value
-        case other => other -> None
+          term -> name.value.orNull
+        case other => other -> null
 
       cases
         .map: expr =>
@@ -137,7 +137,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
   object findProduction {
     private val productionsByName = productions
       .collect:
-        case p if p.name.isDefined => p.name.get -> p
+        case p if p.name != null => p.name -> p
       .toMap
 
     private val productionsByRhs = productions

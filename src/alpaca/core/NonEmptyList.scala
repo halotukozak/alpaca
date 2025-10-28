@@ -22,7 +22,7 @@ object NonEmptyList {
    * @param tail additional elements (optional)
    * @return a new NonEmptyList
    */
-  def apply[A](head: A, tail: A*): NonEmptyList[A] = head :: tail.toList
+  inline def apply[A](inline head: A, inline tail: A*): NonEmptyList[A] = head :: tail.toList
 
   /**
    * Pattern matching extractor for NonEmptyList.
@@ -52,6 +52,5 @@ object NonEmptyList {
 
   private[alpaca] given [A: {Type, ToExpr}]: ToExpr[NonEmptyList[A]] with
     def apply(x: NonEmptyList[A])(using Quotes): Expr[NonEmptyList[A]] =
-      val list = x.map(Expr.apply)
-      '{ NonEmptyList(${ list.head }, ${ Varargs(list.tail) }*) }
+      '{ NonEmptyList(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
 }
