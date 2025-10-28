@@ -8,11 +8,11 @@ import scala.annotation.compileTimeOnly
 
 type ConflictResolution
 
-extension (str: String)
+extension (str: Production)
   @compileTimeOnly(RuleOnly)
-  inline infix def after(other: (String | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(other: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
   @compileTimeOnly(RuleOnly)
-  inline infix def before(other: (String | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(other: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
 opaque type ConflictResolutionTable = Map[NSet[2, Production | String], Production | String]
 

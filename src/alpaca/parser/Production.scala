@@ -6,6 +6,9 @@ import alpaca.parser.Symbol
 
 import scala.annotation.StaticAnnotation
 import scala.quoted.*
+import alpaca.lexer.Token
+import scala.annotation.compileTimeOnly
+import alpaca.core.dummy
 
 final class name(name: ValidName) extends StaticAnnotation
 
@@ -38,15 +41,19 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
     extends Production(rhs)
   case Empty(lhs: NonTerminal, name: Option[ValidName] = None) extends Production(Symbol.Empty)
 }
+object Production {
+  @compileTimeOnly(ConflictResolutionOnly)
+  inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
+  @compileTimeOnly(ConflictResolutionOnly)
+  inline def ofName(name: ValidName): Production = dummy
 
-private[parser] object Production {
-  given Showable[Production] =
+  private[parser] given Showable[Production] =
     case NonEmpty(lhs, rhs, Some(name)) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case NonEmpty(lhs, rhs, None) => show"$lhs -> ${rhs.mkShow(" ")}"
     case Empty(lhs, Some(name)) => show"$lhs -> ${Symbol.Empty} ($name)"
     case Empty(lhs, None) => show"$lhs -> ${Symbol.Empty}"
 
-  given ToExpr[Production] with
+  private[parser] given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) =>
         '{
