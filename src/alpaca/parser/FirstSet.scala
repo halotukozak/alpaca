@@ -37,7 +37,7 @@ private[parser] object FirstSet {
     case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
       firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal, tail), name) =>
+    case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal { type IsEmpty = false }, tail), name) =>
       val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
       val production = tail match

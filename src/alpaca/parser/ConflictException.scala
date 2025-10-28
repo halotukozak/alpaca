@@ -30,7 +30,7 @@ final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbo
           |Shift \"$symbol\" vs Reduce $red
           |In situation like:
           |${path.filter(_ != Symbol.EOF).mkShow("", " ", " ...")}
-          |Consider marking production ${red.production} to be alwaysBefore or alwaysAfter "$symbol"
+          |Consider marking production $red to be alwaysBefore or alwaysAfter "$symbol"
           |""".stripMargin,
   )
 
