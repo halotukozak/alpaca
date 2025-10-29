@@ -4,12 +4,11 @@ package parser
 import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
+import alpaca.core.ValidName.typeToString
 import alpaca.debugToFile
 import alpaca.lexer.Token
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.ConflictResolution
-
-import ValidName.typeToString
 
 import scala.quoted.*
 
@@ -76,13 +75,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, Option[ValidName])] =
+      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
         case Typed(term, tpt) =>
           // todo: maybe it is possible to pattern match on TypeTree
           val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
           val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value
-        case other => other -> None
+          term -> name.value.orNull
+        case other => other -> null
 
       cases
         .map: expr =>
@@ -135,13 +134,32 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
     .tap: table =>
       debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
-  val productionsByName: Position ?=> String => Production =
-    val map = productions
+  object findProduction {
+    private val productionsByName = productions
       .collect:
-        case p if p.name.isDefined => p.name.get -> p
+        case p if p.name != null => p.name -> p
       .toMap
 
-    name => map.getOrElse(name, report.errorAndAbort(s"Production with name '$name' not found", summon[Position]))
+    private val productionsByRhs = productions
+      .collect: p =>
+        p.rhs -> p
+      .toMap
+
+    def apply(prod: Expr[Production]): Production = prod match
+      case '{ Production.ofName(${ Expr(name) }) } =>
+        productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
+      case '{ Production(${ Varargs(rhs) }*) } =>
+        val args = rhs
+          .map[alpaca.parser.Symbol.NonEmpty]:
+            case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
+            case '{ type name <: ValidName; $token: Token[name, ?, ?] } => Terminal(typeToString[name])
+          .toList
+
+        productionsByRhs.getOrElse(
+          NEL.unsafe(args),
+          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
+        )
+  }
 
   val resolutionExprs = scala.util
     .Try:
@@ -154,23 +172,24 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
 
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs
-      .flatMap: expr =>
-        // todo: should be resolved differently to provide better error messages
-        given Position = expr.asTerm.pos
+      .flatMap:
+        case '{ ($first: Production).after(${ Varargs(afters) }*) } =>
+          val firstProduction = findProduction(first)
+          afters.map:
+            case '{ $token: Token[name, ?, ?] } =>
+              NSet((firstProduction, typeToString[name]: Production | String)) -> typeToString[name]
+            case '{ $second: Production } =>
+              val secondProduction = findProduction(second)
+              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
 
-        expr match
-          case '{ (${ Expr(first) }: String).after(${ Varargs(afters) }*) } =>
-            afters.map:
-              case '{ $token: Token[name, ?, ?] } =>
-                NSet((productionsByName(first), typeToString[name]: Production | String)) -> typeToString[name]
-              case '{ ${ Expr(str) }: String } =>
-                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
-          case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
-            befores.map:
-              case '{ $token: Token[name, ?, ?] } =>
-                NSet((productionsByName(first), typeToString[name]: Production | String)) -> productionsByName(first)
-              case '{ ${ Expr(str) }: String } =>
-                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(first)
+        case '{ ($production: Production).before(${ Varargs(befores) }*) } =>
+          val firstProduction = findProduction(production)
+          befores.map:
+            case '{ $token: Token[name, ?, ?] } =>
+              NSet((firstProduction, typeToString[name]: Production | String)) -> firstProduction
+            case '{ $production: Production } =>
+              val secondProduction = findProduction(production)
+              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
       .toMap,
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")

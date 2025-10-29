@@ -2,6 +2,7 @@ package alpaca
 package parser
 
 import alpaca.core.Showable
+import alpaca.parser.Symbol.*
 
 import scala.quoted.*
 import scala.util.Random
@@ -12,59 +13,48 @@ import scala.util.Random
  * In formal grammar theory, symbols are the basic building blocks of
  * productions. Terminals represent tokens from the lexer, while
  * non-terminals represent grammatical constructs.
- *
- * @param isTerminal whether this symbol is a terminal
  */
-private[parser] trait Symbol {
+private[parser] trait Symbol extends Any {
   type IsEmpty <: Boolean
   def name: String
 }
 
-sealed class NonTerminal(override val name: String) extends Symbol {
-  type IsEmpty = false
-
-  override def equals(that: Any): Boolean = that match
-    case that: NonTerminal => this.name == that.name
-    case _ => false
-
-  override def hashCode(): Int = name.hashCode
-}
+sealed case class NonTerminal(name: String) extends AnyVal with Symbol
 
 object NonTerminal:
-  def fresh(name: String): NonTerminal =
+
+  def fresh(name: String): NonTerminal & NonEmpty =
     NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
-  def unapply(nonTerminal: NonTerminal): Some[String] = Some(nonTerminal.name)
 
-sealed class Terminal(override val name: String) extends Symbol {
-  override def equals(that: Any): Boolean = that match
-    case that: Terminal => this.name == that.name
-    case _ => false
+  inline def apply(inline name: String): NonTerminal & NonEmpty =
+    new NonTerminal(name).asInstanceOf[NonTerminal & NonEmpty]
 
-  override def hashCode(): Int = name.hashCode
-}
+sealed case class Terminal(name: String) extends AnyVal with Symbol
 
-private[parser] object Terminal:
-  def apply(name: String): Terminal { type IsEmpty = false } = new Terminal(name) { type IsEmpty = false }
-  def unapply(terminal: Terminal): Some[String] = Some(terminal.name)
+object Terminal:
+  inline def apply(inline name: String): Terminal & NonEmpty =
+    new Terminal(name).asInstanceOf[Terminal & NonEmpty]
 
 private[parser] object Symbol {
   type NonEmpty = Symbol { type IsEmpty = false }
 
-  given Showable[Symbol] = _.name
-
   /** The augmented start symbol used internally by the parser. */
-  case object Start extends NonTerminal("S'") { type IsEmpty = false }
+  val Start: NonTerminal { type IsEmpty = false } = NonTerminal("S'")
 
   /** The end-of-file terminal symbol. */
-  case object EOF extends Terminal("$") { type IsEmpty = false }
+  val EOF: Terminal { type IsEmpty = false } = Terminal("$")
 
   /** The empty terminal symbol (epsilon). */
-  case object Empty extends Terminal("ε") { type IsEmpty = true }
+  val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given ToExpr[Symbol] with
-    def apply(x: Symbol)(using Quotes): Expr[Symbol] = x match
-      case x: NonTerminal => Expr(x)
-      case x: Terminal => Expr(x)
+  given Showable[Symbol] = _.name
+
+  given [S <: Symbol]: ToExpr[S] with
+    def apply(x: S)(using Quotes): Expr[S] =
+      x.match
+        case x: NonTerminal => Expr[NonTerminal](x)
+        case x: Terminal => Expr[Terminal](x)
+      .asInstanceOf[Expr[S]]
 
   given ToExpr[NonTerminal] with
     def apply(x: NonTerminal)(using Quotes): Expr[NonTerminal] = '{ NonTerminal(${ Expr(x.name) }) }

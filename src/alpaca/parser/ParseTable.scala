@@ -87,11 +87,11 @@ private[parser] object ParseTable {
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
-              (existingAction, action) match
+              (existingAction, action).runtimeChecked match
                 case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
-                case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
-                case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
-                case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
+                case (_: Shift, red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
+                case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
+                case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
     @tailrec
     def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
@@ -159,5 +159,37 @@ private[parser] object ParseTable {
   }
 
   given ToExpr[ParseTable] with
-    def apply(x: ParseTable)(using Quotes): Expr[ParseTable] = '{ ${ Expr(x.toList) }.toMap }
+    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
+      import quotes.reflect.*
+
+      type BuilderTpe = mutable.Builder[
+        ((state: Int, stepSymbol: alpaca.parser.Symbol), Shift | Reduction),
+        Map[(state: Int, stepSymbol: alpaca.parser.Symbol), Shift | Reduction],
+      ]
+
+      val symbol = Symbol.newVal(
+        Symbol.spliceOwner,
+        Symbol.freshName("builder"),
+        TypeRepr.of[BuilderTpe],
+        Flags.Mutable,
+        Symbol.noSymbol,
+      )
+
+      val valDef = ValDef(symbol, Some('{ Map.newBuilder: BuilderTpe }.asTerm))
+
+      val builder = Ref(symbol).asExprOf[BuilderTpe]
+
+      val additions = entries
+        .map(entry =>
+          '{
+            def avoidTooLargerMethod(): Unit = $builder += ${ Expr(entry) }
+            avoidTooLargerMethod()
+          }.asTerm,
+        )
+        .toList
+
+      val result = '{ $builder.result() }.asTerm
+
+      Block(valDef :: additions, result).asExprOf[ParseTable]
+    }
 }

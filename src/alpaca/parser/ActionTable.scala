@@ -54,36 +54,3 @@ private[parser] object ActionTable {
      */
     def apply(production: Production): Action[Ctx] = table(production)
 }
-
-/**
- * Represents a parse action in the LR parse table.
- *
- * Parse actions determine what the parser should do in each state
- * when encountering a symbol. It can either shift to a new state
- * or reduce by a production.
- */
-private[parser] enum ParseAction:
-  /**
-   * Shift action: read the input symbol and move to a new state.
-   *
-   * @param newState the state to transition to
-   */
-  case Shift(newState: Int)
-
-  /**
-   * Reduce action: apply a production rule to reduce symbols.
-   *
-   * @param production the production to reduce by
-   */
-  case Reduction(production: Production)
-
-private[parser] object ParseAction {
-  given Showable[ParseAction] =
-    case ParseAction.Shift(newState) => show"S$newState"
-    case ParseAction.Reduction(production) => show"$production"
-
-  given ToExpr[ParseAction] with
-    def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
-      case ParseAction.Shift(i) => '{ ParseAction.Shift(${ Expr(i) }) }
-      case ParseAction.Reduction(p) => '{ ParseAction.Reduction(${ Expr(p) }) }
-}

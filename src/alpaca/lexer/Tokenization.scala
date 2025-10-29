@@ -18,11 +18,8 @@ import scala.util.matching.Regex
 abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStages as betweenStages}]
   extends Selectable {
 
-  // protected def compiled: Regex
-
-  private lazy val compiled: Regex =
-    // todo: consider some quoting somewhere someday
-    tokens.view.map(_.info).map(info => s"(?<${info.regexGroupName}>${info.pattern})").mkString("|").r
+  /** The compiled regex that matches all defined tokens. */
+  protected def compiled: Regex
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
   def tokens: List[Token[?, Ctx, ?]]

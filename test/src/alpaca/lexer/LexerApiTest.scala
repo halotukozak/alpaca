@@ -25,7 +25,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
         "print") =>
       Token[keyword.type]
     case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "{" | "}" | ":" |
+    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
         "'" | "," | ";") =>
       Token[literal.type]
   }
@@ -47,7 +47,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       "\"[^\"]*\"",
       "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
       "[a-zA-Z_][a-zA-Z0-9_]*",
-      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "{", "}", ":", "'", ",", ";",
+      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "\\{", "\\}", ":", "'", ",", ";",
     )
     //format: on
 
@@ -63,8 +63,8 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.`\\)`: Token["\\)", DefaultGlobalCtx, Unit]
     Lexer.`\\[`: Token["\\[", DefaultGlobalCtx, Unit]
     Lexer.`\\]`: Token["\\]", DefaultGlobalCtx, Unit]
-    Lexer.`{`: Token["{", DefaultGlobalCtx, Unit]
-    Lexer.`}`: Token["}", DefaultGlobalCtx, Unit]
+    Lexer.`\\{`: Token["\\{", DefaultGlobalCtx, Unit]
+    Lexer.`\\}`: Token["\\}", DefaultGlobalCtx, Unit]
     Lexer.`:`: Token[":", DefaultGlobalCtx, Unit]
     Lexer.`'`: Token["'", DefaultGlobalCtx, Unit]
     Lexer.`,`: Token[",", DefaultGlobalCtx, Unit]
