@@ -170,36 +170,22 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
-  def parseConflictResolution(
-    acc: Map[Production | String, Set[Production | String]],
-    before: Expr[Production | Token[?, ?, ?]],
-    after: Expr[Production | Token[?, ?, ?]],
-  ): Map[Production | String, Set[Production | String]] =
-    val parsedBefore = before match
-      case '{ $prod: Production } => findProduction(prod)
-      case '{ $token: Token[name, ?, ?] } => typeToString[name]
-
-    val parsedAfter = after match
-      case '{ $prod: Production } => findProduction(prod)
-      case '{ $token: Token[name, ?, ?] } => typeToString[name]
-
-    acc.updatedWith(parsedBefore) {
-      case Some(set) => Some(set + parsedAfter)
-      case None => Some(Set(parsedAfter))
-    }
+  def extractKey(expr: Expr[Production | Token[?, ?, ?]]): Production | ValidName = expr match
+    case '{ $prod: Production } => findProduction(prod)
+    case '{ $token: Token[name, ?, ?] } => typeToString[name]
 
   val conflictResolutionTable = ConflictResolutionTable(
-    resolutionExprs
-      .foldLeft(Map.empty[Production | String, Set[Production | String]]):
-        case (acc, '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) }) =>
-          befores.foldLeft(acc): (acc, before) =>
-            parseConflictResolution(acc, before, after)
-
-        case (acc, '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) }) =>
-          afters.foldLeft(acc): (acc, after) =>
-            parseConflictResolution(acc, before, after)
-
-        case (acc, expr) => raiseShouldNeverBeCalled(expr.show),
+    resolutionExprs.view
+      .flatMap:
+        case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
+        case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
+        case expr => raiseShouldNeverBeCalled(expr.show)
+      .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
+        case (acc, (before, after)) =>
+          acc.updatedWith(extractKey(before)) {
+            case Some(set) => Some(set + extractKey(after))
+            case None => Some(Set(extractKey(after)))
+          },
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 

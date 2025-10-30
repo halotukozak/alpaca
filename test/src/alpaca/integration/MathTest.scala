@@ -9,12 +9,10 @@ import alpaca.parser.context.default.EmptyGlobalCtx
 import alpaca.parser.Rule
 import alpaca.parser.rule
 import alpaca.parser.{after, before, name}
-import alpaca.lexer.LazyReader
-import java.nio.file.Files
-import scala.util.Using
 import alpaca.parser.Production as P
+import alpaca.TestHelpers.withTempFile
 
-class MathTest extends AnyFunSuite:
+final class MathTest extends AnyFunSuite:
   test("e2e math test") {
     val CalcLexer = lexer {
       // ignore whitespace/comments
@@ -34,7 +32,7 @@ class MathTest extends AnyFunSuite:
         Token[keyword.type]
 
       // trig functions (lowercase)
-      case keyword @ ("sin" | "cos" | "tan" | "asin" | "acos" | "atan" | "atan2" | "sinh" | "cosh" | "tanh") =>
+      case keyword @ ("sin" | "cos" | "tan" | "asin" | "acos" | "atan2" | "atan" | "sinh" | "cosh" | "tanh") =>
         Token[keyword.type]
 
       // numbers
@@ -113,52 +111,32 @@ class MathTest extends AnyFunSuite:
 
     val input = "1 + 2"
     val tokens = CalcLexer.tokenize(input)
-    val result = CalcParser.parse[Double](tokens)
-    assert(result.result == 3.0)
+    val (_, result) = CalcParser.parse[Double](tokens)
+    assert(result == 3.0)
 
-    val tempFile = Files.createTempFile("test", ".txt")
-    try {
-      Files.write(
-        tempFile,
-        """
-      (12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5) 
+    withTempFile("""
+      ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5) 
       * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
       - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
       + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
-    """.getBytes(),
-      )
-
-      Using(LazyReader.from(tempFile)) { input2 =>
-        val tokens2 = CalcLexer.tokenize(input2)
-        val result2 = CalcParser.parse[Double](tokens2)
-        assert(result2.result == 2096.0)
-      }
-    } finally {
-      Files.deleteIfExists(tempFile)
+    """) { input2 =>
+      val tokens2 = CalcLexer.tokenize(input2)
+      val (_, result2) = CalcParser.parse[Double](tokens2)
+      assert(result2 == 2096.0)
     }
 
-    val tempFile2 = Files.createTempFile("test", ".txt")
-    try {
-      Files.write(
-        tempFile2,
-        """
-      +sin(pi/6) + cos(pi/3) + tan(pi/4)
+    withTempFile("""
+      + sin(pi/6) + cos(pi/3) + tan(pi/4)
       + (2 ** 3 ** 2) / (3 + 1)
       + ((7 // 3) * 5 + (10 % 4))
       - (-cos(0) + +sin(pi/2))
       + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
       + atan2(1, 0)
-    """.getBytes(),
-      )
+    """) { input2 =>
+      val tokens2 = CalcLexer.tokenize(input2)
+      val (_, result2) = CalcParser.parse[Double](tokens2)
+      val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
 
-      Using(LazyReader.from(tempFile2)) { input2 =>
-        val tokens2 = CalcLexer.tokenize(input2)
-        val result2 = CalcParser.parse[Double](tokens2)
-        val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
-
-        assert(result2.result == expected, s"Multiple expression mismatch: $result2 vs $expected")
-      }
-    } finally {
-      Files.deleteIfExists(tempFile2)
+      assert(result2 == expected, s"Multiple expression mismatch: $result2 vs $expected")
     }
   }

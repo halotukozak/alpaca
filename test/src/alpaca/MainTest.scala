@@ -9,11 +9,9 @@ import alpaca.parser.context.GlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 import scala.quoted.Expr
 import java.nio.file.Path
-import alpaca.lexer.LazyReader
-import java.nio.file.Files
-import scala.util.Using
 import alpaca.parser.Rule
 import alpaca.parser.rule
+import alpaca.TestHelpers.withTempFile
 
 @main def main(): Unit = {
   val CalcLexer = lexer {
@@ -53,25 +51,15 @@ import alpaca.parser.rule
   val result = CalcParser.parse[Double](tokens)
   assert(result.result == 3.0)
 
-  val tempFile = Files.createTempFile("test", ".txt")
-  try {
-    Files.write(
-      tempFile,
-      """
-        (12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5) 
-        * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
-        - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
+  withTempFile("""
+        ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)
+        * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1)))
+        - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2))))
         + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
-      """.getBytes(),
-    )
-
-    Using(LazyReader.from(tempFile)) { input2 =>
-      val tokens2 = CalcLexer.tokenize(input2)
-      val result2 = CalcParser.parse[Double](tokens2)
-      assert(result2.result == 2096.0)
-    }
-  } finally {
-    Files.deleteIfExists(tempFile)
+      """) { input2 =>
+    val tokens2 = CalcLexer.tokenize(input2)
+    val result2 = CalcParser.parse[Double](tokens2)
+    assert(result2.result == 2096.0)
   }
 
 }

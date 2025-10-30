@@ -6,9 +6,11 @@ import alpaca.lexer.{AlgorithmError, Token}
 import scala.collection.mutable
 import alpaca.core.Showable.mkShow
 import scala.annotation.compileTimeOnly
-import alpaca.lexer.Token
+import scala.annotation.tailrec
 
 type ConflictResolution
+
+type ConflictKey = Production | String
 
 extension (first: Production | Token[?, ?, ?])
   @compileTimeOnly(RuleOnly)
@@ -16,44 +18,38 @@ extension (first: Production | Token[?, ?, ?])
   @compileTimeOnly(RuleOnly)
   inline infix def before(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
-opaque type ConflictResolutionTable = Map[Production | String, Set[Production | String]]
+opaque type ConflictResolutionTable = Map[ConflictKey, Set[ConflictKey]]
 
 object ConflictResolutionTable {
-  def apply(resolutions: Map[Production | String, Set[Production | String]]): ConflictResolutionTable = resolutions
+  def apply(resolutions: Map[ConflictKey, Set[ConflictKey]]): ConflictResolutionTable = resolutions
 
   extension (table: ConflictResolutionTable)
     def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
-      def extractProdOrName(action: ParseAction): Production | String = action.runtimeChecked match
+      def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
         case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
 
-      if relationExists(extractProdOrName(first), extractProdOrName(second)) then Some(first)
-      else if relationExists(extractProdOrName(second), extractProdOrName(first)) then Some(second)
-      else None
-    }
+      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] = {
+        val to = extractProdOrName(second)
 
-    def relationExists(from: Production | String, to: Production | String): Boolean = {
-      val visited = mutable.Set[Production | String](from)
-      val queue = mutable.Queue(from)
+        @tailrec
+        def loop(queue: List[ConflictKey], visited: Set[ConflictKey]): Option[ParseAction] = queue match
+          case Nil => None
+          case `to` :: _ => Some(first)
+          case head :: tail =>
+            val current = table.get(head).getOrElse(Set.empty)
+            val neighbors = current.filterNot(visited.contains)
+            loop(tail ++ neighbors, visited + head)
 
-      while queue.nonEmpty do
-        val current = queue.dequeue()
-        if current == to then return true
+        loop(List(extractProdOrName(first)), Set())
+      }
 
-        table.get(current) match
-          case Some(neighbors) =>
-            neighbors.foreach: neighbor =>
-              if !visited.contains(neighbor) then
-                visited.add(neighbor)
-                queue.enqueue(neighbor)
-          case None => ()
-
-      false
+      winsOver(first, second) orElse winsOver(second, first)
     }
 
   given Showable[ConflictResolutionTable] =
     _.map: (k, v) =>
-      def show(x: Production | String): String = x match
+      def show(x: ConflictKey): String = x match
         case p: Production => show"$p"
         case s: String => show"Token[$s]"
 

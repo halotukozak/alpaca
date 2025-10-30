@@ -1,9 +1,9 @@
 package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
+import alpaca.TestHelpers.withTempFile
 
 import java.io.StringReader
-import java.nio.file.Files
 import scala.util.Using
 
 class LazyReaderTest extends AnyFunSuite {
@@ -63,20 +63,12 @@ class LazyReaderTest extends AnyFunSuite {
   }
 
   test("LazyReader.from should create LazyReader from file path") {
-    // Create a temporary file
-    val tempFile = Files.createTempFile("test", ".txt")
-    try {
-      Files.write(tempFile, "test content for file reading.".getBytes())
-
-      Using(LazyReader.from(tempFile)) { lazyReader =>
-        assert(lazyReader.length == 30)
-        assert(lazyReader.charAt(0) == 't')
-        assert(lazyReader.charAt(4) == ' ')
-        assert(lazyReader.subSequence(0, 4) == "test")
-        assert(lazyReader.subSequence(5, 12) == "content")
-      }
-    } finally {
-      Files.deleteIfExists(tempFile)
+    withTempFile("test content for file reading.") { lazyReader =>
+      assert(lazyReader.length == 30)
+      assert(lazyReader.charAt(0) == 't')
+      assert(lazyReader.charAt(4) == ' ')
+      assert(lazyReader.subSequence(0, 4) == "test")
+      assert(lazyReader.subSequence(5, 12) == "content")
     }
   }
 
