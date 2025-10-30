@@ -1,4 +1,5 @@
-package alpaca.lexer
+package alpaca
+package lexer
 
 import alpaca.lexer.context.Lexem
 import org.scalatest.funsuite.AnyFunSuite
@@ -91,7 +92,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\s+" => Token.Ignored
     }
 
-    Using.t("(x + 42) * y - 1") { reader =>
+    withLazyReader("(x + 42) * y - 1") { reader =>
       val result = Lexer.tokenize(reader)
 
       assert(

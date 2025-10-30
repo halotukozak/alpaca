@@ -1,4 +1,5 @@
-package alpaca.lexer
+package alpaca
+package lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 
