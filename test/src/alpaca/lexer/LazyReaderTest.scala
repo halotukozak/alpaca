@@ -1,7 +1,6 @@
 package alpaca.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
-import alpaca.TestHelpers.withTempFile
 
 import java.io.StringReader
 import scala.util.Using
@@ -63,7 +62,7 @@ class LazyReaderTest extends AnyFunSuite {
   }
 
   test("LazyReader.from should create LazyReader from file path") {
-    withTempFile("test content for file reading.") { lazyReader =>
+    withLazyReader("test content for file reading.") { lazyReader =>
       assert(lazyReader.length == 30)
       assert(lazyReader.charAt(0) == 't')
       assert(lazyReader.charAt(4) == ' ')

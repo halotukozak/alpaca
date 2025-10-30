@@ -11,7 +11,6 @@ import scala.quoted.Expr
 import java.nio.file.Path
 import alpaca.parser.Rule
 import alpaca.parser.rule
-import alpaca.TestHelpers.withTempFile
 
 @main def main(): Unit = {
   val CalcLexer = lexer {
@@ -51,7 +50,7 @@ import alpaca.TestHelpers.withTempFile
   val result = CalcParser.parse[Double](tokens)
   assert(result.result == 3.0)
 
-  withTempFile("""
+  withLazyReader("""
         ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)
         * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1)))
         - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2))))
