@@ -7,6 +7,16 @@ import alpaca.parser.ParserExtractors.*
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
+/**
+ * Internal utility class for extracting and transforming parser patterns.
+ *
+ * This class is used during macro expansion to analyze parser rule definitions
+ * and extract information about terminals, non-terminals, and EBNF operators
+ * (optional, repeated) from pattern matching expressions.
+ *
+ * @tparam Q the Quotes type
+ * @tparam Ctx the parser context type
+ */
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type](using val quotes: Q) {
   import quotes.reflect.*
 
@@ -163,16 +173,34 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
 }
 
 //noinspection ScalaWeakerAccess
+/**
+ * Companion object containing action functions for EBNF operators.
+ *
+ * These functions define how to combine parsed elements for optional
+ * and repeated patterns.
+ */
 private object ParserExtractors {
+  /**
+   * Action for repeated elements - appends a new element to the accumulated list.
+   */
   val repeatedAction: Action[AnyGlobalCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
     case x => raiseShouldNeverBeCalled(x.toString)
 
+  /**
+   * Action for the base case of repeated elements - creates an empty list.
+   */
   val emptyRepeatedAction: Action[AnyGlobalCtx] = (_, _) => Nil
 
+  /**
+   * Action for optional elements that are present - wraps the element in Some.
+   */
   val someAction: Action[AnyGlobalCtx] =
     case (_, Seq(elem)) => Some(elem)
     case x => raiseShouldNeverBeCalled(x.toString)
 
+  /**
+   * Action for optional elements that are absent - returns None.
+   */
   val noneAction: Action[AnyGlobalCtx] = (_, _) => None
 }
