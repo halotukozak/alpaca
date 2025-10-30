@@ -37,8 +37,16 @@ private[lexer] final case class TokenInfo[+Name <: ValidName](
 object TokenInfo {
   private val counter = AtomicInteger(0)
 
+  /**
+   * Generates a unique name for a regex capture group.
+   *
+   * @return a unique token group name
+   */
   private[lexer] def nextName(): String = s"token${counter.getAndIncrement()}"
 
+  /**
+   * Given instance to extract TokenInfo from compile-time expressions.
+   */
   given FromExpr[TokenInfo[?]] with
     def unapply(x: Expr[TokenInfo[?]])(using Quotes): Option[TokenInfo[?]] = x match
       case '{ type name <: ValidName; TokenInfo($name: name, $regexGroupName: String, $pattern: String) } =>

@@ -82,6 +82,9 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
         ensure(pos)
 }
 
+/**
+ * Factory methods for creating LazyReader instances.
+ */
 object LazyReader {
 
   /**
