@@ -48,9 +48,6 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
   ) extends Production(Symbol.Empty)
 }
 
-/**
- * Factory methods and type class instances for productions.
- */
 object Production {
   /**
    * Creates a production reference from symbols.

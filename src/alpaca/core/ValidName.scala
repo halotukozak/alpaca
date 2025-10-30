@@ -11,9 +11,6 @@ import scala.quoted.*
  */
 private[alpaca] type ValidName = String & Singleton
 
-/**
- * Companion object providing type class instances for ValidName.
- */
 object ValidName {
 
   /**

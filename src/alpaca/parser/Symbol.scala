@@ -30,9 +30,6 @@ private[parser] trait Symbol extends Any {
  */
 sealed case class NonTerminal(name: String) extends AnyVal with Symbol
 
-/**
- * Factory methods for creating non-terminal symbols.
- */
 object NonTerminal:
 
   /**
@@ -67,9 +64,6 @@ object NonTerminal:
  */
 sealed case class Terminal(name: String) extends AnyVal with Symbol
 
-/**
- * Factory methods for creating terminal symbols.
- */
 object Terminal:
   /**
    * Creates a terminal symbol from a name.

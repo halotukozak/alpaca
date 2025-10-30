@@ -24,9 +24,6 @@ import scala.quoted.*
 opaque type Tables[Ctx <: AnyGlobalCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
-/**
- * Companion object providing automatic table generation.
- */
 object Tables:
   /**
    * Automatically generates parse and action tables from a parser definition.

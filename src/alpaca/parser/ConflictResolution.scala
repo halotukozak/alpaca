@@ -24,9 +24,6 @@ type ConflictResolution
  */
 type ConflictKey = Production | String
 
-/**
- * Extension methods for defining conflict resolution rules.
- */
 extension (first: Production | Token[?, ?, ?])
   /**
    * Specifies that this production/token should have higher precedence than others.
@@ -66,17 +63,8 @@ extension (first: Production | Token[?, ?, ?])
  * This maps each production/token to a set of productions/tokens that it has
  * precedence over.
  */
-/**
- * Opaque type representing a table of conflict resolution rules.
- *
- * This maps each production/token to a set of productions/tokens that it has
- * precedence over.
- */
 opaque type ConflictResolutionTable = Map[ConflictKey, Set[ConflictKey]]
 
-/**
- * Factory and operations for ConflictResolutionTable.
- */
 object ConflictResolutionTable {
   /**
    * Creates a ConflictResolutionTable from a map of resolutions.
@@ -86,9 +74,6 @@ object ConflictResolutionTable {
    */
   def apply(resolutions: Map[ConflictKey, Set[ConflictKey]]): ConflictResolutionTable = resolutions
 
-  /**
-   * Extension methods for ConflictResolutionTable.
-   */
   extension (table: ConflictResolutionTable)
     /**
      * Resolves a conflict between two parse actions.

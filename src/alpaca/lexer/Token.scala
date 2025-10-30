@@ -33,9 +33,6 @@ private[lexer] final case class TokenInfo[+Name <: ValidName](
   pattern: String,
 )
 
-/**
- * Companion object providing utilities for TokenInfo.
- */
 //todo: why it cannot be private[lexer]
 object TokenInfo {
   private val counter = AtomicInteger(0)
