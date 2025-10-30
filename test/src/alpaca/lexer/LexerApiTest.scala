@@ -9,9 +9,6 @@ import scala.annotation.nowarn
 @nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer {
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
-        "'" | "," | ";") =>
-      Token[literal.type]
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -28,13 +25,15 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
         "print") =>
       Token[keyword.type]
     case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
+    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
+        "'" | "," | ";") =>
+      Token[literal.type]
   }
 
   test("Lexer recognizes basic tokens") {
     Lexer.tokens.map(_.info.pattern) shouldBe List(
     //format: off
       "#.*",
-      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "\\{", "\\}", ":", "'", ",", ";",
       raw"\.\+",
       raw"\.\-",
       raw"\.\*",
@@ -48,6 +47,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
       "\"[^\"]*\"",
       "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
       "[a-zA-Z_][a-zA-Z0-9_]*",
+      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "\\{", "\\}", ":", "'", ",", ";",
     )
     //format: on
 

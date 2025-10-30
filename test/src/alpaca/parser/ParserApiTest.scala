@@ -17,7 +17,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
 
   val CalcLexer = lexer {
     case " " => Token.Ignored
-    case " \\t" => Token.Ignored
+    case "\\t" => Token.Ignored
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
     case "\\+" => Token["PLUS"]
     case "-" => Token["MINUS"]

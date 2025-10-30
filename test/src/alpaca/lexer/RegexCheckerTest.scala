@@ -26,6 +26,18 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
     RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
   }
 
+  test("checkPatterns should report prefix shadowing") {
+    val patterns = List(
+      "i",
+      "\\*",
+      "if",
+      "=",
+      "[a-zA-Z]+",
+      "[ \\t\\n]+",
+    )
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern if is shadowed by i"
+  }
+
   test("checkPatterns should report identical patterns as overlapping") {
     val patterns = List(
       "[a-zA-Z_][a-zA-Z0-9_]*",
@@ -43,6 +55,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
       "if",
       "\\*",
       "when",
+      "i",
       "=",
       "[a-zA-Z_][a-zA-Z0-9_]*",
       "[ \\t\\n]+",
