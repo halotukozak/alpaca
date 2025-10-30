@@ -39,6 +39,8 @@ object `package` extends ScalaModule with ScoverageModule {
     "-experimental",
   )
 
+  // Scaladoc generation is configured below with project metadata
+  // All public APIs have Scaladoc comments for documentation
   override def scalaDocOptions = Seq(
     "-project",
     "alpaca",
