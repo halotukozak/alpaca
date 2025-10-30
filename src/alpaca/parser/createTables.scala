@@ -12,10 +12,32 @@ import alpaca.parser.ConflictResolution
 
 import scala.quoted.*
 
+/**
+ * An opaque type containing the parse and action tables for the parser.
+ *
+ * The parse table is used to drive the LR parsing algorithm, while the
+ * action table maps productions to their semantic actions. These tables
+ * are generated at compile time by analyzing the grammar rules.
+ *
+ * @tparam Ctx the parser context type
+ */
 opaque type Tables[Ctx <: AnyGlobalCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
+/**
+ * Companion object providing automatic table generation.
+ */
 object Tables:
+  /**
+   * Automatically generates parse and action tables from a parser definition.
+   *
+   * This given instance triggers compile-time macro expansion to analyze
+   * the parser's grammar rules and generate the necessary tables.
+   *
+   * @tparam Ctx the parser context type
+   * @param debugSettings debug configuration
+   * @return the generated parse and action tables
+   */
   inline given [Ctx <: AnyGlobalCtx](
     using inline debugSettings: DebugSettings[?, ?],
   ): Tables[Ctx] = ${ createTablesImpl[Ctx]('{ debugSettings }) }
