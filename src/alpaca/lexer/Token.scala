@@ -39,15 +39,20 @@ object TokenInfo {
 
   private[lexer] def nextName(): String = s"token${counter.getAndIncrement()}"
 
-  given FromExpr[TokenInfo[?]] with
-    def unapply(x: Expr[TokenInfo[?]])(using Quotes): Option[TokenInfo[?]] = x match
-      case '{ type name <: ValidName; TokenInfo($name: name, $regexGroupName: String, $pattern: String) } =>
+  given [name <: ValidName]: FromExpr[TokenInfo[name]] with
+    def unapply(x: Expr[TokenInfo[name]])(using Quotes): Option[TokenInfo[name]] = x match
+      case '{ TokenInfo($name, $regexGroupName: String, $pattern: String) } =>
         for
           name <- name.value
           regexGroupName <- regexGroupName.value
           pattern <- pattern.value
-        yield TokenInfo(name, regexGroupName, pattern)
+        yield TokenInfo(name.asInstanceOf[name], regexGroupName, pattern)
       case _ => None
+
+  given [name <: ValidName: {Type}]: ToExpr[TokenInfo[name]] with
+    def apply(x: TokenInfo[name])(using Quotes): Expr[TokenInfo[name]] =
+      import quotes.reflect.*
+      '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
 }
 
 /**

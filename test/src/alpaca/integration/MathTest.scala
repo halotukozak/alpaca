@@ -31,7 +31,10 @@ final class MathTest extends AnyFunSuite:
         Token[keyword.type]
 
       // trig functions (lowercase)
-      case keyword @ ("sin" | "cos" | "tan" | "asin" | "acos" | "atan2" | "atan" | "sinh" | "cosh" | "tanh") =>
+      case keyword @ ("atan2" | "sinh" | "cosh" | "tanh") =>
+        Token[keyword.type]
+
+      case keyword @ ("sin" | "cos" | "tan" | "asin" | "acos" | "atan") =>
         Token[keyword.type]
 
       // numbers
