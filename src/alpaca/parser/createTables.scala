@@ -170,27 +170,22 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
-  val conflictResolutionTable = ConflictResolutionTable(
-    resolutionExprs
-      .flatMap:
-        case '{ ($first: Production).after(${ Varargs(afters) }*) } =>
-          val firstProduction = findProduction(first)
-          afters.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((firstProduction, typeToString[name]: Production | String)) -> typeToString[name]
-            case '{ $second: Production } =>
-              val secondProduction = findProduction(second)
-              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
+  def extractKey(expr: Expr[Production | Token[?, ?, ?]]): Production | ValidName = expr match
+    case '{ $prod: Production } => findProduction(prod)
+    case '{ $token: Token[name, ?, ?] } => typeToString[name]
 
-        case '{ ($production: Production).before(${ Varargs(befores) }*) } =>
-          val firstProduction = findProduction(production)
-          befores.map:
-            case '{ $token: Token[name, ?, ?] } =>
-              NSet((firstProduction, typeToString[name]: Production | String)) -> firstProduction
-            case '{ $production: Production } =>
-              val secondProduction = findProduction(production)
-              NSet((firstProduction, secondProduction: Production | String)) -> secondProduction
-      .toMap,
+  val conflictResolutionTable = ConflictResolutionTable(
+    resolutionExprs.view
+      .flatMap:
+        case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
+        case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
+        case expr => raiseShouldNeverBeCalled(expr.show)
+      .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
+        case (acc, (before, after)) =>
+          acc.updatedWith(extractKey(before)) {
+            case Some(set) => Some(set + extractKey(after))
+            case None => Some(Set(extractKey(after)))
+          },
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
