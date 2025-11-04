@@ -7,6 +7,16 @@ import alpaca.parser.ParserExtractors.*
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
+/**
+ * Internal utility class for extracting and transforming parser patterns.
+ *
+ * This class is used during macro expansion to analyze parser rule definitions
+ * and extract information about terminals, non-terminals, and EBNF operators
+ * (optional, repeated) from pattern matching expressions.
+ *
+ * @tparam Q the Quotes type
+ * @tparam Ctx the parser context type
+ */
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type](using val quotes: Q) {
   import quotes.reflect.*
 

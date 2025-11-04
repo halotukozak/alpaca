@@ -49,17 +49,38 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
 }
 
 object Production {
+  /**
+   * Creates a production reference from symbols.
+   *
+   * This is compile-time only and used in conflict resolution definitions
+   * to refer to productions by their right-hand side.
+   *
+   * @param symbols the symbols on the right-hand side of the production
+   * @return a production reference
+   */
   @compileTimeOnly(ConflictResolutionOnly)
   inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
+
+  /**
+   * Creates a production reference from a name.
+   *
+   * This is compile-time only and used in conflict resolution definitions
+   * to refer to named productions.
+   *
+   * @param name the name of the production
+   * @return a production reference
+   */
   @compileTimeOnly(ConflictResolutionOnly)
   inline def ofName(name: ValidName): Production = dummy
 
+  /** Showable instance for displaying productions in human-readable form. */
   given Showable[Production] =
     case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
     case NonEmpty(lhs, rhs, name) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name) => show"$lhs -> ${Symbol.Empty} ($name)"
 
+  /** ToExpr instance for lifting productions to compile-time expressions. */
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
