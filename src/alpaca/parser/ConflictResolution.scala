@@ -66,6 +66,7 @@ extension (first: Production | Token[?, ?, ?])
 opaque type ConflictResolutionTable = Map[ConflictKey, Set[ConflictKey]]
 
 object ConflictResolutionTable {
+
   /**
    * Creates a ConflictResolutionTable from a map of resolutions.
    *
