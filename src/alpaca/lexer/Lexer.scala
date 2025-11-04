@@ -129,7 +129,9 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
           tokenInfo.valueOrAbort
         case x => raiseShouldNeverBeCalled(x.show)
 
-      RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
+      val patterns = infos.map(_.pattern)
+      RegexChecker.checkPatterns(patterns).foreach(report.errorAndAbort)
+      RegexChecker.checkPatterns(patterns.reverse).foreach(report.errorAndAbort)
       (accTokens ::: tokens, accInfos ::: infos)
 
     case (tokens, CaseDef(tree, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
