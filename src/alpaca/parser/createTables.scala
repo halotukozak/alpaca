@@ -4,19 +4,37 @@ package parser
 import alpaca.core.{NonEmptyList as NEL, *}
 import alpaca.core.Csv.toCsv
 import alpaca.core.Showable.mkShow
+import alpaca.core.ValidName.typeToString
 import alpaca.debugToFile
 import alpaca.lexer.Token
 import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.ConflictResolution
 
-import ValidName.typeToString
-
 import scala.quoted.*
 
+/**
+ * An opaque type containing the parse and action tables for the parser.
+ *
+ * The parse table is used to drive the LR parsing algorithm, while the
+ * action table maps productions to their semantic actions. These tables
+ * are generated at compile time by analyzing the grammar rules.
+ *
+ * @tparam Ctx the parser context type
+ */
 opaque type Tables[Ctx <: AnyGlobalCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
 object Tables:
+  /**
+   * Automatically generates parse and action tables from a parser definition.
+   *
+   * This given instance triggers compile-time macro expansion to analyze
+   * the parser's grammar rules and generate the necessary tables.
+   *
+   * @tparam Ctx the parser context type
+   * @param debugSettings debug configuration
+   * @return the generated parse and action tables
+   */
   inline given [Ctx <: AnyGlobalCtx](
     using inline debugSettings: DebugSettings[?, ?],
   ): Tables[Ctx] = ${ createTablesImpl[Ctx]('{ debugSettings }) }
@@ -76,13 +94,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, Option[ValidName])] =
+      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
         case Typed(term, tpt) =>
           // todo: maybe it is possible to pattern match on TypeTree
           val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
           val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value
-        case other => other -> None
+          term -> name.value.orNull
+        case other => other -> null
 
       cases
         .map: expr =>
@@ -135,13 +153,32 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
     .tap: table =>
       debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
-  val productionsByName: Position ?=> String => Production =
-    val map = productions
+  object findProduction {
+    private val productionsByName = productions
       .collect:
-        case p if p.name.isDefined => p.name.get -> p
+        case p if p.name != null => p.name -> p
       .toMap
 
-    name => map.getOrElse(name, report.errorAndAbort(s"Production with name '$name' not found", summon[Position]))
+    private val productionsByRhs = productions
+      .collect: p =>
+        p.rhs -> p
+      .toMap
+
+    def apply(prod: Expr[Production]): Production = prod match
+      case '{ Production.ofName(${ Expr(name) }) } =>
+        productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
+      case '{ Production(${ Varargs(rhs) }*) } =>
+        val args = rhs
+          .map[alpaca.parser.Symbol.NonEmpty]:
+            case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
+            case '{ type name <: ValidName; $token: Token[name, ?, ?] } => Terminal(typeToString[name])
+          .toList
+
+        productionsByRhs.getOrElse(
+          NEL.unsafe(args),
+          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
+        )
+  }
 
   val resolutionExprs = scala.util
     .Try:
@@ -152,26 +189,22 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
-  val conflictResolutionTable = ConflictResolutionTable(
-    resolutionExprs
-      .flatMap: expr =>
-        // todo: should be resolved differently to provide better error messages
-        given Position = expr.asTerm.pos
+  def extractKey(expr: Expr[Production | Token[?, ?, ?]]): Production | ValidName = expr match
+    case '{ $prod: Production } => findProduction(prod)
+    case '{ $token: Token[name, ?, ?] } => typeToString[name]
 
-        expr match
-          case '{ (${ Expr(first) }: String).after(${ Varargs(afters) }*) } =>
-            afters.map:
-              case '{ $token: Token[name, ?, ?] } =>
-                NSet((productionsByName(first), typeToString[name]: Production | String)) -> typeToString[name]
-              case '{ ${ Expr(str) }: String } =>
-                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(str)
-          case '{ (${ Expr(first) }: String).before(${ Varargs(befores) }*) } =>
-            befores.map:
-              case '{ $token: Token[name, ?, ?] } =>
-                NSet((productionsByName(first), typeToString[name]: Production | String)) -> productionsByName(first)
-              case '{ ${ Expr(str) }: String } =>
-                NSet((productionsByName(first), productionsByName(str): Production | String)) -> productionsByName(first)
-      .toMap,
+  val conflictResolutionTable = ConflictResolutionTable(
+    resolutionExprs.view
+      .flatMap:
+        case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
+        case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
+        case expr => raiseShouldNeverBeCalled(expr.show)
+      .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
+        case (acc, (before, after)) =>
+          acc.updatedWith(extractKey(before)) {
+            case Some(set) => Some(set + extractKey(after))
+            case None => Some(Set(extractKey(after)))
+          },
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 

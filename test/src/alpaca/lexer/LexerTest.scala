@@ -1,10 +1,9 @@
-package alpaca.lexer
+package alpaca
+package lexer
 
 import alpaca.lexer.context.Lexem
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
-import java.nio.file.{Files, Path}
 
 final class LexerTest extends AnyFunSuite with Matchers {
 
@@ -93,25 +92,22 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\s+" => Token.Ignored
     }
 
-    val tempFile = Files.createTempFile("lexer_test", ".txt")
-    Files.writeString(tempFile, "(x + 42) * y - 1")
-    val reader = LazyReader.from(tempFile.toAbsolutePath)
-    val result = Lexer.tokenize(reader)
+    withLazyReader("(x + 42) * y - 1") { reader =>
+      val result = Lexer.tokenize(reader)
 
-    assert(
-      result == List(
-        Lexem("LPAREN", ()),
-        Lexem("IDENTIFIER", "x"),
-        Lexem("PLUS", ()),
-        Lexem("NUMBER", "42"),
-        Lexem("RPAREN", ()),
-        Lexem("MULTIPLY", ()),
-        Lexem("IDENTIFIER", "y"),
-        Lexem("MINUS", ()),
-        Lexem("NUMBER", "1"),
-      ),
-    )
-
-    Files.deleteIfExists(tempFile)
+      assert(
+        result == List(
+          Lexem("LPAREN", ()),
+          Lexem("IDENTIFIER", "x"),
+          Lexem("PLUS", ()),
+          Lexem("NUMBER", "42"),
+          Lexem("RPAREN", ()),
+          Lexem("MULTIPLY", ()),
+          Lexem("IDENTIFIER", "y"),
+          Lexem("MINUS", ()),
+          Lexem("NUMBER", "1"),
+        ),
+      )
+    }
   }
 }

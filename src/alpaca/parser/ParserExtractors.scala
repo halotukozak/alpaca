@@ -7,6 +7,16 @@ import alpaca.parser.ParserExtractors.*
 import scala.quoted.*
 import scala.reflect.NameTransformer
 
+/**
+ * Internal utility class for extracting and transforming parser patterns.
+ *
+ * This class is used during macro expansion to analyze parser rule definitions
+ * and extract information about terminals, non-terminals, and EBNF operators
+ * (optional, repeated) from pattern matching expressions.
+ *
+ * @tparam Q the Quotes type
+ * @tparam Ctx the parser context type
+ */
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: Type](using val quotes: Q) {
   import quotes.reflect.*
 
@@ -18,6 +28,18 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
       others: List[(production: Production, action: Expr[Action[Ctx]])],
     ),
   ]
+  val skipTypedOrTest: PartialFunction[Tree, Tree] =
+    case TypedOrTest(tree, _) => tree
+    case tree => tree
+
+  val extractEBNFAndAction: EBNFExtractor =
+    case extractNonTerminalRef(nonterminal) => nonterminal
+    case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
+    case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
+    case extractTerminalRef(terminal) => terminal
+    case extractOptionalTerminal(optionalTerminal) => optionalTerminal
+    case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
+    case x => raiseShouldNeverBeCalled(x.show)
 
   private val extractName: PartialFunction[Tree, String] =
     case Select(This(_), name) => NameTransformer.decode(name)
@@ -28,10 +50,6 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
     case bind: Bind => Some(bind)
     case Ident("_") => None
     case x => raiseShouldNeverBeCalled(x.show)
-
-  val skipTypedOrTest: PartialFunction[Tree, Tree] =
-    case TypedOrTest(tree, _) => tree
-    case tree => tree
 
   private val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
@@ -65,7 +83,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
         ) =>
       (symbol = Terminal(name), bind = bind, others = Nil)
 
-  val extractOptionalTerminal: EBNFExtractor =
+  private val extractOptionalTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(
             Select(
@@ -95,7 +113,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
         ),
       )
 
-  val extractRepeatedTerminal: EBNFExtractor =
+  private val extractRepeatedTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(
             Select(
@@ -125,11 +143,11 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
         ),
       )
 
-  val extractNonTerminalRef: EBNFExtractor =
+  private val extractNonTerminalRef: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind)))) =>
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
-  val extractOptionalNonTerminal: EBNFExtractor =
+  private val extractOptionalNonTerminal: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(Select(Select(_, name), "Option"), "unapply"), Nil, List(extractBind(bind)))) =>
       val fresh = NonTerminal.fresh(name)
       (
@@ -141,7 +159,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
         ),
       )
 
-  val extractRepeatedNonTerminal: EBNFExtractor =
+  private val extractRepeatedNonTerminal: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(Select(Select(_, name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
       val fresh = NonTerminal.fresh(name)
       (
@@ -152,17 +170,9 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
           (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
         ),
       )
-
-  val extractEBNFAndAction: EBNFExtractor =
-    case extractNonTerminalRef(nonterminal) => nonterminal
-    case extractOptionalNonTerminal(optionalNonTerminal) => optionalNonTerminal
-    case extractRepeatedNonTerminal(repeatedNonTerminal) => repeatedNonTerminal
-    case extractTerminalRef(terminal) => terminal
-    case extractOptionalTerminal(optionalTerminal) => optionalTerminal
-    case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
-    case x => raiseShouldNeverBeCalled(x.show)
 }
 
+//noinspection ScalaWeakerAccess
 private object ParserExtractors {
   val repeatedAction: Action[AnyGlobalCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
@@ -170,10 +180,9 @@ private object ParserExtractors {
 
   val emptyRepeatedAction: Action[AnyGlobalCtx] = (_, _) => Nil
 
-  val noneAction: Action[AnyGlobalCtx] =
-    (_, _) => None
-
   val someAction: Action[AnyGlobalCtx] =
     case (_, Seq(elem)) => Some(elem)
     case x => raiseShouldNeverBeCalled(x.toString)
+
+  val noneAction: Action[AnyGlobalCtx] = (_, _) => None
 }

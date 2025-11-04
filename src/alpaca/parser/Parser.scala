@@ -70,7 +70,7 @@ abstract class Parser[Ctx <: AnyGlobalCtx](
 
     @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
-      tables.parseTable(stack.head.index, nextSymbol) match
+      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 

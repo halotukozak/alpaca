@@ -10,12 +10,14 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import scala.collection.mutable
 
+import alpaca.parser.Production as P
+
 final class ParserApiTest extends AnyFunSuite with Matchers {
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])
 
   val CalcLexer = lexer {
     case " " => Token.Ignored
-    case " \\t" => Token.Ignored
+    case "\\t" => Token.Ignored
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
     case "\\+" => Token["PLUS"]
     case "-" => Token["MINUS"]
@@ -40,9 +42,9 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val Expr: Rule[Int] = rule(
       { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
       { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
-      { case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2 }: @name("times"),
-      { case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2 }: @name("divide"),
-      { case (CalcLexer.MINUS(_), Expr(expr)) => -expr }: @name("uminus"),
+      { case (Expr(expr1), CalcLexer.TIMES(_), Expr(expr2)) => expr1 * expr2 },
+      { case (Expr(expr1), CalcLexer.DIVIDE(_), Expr(expr2)) => expr1 / expr2 },
+      { case (CalcLexer.MINUS(_), Expr(expr)) => -expr },
       { case (CalcLexer.`\\(`(_), Expr(expr), CalcLexer.`\\)`(_)) => expr },
       { case CalcLexer.NUMBER(expr) => expr.value },
       { case CalcLexer.ID(id) =>
@@ -71,13 +73,13 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     val root = rule { case Statement(stmt) => stmt }
 
     override val resolutions = Set(
-      "uminus".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      "divide".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      "times".before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      "plus".before(CalcLexer.PLUS, CalcLexer.MINUS),
-      "plus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-      "minus".before(CalcLexer.PLUS, CalcLexer.MINUS),
-      "minus".after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
     )
   }
 

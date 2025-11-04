@@ -20,13 +20,23 @@ object ValidName {
     def unapply(x: Expr[ValidName])(using Quotes): Option[ValidName] =
       FromExpr.StringFromExpr[ValidName].unapply(x)
 
+  /**
+   * Given instance to lift a ValidName to a compile-time expression.
+   */
   given ToExpr[ValidName] with
     def apply(x: ValidName)(using Quotes): Expr[ValidName] =
       ToExpr.StringToExpr[ValidName].apply(x)
 
+  /**
+   * Extracts the string value from a ValidName type.
+   *
+   * @tparam Name the ValidName type
+   * @return the string value of the name
+   */
   def typeToString[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
       case x => raiseShouldNeverBeCalled(x.show)
+}
 }

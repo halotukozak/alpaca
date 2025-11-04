@@ -48,4 +48,4 @@ build/
 
 debug/
 src/alpaca/local.scala
-thesis/src/.texpadtmp
+thesis/src/.texpadtmp/

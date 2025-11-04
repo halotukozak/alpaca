@@ -1,10 +1,12 @@
-package alpaca.parser
+package alpaca
+package parser
 
+import alpaca.core.{*, given}
 import alpaca.core.Showable.*
-import alpaca.core.{show, NonEmptyList, Showable, ValidName, given}
+import alpaca.lexer.Token
 import alpaca.parser.Symbol
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.quoted.*
 
 final class name(name: ValidName) extends StaticAnnotation
@@ -24,7 +26,7 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
   val lhs: NonTerminal
 
   /** An optional name for the production. */
-  val name: Option[ValidName]
+  val name: ValidName | Null
 
   /**
    * Converts this production to an LR(0) item with a given lookahead.
@@ -34,27 +36,53 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
    */
   def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
 
-  case NonEmpty(lhs: NonTerminal, override val rhs: NonEmptyList[Symbol.NonEmpty], name: Option[ValidName] = None)
-    extends Production(rhs)
-  case Empty(lhs: NonTerminal, name: Option[ValidName] = None) extends Production(Symbol.Empty)
+  case NonEmpty(
+    lhs: NonTerminal & Symbol.NonEmpty,
+    override val rhs: NonEmptyList[Symbol.NonEmpty],
+    name: ValidName | Null = null,
+  ) extends Production(rhs)
+
+  case Empty(
+    lhs: NonTerminal,
+    name: ValidName | Null = null,
+  ) extends Production(Symbol.Empty)
 }
 
-private[parser] object Production {
-  given Showable[Production] =
-    case NonEmpty(lhs, rhs, Some(name)) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
-    case NonEmpty(lhs, rhs, None) => show"$lhs -> ${rhs.mkShow(" ")}"
-    case Empty(lhs, Some(name)) => show"$lhs -> ${Symbol.Empty} ($name)"
-    case Empty(lhs, None) => show"$lhs -> ${Symbol.Empty}"
+object Production {
+  /**
+   * Creates a production reference from symbols.
+   *
+   * This is compile-time only and used in conflict resolution definitions
+   * to refer to productions by their right-hand side.
+   *
+   * @param symbols the symbols on the right-hand side of the production
+   * @return a production reference
+   */
+  @compileTimeOnly(ConflictResolutionOnly)
+  inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
 
+  /**
+   * Creates a production reference from a name.
+   *
+   * This is compile-time only and used in conflict resolution definitions
+   * to refer to named productions.
+   *
+   * @param name the name of the production
+   * @return a production reference
+   */
+  @compileTimeOnly(ConflictResolutionOnly)
+  inline def ofName(name: ValidName): Production = dummy
+
+  /** Showable instance for displaying productions in human-readable form. */
+  given Showable[Production] =
+    case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
+    case NonEmpty(lhs, rhs, name) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
+    case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
+    case Empty(lhs, name) => show"$lhs -> ${Symbol.Empty} ($name)"
+
+  /** ToExpr instance for lifting productions to compile-time expressions. */
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
-      case NonEmpty(lhs, rhs, name) =>
-        '{
-          NonEmpty(
-            ${ Expr(lhs) },
-            ${ Expr[NonEmptyList[Symbol]](rhs) }.asInstanceOf[NonEmptyList[Symbol.NonEmpty]],
-            ${ Expr(name) },
-          )
-        }
+      case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
       case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }
 }
