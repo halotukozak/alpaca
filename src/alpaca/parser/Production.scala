@@ -49,6 +49,7 @@ private[parser] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
 }
 
 object Production {
+
   /**
    * Creates a production reference from symbols.
    *
