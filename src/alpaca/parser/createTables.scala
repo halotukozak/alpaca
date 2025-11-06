@@ -177,7 +177,7 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
       case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
     .map:
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
-    .getOrElse(raiseShouldNeverBeCalled("resolutions field not found or invalid"))
+    .getOrElse(Nil)
 
   def extractKey(expr: Expr[Production | Token[?, ?, ?]]): Production | ValidName = expr match
     case '{ $prod: Production } => findProduction(prod)
