@@ -40,10 +40,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
           alternatives
-            .map {
+            .map:
               case Literal(StringConstant(str)) => Result.unsafe(str, str)
               case x => raiseShouldNeverBeCalled(x.show)
-            }
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)
@@ -52,10 +51,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           Result.unsafe(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
-          alternatives.map {
+          alternatives.map:
             case Literal(StringConstant(str)) => Result.unsafe(str, str)
             case x => raiseShouldNeverBeCalled(x.show)
-          }
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
           Result.unsafe(name, regex) :: Nil
@@ -64,10 +62,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           Result.unsafe(
             str,
             alternatives
-              .map {
+              .map:
                 case Literal(StringConstant(str)) => str
                 case x => raiseShouldNeverBeCalled(x.show)
-              }
               .mkString("|"),
           ) :: Nil
         case x =>

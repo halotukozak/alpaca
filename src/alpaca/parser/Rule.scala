@@ -19,6 +19,7 @@ import scala.annotation.compileTimeOnly
  * @tparam Result the type of value produced when this rule is matched
  */
 trait Rule[Result] {
+
   /**
    * Pattern matching extractor for single occurrences of this rule.
    *
