@@ -35,7 +35,7 @@ Użycie parametrów kontekstowych (\texttt{using}) realizuje wzorzec dependency 
 Makro przyjmuje wyrażenie reprezentujące reguły leksera jako \texttt{Expr[Ctx ?=> LexerDefinition[Ctx]]} oraz instancje kontekstualnych klas pomocniczych.
 Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy.
 
-\subsection{Analiza drzewa składni abstrakcyjnej}\label{subsec:analiza-drzewa-skadni-abstrakcyjnej}
+\subsection{Analiza drzewa składni abstrakcyjnej}\label{subsec:analiza-drzewa-skladni-abstrakcyjnej}
 
 \subsubsection{Dekonstrukcja funkcji częściowej}\label{subsubsec:dekonstrukcja-funkcji-czesciowej}
 
@@ -80,7 +80,7 @@ Implementacja wykorzystuje rekurencyjne przetwarzanie drzewa AST z zastosowaniem
 
 \subsection{Generacja klasy anonimowej}\label{subsec:generacja-klasy-anonimowej}
 
-Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest konstruowana programatycznie: (1) tworzymy symbol klasy przez \texttt{Symbol.newClass} wraz z listą deklaracji pól i typów; (2) budujemy ciało klasy (\texttt{ClassDef}) zawierające \texttt{ValDef} dla każdego zdefiniowanego tokena oraz pola \texttt{tokens} i \texttt{byName}; (3) określamy rodzica przez wywołanie konstruktora \texttt{Tokenization[Ctx]} z wymaganymi zależnościami; (4) instancjonujemy klasę i nadajemy jej typ zrafi­nowany przez kolejne \texttt{Refinement} odpowiadające polom-tokenom.
+Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest konstruowana programatycznie: (1) tworzymy symbol klasy przez \texttt{Symbol.newClass} wraz z listą deklaracji pól i typów; (2) budujemy ciało klasy (\texttt{ClassDef}) zawierające \texttt{ValDef} dla każdego zdefiniowanego tokena oraz pola \texttt{tokens} i \texttt{byName}; (3) określamy rodzica przez wywołanie konstruktora \texttt{Tokenization[Ctx]} z wymaganymi zależnościami; (4) instancjonujemy klasę i nadajemy jej typ zrafinowany przez kolejne \texttt{Refinement} odpowiadające polom-tokenom.
 
 \lstinputlisting[language=scala,caption={Generacja i instancjowanie anonimowej klasy \texttt{Tokenization[Ctx]} z typem rafinowanym},label={lst:lexer-14-anon-class}, linerange={192-264}]{../../src/alpaca/lexer/Lexer.scala}
 
