@@ -115,7 +115,7 @@ Ta strategia jest zgodna z zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 \subsection{Wprowadzenie do generatora parserów}\label{subsec:wprowadzenie-do-generatora-parserow}
 
 System \texttt{alpaca.parser} stanowi zaawansowaną implementację generatora parserów LR(1), wykorzystującego metaprogramowanie Scali 3 do automatycznej konstrukcji tabel parsowania w czasie kompilacji.
-W przeciwieństwie do tradycyjnych generatorów parserów takich jak Yacc\cite{johnson1975yacc}, które generują kod w osobnym kroku kompilacji, system ALPACA integruje generację parsera bezpośrednio w procesie kompilacji Scali, oferując pełne wsparcie systemu typów oraz natychmiastową walidację gramatyk.
+W~przeciwieństwie do tradycyjnych generatorów parserów takich jak Yacc\cite{johnson1975yacc}, które generują kod w~osobnym kroku kompilacji, system ALPACA integruje generację parsera bezpośrednio w~procesie kompilacji Scali, oferując pełne wsparcie systemu typów oraz natychmiastową walidację gramatyk.
 
 Implementacja parsera reprezentuje znacznie bardziej złożone wyzwanie inżynierskie niż lekser, ze względu na konieczność:
 (1)~konstrukcji automatów LR(1) i tabel parsowania,
@@ -151,6 +151,7 @@ object CalcParser extends Parser[EmptyGlobalCtx] {
 
 Składnia wykorzystuje dopasowanie wzorców Scali do wyrażenia produkcji gramatycznych.
 Każdy przypadek (\texttt{case}) reprezentuje pojedynczą produkcję, gdzie lewa strona wzorca odpowiada prawej stronie produkcji gramatycznej, a wyrażenie po strzałce~(\texttt{=>}) definiuje akcję semantyczną.
+Na przykład wzorzec \texttt{\{ case (Expr(a), Lexer.PLUS(\_), Expr(b)) => a + b \}} odpowiada produkcji \texttt{Expr → Expr PLUS Expr} z~akcją sumującą wartości podwyrażeń.
 
 \subsection{Generacja tabel parsowania w czasie kompilacji}\label{subsec:generacja-tabel-parsowania-w-czasie-kompilacji}
 
@@ -190,7 +191,12 @@ Problem manifestował się podczas próby wyrażenia tabeli parsowania jako lite
 
 \begin{lstlisting}[language=scala,caption={Naiwna implementacja prowadząca do przekroczenia limitu},label={lst:parser-05-naive}]
 // Ta implementacja generuje jeden duży literal mapy
-Expr.ofList(entries.map(entry => '{ Map(...) += ${Expr(entry)} }))
+'{ Map(
+  (0, Terminal("PLUS")) -> Shift(1),
+  (0, Terminal("NUMBER")) -> Shift(2),
+  // ... tysiące kolejnych wpisów ...
+  (999, Terminal("EOF")) -> Reduction(prod)
+)}
 \end{lstlisting}
 
 Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \texttt{java.lang.ClassFormatError: Code length too large}.
