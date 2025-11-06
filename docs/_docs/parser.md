@@ -529,7 +529,7 @@ println(result3)  // 6
 ### LR Parse Table Generation
 
 ALPACA automatically generates LR parse tables at compile time:
-- Constructs the LR(0) or SLR(1) automaton
+- Constructs the LR(0) automaton
 - Builds ACTION and GOTO tables
 - Detects shift-reduce and reduce-reduce conflicts
 - Provides conflict resolution through precedence declarations
@@ -553,33 +553,3 @@ Parse tables are generated during compilation:
 - Grammar conflicts detected at compile time
 - Invalid rule references cause compilation errors
 - Type mismatches in productions caught early
-
-## Summary
-
-**Essential ALPACA parser patterns:**
-
-1. **Basic rule**: `rule({ case pattern => action })`
-2. **Multiple productions**: `rule(prod1, prod2, prod3)`
-3. **Recursive rules**: `{ case (Expr(a), op(_), Expr(b)) => ... }`
-4. **Optional elements**: `Rule.Option` (matches 0 or 1)
-5. **Repeated elements**: `Rule.List` (matches 0 or more)
-6. **Named productions**: `{ case ... => ... }: @name("name")`
-7. **Conflict resolution**: `P.ofName("name").before/after(tokens...)`
-
-**Best practices:**
-- Define `root` rule as the starting point
-- Use hierarchical rules for precedence (Factor → Term → Expr)
-- Name productions that need conflict resolution
-- Use context for maintaining state (symbol tables, etc.)
-- Handle token values with pattern matching and `.value`
-- Resolve shift-reduce conflicts explicitly with `resolutions`
-- Return meaningful result types from rules
-
-**Precedence hierarchy example:**
-```
-Expr    → Expr + Term | Expr - Term | Term         (lowest precedence)
-Term    → Term * Factor | Term / Factor | Factor   (medium precedence)
-Factor  → NUMBER | ( Expr )                        (highest precedence)
-```
-
-ALPACA's type-safe parser DSL makes grammar development both safe and expressive, with automatic parse table generation and compile-time error detection.
