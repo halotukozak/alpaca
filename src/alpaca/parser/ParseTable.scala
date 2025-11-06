@@ -2,7 +2,7 @@ package alpaca
 package parser
 
 import alpaca.core.{*, given}
-import alpaca.lexer.AlgorithmError
+import alpaca.core.AlgorithmError
 import alpaca.parser.ParseAction.*
 
 import scala.collection.mutable
@@ -64,6 +64,7 @@ private[parser] object ParseTable {
   def apply(
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
+  )(using Quotes,
   ): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0
