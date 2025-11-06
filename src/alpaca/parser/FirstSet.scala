@@ -1,8 +1,8 @@
 package alpaca.parser
 
-import alpaca.core.NonEmptyList
+import alpaca.core.{raiseShouldNeverBeCalled, NonEmptyList}
 import alpaca.parser.Symbol.*
-import scala.quoted.*
+
 import scala.annotation.tailrec
 
 /**
@@ -25,8 +25,7 @@ private[parser] object FirstSet {
    * @param productions the grammar productions
    * @return the computed FIRST sets
    */
-  def apply(productions: List[Production]): FirstSet =
-    loop(productions, Map.empty.withDefaultValue(Set.empty))
+  def apply(productions: List[Production]): FirstSet = loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec
   private def loop(productions: List[Production], firstSet: FirstSet): FirstSet =
@@ -34,7 +33,7 @@ private[parser] object FirstSet {
     if firstSet == newFirstSet then newFirstSet else loop(productions, newFirstSet)
 
   @tailrec
-  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production.runtimeChecked match
+  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production match {
     case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
       firstSet.updated(lhs, firstSet(lhs) + head)
 
@@ -51,6 +50,10 @@ private[parser] object FirstSet {
 
     case Production.Empty(lhs, name) =>
       firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+
+    case x =>
+      raiseShouldNeverBeCalled(x.toString)
+  }
 
   /** Extension methods for FirstSet. */
   extension (firstSet: FirstSet)

@@ -120,13 +120,14 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
-        .getOrElse(Nil)
+        .getOrElse(raiseShouldNeverBeCalled(body.show))
 
-      val infos = tokens.unsafeMap:
+      val infos = tokens.map:
         case '{ type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $remapping) } =>
           tokenInfo.valueOrAbort
         case '{ type name <: ValidName; IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) } =>
           tokenInfo.valueOrAbort
+        case x => raiseShouldNeverBeCalled(x.show)
 
       val patterns = infos.map(_.pattern)
       RegexChecker.checkPatterns(patterns).foreach(report.errorAndAbort)
@@ -151,15 +152,16 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
         )
 
     val fieldTpe = definedTokens
-      .unsafeFoldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])):
+      .foldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])):
         case (
               ('[type names <: Tuple; names], '[type types <: Tuple; types]),
               '{ $token: DefinedToken[name, Ctx, value] },
             ) =>
           (Type.of[name *: names], Type.of[Token[name, Ctx, value] *: types])
-      .runtimeChecked
+        case _ => raiseShouldNeverBeCalled()
       .match
         case ('[type names <: Tuple; names], '[type types <: Tuple; types]) => TypeRepr.of[NamedTuple[names, types]]
+        case _ => raiseShouldNeverBeCalled()
 
     val fieldsDecls = Symbol.newTypeAlias(
       parent = cls,
@@ -263,9 +265,10 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   definedTokens
-    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]):
+    .foldLeft(TypeRepr.of[Tokenization[Ctx]]):
       case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) =>
         Refinement(tpe, ValidName.typeToString[name], token.asTerm.tpe)
+      case _ => raiseShouldNeverBeCalled()
     .asType match
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])

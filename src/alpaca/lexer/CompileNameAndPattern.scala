@@ -1,13 +1,12 @@
 package alpaca
 package lexer
 
+import alpaca.core.raiseShouldNeverBeCalled
 import alpaca.lexer.CompileNameAndPattern.*
 
 import scala.annotation.tailrec
 import scala.quoted.*
 import alpaca.core.ValidName
-import alpaca.core.unsafeMap
-import alpaca.core.raiseShouldNeverBeCalled
 
 /**
  * Compiler for lexer token patterns during macro expansion.
@@ -40,8 +39,10 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           Result.unsafe(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => Result.unsafe(str, str)
+          alternatives
+            .map:
+              case Literal(StringConstant(str)) => Result.unsafe(str, str)
+              case x => raiseShouldNeverBeCalled(x.show)
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)
@@ -50,8 +51,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           Result.unsafe(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
-          alternatives.unsafeMap:
+          alternatives.map:
             case Literal(StringConstant(str)) => Result.unsafe(str, str)
+            case x => raiseShouldNeverBeCalled(x.show)
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
           Result.unsafe(name, regex) :: Nil
@@ -60,11 +62,13 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           Result.unsafe(
             str,
             alternatives
-              .unsafeMap:
+              .map:
                 case Literal(StringConstant(str)) => str
+                case x => raiseShouldNeverBeCalled(x.show)
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled(x)
+        case x =>
+          raiseShouldNeverBeCalled(x.toString)
 
     loop(TypeRepr.of[T], pattern)
 }

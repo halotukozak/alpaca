@@ -6,7 +6,6 @@ import alpaca.parser.ParserExtractors.*
 
 import scala.quoted.*
 import scala.reflect.NameTransformer
-import alpaca.core.AlgorithmError
 
 /**
  * Internal utility class for extracting and transforming parser patterns.
@@ -40,6 +39,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
     case extractTerminalRef(terminal) => terminal
     case extractOptionalTerminal(optionalTerminal) => optionalTerminal
     case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
+    case x => raiseShouldNeverBeCalled(x.show)
 
   private val extractName: PartialFunction[Tree, String] =
     case Select(This(_), name) => NameTransformer.decode(name)
@@ -49,6 +49,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
   private val extractBind: PartialFunction[Tree, Option[Bind]] =
     case bind: Bind => Some(bind)
     case Ident("_") => None
+    case x => raiseShouldNeverBeCalled(x.show)
 
   private val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
@@ -175,13 +176,13 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: AnyGlobalCtx: T
 private object ParserExtractors {
   val repeatedAction: Action[AnyGlobalCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled(x.toString)
 
   val emptyRepeatedAction: Action[AnyGlobalCtx] = (_, _) => Nil
 
   val someAction: Action[AnyGlobalCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled(x.toString)
 
   val noneAction: Action[AnyGlobalCtx] = (_, _) => None
 }

@@ -8,7 +8,6 @@ import alpaca.parser.context.AnyGlobalCtx
 import alpaca.parser.context.default.EmptyGlobalCtx
 
 import scala.annotation.{compileTimeOnly, experimental, tailrec}
-import scala.quoted.*
 
 /**
  * Configuration settings for the parser.

@@ -1,7 +1,7 @@
 package alpaca
 package parser
 
-import alpaca.core.{show, Showable}
+import alpaca.core.{raiseShouldNeverBeCalled, show, Showable}
 import alpaca.parser.context.AnyGlobalCtx
 
 import scala.quoted.*

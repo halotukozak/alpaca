@@ -43,13 +43,11 @@ private[alpaca] object Showable {
    */
   given [T: Showable]: Conversion[T, Shown] = _.show
 
-  def fromToString[T]: Showable[T] = _.toString
-
   /** Showable instance for String (identity). */
   given Showable[String] = x => x
 
   /** Showable instance for Int. */
-  given Showable[Int] = fromToString
+  given Showable[Int] = _.toString
 
   /** Showable instance for nullable types. */
   given [T: Showable]: Showable[T | Null] =
@@ -115,6 +113,6 @@ private[alpaca] object Showable {
     val showables =
       compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
     val values = Tuple.fromProductTyped(t).toList
-    val shown = showables.zip(values).map(_.show(_))
-    s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
+    val shown = showables.zip(values).map { case (s, v) => s.show(v) }
+    s"$name(${fields.zip(shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
 }

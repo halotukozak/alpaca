@@ -47,11 +47,13 @@ object BetweenStages {
 
     val betweenStages = Expr.ofList {
       parents
-        .map:
-          case '[type ctx >: Ctx <: GlobalCtx; ctx] =>
-            Expr
-              .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
-              .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))
+        .map { case '[type ctx >: Ctx <: GlobalCtx; ctx] =>
+          Expr
+            .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
+            .getOrElse {
+              report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}")
+            }
+        }
     }
 
     '{ (name, m, ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }

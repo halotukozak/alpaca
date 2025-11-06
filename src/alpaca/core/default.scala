@@ -1,32 +1,34 @@
 package alpaca.core
 
-import scala.quoted.*
+/**
+ * A type-level marker used to provide default type parameters.
+ *
+ * This class is used internally for type inference to allow optional type parameters
+ * with defaults in the lexer and parser APIs.
+ *
+ * @tparam T the provided type
+ * @tparam Q the default type
+ */
+//todo: better name
+infix private[alpaca] class WithDefault[T, Q]
 
-trait Default[+T] extends (() => T)
+private[alpaca] trait WithDefaultLowImplicitPriority {
 
-object Default:
-  given Default[Unit] = () => ()
-  given Default[Boolean] = () => false
-  given Default[Int] = () => 0
-  given Default[String] = () => ""
-  given Default[Nothing] = () => throw new NoSuchElementException("Default[Nothing] is not defined")
+  /**
+   * Ignore default - use the provided type when explicitly specified.
+   *
+   * @tparam Provided the type that was explicitly provided
+   * @tparam Default the default type (ignored)
+   */
+  given useProvided[Provided, Default]: (Provided WithDefault Default) = new (Provided WithDefault Default)
+}
 
-  given [T](using quotes: Quotes): Default[Expr[T]] = () => '{ ??? }
-  given [T](using quotes: Quotes): Default[List[T]] = () => Nil
+private[alpaca] object WithDefault extends WithDefaultLowImplicitPriority {
 
-  given (using quotes: Quotes): Default[quotes.reflect.Tree] =
-    import quotes.reflect.*
-    () => '{ ??? }.asTerm
-
-  given (using quotes: Quotes): Default[quotes.reflect.TypeRepr] =
-    import quotes.reflect.*
-    () => TypeRepr.of[Nothing]
-
-  given [T <: Tuple](using defaults: Tuple.Map[T, Default]): Default[T] =
-    () =>
-      defaults.toList
-        .asInstanceOf[List[Default[?]]]
-        .map(_.apply())
-        .toArray
-        .|>(Tuple.fromArray)
-        .asInstanceOf[T]
+  /**
+   * Infer type argument to default when no type is explicitly provided.
+   *
+   * @tparam Default the default type to use
+   */
+  given useDefault[Default]: (Default WithDefault Default) = new (Default WithDefault Default)
+}
