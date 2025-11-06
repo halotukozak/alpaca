@@ -120,7 +120,7 @@ private def lexerImpl[Ctx <: AnyGlobalCtx: Type](
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
-        .getOrElse(Nil)
+        .getOrElse(raiseShouldNeverBeCalled(body))
 
       val infos = tokens.unsafeMap:
         case '{ type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $remapping) } =>
