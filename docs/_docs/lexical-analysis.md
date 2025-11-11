@@ -386,6 +386,218 @@ Lexem(MULTIPLY,())
 Lexem(INT,3)
 ```
 
+## Advanced Implementation: Anonymous Classes and Type Refinement
+
+This section explores the internal implementation of ALPACA's lexer macro, focusing on how anonymous classes and type refinement enable type-safe token access.
+
+### How ALPACA Creates Lexers at Compile Time
+
+When you define a lexer using ALPACA's DSL, the `lexer` macro performs sophisticated compile-time code generation. Understanding this process reveals why ALPACA provides such excellent type safety and IDE support.
+
+### Anonymous Class Generation
+
+At the heart of ALPACA's implementation is the creation of an **anonymous class** at compile time. Here's how it works:
+
+```scala
+val myLexer = lexer {
+  case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
+  case "\\+" => Token["PLUS"]
+}
+```
+
+The macro transforms this DSL into something conceptually similar to:
+
+```scala
+val myLexer = new Tokenization[DefaultGlobalCtx] {
+  val NUMBER: DefinedToken["NUMBER", DefaultGlobalCtx, Int] = ...
+  val PLUS: DefinedToken["PLUS", DefaultGlobalCtx, Unit] = ...
+  
+  protected def compiled: Regex = "(?<token0>[0-9]+)|(?<token1>\\+)".r
+  def tokens: List[Token[?, DefaultGlobalCtx, ?]] = List(NUMBER, PLUS)
+  def byName: Map[String, DefinedToken[?, DefaultGlobalCtx, ?]] = Map("NUMBER" -> NUMBER, "PLUS" -> PLUS)
+}
+```
+
+**Implementation details** (from `Lexer.scala`, lines 201-207):
+
+```scala
+val cls = Symbol.newClass(
+  Symbol.spliceOwner,
+  Symbol.freshName("$anon"),      // Creates a unique anonymous class name
+  List(TypeRepr.of[Tokenization[Ctx]]),  // Extends Tokenization
+  decls,                          // Field and method declarations
+  None,
+)
+```
+
+### Type Refinement: Adding Token Fields to the Type
+
+The most powerful feature is **type refinement**, which adds each token as a field directly to the lexer's type. This enables:
+
+1. **Type-safe token access**: `myLexer.NUMBER` is known at compile time
+2. **IDE autocompletion**: Your editor suggests available tokens
+3. **Compile-time validation**: Typos in token names cause compilation errors
+
+**How refinement works** (from `Lexer.scala`, lines 267-276):
+
+```scala
+definedTokens
+  .foldLeft(TypeRepr.of[Tokenization[Ctx]]):
+    case (tpe, token) =>
+      Refinement(tpe, tokenName, tokenType)  // Adds field to type
+  .asType match
+    case '[refinedTpe] =>
+      // Returns: Tokenization[Ctx] & { val NUMBER: ...; val PLUS: ... }
+      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
+```
+
+The result is an **intersection type** (structural type) that includes both:
+- The base `Tokenization[Ctx]` functionality
+- Individual fields for each defined token
+
+### Type Refinement in Action
+
+Consider this lexer:
+
+```scala
+val calc = lexer {
+  case num @ "[0-9]+" => Token["NUM"](num.toInt)
+  case "\\+" => Token["ADD"]
+}
+```
+
+The inferred type becomes:
+
+```scala
+Tokenization[DefaultGlobalCtx] {
+  val NUM: DefinedToken["NUM", DefaultGlobalCtx, Int]
+  val ADD: DefinedToken["ADD", DefaultGlobalCtx, Unit]
+}
+```
+
+This allows you to:
+
+```scala
+// Access tokens with full type information
+calc.NUM  // Type: DefinedToken["NUM", DefaultGlobalCtx, Int]
+calc.ADD  // Type: DefinedToken["ADD", DefaultGlobalCtx, Unit]
+
+// Use in pattern matching with type safety
+def parseExpression(tokens: List[Token[?, DefaultGlobalCtx, ?]]): Unit = tokens match
+  case calc.NUM :: calc.ADD :: calc.NUM :: Nil => println("Valid expression")
+  case _ => println("Invalid")
+```
+
+### Why This Approach?
+
+ALPACA uses anonymous classes and type refinement for several compelling reasons:
+
+#### 1. **Zero Runtime Overhead**
+
+All token definitions are resolved at compile time. There's no reflection, no runtime type checking, and no dictionary lookups for token access.
+
+```scala
+myLexer.NUMBER  // Direct field access, not a map lookup
+```
+
+#### 2. **Maximum Type Safety**
+
+Each token has a precise type including its name and value type:
+
+```scala
+val lexer = lexer {
+  case x @ "[0-9]+" => Token["INT"](x.toInt)
+  case x @ "[0-9]+\\.[0-9]+" => Token["FLOAT"](x.toDouble)
+}
+
+lexer.INT    // Type: DefinedToken["INT", DefaultGlobalCtx, Int]
+lexer.FLOAT  // Type: DefinedToken["FLOAT", DefaultGlobalCtx, Double]
+```
+
+The compiler knows the exact value type of each token, preventing type errors.
+
+#### 3. **Excellent IDE Support**
+
+Because tokens are actual fields in the type, IDEs can:
+- Provide autocompletion for token names
+- Show token types on hover
+- Offer go-to-definition navigation
+- Detect typos before compilation
+
+#### 4. **Compile-Time Pattern Overlap Detection**
+
+The macro analyzes all patterns at compile time:
+
+```scala
+// This will NOT compile - patterns overlap!
+val invalid = lexer {
+  case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
+  case "[a-zA-Z]+" => Token["ALPHABETIC"]  // Error: overlaps with above
+}
+```
+
+ALPACA detects this conflict during compilation, not at runtime.
+
+#### 5. **Structural Typing with Nominal Benefits**
+
+The refined type is structural (you access fields by name), but each field has a precise nominal type. This combines the flexibility of structural typing with the safety of nominal typing.
+
+### Alternative Approaches and Trade-offs
+
+Why not use simpler approaches?
+
+#### Alternative 1: Map-Based Token Storage
+
+```scala
+class SimpleLexer {
+  val tokens: Map[String, Token[?, ?, ?]] = Map(
+    "NUMBER" -> ...,
+    "PLUS" -> ...
+  )
+  def apply(name: String) = tokens(name)
+}
+
+myLexer("NUMBER")  // Runtime lookup, loses type information
+```
+
+**Downsides:**
+- No type safety: `myLexer("NUMBR")` fails at runtime
+- No IDE support
+- Runtime overhead of map lookups
+- Lost type information: result is `Token[?, ?, ?]`
+
+#### Alternative 2: Explicit Class Definition
+
+```scala
+class MyLexer extends Tokenization[DefaultGlobalCtx] {
+  val NUMBER = DefinedToken[...]
+  val PLUS = DefinedToken[...]
+}
+
+val myLexer = new MyLexer
+```
+
+**Downsides:**
+- Verbose and repetitive
+- Requires manual regex compilation
+- No DSL for pattern matching
+- Error-prone (easy to forget patterns in compiled regex)
+
+### Benefits Summary
+
+ALPACA's anonymous class + type refinement approach provides:
+
+| Feature | Benefit |
+|---------|---------|
+| **Compile-time generation** | Zero runtime overhead, early error detection |
+| **Type refinement** | Type-safe token access with precise types |
+| **Structural typing** | Flexible field access with compiler validation |
+| **Anonymous classes** | Clean DSL without boilerplate |
+| **Macro analysis** | Pattern overlap detection, regex validation |
+| **IDE integration** | Autocompletion, navigation, inline errors |
+
+This sophisticated approach makes ALPACA both developer-friendly and highly efficient, catching errors early while maintaining excellent runtime performance.
+
 ## Error Handling
 
 todo: Add error handling section here.
