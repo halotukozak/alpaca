@@ -386,123 +386,126 @@ Lexem(MULTIPLY,())
 Lexem(INT,3)
 ```
 
-## Advanced Implementation: Anonymous Classes and Type Refinement
+## Zaawansowane aspekty implementacji: Klasy anonimowe i typy rafinowane
 
-This section explores the internal implementation of ALPACA's lexer macro, focusing on how anonymous classes and type refinement enable type-safe token access.
+### Generacja klas anonimowych w czasie kompilacji
 
-### How ALPACA Creates Lexers at Compile Time
+Kluczowym mechanizmem implementacyjnym makra `lexer` jest programatyczna konstrukcja klasy anonimowej w czasie kompilacji. Proces ten wykorzystuje API refleksji TASTy do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM.
 
-When you define a lexer using ALPACA's DSL, the `lexer` macro performs sophisticated compile-time code generation. Understanding this process reveals why ALPACA provides such excellent type safety and IDE support.
+#### Konstrukcja symbolu klasy
 
-### Anonymous Class Generation
-
-At the heart of ALPACA's implementation is the creation of an **anonymous class** at compile time. Here's how it works:
-
-```scala
-val myLexer = lexer {
-  case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
-  case "\\+" => Token["PLUS"]
-}
-```
-
-The macro transforms this DSL into something conceptually similar to:
-
-```scala
-val myLexer = new Tokenization[DefaultGlobalCtx] {
-  val NUMBER: DefinedToken["NUMBER", DefaultGlobalCtx, Int] = ...
-  val PLUS: DefinedToken["PLUS", DefaultGlobalCtx, Unit] = ...
-  
-  protected def compiled: Regex = "(?<token0>[0-9]+)|(?<token1>\\+)".r
-  def tokens: List[Token[?, DefaultGlobalCtx, ?]] = List(NUMBER, PLUS)
-  def byName: Map[String, DefinedToken[?, DefaultGlobalCtx, ?]] = Map("NUMBER" -> NUMBER, "PLUS" -> PLUS)
-}
-```
-
-**Implementation details** (from `Lexer.scala`, lines 201-207):
+Anonimowa klasa implementująca `Tokenization[Ctx]` jest tworzona poprzez wywołanie `Symbol.newClass` (linie 201-207 w `Lexer.scala`):
 
 ```scala
 val cls = Symbol.newClass(
   Symbol.spliceOwner,
-  Symbol.freshName("$anon"),      // Creates a unique anonymous class name
-  List(TypeRepr.of[Tokenization[Ctx]]),  // Extends Tokenization
-  decls,                          // Field and method declarations
+  Symbol.freshName("$anon"),
+  List(TypeRepr.of[Tokenization[Ctx]]),
+  decls,
   None,
 )
 ```
 
-### Type Refinement: Adding Token Fields to the Type
+Metoda `Symbol.newClass` przyjmuje następujące parametry:
+- **Symbol.spliceOwner** — właściciel nowego symbolu w hierarchii definiowania, zapewniający poprawną widoczność w zakresie leksykalnym
+- **Symbol.freshName("$anon")** — generowanie unikalnej nazwy klasy zgodnie z konwencją kompilatatora Scali dla klas anonimowych
+- **List(TypeRepr.of[Tokenization[Ctx]])** — lista typów bazowych, w tym przypadku pojedyncza implementacja abstrakcyjnej klasy `Tokenization`
+- **decls** — funkcja dostarczająca listy deklaracji członków klasy (pól i metod)
+- **None** — opcjonalna klasa companion (niewykorzystana w tym przypadku)
 
-The most powerful feature is **type refinement**, which adds each token as a field directly to the lexer's type. This enables:
+#### Definicja członków klasy
 
-1. **Type-safe token access**: `myLexer.NUMBER` is known at compile time
-2. **IDE autocompletion**: Your editor suggests available tokens
-3. **Compile-time validation**: Typos in token names cause compilation errors
+Funkcja `decls` (linie 143-199) konstruuje pełną listę deklaracji dla klasy anonimowej:
 
-**How refinement works** (from `Lexer.scala`, lines 267-276):
+1. **Pola tokenów** — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu `DefinedToken[Name, Ctx, Value]`
+2. **Type alias Fields** — typ pomocniczy w formie `NamedTuple` ułatwiający strukturalny dostęp do tokenów
+3. **Pole compiled** — wartość typu `Regex` zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
+4. **Pole tokens** — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
+5. **Pole byName** — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
+
+#### Materiałizacja klasy
+
+Po zdefiniowaniu symbolu klasy, następuje konstrukcja jej ciała (linie 209-255):
+
+```scala
+val body = {
+  val tokenVals = definedTokens.collect {
+    case token: DefinedToken[name, Ctx, value] =>
+      ValDef(cls.fieldMember(tokenName), Some(tokenExpr))
+  }
+  
+  tokenVals ++ Vector(
+    TypeDef(cls.typeMember("Fields")),
+    ValDef(cls.fieldMember("compiled"), Some(regexExpr)),
+    ValDef(cls.fieldMember("tokens"), Some(tokensListExpr)),
+    ValDef(cls.fieldMember("byName"), Some(byNameMapExpr))
+  )
+}
+```
+
+Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora (linia 274):
+
+```scala
+val newCls = Typed(
+  New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone,
+  TypeTree.of[refinedTpe]
+)
+```
+
+### Typy rafinowane (refinement types)
+
+Mechanizm typów rafinowanych stanowi fundamentalną cechę systemu typów Scali umożliwiającą precyzyjne wyrażenie struktury typów w czasie kompilacji. W kontekście implementacji leksera, typy rafinowane pozwalają na dodanie informacji o polach tokenów bezpośrednio do typu zwracanego przez makro.
+
+#### Proces rafinowania typu
+
+Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego (linie 267-272):
 
 ```scala
 definedTokens
   .foldLeft(TypeRepr.of[Tokenization[Ctx]]):
-    case (tpe, token) =>
-      Refinement(tpe, tokenName, tokenType)  // Adds field to type
+    case (tpe, token: DefinedToken[name, Ctx, value]) =>
+      Refinement(tpe, tokenName, tokenType)
   .asType match
     case '[refinedTpe] =>
-      // Returns: Tokenization[Ctx] & { val NUMBER: ...; val PLUS: ... }
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
 ```
 
-The result is an **intersection type** (structural type) that includes both:
-- The base `Tokenization[Ctx]` functionality
-- Individual fields for each defined token
+Funkcja `Refinement(tpe, name, memberType)` tworzy nowy typ będący rozszerzeniem typu `tpe` o członka `name` typu `memberType`. Operacja ta jest wykonywana w czasie kompilacji i nie generuje dodatkowego kodu w czasie wykonania.
 
-### Type Refinement in Action
+#### Typ przecięcia (intersection type)
 
-Consider this lexer:
+Wynikowy typ ma formę typu przecięcia:
 
-```scala
-val calc = lexer {
-  case num @ "[0-9]+" => Token["NUM"](num.toInt)
-  case "\\+" => Token["ADD"]
+```
+Tokenization[Ctx] & { 
+  val TOKEN1: DefinedToken["TOKEN1", Ctx, Type1]
+  val TOKEN2: DefinedToken["TOKEN2", Ctx, Type2]
+  ...
 }
 ```
 
-The inferred type becomes:
+Ten typ reprezentuje wartości będące jednocześnie instancjami `Tokenization[Ctx]` oraz posiadające określone pola strukturalne. Kompilator Scali wykorzystuje tę informację do:
+- Walidacji dostępu do pól w czasie kompilacji
+- Zapewnienia inferowania precyzyjnych typów
+- Umożliwienia refaktoryzacji z pełnym wsparciem IDE
 
-```scala
-Tokenization[DefaultGlobalCtx] {
-  val NUM: DefinedToken["NUM", DefaultGlobalCtx, Int]
-  val ADD: DefinedToken["ADD", DefaultGlobalCtx, Unit]
-}
-```
+### Uzasadnienie wybranego podejścia implementacyjnego
 
-This allows you to:
+#### Eliminacja narzutu wykonania w czasie działania programu
 
-```scala
-// Access tokens with full type information
-calc.NUM  // Type: DefinedToken["NUM", DefaultGlobalCtx, Int]
-calc.ADD  // Type: DefinedToken["ADD", DefaultGlobalCtx, Unit]
+Wszystkie definicje tokenów są rozwiązywane statycznie w czasie kompilacji. Dostęp do tokenów odbywa się poprzez bezpośrednie odwołanie do pola klasy, co po kompilacji do kodu bajtowego JVM redukuje się do instrukcji `getfield` — operacji o złożoności O(1) bez żadnego narzutu pośrednictwa.
 
-// Use in pattern matching with type safety
-def parseExpression(tokens: List[Token[?, DefaultGlobalCtx, ?]]): Unit = tokens match
-  case calc.NUM :: calc.ADD :: calc.NUM :: Nil => println("Valid expression")
-  case _ => println("Invalid")
-```
+Alternatywne podejście oparte na strukturze mapującej (np. `Map[String, Token]`) wymagałoby:
+- Obliczenia funkcji haszującej dla klucza
+- Przeszukiwania tablicy haszującej
+- Potencjalnej obsługi kolizji
+- Dynamicznego rzutowania typu
 
-### Why This Approach?
+co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator JIT.
 
-ALPACA uses anonymous classes and type refinement for several compelling reasons:
+#### Bezpieczeństwo typów na poziomie systemu
 
-#### 1. **Zero Runtime Overhead**
-
-All token definitions are resolved at compile time. There's no reflection, no runtime type checking, and no dictionary lookups for token access.
-
-```scala
-myLexer.NUMBER  // Direct field access, not a map lookup
-```
-
-#### 2. **Maximum Type Safety**
-
-Each token has a precise type including its name and value type:
+Dzięki typom rafinowanym, każdy token posiada precyzyjny typ znany kompilatorowi:
 
 ```scala
 val lexer = lexer {
@@ -510,43 +513,43 @@ val lexer = lexer {
   case x @ "[0-9]+\\.[0-9]+" => Token["FLOAT"](x.toDouble)
 }
 
-lexer.INT    // Type: DefinedToken["INT", DefaultGlobalCtx, Int]
-lexer.FLOAT  // Type: DefinedToken["FLOAT", DefaultGlobalCtx, Double]
+lexer.INT    // Typ: DefinedToken["INT", DefaultGlobalCtx, Int]
+lexer.FLOAT  // Typ: DefinedToken["FLOAT", DefaultGlobalCtx, Double]
 ```
 
-The compiler knows the exact value type of each token, preventing type errors.
+System typów weryfikuje poprawność wszystkich operacji w czasie kompilacji, eliminując możliwość błędów związanych z niepoprawnym typowaniem wartości tokenów.
 
-#### 3. **Excellent IDE Support**
+#### Integracja z narzędziami deweloperskimi
 
-Because tokens are actual fields in the type, IDEs can:
-- Provide autocompletion for token names
-- Show token types on hover
-- Offer go-to-definition navigation
-- Detect typos before compilation
+Ponieważ tokeny są reprezentowane jako rzeczywiste pola w typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do:
+- Automatycznego uzupełniania nazw tokenów
+- Prezentacji pełnych sygnatur typów przy najechaniu kursorem
+- Nawigacji do definicji przez mechanizm "go-to-definition"
+- Wykrywania błędów składniowych przed kompilacją
 
-#### 4. **Compile-Time Pattern Overlap Detection**
+Te funkcjonalności są niemożliwe do realizacji w przypadku dostępu przez struktury dynamiczne.
 
-The macro analyzes all patterns at compile time:
+#### Statyczna detekcja konfliktów wzorców
+
+Makro przeprowadza analizę wszystkich wzorców w czasie kompilacji, wykrywając potencjalne konflikty nakładających się wyrażeń regularnych:
 
 ```scala
-// This will NOT compile - patterns overlap!
+// Kod nie skompiluje się — wykryto konflikt wzorców
 val invalid = lexer {
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
-  case "[a-zA-Z]+" => Token["ALPHABETIC"]  // Error: overlaps with above
+  case "[a-zA-Z]+" => Token["ALPHABETIC"]  // Błąd: wzorzec nakłada się z poprzednim
 }
 ```
 
-ALPACA detects this conflict during compilation, not at runtime.
+Mechanizm ten zapewnia, że błędy konfiguracji są wykrywane na etapie kompilacji, a nie w czasie wykonania programu, co jest zgodne z zasadą "fail-fast" w inżynierii oprogramowania.
 
-#### 5. **Structural Typing with Nominal Benefits**
+#### Typowanie strukturalne z gwarancjami nominalnymi
 
-The refined type is structural (you access fields by name), but each field has a precise nominal type. This combines the flexibility of structural typing with the safety of nominal typing.
+Zastosowanie typów rafinowanych łączy zalety typowania strukturalnego (elastyczność w dostępie do składowych) z bezpieczeństwem typowania nominalnego (jednoznaczna identyfikacja typów). Każde pole w typie rafinowanym ma precyzyjny typ nominalny, podczas gdy dostęp do tych pól odbywa się przez nazwę, co zapewnia elastyczność interfejsu.
 
-### Alternative Approaches and Trade-offs
+### Analiza alternatywnych rozwiązań
 
-Why not use simpler approaches?
-
-#### Alternative 1: Map-Based Token Storage
+#### Podejście oparte na mapowaniu dynamicznym
 
 ```scala
 class SimpleLexer {
@@ -554,49 +557,47 @@ class SimpleLexer {
     "NUMBER" -> ...,
     "PLUS" -> ...
   )
-  def apply(name: String) = tokens(name)
+  def apply(name: String): Token[?, ?, ?] = tokens(name)
 }
-
-myLexer("NUMBER")  // Runtime lookup, loses type information
 ```
 
-**Downsides:**
-- No type safety: `myLexer("NUMBR")` fails at runtime
-- No IDE support
-- Runtime overhead of map lookups
-- Lost type information: result is `Token[?, ?, ?]`
+**Wady:**
+- Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w czasie wykonania
+- Utrata informacji o typach: zwracany typ to egzystencjalny `Token[?, ?, ?]`
+- Narzut wydajnościowy operacji haszowania i przeszukiwania
+- Brak wsparcia narzędzi deweloperskich
 
-#### Alternative 2: Explicit Class Definition
+#### Podejście oparte na jawnej definicji klasy
 
 ```scala
 class MyLexer extends Tokenization[DefaultGlobalCtx] {
   val NUMBER = DefinedToken[...]
   val PLUS = DefinedToken[...]
+  protected def compiled: Regex = "(?<token0>[0-9]+)|(?<token1>\\+)".r
+  // ...
 }
-
-val myLexer = new MyLexer
 ```
 
-**Downsides:**
-- Verbose and repetitive
-- Requires manual regex compilation
-- No DSL for pattern matching
-- Error-prone (easy to forget patterns in compiled regex)
+**Wady:**
+- Wysoki poziom redundancji kodu (boilerplate)
+- Konieczność ręcznej kompilacji wyrażeń regularnych
+- Podatność na błędy synchronizacji między definicjami tokenów a wyrażeniem regularnym
+- Brak mechanizmu DSL ułatwiającego definicję reguł
 
-### Benefits Summary
+### Podsumowanie korzyści
 
-ALPACA's anonymous class + type refinement approach provides:
+Zastosowanie klas anonimowych i typów rafinowanych w implementacji systemu ALPACA zapewnia:
 
-| Feature | Benefit |
-|---------|---------|
-| **Compile-time generation** | Zero runtime overhead, early error detection |
-| **Type refinement** | Type-safe token access with precise types |
-| **Structural typing** | Flexible field access with compiler validation |
-| **Anonymous classes** | Clean DSL without boilerplate |
-| **Macro analysis** | Pattern overlap detection, regex validation |
-| **IDE integration** | Autocompletion, navigation, inline errors |
+| Aspekt | Korzyść |
+|--------|---------|
+| **Wydajność** | Zerowy narzut wykonania, bezpośredni dostęp do pól |
+| **Bezpieczeństwo typów** | Pełna weryfikacja w czasie kompilacji |
+| **Ergonomia** | Przejrzysty DSL bez kodu pomocniczego |
+| **Narzędzia** | Pełne wsparcie IDE i refaktoryzacji |
+| **Walidacja** | Statyczna detekcja konfliktów i błędów konfiguracji |
+| **Integracja** | Bezproblemowa współpraca z systemem typów Scali |
 
-This sophisticated approach makes ALPACA both developer-friendly and highly efficient, catching errors early while maintaining excellent runtime performance.
+Zastosowane podejście łączy w sobie zaawansowane techniki metaprogramowania z pragmatycznymi rozwiązaniami inżynierskimi, dostarczając system o wysokim poziomie abstrakcji przy zachowaniu maksymalnej wydajności i bezpieczeństwa.
 
 ## Error Handling
 
