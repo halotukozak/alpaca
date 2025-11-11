@@ -20,8 +20,6 @@ Add Alpaca as a dependency in your `build.mill`:
 ```scala
 //| mill-version: 1.0.6
 //| mill-jvm-version: 21
-//| mvnDeps:
-//| - com.github.halotukozak::alpaca:0.1.0
 
 import mill._
 import mill.scalalib._
@@ -266,9 +264,9 @@ See the [LICENSE](LICENSE) file for details.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Author
+## Authors
 
-Created by [halotukozak](https://github.com/halotukozak)
+Created by [halotukozak](https://github.com/halotukozak) and [Corvette653](https://github.com/Corvette653)
 
 ---
 
