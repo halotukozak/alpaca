@@ -15,7 +15,6 @@ object ValidName {
 
   def typeToString[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*
-    TypeRepr.of[Name] match
-      case ConstantType(StringConstant(str)) => str
-      case x => raiseShouldNeverBeCalled(x.show)
+    val ConstantType(StringConstant(str)) = TypeRepr.of[Name].runtimeChecked
+    str
 }

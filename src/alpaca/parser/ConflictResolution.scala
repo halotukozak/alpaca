@@ -2,7 +2,8 @@ package alpaca
 package parser
 
 import alpaca.core.*
-import alpaca.lexer.{AlgorithmError, Token}
+import alpaca.lexer.Token
+import alpaca.core.AlgorithmError
 import scala.collection.mutable
 import alpaca.core.Showable.mkShow
 import scala.annotation.compileTimeOnly

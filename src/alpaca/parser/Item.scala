@@ -3,7 +3,7 @@ package parser
 
 import alpaca.core.{show, Showable}
 import alpaca.core.Showable.*
-import alpaca.lexer.AlgorithmError
+import alpaca.core.AlgorithmError
 import alpaca.parser.{FirstSet, Symbol}
 
 /**

@@ -5,6 +5,7 @@ import alpaca.lexer.context.{AnyGlobalCtx, Lexem}
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
+import alpaca.core.AlgorithmError
 
 /**
  * The result of compiling a lexer definition.
@@ -63,7 +64,8 @@ abstract class Tokenization[Ctx <: AnyGlobalCtx: {Copyable as copy, BetweenStage
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)
-          val lexem = List(token).collect { case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem }
+          val lexem = List(token).collect:
+            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

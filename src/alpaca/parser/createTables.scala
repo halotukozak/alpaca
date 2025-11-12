@@ -77,7 +77,8 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
   val parserExtractor = new ParserExtractors[quotes.type, Ctx]
   import parserExtractor.*
 
-  def extractEBNF(ruleName: String): Expr[Rule[?]] => Seq[(production: Production, action: Expr[Action[Ctx]])] = {
+  def extractEBNF(ruleName: String)
+    : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
@@ -88,9 +89,8 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
             binds.zipWithIndex
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
-              .map:
-                case ((bind, '[t]), idx) => (find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm)
-                case x => raiseShouldNeverBeCalled(x.toString)
+              .unsafeFlatMap:
+                case ((bind, '[t]), idx) => Some((find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm))
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
@@ -103,15 +103,13 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
         case other => other -> null
 
       cases
-        .map: expr =>
-          extractProductionName(expr.asTerm)
-        .map:
+        .map(_.asTerm)
+        .map(extractProductionName)
+        .unsafeMap:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
-          case x =>
-            raiseShouldNeverBeCalled(x.toString)
-        .flatMap:
+        .unsafeFlatMap:
           case (CaseDef(pattern, Some(_), rhs), name) =>
             throw new NotImplementedError("Guards are not supported yet")
           // Tuple1
@@ -129,27 +127,19 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
               production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
               action = createAction(binds, rhs),
             ) :: others.flatten
-          case (x, name) =>
-            raiseShouldNeverBeCalled(x.show)
-    case x => raiseShouldNeverBeCalled(x.show)
-  }
 
   val rules = parserTpe.typeSymbol.declarations
-    .filter:
-      _.typeRef <:< TypeRepr.of[Rule[?]]
-    .map:
-      _.tree
+    .filter(_.typeRef <:< TypeRepr.of[Rule[?]])
+    .map(_.tree)
 
   val table = rules
-    .flatMap:
+    .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-      case x => raiseShouldNeverBeCalled(x.show)
     .tap: table =>
       debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
 
   val productions = table
-    .map:
-      _.production
+    .map(_.production)
     .tap: table =>
       debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
@@ -195,16 +185,14 @@ private def createTablesImpl[Ctx <: AnyGlobalCtx: Type](
 
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs.view
-      .flatMap:
+      .unsafeFlatMap:
         case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
         case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
-        case expr => raiseShouldNeverBeCalled(expr.show)
       .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
         case (acc, (before, after)) =>
-          acc.updatedWith(extractKey(before)) {
+          acc.updatedWith(extractKey(before)):
             case Some(set) => Some(set + extractKey(after))
-            case None => Some(Set(extractKey(after)))
-          },
+            case None => Some(Set(extractKey(after))),
   ).tap: table =>
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
