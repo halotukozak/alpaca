@@ -1,15 +1,8 @@
-package alpaca.integration
+package alpaca
+package integration
 
 import org.scalatest.funsuite.AnyFunSuite
-
-import alpaca.withLazyReader
-
-import alpaca.lexer.lexer
-import alpaca.lexer.Token
-
-import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.{after, before, name, rule, Parser, Rule}
-import alpaca.parser.Production as P
+import Production as P
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])
@@ -44,7 +37,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
   }
 
-  object ASTPrinterParser extends Parser[EmptyGlobalCtx] {
+  object ASTPrinterParser extends Parser {
     val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
       ASTNode("program", instructions)
     }

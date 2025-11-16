@@ -60,6 +60,7 @@ private[parser] object ParseTable {
   def apply(
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
+  )(using Quotes,
   ): ParseTable = {
     val firstSet = FirstSet(productions)
     var currStateId = 0

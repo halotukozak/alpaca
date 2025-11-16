@@ -1,4 +1,5 @@
 package alpaca
+package integration
 
 import org.scalatest.funsuite.AnyFunSuite
 
