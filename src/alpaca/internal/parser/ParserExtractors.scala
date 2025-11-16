@@ -40,7 +40,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     case extractTerminalRef(terminal) => terminal
     case extractOptionalTerminal(optionalTerminal) => optionalTerminal
     case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
-    case x => raiseShouldNeverBeCalled(x.show)
+    case x => raiseShouldNeverBeCalled(x.toString)
 
   // todo NameTransformer.decode once
   private val extractName: PartialFunction[Tree, String] =
@@ -51,14 +51,20 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
   private val extractBind: PartialFunction[Tree, Option[Bind]] =
     case bind: Bind => Some(bind)
     case Ident("_") => None
-    case x => raiseShouldNeverBeCalled(x.show)
+    case x => raiseShouldNeverBeCalled(x.toString)
+
+//todo: it should be compared with Symbol or sth
+  private val extractMethodName: PartialFunction[Tree, String] =
+    case Select(_, name) => name
+    case Ident(name) => name
+    case x => raiseShouldNeverBeCalled(x.toString)
 
   private val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(
             Select(
               TypeApply(
-                Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                 List(asInstanceOfType),
               ),
               "unapply",
@@ -71,10 +77,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     case skipTypedOrTest(
           Unapply(
             Apply(
-              Select(_, "unapply"),
+              extractMethodName("unapply"),
               List(
                 TypeApply(
-                  Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                  Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                   List(asInstanceOfType),
                 ),
               ),
@@ -90,10 +96,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           Unapply(
             Select(
               Apply(
-                Select(_, "Option"),
+                extractMethodName("Option"),
                 List(
                   TypeApply(
-                    Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                    Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                     List(asInstanceOfType),
                   ),
                 ),
@@ -120,10 +126,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           Unapply(
             Select(
               Apply(
-                Select(_, "List"),
+                extractMethodName("List"),
                 List(
                   TypeApply(
-                    Select(Apply(Select(_, "selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
+                    Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                     List(asInstanceOfType),
                   ),
                 ),
@@ -150,7 +156,9 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
   private val extractOptionalNonTerminal: EBNFExtractor =
-    case skipTypedOrTest(Unapply(Select(Select(Select(_, name), "Option"), "unapply"), Nil, List(extractBind(bind)))) =>
+    case skipTypedOrTest(
+          Unapply(Select(Select(extractName(name), "Option"), "unapply"), Nil, List(extractBind(bind))),
+        ) =>
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
@@ -162,7 +170,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
   private val extractRepeatedNonTerminal: EBNFExtractor =
-    case skipTypedOrTest(Unapply(Select(Select(Select(_, name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
+    case skipTypedOrTest(Unapply(Select(Select(extractName(name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,

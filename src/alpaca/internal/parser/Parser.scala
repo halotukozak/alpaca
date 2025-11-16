@@ -38,7 +38,7 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   def root: Rule[?]
 
-  def resolutions: Set[ConflictResolution] = Set.empty
+  val resolutions: Set[ConflictResolution] = Set.empty
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -51,7 +51,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings[?, ?]): (ctx: Ctx, result: R | Null) = {
+  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings): (ctx: Ctx, result: R | Null) = {
     type State = (index: Int, node: R | Lexem[?, ?] | Null)
     val ctx = empty()
 

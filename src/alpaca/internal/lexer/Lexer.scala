@@ -20,13 +20,10 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
-  debugSettings: Expr[DebugSettings[?, ?]],
+)(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx]] = {
   import quotes.reflect.*
-
-  given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
-
   type ThisToken = Token[?, Ctx, ?]
 
   val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")

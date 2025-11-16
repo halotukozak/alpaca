@@ -29,8 +29,8 @@ object Tables:
    * @param debugSettings debug configuration
    * @return the generated parse and action tables
    */
-  inline given [Ctx <: ParserCtx](using inline debugSettings: DebugSettings[?, ?]): Tables[Ctx] =
-    ${ createTablesImpl[Ctx]('{ debugSettings }) }
+  inline given [Ctx <: ParserCtx](using inline debugSettings: DebugSettings): Tables[Ctx] =
+    ${ createTablesImpl[Ctx](using '{ debugSettings }) }
 
 /**
  * Macro implementation that builds parse and action tables at compile time.
@@ -51,13 +51,10 @@ object Tables:
  * @return an expression containing the parse and action tables
  */
 private def createTablesImpl[Ctx <: ParserCtx: Type](
-  using quotes: Quotes,
-)(
-  debugSettings: Expr[DebugSettings[?, ?]],
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = {
+  using debugSettings: Expr[DebugSettings],
+)(using quotes: Quotes,
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = runWithTimeout:
   import quotes.reflect.*
-
-  given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
 
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
@@ -135,6 +132,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val table = rules
     .flatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
+      case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
       case x => raiseShouldNeverBeCalled(x.show)
     .tap: table =>
       debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
@@ -218,4 +216,3 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   )
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
-}
