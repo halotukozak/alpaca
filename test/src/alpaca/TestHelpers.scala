@@ -1,6 +1,7 @@
 package alpaca
 
-import alpaca.lexer.LazyReader
+import alpaca.internal.lexer.LazyReader
+
 import java.nio.file.Files
 import scala.util.Using
 

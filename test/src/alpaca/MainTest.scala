@@ -1,16 +1,6 @@
 package alpaca
 
-import alpaca.core.{show, Copyable, Showable}
-import alpaca.core.Showable.mkShow
-import alpaca.lexer.{lexer, Token}
-import alpaca.parser.Parser
 import org.scalatest.funsuite.AnyFunSuite
-import alpaca.parser.context.GlobalCtx
-import alpaca.parser.context.default.EmptyGlobalCtx
-import scala.quoted.Expr
-import java.nio.file.Path
-import alpaca.parser.Rule
-import alpaca.parser.rule
 
 @main def main(): Unit = {
   val CalcLexer = lexer {
@@ -24,7 +14,7 @@ import alpaca.parser.rule
     case "[ \\t\\r\\n]+" => Token.Ignored
   }
 
-  object CalcParser extends Parser[EmptyGlobalCtx] {
+  object CalcParser extends Parser {
     val root: Rule[Double] = rule { case Expr(e) => e }
 
     val Expr: Rule[Double] = rule(
