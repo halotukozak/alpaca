@@ -1,4 +1,4 @@
-package alpaca.lexer
+package alpaca.core
 
 /**
  * Exception thrown when an algorithmic error occurs during lexing or parsing.
