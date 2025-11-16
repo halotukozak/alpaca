@@ -2,8 +2,10 @@ package alpaca
 package integration
 
 import org.scalatest.funsuite.AnyFunSuite
+
 import alpaca.lexer.lexer
 import alpaca.lexer.Token
+
 import alpaca.parser.Parser
 import alpaca.parser.context.default.EmptyGlobalCtx
 import alpaca.parser.Rule
