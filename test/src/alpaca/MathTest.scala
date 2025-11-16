@@ -5,6 +5,16 @@ import Production as P
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import alpaca.lexer.lexer
+import alpaca.lexer.Token
+
+import alpaca.parser.Parser
+import alpaca.parser.context.default.EmptyGlobalCtx
+import alpaca.parser.Rule
+import alpaca.parser.rule
+import alpaca.parser.{after, before, name}
+import alpaca.parser.Production as P
+
 final class MathTest extends AnyFunSuite:
   test("e2e math test") {
     val CalcLexer = lexer {
