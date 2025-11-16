@@ -17,7 +17,7 @@ A **lexer** (also called a **lexical analyzer**, **scanner**, or **tokenizer**) 
 ### Core Concepts
 
 #### Token
-A **token** is a (name, attribute) pair representing a syntactic category. The token name is passed to the parser, while attributes provide additional information.
+A **token** is a (name, ctx, value) triple representing a syntactic category. The token name is passed to the parser, ctx provides context information, and value contains the semantic data.
 
 **Example tokens:**
 - `KEYWORD` - reserved words like `if`, `while`, `for`
@@ -31,6 +31,9 @@ A **lexeme** is the actual sequence of characters in the source code that matche
 
 #### Pattern
 A **pattern** describes the set of lexemes that can represent a particular token, typically specified using regular expressions.
+
+#### Token
+A **token** is a (name, ctx, value) triple representing a syntactic category. The token name is passed to the parser, ctx provides context information, and value contains the semantic data.
 
 ### Example: Token, Lexeme, and Pattern
 
@@ -77,16 +80,27 @@ The fundamental syntax for defining a lexer in ALPACA is:
 import alpaca.api.*
 
 val myLexer = lexer:
-  case pattern @ "regex" => Token["TOKEN_NAME"](value)
+  case "regex" => Token["TOKEN_NAME"]
 ```
 
 **Key components:**
 - `lexer { ... }` - Creates a new lexer instance
 - `case` - Pattern matching for each token rule
-- `pattern @` - Captures the matched text (optional)
 - `"regex"` - Regular expression as a string literal
 - `Token["NAME"]` - Defines the token type
-- `(value)` - Optional semantic value
+
+For capturing values:
+
+```scala
+import alpaca.api.*
+
+val myLexer = lexer:
+  case pattern @ "regex" => Token["TOKEN_NAME"](value)
+```
+
+**Additional components:**
+- `pattern @` - Captures the matched text
+- `(value)` - Semantic value to attach to the token
 
 ## Example 1: Simple Identifier Lexer
 
@@ -117,6 +131,7 @@ import alpaca.api.*
 val calculatorLexer = lexer:
   case number @ "[0-9]+" => Token["NUMBER"](number)
   case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
   case "\\s+" => Token.Ignored
 
 val result = calculatorLexer.tokenize("42 + 13")
@@ -179,6 +194,10 @@ val result = typedLexer.tokenize("123")
 
 **Important:** When parsing fails, ALPACA throws a `RuntimeException`.
 
+**Explanation:**
+- Special regex characters need escaping with `\\`: use `"\\+"` for the `+` operator
+- Some characters like `-` can be used directly without escaping in this context: `"-"` for minus
+
 ## Example 5: Programming Language Lexer
 
 A comprehensive lexer for a full programming language:
@@ -201,6 +220,8 @@ val programmingLangLexer = lexer:
   case "\\.\\-" => Token["dotSub"]
   case "\\.\\*" => Token["dotMul"]
   case "\\./" => Token["dotDiv"]
+  
+  // Compound operators - order matters! Longer patterns first
   case "<=" => Token["lessEqual"]
   case ">=" => Token["greaterEqual"]
   case "!=" => Token["notEqual"]
@@ -254,9 +275,20 @@ val invalidLexer = lexer:
     case "if" => Token["if"]
 ```
 
+**Important for operators:** When using alternation with overlapping patterns, split them into separate cases:
+
+```scala
+// WRONG - alternation with overlapping patterns
+case ("<" | "<=") => ...  // Don't use alternation here!
+
+// CORRECT - separate cases, longer pattern first
+case "<=" => Token["lessEqual"]
+case "<" => Token["less"]
+```
+
 ### 3. Overlapping Pattern Detection
 
-ALPACA detects overlapping patterns at compile time:[
+ALPACA detects overlapping patterns at compile time:
 
 ```scala sc:fail
 import alpaca.api.*
@@ -266,6 +298,8 @@ val invalidLexer = lexer:
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
   case "[a-zA-Z]+" => Token["ALPHABETIC"]  // Error: overlaps with above
 ```
+
+**Note:** When ALPACA detects overlapping patterns, it will provide a compile-time warning to help you identify and resolve the issue. You don't need to worry about missing these problems at runtime.
 
 ### 4. Accessing Lexer Fields
 
@@ -407,4 +441,4 @@ todo: Add error handling section here.
 - Use `@` binding to capture matched text
 - Let ALPACA detect pattern overlaps at compile time
 
-ALPACA's type-safe DSL makes lexer development both safe and expressive, catching errors at compile time rather than runtime.[3][2][1]
+ALPACA's type-safe DSL makes lexer development both safe and expressive, catching errors at compile time rather than runtime.
