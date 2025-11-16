@@ -1,17 +1,10 @@
 package alpaca
 package integration
 
+import Production as P
+
+import alpaca.{name, Production as P, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
-
-import alpaca.lexer.lexer
-import alpaca.lexer.Token
-
-import alpaca.parser.Parser
-import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.Rule
-import alpaca.parser.rule
-import alpaca.parser.{after, before, name}
-import alpaca.parser.Production as P
 
 final class MathTest extends AnyFunSuite:
   test("e2e math test") {
@@ -44,7 +37,7 @@ final class MathTest extends AnyFunSuite:
       case x @ "\\d+" => Token["int"](x.toInt)
     }
 
-    object CalcParser extends Parser[EmptyGlobalCtx] {
+    object CalcParser extends Parser {
       val Expr: Rule[Double] = rule(
         // binary arithmetic
         { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b }: @name("plus"),

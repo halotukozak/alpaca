@@ -1,15 +1,8 @@
-package alpaca.integration
+package alpaca
+package integration
 
 import org.scalatest.funsuite.AnyFunSuite
-
-import alpaca.withLazyReader
-
-import alpaca.lexer.lexer
-import alpaca.lexer.Token
-
-import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.{after, before, name, rule, Parser, Rule}
-import alpaca.parser.Production as P
+import Production as P
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])
@@ -44,7 +37,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
   }
 
-  object ASTPrinterParser extends Parser[EmptyGlobalCtx] {
+  object ASTPrinterParser extends Parser {
     val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
       ASTNode("program", instructions)
     }
@@ -268,14 +261,14 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
   test("assignment operators, binary operators, transposition") {
     withLazyReader("""
-    C = -A;     # assignment with unary expression
-    C = B' ;    # assignment with matrix transpose
-    C = A+B ;   # assignment with binary addition
-    C = A-B ;   # assignment with binary subtraction
-    C = A*B ;   # assignment with binary multiplication
-    C = A/B ;   # assignment with binary division
+    C = -A;     # assignemnt with unary expression
+    C = B' ;    # assignemnt with matrix transpose
+    C = A+B ;   # assignemnt with binary addition
+    C = A-B ;   # assignemnt with binary substraction
+    C = A*B ;   # assignemnt with binary multiplication
+    C = A/B ;   # assignemnt with binary division
     C = A.+B ;  # add element-wise A to B
-    C = A.-B ;  # subtract B from A
+    C = A.-B ;  # substract B from A
     C = A.*B ;  # multiply element-wise A with B
     C = A./B ;  # divide element-wise A by B
 

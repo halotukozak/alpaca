@@ -1,16 +1,7 @@
-package alpaca.integration
+package alpaca
+package integration
 
 import org.scalatest.funsuite.AnyFunSuite
-
-import alpaca.withLazyReader
-
-import alpaca.lexer.lexer
-import alpaca.lexer.Token
-
-import alpaca.parser.context.default.EmptyGlobalCtx
-import alpaca.parser.Parser
-import alpaca.parser.Rule
-import alpaca.parser.rule
 
 final class JsonTest extends AnyFunSuite:
   test("e2e json test") {
@@ -35,7 +26,7 @@ final class JsonTest extends AnyFunSuite:
       case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
     }
 
-    object JsonParser extends Parser[EmptyGlobalCtx] {
+    object JsonParser extends Parser {
       val root: Rule[Any] = rule { case Value(value) => value }
 
       val Value: Rule[Any] = rule(
