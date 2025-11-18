@@ -1,5 +1,8 @@
 package example
 
+import alpaca.DebugSettings.default
+import scala.annotation.unchecked.uncheckedVariance
+
 // +- Tree -+- Statement -+
 //          +- Block      |
 //                        +- Expr --------+- Literal
@@ -21,208 +24,63 @@ package example
 object AST {
   sealed trait Tree:
     def line: Int | Null
+    def children: List[Tree] = Nil
+
   sealed trait Statement extends Tree
 
-//class Tree:
-//    def __init__(self, line: Optional[int]):
-//        self.line = line or -1
-//
-//    # for mypy
-//    def print_tree(self, indent_level: int) -> None:
-//        pass
-//
-//
-//
+  case class Block(statements: List[Statement], line: Int | Null = null) extends Tree:
+    override def children: List[Tree] = statements
 
-  case class Block(statements: List[Statement], line: Int | Null = null) extends Tree
+  sealed trait Expr extends Statement:
+    def tpe: Type
+    def line: Int
 
-//# synthetic tree node to represent a block of statements
-//@dataclass(init=False)
-//class Block(Tree):
-//    statements: list[Statement]
-//
-//    def __init__(self, statements: list[Statement], line: Optional[int] = None):
-//        super().__init__(line)
-//        self.statements = statements
-//
-//    def __iter__(self) -> Iterator[Statement]:
-//        return iter(self.statements)
-//
-//
-//T = TypeVar('T', bound=TS.Type)
-//
-//
+  object Expr {
+//    def traverse[T <: Type](expr: AST.Expr[Type.VarArg[T]]): Seq[AST.Expr[T]] =
+//      throw NotImplementedError(expr.toString)
 
-  sealed trait Expr[+T <: Type] extends Statement {
-    def `type`: T | Null = null
+    def traverse(expr: AST.Expr): Seq[AST.Expr] =
+      throw NotImplementedError(expr.toString)
+
+    def unapply(expr: AST.Expr): Some[Type] = Some(expr.tpe)
   }
 
-//class Expr[T](Statement):
-//    def __init__(self, type_: Optional[TS.Type], line: Optional[int]):
-//        super().__init__(line)
-//        self.type = type_ or TS.undef()
-//
-//
+  case class Literal(tpe: Type, value: Type.ToScala[tpe.type], line: Int) extends Expr
 
-  case class Literal[+T <: Type](override val `type`: T, value: Any, line: Int) extends Expr[T]
+  sealed trait Ref extends Expr
 
-  // remove facoty methods
-  object Literal {
-    def float(value: Double, line: Int): Literal[Type.Float] =
-      Literal(Type.Float, value, line)
+  case class SymbolRef(tpe: Type, name: String, line: Int) extends Ref
 
-    def string(value: String, line: Int): Literal[Type.String] =
-      Literal(Type.String, value, line)
+  case class VectorRef(vector: SymbolRef, element: Expr, line: Int) extends Ref:
+    val tpe: Type.Numerical = Type.Numerical
+    override def children: List[Tree] = List(vector, element)
 
-    def int(value: Int, line: Int): Literal[Type.Int] =
-      Literal(Type.Int, value, line)
-  }
+  case class MatrixRef(matrix: SymbolRef, row: Expr | Null, col: Expr | Null, line: Int) extends Ref:
+    val tpe: Type.Numerical = Type.Numerical
+    override def children: List[Tree] = List(matrix, row, col).collect { case t: Tree => t }
 
-//@dataclass(init=False)
-//class Literal[T](Expr[T]):
-//    value: Any
-//
-//    def __init__(self, value: Any, line: int, type_: TS.Type):
-//        super().__init__(type_, line)
-//        self.value = value
-//
-//    @staticmethod
-//    def float(value: float, line: int) -> 'Literal[TS.Float]':
-//        return Literal(float(value), line, TS.Float())
-//
-//    @staticmethod
-//    def string(value: str, line: int) -> 'Literal[TS.String]':
-//        return Literal(str(value), line, TS.String())
-//
-//    @staticmethod
-//    def int(value: int, line: int) -> 'Literal[TS.Int]':
-//        return Literal(int(value), line, TS.Int())
-//
-//
-//@dataclass(init=False)
-//class Ref[T](Expr[T]):
-//    pass
-//
+  case class Apply(ref: SymbolRef, args: List[Expr], line: Int) extends Expr:
+    val tpe: Type = ref.tpe
+    override def children: List[Tree] = ref :: args
 
-  sealed trait Ref[+T <: Type] extends Expr[T]
+  case class Range(start: Expr, end: Expr, line: Int) extends Expr:
+    val tpe: Type.Range = Type.Range
+    override def children: List[Tree] = List(start, end)
 
-  case class SymbolRef[+T <: Type](name: String, override val `type`: T, line: Int) extends Ref[T]
+  case class Assign(ref: Ref, expr: Expr, line: Int) extends Statement:
+    override def children: List[Tree] = List(ref, expr)
+  case class If(condition: Expr, thenBlock: Block, elseBlock: Block | Null, line: Int) extends Statement:
+    override def children: List[Tree] = List(condition, thenBlock) ++ Option.fromNullable(elseBlock)
 
-  case class VectorRef(vector: SymbolRef[?], element: Expr[Type.Int], line: Int) extends Ref[Type.Numerical]
+  case class While(condition: Expr, body: Block, line: Int) extends Statement:
+    override def children: List[Tree] = List(condition, body)
+  case class For(varRef: SymbolRef, range: Range, body: Block, line: Int) extends Statement:
+    override def children: List[Tree] = List(varRef, range, body)
 
-//
-//@dataclass(init=False)
-//class VectorRef(Ref[TS.Int | TS.Float]):
-//    vector: SymbolRef[TS.Vector]
-//    element: Expr[TS.Int]
-//
-//    def __init__(self, vector: SymbolRef, element: Expr[TS.Int], line: int):
-//        super().__init__(TS.Int() | TS.Float(), line)
-//        self.vector = vector
-//        self.element = element
-//
-//
-//@dataclass(init=False)
-//class MatrixRef(Ref[TS.Int | TS.Float]):
-//    matrix: SymbolRef[TS.Matrix]
-//
-//    def __init__(self, matrix: SymbolRef, row: Optional[Expr[TS.Int]], col: Optional[Expr[TS.Int]], line: int):
-//        super().__init__(TS.Int() | TS.Float(), line)
-//        self.matrix = matrix
-//        self.row = row
-//        self.col = col
-//
-  case class MatrixRef(matrix: SymbolRef[?], row: Expr[Type.Int] | Null, col: Expr[Type.Int] | Null, line: Int)
-    extends Ref[Type.Numerical]
-//
-//@dataclass(init=False)
-//class Apply(Expr):
-//    ref: Ref
-//    args: list[Expr]
-//
-//    def __init__(self, ref: Ref, args: list[Expr], line: int):
-//        super().__init__(TS.undef(), line)
-//        self.ref = ref
-//        self.args = args
-//
-
-  case class Apply(ref: Ref[?], args: List[Expr[?]], line: Int) extends Expr[Type.Undef]
-//
-//@dataclass
-//class Range(Expr):
-//    start: Expr[TS.Int]
-//    end: Expr[TS.Int]
-//    line: int
-//
-
-  case class Range(start: Expr[Type.Int], end: Expr[Type.Int], line: Int | Null) extends Expr[Type.Range]
-//
-//@dataclass
-//class Assign[T](Statement):
-//    var: Ref[T]
-//    expr: Expr[T]
-//    line: int
-//
-//
-
-  case class Assign[+T <: Type](varRef: Ref[T], expr: Expr[T], line: Int) extends Statement
-
-  case class If(condition: Expr[Type.Bool], thenBlock: Block, elseBlock: Block | Null, line: Int) extends Statement
-
-//@dataclass(init=False)
-//class If(Statement):
-//    condition: Expr[TS.Bool]
-//    then: Block
-//    else_: Optional[Block]
-//
-//    def __init__(self, condition: Expr[TS.Bool], then: list[Statement], else_: Optional[list[Statement]], line: int):
-//        super().__init__(line)
-//        self.condition = condition
-//        self.then = Block(then)
-//        self.else_ = Block(else_) if else_ else None
-//
-//
-  case class While(condition: Expr[Type.Bool], body: Block, line: Int) extends Statement
-
-//@dataclass(init=False)
-//class While(Statement):
-//    condition: Expr
-//    body: Block
-//
-//    def __init__(self, condition: Expr, body: list[Statement], line: int):
-//        super().__init__(line)
-//        self.condition = condition
-//        self.body = Block(body)
-//        self.line = line
-//
-//
-//@dataclass(init=False)
-//class For(Statement):
-//    var: SymbolRef
-//    range: Range
-//    body: Block
-//
-//    def __init__(self, var: SymbolRef, range_: Range, body: list[Statement], line: int):
-//        super().__init__(line)
-//        self.var = var
-//        self.range = range_
-//        self.body = Block(body)
-//
-//
-
-  case class For(varRef: SymbolRef[Type.Int], range: Range, body: Block, line: Int) extends Statement
-
-  case class Return[+T <: Type](expr: Expr[T], line: Int) extends Statement
+  case class Return(expr: Expr, line: Int) extends Statement:
+    override def children: List[Tree] = List(expr)
 
   case class Continue(line: Int) extends Statement
 
   case class Break(line: Int) extends Statement
 }
-
-enum Comparator:
-  case Greater
-  case Less
-  case Equal
-  case NotEqual
-  case LessEqual
-  case GreaterEqual

@@ -60,7 +60,10 @@ private[parser] object ParseTable {
   def apply(
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
+  )(using quotes: Quotes,
   ): ParseTable = {
+    import quotes.reflect.report
+
     val firstSet = FirstSet(productions)
     var currStateId = 0
     val states =
@@ -89,12 +92,14 @@ private[parser] object ParseTable {
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
                 case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
-    @tailrec
-    def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+    @tailrec def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
       if stateId == 0 then acc
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
-        toPath(sourceStateId, symbol :: acc)
+        if sourceStateId == stateId then
+          report.info(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          symbol :: acc
+        else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)

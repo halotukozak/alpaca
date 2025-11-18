@@ -1,49 +1,17 @@
 package example
 
 sealed trait Type(val isFinal: Boolean = true) {
-  type Scala
+  def |(other: Type): Type = Type.Or(this, other)
+
+  def <=(other: Type): Boolean = (this, other) match
+    case (_, Type.Any) => true
+    case (Type.Any, _) => false
+    case (left: Type.AnyOf, right: Type.AnyOf) => left.all.forall(l => right.all.exists(r => l <= r))
+    case (left: Type.AnyOf, right) => left.all.exists(l => l <= right)
+    case (left, right: Type.AnyOf) => right.all.exists(r => left <= r)
+    case _ => this == other
 }
 
-//#
-//# class Type:
-//#     is_final: bool = True
-//#
-//#     def __eq__(self, other: object) -> bool:
-//#         if isinstance(other, Any) or isinstance(self, Any):
-//#             return True
-//#         elif isinstance(other, AnyOf) and isinstance(self, AnyOf):
-//#             return set(self.all).intersection(other.all) != set()
-//#         elif isinstance(self, AnyOf) and isinstance(other, Type):
-//#             return other in self
-//#         elif isinstance(other, AnyOf):
-//#             return self in other
-//#         else:
-//#             return type(self) == type(other)
-//#
-//#     def __str__(self) -> str:
-//#         return type(self).__name__
-//#
-//#     def __repr__(self) -> str:
-//#         return type(self).__name__
-//#
-//#     def __or__(self, other: 'Type') -> 'Type':
-//#         if isinstance(other, Any) or isinstance(self, Any):
-//#             return Any()
-//#         elif isinstance(other, AnyOf) and isinstance(self, AnyOf):
-//#             return AnyOf(*self.all, *other.all)
-//#         elif isinstance(self, AnyOf):
-//#             return AnyOf(*self.all, other)
-//#         elif isinstance(other, AnyOf):
-//#             return AnyOf(self, *other.all)
-//#         elif self == other:
-//#             return self
-//#         else:
-//#             return Or(self, other)
-//#
-//#     def __hash__(self) -> int:
-//#         return hash(repr(self))
-//#
-//#
 //#
 //# class AnyOf(Type):
 //#     all: list[Type]
@@ -64,57 +32,6 @@ sealed trait Type(val isFinal: Boolean = true) {
 //#
 //#
 
-//# class Or(AnyOf):
-//#     def __init__(self, left: Type, right: Type):
-//#         super().__init__(left, right)
-//#
-//#
-//# # arity has no meaning in equality!
-//# # todo: vector should be a metrix with 1 column/row
-//# class Vector(Type):
-//#     def __init__(self, arity: Optional[int] = None):
-//#         self.arity = arity
-//#         if arity is None:
-//#             self.is_final = False
-//#
-//#     def __str__(self) -> str:
-//#         if self.arity is not None:
-//#             return f"Vector[{self.arity}]"
-//#         else:
-//#             return f"Vector[?]"
-//#
-//#     def __repr__(self) -> str:
-//#         return self.__str__()
-//#
-//#
-//# # arity has no meaning in equality!
-//# class Matrix(Type):
-//#     def __init__(self, rows: Optional[int] = None, cols: Optional[int] = None):
-//#         self.rows = rows
-//#         self.cols = cols
-//#         if not self.rows or not self.cols:
-//#             self.is_final = False
-//#
-//#     def __str__(self) -> str:
-//#         match self.arity:
-//#             case (None, None):
-//#                 return "Matrix[?, ?]"
-//#             case (None, b):
-//#                 return f"Matrix[?, {b}]"
-//#             case (a, None):
-//#                 return f"Matrix[{a}, ?]"
-//#             case (a, b):
-//#                 return f"Matrix[{a}, {b}]"
-//#             case _:
-//#                 raise NotImplementedError
-//#
-//#     def __repr__(self) -> str:
-//#         return self.__str__()
-//#
-//#     @property
-//#     def arity(self) -> Tuple[Optional[int], Optional[int]]:
-//#         return self.rows, self.cols
-//#
 //#
 //# @dataclass
 //# class VarArg(Type):
@@ -196,27 +113,9 @@ sealed trait Type(val isFinal: Boolean = true) {
 //#         return hash(repr(self))
 //#
 //#
-//# class Int(Type):
-//#     pass
-//#
-//#
-//# class Float(Type):
-//#     pass
-//#
-//#
-//# class String(Type):
-//#     pass
-//#
-//#
-//# class Bool(Type):
-//#     pass
-//#
-//#
-//# def numerical() -> Type:
-//#     return Int() | Float()
 
 object Type:
-  type Numerical = Int | Float
+  type Numerical = Numerical.type
   type Undef = Undef.type
   type Unit = Unit.type
   type Any = Any.type
@@ -225,10 +124,64 @@ object Type:
   type String = String.type
   type Bool = Bool.type
   type Range = Range.type
+  type FromScala[T] = T match
+    case scala.Int => Type.Int
+    case scala.Double => Type.Float
+    case scala.Unit => Type.Unit
+    case scala.Boolean => Type.Bool
+    case scala.Predef.String => Type.String
+  type ToScala[T <: Type] = T match
+    case Type.Int => scala.Int
+    case Type.Float => scala.Double
+    case Type.Unit => scala.Unit
+    case Type.Bool => scala.Boolean
+    case Type.String => scala.Predef.String
+  val Numerical = Int | Float
 
-  def Or(left: Type, right: Type) = AnyOf(Set(left, right))
+  def Or(left: Type, right: Type) = (left, right) match
+    case (left: Any, _) => Any
+    case (_, right: Any) => Any
+    case (left: AnyOf, right: AnyOf) => AnyOf(left.all ++ right.all)
+    case (left: AnyOf, right) => AnyOf(left.all + right)
+    case (left, right: AnyOf) => AnyOf(right.all + left)
+    case (left, right) if left == right => left
+    case _ => AnyOf(Set(left, right))
 
   case class AnyOf(all: Set[Type]) extends Type(false)
+
+  case class Function(args: Type*)(val result: Type) extends Type:
+    def takes(argTypes: List[Type]) = args match
+      case Nil => argTypes.isEmpty
+      case Type.VarArg(tpe) :: Nil => argTypes.forall(_ == tpe)
+      case `args` => true
+      case _ => false
+
+  case class FunctionTypeFactory(
+    args: Tuple,
+    result_hint: Type,
+    result_type_factory: Tuple.Map[args.type, [X] =>> AST.Expr] => Result[Type],
+//    result_type_factory: Tuple.Map[args.type, [X] =>> AST.Expr[X & Type]] => Result[Type],
+  ) extends Type(false)
+
+  case class Vector(arity: scala.Int | Null = null) extends Type(arity != null) {
+    override def toString = arity match
+      case null => "Vector[?]"
+      case a => s"Vector[$a]"
+  }
+
+  case class Matrix(rows: scala.Int | Null = null, cols: scala.Int | Null = null)
+    extends Type(rows != null && cols != null) {
+    override def toString = (rows, cols) match
+      case (null, null) => "Matrix[?, ?]"
+      case (null, b) => s"Matrix[?, $b]"
+      case (a, null) => s"Matrix[$a, ?]"
+      case (a, b) => s"Matrix[$a, $b]"
+
+    def arity = (rows, cols)
+  }
+
+//  case class VarArg[T <: Type](`type`: T) extends Type(false)
+  case class VarArg(`type`: Type) extends Type(false)
 
   case object Undef extends Type(false)
 
@@ -246,17 +199,20 @@ object Type:
 
   case object Range extends Type
 
-  type FromScala[T] = T match
-    case scala.Int => Type.Int
-    case scala.Float => Type.Float
-    case scala.Unit => Type.Unit
-    case scala.Boolean => Type.Bool
-    case scala.Predef.String => Type.String
-
-  inline def from[T]: Type.FromScala[T] =
-    inline compiletime.erasedValue[T] match
-      case _: scala.Int => Type.Int
-      case _: scala.Float => Type.Float
-      case _: scala.Unit => Type.Unit
-      case _: scala.Boolean => Type.Bool
-      case _: scala.Predef.String => Type.String
+  object FunctionTypeFactory:
+//    def apply(arg: Type, result_hint: Type, result_type_factory: AST.Expr[arg.type] => Result[Type]) =
+    def apply(arg: Type, result_hint: Type, result_type_factory: AST.Expr => Result[Type]) =
+      new FunctionTypeFactory(
+        Tuple(arg),
+        result_hint,
+        { case x *: EmptyTuple => result_type_factory(x) },
+      )
+    def varargs(
+      arg: Type.VarArg,
+      result_hint: Type,
+      result_type_factory: Seq[AST.Expr] => Result[Type],
+    ) = new FunctionTypeFactory(
+      Tuple(arg),
+      result_hint,
+      { case (vararg: AST.Expr) *: EmptyTuple => result_type_factory(AST.Expr.traverse(vararg)) },
+    )

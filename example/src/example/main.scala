@@ -1,42 +1,31 @@
 package example
 
 import alpaca.internal.lexer.LazyReader
+import alpaca.*
 
 import java.nio.file.Files
 import java.nio.file.Path
-
 import scala.util.Using
+import example.TreePrinter.printTree
+import scala.util.control.NonFatal
 
 @main
 def main = Files
-  .list(Path.of("in"))
+  .list(Path.of("example/src/example/in"))
   .forEach: file =>
-    val tokens = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
-    val ast = MatrixParser.parse(tokens)
-    print(ast)
+    try
+      println(s"Processing file: $file")
+      val tokens = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
+      val (_, ast) = MatrixParser.parse(tokens)
+      // ast.nn.printTree()
 
-//#     def quit_if_failed(self: object) -> None:
-//#         if getattr(self, 'failed', False):
-//#             print_errors_and_warnings()
-//#             sys.exit(0)
-//#
-//#
-//#     Utils.debug = False
-//#
-//#     print_ast = False
-//#
-//#     text = file.read()
-//#     lexer = MatrixScanner()
-//#     tokens = lexer.tokenize(text)
-//#     quit_if_failed(lexer)
-//#
-//#     parser = MatrixParser()
-//#     ast = parser.parse(tokens)
-//#     quit_if_failed(parser)
-//#
-//#     if print_ast:
-//#         treePrinter = TreePrinter()
-//#         treePrinter.print_result(ast)
+      val globalScope = Scope(null, ast.nn, false, symbols, Map.empty)
+      val scoped = MatrixScoper.visit(ast.nn)(globalScope)
+
+    catch
+      case NonFatal(e) =>
+        println(s"Error processing file $file: ${e.getMessage}")
+
 //#
 //#     scoper = MatrixScoper()
 //#     scoper.visit_all(ast)

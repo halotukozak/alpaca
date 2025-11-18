@@ -44,11 +44,11 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?, ?]] = {
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?, ?]]): List[Lexem[?, ?]] =
+  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexeme[?, ?]] = {
+    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme[?, ?]]): List[Lexeme[?, ?]] =
       globalCtx.text.length match
         case 0 =>
-          acc.reverse
+          acc.reverse // todo: make it not reversed
         case _ =>
           val m = compiled.findPrefixMatchOf(globalCtx.text) getOrElse {
             // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
@@ -58,7 +58,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)
-          val lexem = List(token).collect { case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem }
+          val lexem = List(token).collect { case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn }
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

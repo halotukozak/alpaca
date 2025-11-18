@@ -2,10 +2,16 @@ package example
 
 import MatrixLexer as ML
 
-import alpaca.*
+import alpaca.{Production as P, *}
+import alpaca.internal.lexer.DefinedToken
 
 object MatrixParser extends Parser {
-  def root = rule { case Instructions.Option(is) => is }
+  // todo: implement lexeme context
+  extension (lexem: Any) def line: Int = -1
+
+  val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
+    AST.Block(is.toList.flatten, is.headOption.map(_.line).orNull)
+  }
 
   def Instructions: Rule[List[AST.Statement]] = rule(
     { case Instruction(i) => i :: Nil },
@@ -14,15 +20,19 @@ object MatrixParser extends Parser {
 
   def Instruction: Rule[AST.Statement] = rule(
     { case (Statement(s), ML.`;`(_)) => s },
-    { case (For(_), ML.ID(id), ML.`=`(_), Range(r), Block(b)) =>
-      //  var = AST.SymbolRef(p.ID, p.lineno, TS.Int())
-// // #         return AST.For(var, p.range, p.block, p.lineno)
-      ???
-    },
+    // { case (Statement(s), ML.`\\n+`(_)) => throw new Exception("Missing semicolon") },
+    { case If(i) => i },
+    { case While(w) => w },
+    { case For(f) => f },
   )
-  // { case (Statement(s), ML.`\\n`(_)) =>
-  //   throw new Exception("Missing semicolon")
-  // },
+
+  def Statement: Rule[AST.Statement] = rule(
+    { case ML.break(l) => AST.Break(l.line) },
+    { case ML.continue(l) => AST.Continue(l.line) },
+    { case (ML.`return`(l), Expr(e)) => AST.Return(e, l.line) },
+    { case (ML.print(l), Varargs(args)) => AST.Apply(symbols("PRINT"), args, l.line) },
+    { case Assignment(a) => a },
+  )
 
   def Block: Rule[AST.Block] = rule(
     { case (ML.`\\{`(_), Instructions(is), ML.`\\}`(_)) => AST.Block(is, is.headOption.map(_.line).orNull) },
@@ -30,12 +40,12 @@ object MatrixParser extends Parser {
   )
 
   def If: Rule[AST.If] = rule(
-    { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock)) =>
-      AST.If(cond, thenBlock, null, l.line)
-    },
     { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock), ML.`else`(_), Block(elseBlock)) =>
       AST.If(cond, thenBlock, elseBlock, l.line)
-    },
+    }: @name("if-else"),
+    { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock)) =>
+      AST.If(cond, thenBlock, null, l.line)
+    }: @name("if"),
   )
 
   def While: Rule[AST.While] = rule { case (ML.`while`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(body)) =>
@@ -43,13 +53,13 @@ object MatrixParser extends Parser {
   }
 
   def For: Rule[AST.For] = rule { case (ML.`for`(l), ML.ID(id), ML.`=`(_), Range(r), Block(body)) =>
-    val varRef = AST.SymbolRef(id.value, Type.Int, id.line)
-    AST.For(varRef, r, body, l.line)
+    // val varRef = AST.SymbolRef(id.value, Type.Int, id.line)
+    // AST.For(varRef, r, body, l.line)
+    AST.For(AST.SymbolRef(Type.Int, id.value, id.line), r, body, l.line)
   }
 
-  def Range: Rule[AST.Range] = rule {
-    case (Expr(start: AST.Expr[Type.Int]), ML.`:`(_), Expr(end: AST.Expr[Type.Int])) =>
-      AST.Range(start, end, start.line)
+  def Range: Rule[AST.Range] = rule { case (Expr(start), ML.`:`(_), Expr(end)) =>
+    AST.Range(start, end, start.line)
   }
 
   def Comparator: Rule[String] = rule(
@@ -61,52 +71,25 @@ object MatrixParser extends Parser {
     { case ML.GREATER_EQUAL(_) => ">=" },
   )
 
-  def Condition: Rule[AST.Expr[Type.Bool]] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
-    // args = [p.expr0, p.expr1]
-    // return AST.Apply(Predef.get_symbol(p.comparator), args, p.lineno)
-    ???
+  def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
+    AST.Apply(
+      symbols(op).asInstanceOf[AST.SymbolRef],
+      List(e1.asInstanceOf[AST.Expr], e2.asInstanceOf[AST.Expr]),
+      e1.line,
+    )
   }
 
-  def AsssignOp: Rule[String] = rule(
-    { case ML.ADDASSIGN(_) => "+=" },
-    { case ML.SUBASSIGN(_) => "-=" },
-    { case ML.MULASSIGN(_) => "*=" },
-    { case ML.DIVASSIGN(_) => "/=" },
-    { case ML.`=`(_) => "=" },
+  def AsssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
+    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), List(e1, e2), e1.line) },
+    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), List(e1, e2), e1.line) },
+    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), List(e1, e2), e1.line) },
+    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), List(e1, e2), e1.line) },
+    { case ML.`=`(_) => (e1, e2) => e2 },
   )
 
-  def Statement: Rule[AST.Statement] = rule(
-    { case ML.break(l) => AST.Break(l.line) },
-    { case ML.continue(l) => AST.Continue(l.line) },
-    { case (ML.`return`(l), Expr(e)) => AST.Return(e, l.line) },
-    { case (ML.print(l), Varargs(args)) =>
-      // AST.Apply(Predef.get_symbol("PRINT"), args, l.line)
-      ???
-    },
-    { case (ML.ID(id), AsssignOp(op), Expr(e)) =>
-      // // #     @_('ID assign_op expr')
-// // #     def statement(self, p: YaccProduction):
-// // #         var = AST.SymbolRef(p.ID, p.lineno, TS.undef())
-// // #         match p.assign_op:
-// // #             case "=":
-// // #                 expr = p.expr
-// // #             case _:
-// // #                 expr = AST.Apply(Predef.get_symbol(p.assign_op[:-1]), [var, p.expr], p.lineno)
-// // #         var.type = expr.type
-// // #         return AST.Assign(var, expr, p.lineno)
-      ???
-
-    },
-    { case (Element(el), AsssignOp(op), Expr(e)) =>
-      // match p.assign_op:
-// // #             case "=":
-// // #                 expr = p.expr
-// // #             case _:
-// // #                 args = [p.element, p.expr]
-// // #                 expr = AST.Apply(Predef.get_symbol(p.assign_op[:-1]), args, p.lineno)
-// // #         return AST.Assign(p.element, expr, p.lineno)
-      ???
-    },
+  def Assignment: Rule[AST.Assign] = rule(
+    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
+    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
   )
 
   def FunctionName = rule(
@@ -116,87 +99,79 @@ object MatrixParser extends Parser {
   )
 
   def Matrix = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
-    // return AST.Apply(Predef.get_symbol("INIT"), p.var_args, p.lineno)
-    ???
+    AST.Apply(symbols("INIT"), varArgs, varArgs.headOption.map(_.line).getOrElse(-1))
   }
 
   def Element = rule { case (Var(v), ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
     varArgs.length match
       case 1 =>
-        AST.VectorRef(v, varArgs.head.asInstanceOf[AST.Expr[Type.Int]], v.line)
+        AST.VectorRef(v, varArgs.head.asInstanceOf[AST.Expr], v.line)
       case 2 =>
-        AST.MatrixRef(
-          v,
-          varArgs.head.asInstanceOf[AST.Expr[Type.Int]],
-          varArgs(1).asInstanceOf[AST.Expr[Type.Int]],
-          v.line,
-        )
+        AST.MatrixRef(v, varArgs.head, varArgs(1), v.line)
       case _ =>
         // report_error(self, "Invalid matrix element reference", p.lineno)
         AST.MatrixRef(v, null, null, v.line)
   }
 
-  def Var = rule { case ML.ID(id) =>
-    AST.SymbolRef(id.value, Type.Undef, id.line)
-  }
+  def Var = rule { case ML.ID(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
 
-  def Expr: Rule[AST.Expr[?]] = rule(
-    { case ML.INTNUM(l) => AST.Literal.int(l.value, l.line) },
-    { case ML.FLOAT(l) => AST.Literal.float(l.value, l.line) },
-    { case ML.STRING(l) => AST.Literal.string(l.value, l.line) },
+  def Expr: Rule[AST.Expr] = rule(
+    { case ML.INTNUM(l) => AST.Literal(Type.Int, l.value, l.line) },
+    { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
+    { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
-      // return AST.Apply(Predef.get_symbol("UMINUS"), [p.expr], p.lineno)
-      ???
+      AST.Apply(symbols("UMINUS"), List(e), l.line)
     }: @name("uminus"),
-    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("+"), [p.expr0, p.expr1], p.lineno
-      ???
-    }: @name("plus"),
-    { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("-"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
-    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("*"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
-    { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("/"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
+    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) => AST.Apply(symbols("+"), List(e1, e2), e1.line) }: @name("add"),
+    { case (Expr(e1), ML.`-`(_), Expr(e2)) => AST.Apply(symbols("-"), List(e1, e2), e1.line) }: @name("sub"),
+    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) => AST.Apply(symbols("*"), List(e1, e2), e1.line) }: @name("mul"),
+    { case (Expr(e1), ML.`/`(_), Expr(e2)) => AST.Apply(symbols("/"), List(e1, e2), e1.line) }: @name("div"),
     { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("DOTADD"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
+      AST.Apply(symbols("DOTADD"), List(e1, e2), e1.line)
+    }: @name("dotadd"),
     { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("DOTSUB"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
+      AST.Apply(symbols("DOTSUB"), List(e1, e2), e1.line)
+    }: @name("dotsub"),
     { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("DOTMUL"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
+      AST.Apply(symbols("DOTMUL"), List(e1, e2), e1.line)
+    }: @name("dotmul"),
     { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      // return AST.Apply(Predef.get_symbol("DOTDIV"), [p.expr0, p.expr1], p.lineno
-      ???
-    },
-    { case (Expr(e), ML.`'`(_)) =>
-      // return AST.Apply(Predef.get_symbol("'"), [p.expr], p.lineno
-      ???
-    },
+      AST.Apply(symbols("DOTDIV"), List(e1, e2), e1.line)
+    }: @name("dotdiv"),
+    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("'"), List(e), e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
     { case Matrix(m) => m },
     { case (FunctionName(name), ML.`\\(`(_), Varargs(args), ML.`\\)`(_)) =>
-      // return AST.Apply(Predef.get_symbol(name), p.var_args, p.lineno
-      ???
+      AST.Apply(symbols(name), args, args.headOption.map(_.line).getOrElse(-1))
     },
   )
 
-  def Varargs: Rule[List[AST.Expr[?]]] = rule(
+  def Varargs: Rule[List[AST.Expr]] = rule(
     { case Expr(l) => l :: Nil },
     { case (Varargs(vs), ML.`,`(_), Expr(e)) => vs :+ e },
+  )
+
+  override val resolutions: Set[ConflictResolution] = Set(
+    ML.`'`.before(P.ofName("uminus")),
+    P.ofName("uminus").before(P.ofName("dotmul"), P.ofName("dotdiv")),
+    P.ofName("dotmul").before(ML.DOTMUL, ML.DOTDIV),
+    ML.DOTMUL.before(P.ofName("mul"), P.ofName("div")),
+    P.ofName("dotdiv").before(ML.DOTMUL, ML.DOTDIV),
+    ML.DOTDIV.before(P.ofName("mul"), P.ofName("div")),
+    P.ofName("mul").before(ML.`\\*`, ML.`/`),
+    ML.`\\*`.before(P.ofName("dotadd"), P.ofName("dotsub")),
+    P.ofName("div").before(ML.`\\*`, ML.`/`),
+    ML.`/`.before(P.ofName("dotadd"), P.ofName("dotsub")),
+    P.ofName("dotadd").before(ML.DOTADD, ML.DOTSUB),
+    ML.DOTADD.before(P.ofName("add"), P.ofName("sub")),
+    P.ofName("dotsub").before(ML.DOTADD, ML.DOTSUB),
+    ML.DOTSUB.before(P.ofName("add"), P.ofName("sub")),
+    P.ofName("add").before(ML.`\\+`, ML.`-`),
+    P.ofName("sub").before(ML.`\\+`, ML.`-`),
+    P.ofName("if-else").before(ML.`else`),
+    ML.`else`.before(P.ofName("if")),
   )
 
 // // #     def error(self, p: YaccProduction):
@@ -204,23 +179,4 @@ object MatrixParser extends Parser {
 // // #             report_error(self, f"Syntax error: {p.type}('{p.value}')", p.lineno)
 // // #         else:
 // // #             report_error(self, "Syntax error", -1)
-
-  import Production as P
-  override val resolutions: Set[ConflictResolution] = Set(
-    P.ofName("uminus").before(ML.`\\+`),
-    P.ofName("uminus").before(ML.DOTADD),
-    P.ofName("uminus").before(ML.DOTSUB),
-  )
 }
-
-// // #     precedence = (
-// // #         ('nonassoc', 'IFX'),
-// // #         ('nonassoc', 'ELSE'),
-// // #         ('nonassoc', '<', '>', 'LESS_EQUAL', 'GREATER_EQUAL', 'NOT_EQUAL', 'EQUAL'),
-// // #         ('left', '+', '-'),
-// // #         ('left', 'DOTADD', 'DOTSUB'),
-// // #         ('left', '*', '/'),
-// // #         ('left', 'DOTMUL', 'DOTDIV'),
-// // #         ('right', 'UMINUS'),
-// // #         ('left', "'"),
-// // #     )

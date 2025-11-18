@@ -89,8 +89,8 @@ transparent inline given ctx(using c: LexerCtx): c.type = c
  */
 trait LexerCtx {
 
-  /** The last lexem that was created. */
-  var lastLexem: Lexem[?, ?] = compiletime.uninitialized
+  /** The last lexeme that was created. */
+  var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
 
   /** The raw string that was matched for the last token. */
   var lastRawMatched: String = compiletime.uninitialized
@@ -121,11 +121,12 @@ object LexerCtx:
   given BetweenStages[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched
-      ctx.lastLexem = Lexem(info.name, remapping(ctx))
+      ctx.lastLexeme = Lexeme(info.name, remapping(ctx))
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
     case (IgnoredToken(_, modifyCtx), m, ctx) =>
+      ctx.lastRawMatched = m.matched
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 

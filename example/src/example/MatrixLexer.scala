@@ -2,7 +2,9 @@ package example
 
 import alpaca.*
 import alpaca.ctx
+import annotation.nowarn
 
+@nowarn("msg=flexible type")
 val MatrixLexer = lexer:
   case "\\+=" => Token["ADDASSIGN"]
   case "-=" => Token["SUBASSIGN"]
@@ -30,13 +32,7 @@ val MatrixLexer = lexer:
   case float @ "(\\d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["FLOAT"](float.toDouble)
   case int @ "[0-9]+" => Token["INTNUM"](int.toInt)
   case string @ "\"[^\"]*\"" => Token["STRING"](string.substring(1, string.length - 1))
-  case " \t" => Token.Ignored
-  case "\\#.*" => Token.Ignored
+  case (" " | "\t" | "\\#.*") => Token.Ignored
   case newLines @ "\n+" =>
     ctx.line += newLines.count(_ == '\n')
     Token.Ignored
-
-//
-//    def error(self, t: Token) -> None:
-//        report_error(self, f"Illegal character '{t.value[0]}'", self.lineno)
-//        self.index += 1

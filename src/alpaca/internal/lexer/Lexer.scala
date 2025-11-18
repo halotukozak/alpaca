@@ -68,7 +68,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
 
-      val tokens = extractSimple('{ identity })
+      val tokens = extractSimple('{ _ => () })
         .lift(body.asExprOf[ThisToken])
         .orElse:
           body match

@@ -4,6 +4,7 @@ package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
+import scala.annotation.compileTimeOnly
 
 /**
  * Type alias for context manipulation functions.
@@ -116,7 +117,14 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, Value](
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value] {
-  type LexemTpe = Lexem[Name, Value]
+  type LexemeTpe = Lexeme[Name, Value]
+
+  @compileTimeOnly(RuleOnly)
+  inline def unapply(x: Any): Option[LexemeTpe] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def List: PartialFunction[Any, Option[List[LexemeTpe]]] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
 }
 
 /**
