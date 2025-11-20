@@ -66,7 +66,7 @@ abstract class Parser[Ctx <: ParserCtx](
           val newState = newStack.head
 
           if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
-          else {
+          else
             val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
             loop(
@@ -76,7 +76,6 @@ abstract class Parser[Ctx <: ParserCtx](
                 tables.actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
               ) :: newStack,
             )
-          }
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
           stack.head.node.asInstanceOf[R | Null]

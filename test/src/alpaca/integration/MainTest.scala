@@ -2,6 +2,7 @@ package alpaca
 package integration
 
 import org.scalatest.funsuite.AnyFunSuite
+import language.experimental.relaxedLambdaSyntax
 
 @main def main(): Unit = {
   val CalcLexer = lexer {
@@ -19,20 +20,20 @@ import org.scalatest.funsuite.AnyFunSuite
     val root: Rule[Double] = rule { case Expr(e) => e }
 
     val Expr: Rule[Double] = rule(
-      { case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b },
-      { case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b },
-      { case Term(t) => t },
+      case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b,
+      case (Expr(a), CalcLexer.MINUS(_), Term(b)) => a - b,
+      case Term(t) => t,
     )
 
     val Term: Rule[Double] = rule(
-      { case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b },
-      { case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b },
-      { case Factor(f) => f },
+      case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b,
+      case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b,
+      case Factor(f) => f,
     )
 
     val Factor: Rule[Double] = rule(
-      { case CalcLexer.NUM(n) => n.value },
-      { case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e },
+      case CalcLexer.NUM(n) => n.value,
+      case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e,
     )
   }
 

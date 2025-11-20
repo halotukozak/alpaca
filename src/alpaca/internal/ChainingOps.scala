@@ -6,7 +6,7 @@ package internal
  *
  * Provides utility methods for functional programming patterns.
  */
-extension [A](self: A) {
+extension [A](self: A)
 
   /**
    * Applies a side-effecting function to the value and returns the original value.
@@ -16,10 +16,9 @@ extension [A](self: A) {
    * @param f the function to apply for its side effects
    * @return the original value
    */
-  inline private[internal] def tap[U](inline f: A => U): A = {
+  inline private[internal] def tap[U](inline f: A => U): A =
     f(self)
     self
-  }
 
   /**
    * Applies a function to the value (forward pipe operator).
@@ -30,4 +29,3 @@ extension [A](self: A) {
    * @return the result of applying f to the value
    */
   inline private[internal] def |>[B](inline f: A => B): B = f(self)
-}
