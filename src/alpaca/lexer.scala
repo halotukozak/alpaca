@@ -120,7 +120,7 @@ object LexerCtx:
    */
   given BetweenStages[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
-      ctx.lastRawMatched = m.matched
+      ctx.lastRawMatched = m.matched.nn
       ctx.lastLexem = Lexem(info.name, remapping(ctx))
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)

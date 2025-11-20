@@ -27,5 +27,6 @@ object PositionTracking:
    * when the context extends PositionTracking.
    */
   given BetweenStages[PositionTracking] = (name, m, ctx) =>
-    if m.matched == "\n" then ctx.position = 1
-    else ctx.position += m.matched.length
+    m.matched match
+      case "\n" => ctx.position = 1
+      case matched => ctx.position += matched.nn.length
