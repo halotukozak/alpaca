@@ -3,21 +3,22 @@ package internal.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import scala.language.experimental.relaxedLambdaSyntax
 
 final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize simple identifier") {
-    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
+    val Lexer = lexer: case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
     val result = Lexer.tokenize("hello")
     assert(result == List(Lexem("IDENTIFIER", "hello")))
   }
 
   test("tokenize with whitespace ignored") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored
-    }
+    
     val result = Lexer.tokenize("42 + 13")
 
     assert(
@@ -30,22 +31,22 @@ final class LexerTest extends AnyFunSuite with Matchers {
   }
 
   test("tokenize empty string") {
-    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
+    val Lexer = lexer: case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
     val result = Lexer.tokenize("")
     assert(result == List.empty)
   }
 
   test("throw exception for unexpected character") {
-    val Lexer = lexer { case number @ "[0-9]+" => Token["NUMBER"](number.toInt) }
+    val Lexer = lexer: case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
 
-    val exception = intercept[RuntimeException] {
+    val exception = intercept[RuntimeException]:
       Lexer.tokenize("123abc")
-    }
+    
     assert(exception.getMessage.contains("Unexpected character: 'a'"))
   }
 
   test("tokenize complex expression") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
@@ -54,7 +55,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\(" => Token["LPAREN"]
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
-    }
+    
     val result = Lexer.tokenize("(x + 42) * y - 1")
 
     assert(
@@ -80,7 +81,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
   }
 
   test("tokenize file") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
@@ -89,9 +90,8 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\(" => Token["LPAREN"]
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
-    }
 
-    withLazyReader("(x + 42) * y - 1") { reader =>
+    withLazyReader("(x + 42) * y - 1"): reader =>
       val result = Lexer.tokenize(reader)
 
       assert(
@@ -107,6 +107,5 @@ final class LexerTest extends AnyFunSuite with Matchers {
           Lexem("NUMBER", "1"),
         ),
       )
-    }
   }
 }

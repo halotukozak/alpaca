@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.NamedTuple.NamedTuple
+import scala.language.experimental.relaxedLambdaSyntax
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
@@ -34,8 +35,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
 
     override def transformTerm(tree: Term)(owner: Symbol): Term =
       filtered
-        .collectFirst:
-          case (find, replace) if find == tree.symbol => replace
+        .collectFirst(case (find, replace) if find == tree.symbol => replace)
         .getOrElse(super.transformTerm(tree)(owner))
   }
 }

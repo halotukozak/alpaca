@@ -273,6 +273,7 @@ extension (using quotes: Quotes)(e: Any)
  * @param pos implicit source position
  */
 inline private[internal] def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
+
 private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
   import quotes.reflect.*
   Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
@@ -288,6 +289,7 @@ private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes:
  */
 inline private[internal] def showRawAst(inline body: Any)(using pos: DebugPosition) =
   ${ showRawAstImpl('{ body }, '{ pos }) }
+
 private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
   import quotes.reflect.*
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)

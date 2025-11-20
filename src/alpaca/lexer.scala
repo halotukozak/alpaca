@@ -87,7 +87,7 @@ transparent inline given ctx(using c: LexerCtx): c.type = c
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx {
+trait LexerCtx:
 
   /** The last lexem that was created. */
   var lastLexem: Lexem[?, ?] = compiletime.uninitialized
@@ -97,7 +97,6 @@ trait LexerCtx {
 
   /** The remaining text to be tokenized. */
   var text: CharSequence
-}
 
 object LexerCtx:
 
@@ -106,8 +105,7 @@ object LexerCtx:
    *
    * @tparam Ctx the context type
    */
-  given [Ctx <: LexerCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
-    Copyable.derived
+  given [Ctx <: LexerCtx & Product: Mirror.ProductOf]: Copyable[Ctx] = Copyable.derived
 
   /**
    * Default BetweenStages implementation that updates the context after each match.

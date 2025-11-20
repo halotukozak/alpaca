@@ -23,7 +23,7 @@ final case class DebugSettings[
   directory: Directory,
 )
 
-object DebugSettings {
+object DebugSettings:
 
   /**
    * Default debug settings with debugging disabled.
@@ -45,4 +45,3 @@ object DebugSettings {
   inline def apply[Enabled <: Boolean & Singleton, Directory <: String & Singleton]()
     : DebugSettings[Enabled, Directory] =
     DebugSettings(compiletime.constValue[Enabled], compiletime.constValue[Directory])
-}

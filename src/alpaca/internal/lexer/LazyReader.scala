@@ -29,10 +29,9 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @return the character at that position
    * @throws IndexOutOfBoundsException if the position is beyond the end of input
    */
-  def charAt(pos: Int): Char = {
+  def charAt(pos: Int): Char =
     ensure(pos)
     buffer(pos)
-  }
 
   /**
    * Gets the length of the input.
@@ -48,10 +47,9 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @param end the end position (exclusive)
    * @return a string containing the subsequence
    */
-  def subSequence(start: Int, end: Int): CharSequence = {
+  def subSequence(start: Int, end: Int): CharSequence =
     ensure(end - 1)
     buffer.slice(start, end).mkString
-  }
 
   /**
    * Skips the first count characters.
@@ -61,11 +59,10 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @param count the number of characters to skip
    * @return this LazyReader for chaining
    */
-  def from(count: Int): LazyReader = {
+  def from(count: Int): LazyReader =
     buffer.remove(0, count)
     size -= count
     this
-  }
 
   override def toString: String = subSequence(0, length).toString
 
@@ -85,7 +82,7 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
 /**
  * Factory methods for creating LazyReader instances.
  */
-object LazyReader {
+object LazyReader:
 
   /**
    * Creates a LazyReader from a file path.
@@ -94,9 +91,7 @@ object LazyReader {
    * @param charset the character encoding (defaults to UTF-8)
    * @return a new LazyReader
    */
-  def from(path: Path, charset: Charset = StandardCharsets.UTF_8): LazyReader = {
+  def from(path: Path, charset: Charset = StandardCharsets.UTF_8): LazyReader =
     val reader = Files.newBufferedReader(path, charset)
     val size = Files.size(path)
     LazyReader(reader, size)
-  }
-}

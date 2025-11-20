@@ -11,10 +11,9 @@ import scala.util.Random
  * productions. Terminals represent tokens from the lexer, while
  * non-terminals represent grammatical constructs.
  */
-private[parser] trait Symbol extends Any {
+private[parser] trait Symbol extends Any:
   type IsEmpty <: Boolean
   def name: String
-}
 
 /**
  * Represents a non-terminal symbol in the grammar.

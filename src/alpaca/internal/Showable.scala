@@ -30,7 +30,7 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
  */
 opaque private[internal] type Shown <: String = String
 
-object Shown {
+object Shown:
 
   /**
    * Implicit conversion from any Showable type to Shown.
@@ -38,7 +38,6 @@ object Shown {
    * @tparam T the type with a Showable instance
    */
   given [T: Showable]: Conversion[T, Shown] = _.show
-}
 
 private[internal] object Showable {
 

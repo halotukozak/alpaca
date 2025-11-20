@@ -5,6 +5,7 @@ package parser
 import NonEmptyList as NEL
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
+import language.experimental.relaxedLambdaSyntax
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -102,8 +103,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
         .unsafeFlatMap:
-          case (CaseDef(pattern, Some(_), rhs), name) =>
-            throw new NotImplementedError("Guards are not supported yet")
+          case (CaseDef(pattern, Some(_), rhs), name) => throw new NotImplementedError("Guards are not supported yet")
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
@@ -125,26 +125,18 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     .map(_.tree)
 
   val table = rules
-    .unsafeFlatMap:
+    .unsafeFlatMap: 
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-    .tap: table =>
-      debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
+    .tap: table => debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
 
   val productions = table
     .map(_.production)
-    .tap: table =>
-      debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
+    .tap: table => debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
   object findProduction {
-    private val productionsByName = productions
-      .collect:
-        case p if p.name != null => p.name -> p
-      .toMap
+    private val productionsByName = productions.collect(case p if p.name != null => p.name -> p).toMap
 
-    private val productionsByRhs = productions
-      .collect: p =>
-        p.rhs -> p
-      .toMap
+    private val productionsByRhs = productions.collect(p => p.rhs -> p).toMap
 
     def apply(prod: Expr[Production]): Production = prod match
       case '{ alpaca.Production.ofName(${ Expr(name) }) } =>
@@ -163,12 +155,9 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   }
 
   val resolutionExprs = scala.util
-    .Try:
-      parserTpe.typeSymbol.declaredField("resolutions").tree
-    .map:
-      case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
-    .map:
-      case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
+    .Try(parserTpe.typeSymbol.declaredField("resolutions").tree)
+    .map(case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]])
+    .map(case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs)
     .getOrElse(Nil)
 
   def extractKey(expr: Expr[Production | Token[?, ?, ?]]): Production | ValidName = expr match
@@ -185,12 +174,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           acc.updatedWith(extractKey(before)):
             case Some(set) => Some(set + extractKey(after))
             case None => Some(Set(extractKey(after))),
-  ).tap: table =>
-    debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
+  ).tap: table => debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
   val root = table
-    .collectFirst:
-      case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
+    .collectFirst(case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p)
     .get
 
   val parseTable = Expr(
@@ -202,8 +189,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   )
 
   val actionTable = Expr.ofList(
-    table.map:
-      case (production, action) => Expr.ofTuple(Expr(production) -> action),
+    table.map: case (production, action) => Expr.ofTuple(Expr(production) -> action),
   )
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }

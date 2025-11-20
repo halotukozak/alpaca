@@ -4,6 +4,7 @@ package lexer
 
 import scala.NamedTuple.NamedTuple
 import scala.util.matching.Regex
+import language.experimental.relaxedLambdaSyntax
 
 /**
  * Type alias for lexer rule definitions.
@@ -46,41 +47,36 @@ def lexerImpl[Ctx <: LexerCtx: Type](
         ctxManipulation: Expr[CtxManipulation[Ctx]],
       ): PartialFunction[Expr[ThisToken], List[Expr[ThisToken]]] =
         case '{ Token.Ignored(using $ctx) } =>
-          compileNameAndPattern[Nothing](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } => '{ IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) }
+          compileNameAndPattern[Nothing](tree).map: case '{ $tokenInfo: TokenInfo[name] } =>
+            '{ IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) }
 
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
-          compileNameAndPattern[t](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } => '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
+          compileNameAndPattern[t](tree).map: case '{ $tokenInfo: TokenInfo[name] } =>
+            '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
         case '{ type t <: ValidName; Token.apply[t]($value: String)(using $ctx) }
             if value.asTerm.symbol == tree.symbol =>
 
-          compileNameAndPattern[t](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } =>
-              '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
+          compileNameAndPattern[t](tree).map: case '{ $tokenInfo: TokenInfo[name] } =>
+            '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
 
         case '{ type t <: ValidName; Token.apply[t]($value: v)(using $ctx) } =>
-          compileNameAndPattern[t](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } =>
-              // we need to widen here to avoid weird types
-              TypeRepr.of[v].widen.asType match
-                case '[result] =>
-                  val remapping = createLambda[Ctx => result]:
-                    case (methSym, (newCtx: Term) :: Nil) =>
-                      replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
-                  '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
+          compileNameAndPattern[t](tree).map: case '{ $tokenInfo: TokenInfo[name] } =>
+            // we need to widen here to avoid weird types
+            TypeRepr.of[v].widen.asType match
+              case '[result] =>
+                val remapping = createLambda[Ctx => result]: case (methSym, (newCtx: Term) :: Nil) =>
+                    replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
+
+                '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
 
       val tokens = extractSimple('{ identity })
         .lift(body.asExprOf[ThisToken])
         .orElse:
           body match
             case Block(statements, expr) =>
-              val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
-                case (methSym, (newCtx: Term) :: Nil) =>
-                  replaceWithNewCtx(newCtx).transformTerm(
-                    Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
-                  )(methSym)
+              val ctxManipulation = createLambda[CtxManipulation[Ctx]]: case (methSym, (newCtx: Term) :: Nil) =>
+                replaceWithNewCtx(newCtx).transformTerm(Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())))(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
         .getOrElse(raiseShouldNeverBeCalled(body))
@@ -103,8 +99,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
 
   def decls(cls: Symbol): List[Symbol] = {
-    val tokenDecls = definedTokens.map:
-      case '{ $token: DefinedToken[name, Ctx, value] } =>
+    val tokenDecls = definedTokens.map: case '{ $token: DefinedToken[name, Ctx, value] } =>
         Symbol.newVal(
           parent = cls,
           name = ValidName.from[name],
@@ -168,12 +163,11 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   )
 
   val body = {
-    val tokenVals = definedTokens.collect:
-      case '{ $token: DefinedToken[name, Ctx, value] } =>
-        ValDef(
-          cls.fieldMember(ValidName.from[name]),
-          Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
-        )
+    val tokenVals = definedTokens.collect: case '{ $token: DefinedToken[name, Ctx, value] } =>
+      ValDef(
+        cls.fieldMember(ValidName.from[name]),
+        Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
+      )
 
     tokenVals ++ Vector(
       TypeDef(cls.typeMember("Fields")),
@@ -182,8 +176,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
         Some {
           val regex = Expr(
             infos
-              .map:
-                case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)"
+              .map(case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)")
               .mkString("|")
               .r
               .regex, // we'd like to compile it here to fail in compile time if regex is invalid
@@ -195,9 +188,8 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       ValDef(
         cls.fieldMember("tokens"),
         Some {
-          val declaredTokens = definedTokens.map:
-            case '{ $token: DefinedToken[name, Ctx, ?] } =>
-              This(cls).select(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
+          val declaredTokens = definedTokens.map: case '{ $token: DefinedToken[name, Ctx, ?] } =>
+            This(cls).select(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
 
           Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
         },
@@ -226,9 +218,8 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   definedTokens
-    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]):
-      case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) =>
-        Refinement(tpe, ValidName.from[name], token.asTerm.tpe)
+    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]): 
+      case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) => Refinement(tpe, ValidName.from[name], token.asTerm.tpe)
     .asType match
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
