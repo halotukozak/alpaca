@@ -4,19 +4,6 @@ package internal
 import scala.NamedTuple.NamedTuple
 import scala.concurrent.duration.FiniteDuration
 
-/**
- * Throws an exception indicating an impossible code path was reached.
- *
- * This function is used in pattern matching and other control flow
- * to mark code paths that should never be executed. If they are executed,
- * it indicates a bug in the library.
- *
- * @param x additional context information about what was encountered
- * @throws Exception always
- */
-private[internal] def raiseShouldNeverBeCalled(x: String = ""): Nothing =
-  throw new Exception(s"It should never happen. Got: $x")
-
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
 /**
@@ -48,7 +35,8 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
 
     override def transformTerm(tree: Term)(owner: Symbol): Term =
       filtered
-        .collectFirst { case (find, replace) if find == tree.symbol => replace }
+        .collectFirst:
+          case (find, replace) if find == tree.symbol => replace
         .getOrElse(super.transformTerm(tree)(owner))
   }
 }
@@ -80,7 +68,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.applyOrElse((sym, args), _ => raiseShouldNeverBeCalled(s"Unexpected arguments: $sym, $args")),
+      (sym, args) => rhsFn.unsafeApply((sym, args)),
     ).asExprOf[F]
   }
 }

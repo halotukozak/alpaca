@@ -1,9 +1,10 @@
 package alpaca
+package integration
 
 import Production as P
 
+import alpaca.{name, Production as P, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
 final class MathTest extends AnyFunSuite:
   test("e2e math test") {

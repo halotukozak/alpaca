@@ -42,11 +42,13 @@ object Shown {
 
 private[internal] object Showable {
 
+  def fromToString[T]: Showable[T] = _.toString
+
   /** Showable instance for String (identity). */
   given Showable[String] = _.asInstanceOf[Shown]
 
   /** Showable instance for Int. */
-  given Showable[Int] = _.toString
+  given Showable[Int] = fromToString
 
   /** Showable instance for nullable types. */
   given [T: Showable]: Showable[T | Null] =
@@ -79,8 +81,8 @@ private[internal] object Showable {
     val showables =
       compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
     val values = Tuple.fromProductTyped(t).toList
-    val shown = showables.zip(values).map { case (s, v) => s.show(v) }
-    s"$name(${fields.zip(shown).map { case (f, v) => s"$f: $v" }.mkString(", ")})"
+    val shown = showables.zip(values).map(_.show(_))
+    s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
 }
 
 extension [C[X] <: Iterable[X], T: Showable](c: C[T])

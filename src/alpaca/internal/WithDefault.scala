@@ -10,6 +10,7 @@ package internal
  * @tparam T the provided type
  * @tparam Q the default type
  */
+//todo: better name
 infix private[alpaca] class withDefault[T, Q]
 
 private[alpaca] trait withDefaultLowImplicitPriority {

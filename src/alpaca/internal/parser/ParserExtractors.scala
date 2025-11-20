@@ -40,7 +40,6 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     case extractTerminalRef(terminal) => terminal
     case extractOptionalTerminal(optionalTerminal) => optionalTerminal
     case extractRepeatedTerminal(repeatedTerminal) => repeatedTerminal
-    case x => raiseShouldNeverBeCalled(x.toString)
 
   // todo NameTransformer.decode once
   private val extractName: PartialFunction[Tree, String] =
@@ -51,9 +50,8 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
   private val extractBind: PartialFunction[Tree, Option[Bind]] =
     case bind: Bind => Some(bind)
     case Ident("_") => None
-    case x => raiseShouldNeverBeCalled(x.toString)
 
-//todo: it should be compared with Symbol or sth
+  // todo: it should be compared with Symbol or sth
   private val extractMethodName: PartialFunction[Tree, String] =
     case Select(_, name) => name
     case Ident(name) => name
@@ -186,13 +184,13 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
 private object ParserExtractors {
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x.toString)
+    case x => raiseShouldNeverBeCalled(x)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x.toString)
+    case x => raiseShouldNeverBeCalled(x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
 }
