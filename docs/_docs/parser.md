@@ -16,14 +16,7 @@ A **parser** (also called a **syntax analyzer**) is the second phase of a compil
 
 #### Grammar
 
-A **grammar** is a set of rules that defines the valid structure of sentences in a language. Grammars are typically written in **Backus-Naur Form (BNF)** or **Extended BNF (EBNF)**.
-
-**Example grammar for arithmetic expressions:**
-```
-Expr → Expr + Term | Expr - Term | Term
-Term → Term * Factor | Term / Factor | Factor
-Factor → NUMBER | ( Expr )
-```
+A **grammar** is a set of rules (called **productions**) that defines the valid structure of sentences in a language. Grammars are typically written in **Backus-Naur Form (BNF)** or **Extended BNF (EBNF)**.
 
 #### Production Rules
 
@@ -34,6 +27,20 @@ A **production rule** defines how a non-terminal symbol can be replaced with a s
 Expr → Expr + Term
 ```
 This rule says: "An expression can be an expression followed by '+' followed by a term."
+
+**Example grammar for arithmetic expressions (mathematicians):**
+```
+Expr → Expr + Term | Expr - Term | Term
+Term → Term * Factor | Term / Factor | Factor
+Factor → NUMBER | ( Expr )
+```
+
+**Example grammar for a C++ for loop (programmers):**
+```
+ForStmt → for ( Expr ; Expr ; Expr ) Stmt
+Stmt → { StmtList } | Expr ;
+StmtList → Stmt StmtList | ε
+```
 
 #### Terminals vs Non-terminals
 
@@ -157,7 +164,7 @@ val (_, result) = CalcParser.parse[Int](tokens)
 
 ## Example 2: Precedence and Associativity
 
-Real parsers need to handle operator precedence correctly:
+Real parsers need to handle operator precedence correctly. One way to do this is by structuring the grammar with multiple levels:
 
 ```scala
 import alpaca.api.*
@@ -194,12 +201,41 @@ val (_, result) = MathParser.parse[Int](tokens)
 
 **Key points:**
 - Three-level hierarchy: `Expr` → `Term` → `Factor`
-- `Factor` handles base values
-- `Term` handles multiplication (higher precedence)
-- `Expr` handles addition (lower precedence)
-- This grammar structure naturally encodes precedence
+- `Factor` handles base values (numbers)
+- `Term` handles multiplication (higher precedence) - a `Term` can be multiple `Factor`s multiplied together
+- `Expr` handles addition (lower precedence) - an `Expr` can be multiple `Term`s added together
+- This grammar structure naturally encodes precedence by making multiplication "bind tighter" than addition
 
-## Example 3: Conflict Resolution
+## Example 3: Alternative Approach with Conflict Resolution
+
+Another way to handle precedence is using a single expression rule with explicit conflict resolution:
+
+```scala
+import alpaca.api.*
+import alpaca.parser.Production as P
+
+object AltMathParser extends Parser[EmptyGlobalCtx] {
+  val Expr: Rule[Int] = rule(
+    { case (Expr(a), MathLexer.PLUS(_), Expr(b)) => a + b }: @name("plus"),
+    { case (Expr(a), MathLexer.TIMES(_), Expr(b)) => a * b }: @name("times"),
+    { case MathLexer.NUMBER(n) => n.value }
+  )
+  
+  val root = rule { case Expr(result) => result }
+  
+  override val resolutions = Set(
+    P.ofName("times").before(MathLexer.PLUS),
+    P.ofName("times").before(MathLexer.TIMES),
+    P.ofName("plus").after(MathLexer.TIMES),
+    P.ofName("plus").before(MathLexer.PLUS)
+  )
+}
+```
+
+**Explanation:**
+- This approach uses a flat expression rule instead of a hierarchy
+- Conflict resolution declarations specify precedence and associativity
+- Both approaches produce the same result, but conflict resolution gives more fine-grained control
 
 When using left-recursive grammars (like `Expr → Expr + Expr`), ALPACA may detect shift-reduce conflicts. You can resolve these explicitly:
 
@@ -217,23 +253,40 @@ object ExprParser extends Parser[EmptyGlobalCtx] {
   val root = rule { case Expr(result) => result }
   
   override val resolutions = Set(
-    // Times has higher precedence than plus
-    P.ofName("times").before(CalcLexer.PLUS),
+    // Production `times` should be before `plus` token/terminal
+    // It resolves the problem ALPACA has in situation like:
+    // 1 * 2 + ... (possibly 3 but we don't know yet what's next)
+    // ALPACA may either calculate 1 * 2 then continue with 3 + ...
+    // or continue to 1 * 2 + 3 (let's say this is the end) then calculate 1 * 5 -> 5
+    P.ofName("times").before(CalcLexer.PLUS), 
+    
+    // In situation like:
+    // 1 * 2 * ...
+    // Prioritize the production (calculation), only then proceed to the next symbols
     P.ofName("times").before(CalcLexer.TIMES),
     
-    // Plus comes after times
+    // 1 + 2 * ... 
+    // In this situation we actually want to go ahead and leave addition to calculate later on
     P.ofName("plus").after(CalcLexer.TIMES),
+    
+    // 1 + 2 + ...
+    // Operators calculated from left to right are called left-associative
     P.ofName("plus").before(CalcLexer.PLUS)
   )
+  
+  // Don't we always calculate from left to right?
+  // No, we don't :D
+  // Mathematicians calculate 2^3^4 as 2^(3^4) that is 2^81
+  // Such operators are called right-associative
 }
 ```
 
-**Explanation:**
-- `@name("...")` annotation labels productions
-- `resolutions` set defines precedence and associativity
-- `.before(tokens...)` means reduce production before shifting those tokens
-- `.after(tokens...)` means shift those tokens before reducing production
-- This gives fine-grained control over ambiguity resolution
+**This is one of the hardest concepts in parser design:**
+- Understanding shift-reduce conflicts is crucial for debugging parser issues
+- The `.before()` directive means "reduce the production before shifting this token"
+- The `.after()` directive means "shift this token before reducing the production"
+- Left-associative operators (like `+`, `*`) use `.before()` to ensure left-to-right evaluation
+- Right-associative operators (like `^`) would use `.after()` for right-to-left evaluation
 
 ## Example 4: Extracting Token Values
 
@@ -260,9 +313,9 @@ object TypedParser extends Parser[EmptyGlobalCtx] {
 
 **Important:** Token extractors like `NUMBER(n)` bind the lexem, and `.value` accesses its semantic value.
 
-## Example 5: Complex Grammar with Variables
+## Example 5: Complex Grammar with Variables and Statements
 
-A parser for assignment statements and expressions:
+A parser for assignment statements and expressions that can handle multiple statements:
 
 ```scala
 import alpaca.api.*
@@ -282,20 +335,34 @@ object VarParser extends Parser[CalcContext] {
     }
   )
   
-  val Statement: Rule[Unit] = rule(
+  val Statement: Rule[Int] = rule(
     { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(value)) =>
       ctx.names(id.value) = value
+      value
     },
-    { case Expr(e) => () }
+    { case Expr(e) => e }
   )
   
-  val root = rule { case Statement(s) => s }
+  // Using .List for zero or more statements
+  val root = rule { 
+    case (Statement.List(statements), Expr(finalExpr)) => 
+      // Statements are executed for their side effects
+      // The final expression is the result
+      finalExpr
+  }
 }
 
-val tokens = CalcLexer.tokenize("x = 10")
-val (ctx, _) = VarParser.parse[Unit](tokens)
-// ctx.names contains Map("x" -> 10)
+// Example with multiple statements:
+val tokens = CalcLexer.tokenize("x = 10\ny = 5\nx + y")
+val (ctx, result) = VarParser.parse[Int](tokens)
+// ctx.names contains Map("x" -> 10, "y" -> 5)
+// result is 15
 ```
+
+**Key points:**
+- `Statement.List` matches zero or more statements
+- This creates a useful calculator that can define variables and then compute results
+- The context accumulates variable definitions across all statements
 
 ## Key Features and Best Practices
 
@@ -325,6 +392,10 @@ ALPACA supports EBNF-style optional and repeated elements:
 import alpaca.api.*
 
 object EbnfParser extends Parser[EmptyGlobalCtx] {
+  val Expr: Rule[Int] = rule(
+    { case CalcLexer.NUMBER(n) => n.value }
+  )
+  
   val ArgList: Rule[List[Int]] = rule(
     { case (Expr(e), CalcLexer.COMMA(_), ArgList(rest)) => e :: rest },
     { case Expr(e) => List(e) }
@@ -350,6 +421,29 @@ object EbnfParser extends Parser[EmptyGlobalCtx] {
 - `Rule.Option` - Matches 0 or 1 occurrence (like `?` in EBNF)
 - `Rule.List` - Matches 0 or more occurrences (like `*` in EBNF)
 
+**Another useful example with .List:**
+```scala
+import alpaca.api.*
+
+object StatementsParser extends Parser[EmptyGlobalCtx] {
+  val Statement: Rule[String] = rule(
+    { case CalcLexer.ID(id) => id.value }
+  )
+  
+  val Program: Rule[List[String]] = rule(
+    { case Statement.List(stmts) => stmts }
+  )
+  
+  val root = rule { case Program(p) => p }
+}
+
+// Parse: "a b c"
+// Result: List("a", "b", "c")
+
+// Parse: ""
+// Result: List()
+```
+
 ### 3. Naming Productions
 
 Use `@name` to label productions for conflict resolution:
@@ -363,7 +457,7 @@ val Expr: Rule[Int] = rule(
 
 ### 4. Context-Aware Parsing
 
-Access and modify parser context during parsing:
+Access and modify parser context during parsing. The callback in the production is executed **after parsing the entire subtree**, allowing you to perform post-processing or validation:
 
 ```scala
 case class MyContext(
@@ -372,14 +466,53 @@ case class MyContext(
 ) extends GlobalCtx
 
 object ContextParser extends Parser[MyContext] {
-  val Block: Rule[Unit] = rule(
-    { case (CalcLexer.LBRACE(_), Statements(_), CalcLexer.RBRACE(_)) =>
+  val Statement: Rule[Unit] = rule(
+    { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(value)) =>
+      // This runs after parsing the assignment
+      ctx.symbols += id.value
+      ()
+    }
+  )
+  
+  val Block: Rule[List[Unit]] = rule(
+    { case (CalcLexer.LBRACE(_), Statement.List(statements), CalcLexer.RBRACE(_)) =>
+      // This runs after parsing all statements in the block
+      // You could process or transform the statements here
       ctx.depth += 1
+      statements
+    }
+  )
+}
+```
+
+**Practical example - Variable scope tracking:**
+```scala
+case class ScopeContext(
+  variables: mutable.Set[String] = mutable.Set.empty
+) extends GlobalCtx
+
+object ScopeParser extends Parser[ScopeContext] {
+  val Assignment: Rule[String] = rule(
+    { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(value)) =>
+      ctx.variables += id.value
+      id.value
+    }
+  )
+  
+  val Block: Rule[Unit] = rule(
+    { case (CalcLexer.LBRACE(_), Assignment.List(vars), CalcLexer.RBRACE(_)) =>
+      // After parsing block, remove variables from scope
+      vars.foreach(ctx.variables.remove)
       ()
     }
   )
 }
 ```
+
+**Use cases:**
+- **Variable tracking**: Add variable names to context in assignment rules
+- **Scope management**: Track and pop variables when exiting blocks (Python-like scoping)
+- **Post-processing**: Transform AST nodes after entire subtrees are parsed
 
 ### 5. Semantic Actions
 
@@ -397,18 +530,22 @@ val Statement: Rule[Int] = rule(
 
 ### 6. Error Handling
 
-ALPACA parsers return `null` on parse errors:
+ALPACA parsers raise an error with limited information when parsing fails:
 
 ```scala
 val tokens = CalcLexer.tokenize("invalid syntax")
-val (ctx, result) = CalcParser.parse[Int](tokens)
 
-if (result == null) {
-  println("Parse error!")
-} else {
+try {
+  val (ctx, result) = CalcParser.parse[Int](tokens)
   println(s"Result: $result")
+} catch {
+  case e: Exception =>
+    println(s"Parse error: ${e.getMessage}")
+    // Error messages provide limited information about the failure
 }
 ```
+
+**Note:** ALPACA's error reporting provides basic information about parse failures. For production use, consider adding custom error handling or validation.
 
 ## Complete Working Example: Calculator Language
 
@@ -417,6 +554,7 @@ Here's a comprehensive parser for a calculator with functions and precedence:
 ```scala
 import alpaca.api.*
 import alpaca.parser.Production as P
+import scala.collection.mutable
 
 val CalcLexer = lexer {
   case " " => Token.Ignored
