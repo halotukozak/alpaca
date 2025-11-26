@@ -28,7 +28,7 @@ object myproject extends ScalaModule {
   def scalaVersion = "3.7.4"
   
   def mvnDeps = Seq(
-    mvn"com.github.halotukozak::alpaca:0.1.0"
+    mvn"io.github.halotukozak::alpaca:0.0.1"
   )
 }
 ```
@@ -38,7 +38,7 @@ object myproject extends ScalaModule {
 Add Alpaca to your `build.sbt`:
 
 ```sbt
-libraryDependencies += "com.github.halotukozak" %% "alpaca" % "0.1.0"
+libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.1"
 ```
 
 Make sure you're using Scala 3.7.4 or later:
@@ -53,7 +53,7 @@ Use Alpaca directly in your Scala CLI scripts:
 
 ```scala
 //> using scala "3.7.4"
-//> using dep "com.github.halotukozak::alpaca:0.1.0"
+//> using dep "io.github.halotukozak::alpaca:0.0.1"
 
 import alpaca.*
 
@@ -112,8 +112,8 @@ object MyParser extends Parser:
 
 ```scala sc-compile-with:MyLexer.scala,MyParser.scala
 val input = "2 + 3 * 4"
-val tokens = MyLexer.tokenize(input)
-val (_, result) = MyParser.parse[Double](tokens)
+val (_, lexemes) = MyLexer.tokenize(input)
+val (_, result) = MyParser.parse(lexemes)
 println(result) // 14.0
 ```
 
