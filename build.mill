@@ -64,7 +64,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   def publishVersion = Task(VcsVersion.vcsState().format())
 
   def pomSettings = PomSettings(
-    description = "",
+    description = "Another Lexer Parser And Compiler Alpaca",
     organization = "io.github.halotukozak",
     url = "https://halotukozak.github.io/alpaca/docs/index.html",
     licenses = Seq(License.MIT),
