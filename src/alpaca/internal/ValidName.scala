@@ -22,11 +22,10 @@ object ValidName {
   /**
    * Validates a token name during macro expansion.
    *
-   * Token names must not be underscore (_) as that would be invalid.
+   * Token names must not be an underscore (_) as that would be invalid.
    *
    * @param name the token name to validate
    * @param quotes the Quotes instance
-   * @throws compilation error if the name is invalid
    */
   def check(name: String)(using quotes: Quotes): Unit =
     import quotes.reflect.*

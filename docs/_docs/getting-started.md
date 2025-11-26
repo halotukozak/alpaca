@@ -1,12 +1,10 @@
-# Getting Started
+# Alpaca 🦙
 
-This guide will help you get started with Alpaca, a modern, type-safe lexer and parser library for Scala 3.
+A modern, type-safe lexer and parser library for Scala 3, featuring compile-time validation and elegant DSL syntax.
 
-## What is Alpaca?
+## Features
 
-Alpaca is a lexer and parser library featuring compile-time validation and elegant DSL syntax. It leverages Scala 3's powerful type system and macros to provide:
-
-- 🔍 **Type-safe lexer and parser** - Catch errors at compile time
+- 🔍 **Type-safe lexer and parser** - Catch errors at compile time with Scala 3's powerful type system
 - 🎯 **Elegant DSL** - Define lexers and parsers using intuitive pattern matching syntax
 - ⚡ **Compile-time validation** - Regex patterns and grammar rules are validated during compilation
 - 🧪 **Macro-based** - Leverages Scala 3 macros for efficient code generation
@@ -175,6 +173,21 @@ import alpaca.parser.context.default.EmptyGlobalCtx
 }
 ```
 
+## Project Structure
+
+```
+alpaca/
+├── src/alpaca/
+│   ├── core/           # Core utilities (Empty, Copyable, Showable, etc.)
+│   ├── lexer/          # Lexer implementation and DSL
+│   │   └── context/    # Lexical context management
+│   └── parser/         # Parser implementation and DSL
+│       └── context/    # Parsing context management
+├── test/               # Test suite
+├── docs/              # Documentation
+└── build.mill         # Mill build configuration
+```
+
 ## Advanced Features
 
 ### Contextual Lexing and Parsing
@@ -210,13 +223,51 @@ case "[ \\t\\r\\n]+" => Token.Ignored
 case "#.*" => Token.Ignored  // Comments
 ```
 
+## Building from Source
+
+### Prerequisites
+
+- JDK 21 or later
+- Mill 1.0.6 or later
+
+### Build Commands
+
+```bash
+# Compile the project
+./mill compile
+
+# Run tests
+./mill test
+
+# Generate documentation
+./mill docJar
+
+# Run test coverage
+./mill test.scoverage.htmlReport
+```
+
+## Documentation
+
+- 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
+- 🚀 [Getting Started Guide](docs/_docs/getting-started.md)
+
 ## Requirements
 
 - Scala 3.7.3 or later
 - JDK 21 or later (for development)
 
-## Next Steps
+## License
 
-- Check out the [full documentation](https://halotukozak.github.io/alpaca/)
-- Explore the [example projects](../../test)
-- Read about the [project structure](../../README.md#project-structure)
+See the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Authors
+
+Created by [halotukozak](https://github.com/halotukozak) and [Corvette653](https://github.com/Corvette653)
+
+---
+
+Made with ❤️ and coffee
