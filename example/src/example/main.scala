@@ -25,7 +25,7 @@ def main() =
 
         val globalScope = Scope(ast.nn, null, false, symbols)
         val scoped = MatrixScoper.visit(ast.nn)(globalScope).get
-        val typed = MatrixTyper.visit(ast.nn)().get
+        val typed = MatrixTyper.visit(ast.nn)().get.nn
         val globalEnv = Env(null, mutable.Map.empty, globalFunctions.to(mutable.Map))
         val result = MatrixInterpreter.visit(typed)(globalEnv)
 

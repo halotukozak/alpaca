@@ -1,15 +1,12 @@
 //| mill-version: 1.0.6
 //| mill-jvm-version: 21
+
 package build
 
-import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._
 
-object `package` extends ScalaModule with ScoverageModule {
-  base =>
+object `package` extends ScalaModule {
   def scalaVersion = "3.8.0-RC1"
-
-  def scoverageVersion = "2.3.0"
 
   override def scalacOptions = Seq(
     "-deprecation",
@@ -39,6 +36,10 @@ object `package` extends ScalaModule with ScoverageModule {
   )
 
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak:alpaca:0.0.1"
+    mvn"io.github.halotukozak:_3:0.0.1",
+    mvn"com.github.marianobarrios:dregex:0.9.0",
+    mvn"org.jparsec:jparsec:3.1",
+    mvn"org.slf4j:slf4j-api:1.7.36",
+    mvn"org.slf4j:slf4j-simple:1.7.36",
   )
 }

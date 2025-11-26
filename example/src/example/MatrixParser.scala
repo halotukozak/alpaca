@@ -71,23 +71,23 @@ object MatrixParser extends Parser {
   def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
     AST.Apply(
       symbols(op).asInstanceOf[AST.SymbolRef],
-      List(e1.asInstanceOf[AST.Expr], e2.asInstanceOf[AST.Expr]),
+      scala.List(e1, e2),
       Type.Undef,
       e1.line,
     )
   }
 
-  def AsssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
-    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), List(e1, e2), Type.Undef, e1.line) },
-    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), List(e1, e2), Type.Undef, e1.line) },
-    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), List(e1, e2), Type.Undef, e1.line) },
-    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), List(e1, e2), Type.Undef, e1.line) },
-    { case ML.`=`(_) => (e1, e2) => e2 },
+  def AsssignOp: Rule[AST.Expr] = rule(
+    { case (Expr(e1), ML.ADDASSIGN(_), Expr(e2)) => AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case (Expr(e1), ML.SUBASSIGN(_), Expr(e2)) => AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case (Expr(e1), ML.MULASSIGN(_), Expr(e2)) => AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case (Expr(e1), ML.DIVASSIGN(_), Expr(e2)) => AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case (Expr(e1), ML.`=`(_), Expr(e2)) => AST.Apply(symbols("="), scala.List(e1, e2), Type.Undef, e1.line) },
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
-    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
+    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op, v.line) },
+    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op, el.line) },
   )
 
   def FunctionName = rule(
@@ -118,29 +118,33 @@ object MatrixParser extends Parser {
     { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
     { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
-      AST.Apply(symbols("UMINUS"), List(e), Type.Undef, l.line)
+      AST.Apply(symbols("UMINUS"), scala.List(e), Type.Undef, l.line)
     }: @name("uminus"),
-    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) => AST.Apply(symbols("+"), List(e1, e2), Type.Undef, e1.line) }: @name(
-      "add",
-    ),
-    { case (Expr(e1), ML.`-`(_), Expr(e2)) => AST.Apply(symbols("-"), List(e1, e2), Type.Undef, e1.line) }: @name("sub"),
-    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) => AST.Apply(symbols("*"), List(e1, e2), Type.Undef, e1.line) }: @name(
-      "mul",
-    ),
-    { case (Expr(e1), ML.`/`(_), Expr(e2)) => AST.Apply(symbols("/"), List(e1, e2), Type.Undef, e1.line) }: @name("div"),
+    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
+      AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line)
+    }: @name("add"),
+    { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
+      AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line)
+    }: @name("sub"),
+    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
+      AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line)
+    }: @name("mul"),
+    { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
+      AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line)
+    }: @name("div"),
     { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTADD"), List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(symbols("DOTADD"), scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotadd"),
     { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTSUB"), List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(symbols("DOTSUB"), scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotsub"),
     { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTMUL"), List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(symbols("DOTMUL"), scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotmul"),
     { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTDIV"), List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(symbols("DOTDIV"), scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotdiv"),
-    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("TRANSPOSE"), List(e), Type.Undef, e.line) },
+    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("TRANSPOSE"), scala.List(e), Type.Undef, e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
