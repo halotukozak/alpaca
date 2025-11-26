@@ -48,7 +48,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[LexemeType] = {
+  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): (ctx: Ctx, lexemes: List[LexemeType]) = {
     @tailrec def loop(globalCtx: Ctx)(acc: List[LexemeType]): List[LexemeType] =
       globalCtx.text.length match
         case 0 =>
@@ -68,7 +68,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
 
     val initialContext = empty()
     initialContext.text = input
-    loop(initialContext: Ctx)(Nil)
+    (initialContext, loop(initialContext)(Nil))
   }
 
   /** The compiled regex that matches all defined tokens. */

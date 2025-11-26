@@ -26,7 +26,6 @@ object ValidName {
    *
    * @param name the token name to validate
    * @param quotes the Quotes instance
-   * @throws compilation error if the name is invalid
    */
   def check(name: String)(using quotes: Quotes): Unit =
     import quotes.reflect.*

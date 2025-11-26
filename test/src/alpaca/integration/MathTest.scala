@@ -107,8 +107,8 @@ final class MathTest extends AnyFunSuite:
     }
 
     val input = "1 + 2"
-    val tokens = CalcLexer.tokenize(input)
-    val (_, result) = CalcParser.parse(tokens)
+    val (_, lexemes) = CalcLexer.tokenize(input)
+    val (_, result) = CalcParser.parse(lexemes)
     assert(result == 3.0)
 
     withLazyReader("""
@@ -116,10 +116,10 @@ final class MathTest extends AnyFunSuite:
       * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
       - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
       + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
-    """) { input2 =>
-      val tokens2 = CalcLexer.tokenize(input2)
-      val (_, result2) = CalcParser.parse(tokens2)
-      assert(result2 == 2096.0)
+    """) { input =>
+      val (_, lexemes) = CalcLexer.tokenize(input)
+      val (_, result) = CalcParser.parse(lexemes)
+      assert(result == 2096.0)
     }
 
     withLazyReader("""
@@ -129,11 +129,11 @@ final class MathTest extends AnyFunSuite:
       - (-cos(0) + +sin(pi/2))
       + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
       + atan2(1, 0)
-    """) { input2 =>
-      val tokens2 = CalcLexer.tokenize(input2)
-      val (_, result2) = CalcParser.parse(tokens2)
+    """) { input =>
+      val (_, lexemes) = CalcLexer.tokenize(input)
+      val (_, result) = CalcParser.parse(lexemes)
       val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
 
-      assert(result2 == expected, s"Multiple expression mismatch: $result2 vs $expected")
+      assert(result == expected, s"Multiple expression mismatch: $result vs $expected")
     }
   }

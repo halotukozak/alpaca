@@ -37,9 +37,9 @@ import org.scalatest.funsuite.AnyFunSuite
   }
 
   val input = "1 + 2"
-  val tokens = CalcLexer.tokenize(input)
-  val result = CalcParser.parse(tokens)
-  assert(result.result == 3.0)
+  val (_, lexemes) = CalcLexer.tokenize(input)
+  val (_, result) = CalcParser.parse(lexemes)
+  assert(result == 3.0)
 
   withLazyReader("""
         ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)
@@ -47,9 +47,9 @@ import org.scalatest.funsuite.AnyFunSuite
         - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2))))
         + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
       """) { input2 =>
-    val tokens2 = CalcLexer.tokenize(input2)
-    val result2 = CalcParser.parse(tokens2)
-    assert(result2.result == 2096.0)
+    val (_, lexemes) = CalcLexer.tokenize(input2)
+    val (_, result) = CalcParser.parse(lexemes)
+    assert(result == 2096.0)
   }
 
 }

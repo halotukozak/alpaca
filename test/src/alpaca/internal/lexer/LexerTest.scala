@@ -8,8 +8,8 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
   test("tokenize simple identifier") {
     val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
-    val result = Lexer.tokenize("hello")
-    assert(result == List(Lexeme("IDENTIFIER", "hello", Map.empty)))
+    val (_, lexemes) = Lexer.tokenize("hello")
+    assert(lexemes == List(Lexeme("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
   }
 
   test("tokenize with whitespace ignored") {
@@ -18,21 +18,21 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored
     }
-    val result = Lexer.tokenize("42 + 13")
+    val (_, lexemes) = Lexer.tokenize("42 + 13")
 
     assert(
-      result == List(
-        Lexeme("NUMBER", "42", Map.empty),
-        Lexeme("PLUS", (), Map.empty),
-        Lexeme("NUMBER", "13", Map.empty),
+      lexemes == List(
+        Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
+        Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        Lexeme("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
       ),
     )
   }
 
   test("tokenize empty string") {
     val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
-    val result = Lexer.tokenize("")
-    assert(result == List.empty)
+    val (_, lexemes) = Lexer.tokenize("")
+    assert(lexemes == List.empty)
   }
 
   test("throw exception for unexpected character") {
@@ -55,19 +55,19 @@ final class LexerTest extends AnyFunSuite with Matchers {
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
     }
-    val result = Lexer.tokenize("(x + 42) * y - 1")
+    val (_, lexemes) = Lexer.tokenize("(x + 42) * y - 1")
 
     assert(
-      result == List(
-        Lexeme("LPAREN", (), Map.empty),
-        Lexeme("IDENTIFIER", "x", Map.empty),
-        Lexeme("PLUS", (), Map.empty),
-        Lexeme("NUMBER", "42", Map.empty),
-        Lexeme("RPAREN", (), Map.empty),
-        Lexeme("MULTIPLY", (), Map.empty),
-        Lexeme("IDENTIFIER", "y", Map.empty),
-        Lexeme("MINUS", (), Map.empty),
-        Lexeme("NUMBER", "1", Map.empty),
+      lexemes == List(
+        Lexeme("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+        Lexeme("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+        Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+        Lexeme("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+        Lexeme("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+        Lexeme("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+        Lexeme("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+        Lexeme("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
       ),
     )
   }
@@ -92,19 +92,19 @@ final class LexerTest extends AnyFunSuite with Matchers {
     }
 
     withLazyReader("(x + 42) * y - 1") { reader =>
-      val result = Lexer.tokenize(reader)
+      val (_, lexemes) = Lexer.tokenize(reader)
 
       assert(
-        result == List(
-          Lexeme("LPAREN", (), Map.empty),
-          Lexeme("IDENTIFIER", "x", Map.empty),
-          Lexeme("PLUS", (), Map.empty),
-          Lexeme("NUMBER", "42", Map.empty),
-          Lexeme("RPAREN", (), Map.empty),
-          Lexeme("MULTIPLY", (), Map.empty),
-          Lexeme("IDENTIFIER", "y", Map.empty),
-          Lexeme("MINUS", (), Map.empty),
-          Lexeme("NUMBER", "1", Map.empty),
+        lexemes == List(
+          Lexeme("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+          Lexeme("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+          Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+          Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+          Lexeme("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+          Lexeme("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+          Lexeme("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+          Lexeme("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+          Lexeme("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
         ),
       )
     }

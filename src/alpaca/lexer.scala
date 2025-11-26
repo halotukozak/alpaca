@@ -125,7 +125,8 @@ object LexerCtx:
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched.nn
       val ctxAsProduct = ctx.asInstanceOf[Product]
-      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap
+      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
+        ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
