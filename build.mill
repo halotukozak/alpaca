@@ -4,11 +4,12 @@
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
+
 import mill.contrib.scoverage.ScoverageModule
 import mill.scalalib._
 
 object `package` extends ScalaModule with ScoverageModule {
-  def scalaVersion = "3.7.3"
+  def scalaVersion = "3.8.0-RC1"
 
   def scoverageVersion = "2.3.0"
 
