@@ -3,14 +3,11 @@ package example
 import MatrixLexer as ML
 
 import alpaca.{Production as P, *}
-import alpaca.internal.lexer.DefinedToken
+import java.util.jar.Attributes.Name
 
 object MatrixParser extends Parser {
-  // todo: implement lexeme context
-  extension (lexem: Any) def line: Int = -1
-
   val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
-    AST.Block(is.toList.flatten, is.headOption.map(_.line).orNull)
+    AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull)
   }
 
   def Instructions: Rule[List[AST.Statement]] = rule(
@@ -30,7 +27,7 @@ object MatrixParser extends Parser {
     { case ML.break(l) => AST.Break(l.line) },
     { case ML.continue(l) => AST.Continue(l.line) },
     { case (ML.`return`(l), Expr(e)) => AST.Return(e, l.line) },
-    { case (ML.print(l), Varargs(args)) => AST.Apply(symbols("PRINT"), args, l.line) },
+    { case (ML.print(l), Varargs(args)) => AST.Apply(symbols("PRINT"), args, Type.Undef, l.line) },
     { case Assignment(a) => a },
   )
 
@@ -75,15 +72,16 @@ object MatrixParser extends Parser {
     AST.Apply(
       symbols(op).asInstanceOf[AST.SymbolRef],
       List(e1.asInstanceOf[AST.Expr], e2.asInstanceOf[AST.Expr]),
+      Type.Undef,
       e1.line,
     )
   }
 
   def AsssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
-    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), List(e1, e2), e1.line) },
-    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), List(e1, e2), e1.line) },
-    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), List(e1, e2), e1.line) },
-    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), List(e1, e2), e1.line) },
+    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), List(e1, e2), Type.Undef, e1.line) },
+    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), List(e1, e2), Type.Undef, e1.line) },
+    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), List(e1, e2), Type.Undef, e1.line) },
+    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), List(e1, e2), Type.Undef, e1.line) },
     { case ML.`=`(_) => (e1, e2) => e2 },
   )
 
@@ -99,7 +97,7 @@ object MatrixParser extends Parser {
   )
 
   def Matrix = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
-    AST.Apply(symbols("INIT"), varArgs, varArgs.headOption.map(_.line).getOrElse(-1))
+    AST.Apply(symbols("INIT"), varArgs, Type.Undef, varArgs.headOption.map(_.line).getOrElse(-1))
   }
 
   def Element = rule { case (Var(v), ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
@@ -120,31 +118,35 @@ object MatrixParser extends Parser {
     { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
     { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
-      AST.Apply(symbols("UMINUS"), List(e), l.line)
+      AST.Apply(symbols("UMINUS"), List(e), Type.Undef, l.line)
     }: @name("uminus"),
-    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) => AST.Apply(symbols("+"), List(e1, e2), e1.line) }: @name("add"),
-    { case (Expr(e1), ML.`-`(_), Expr(e2)) => AST.Apply(symbols("-"), List(e1, e2), e1.line) }: @name("sub"),
-    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) => AST.Apply(symbols("*"), List(e1, e2), e1.line) }: @name("mul"),
-    { case (Expr(e1), ML.`/`(_), Expr(e2)) => AST.Apply(symbols("/"), List(e1, e2), e1.line) }: @name("div"),
+    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) => AST.Apply(symbols("+"), List(e1, e2), Type.Undef, e1.line) }: @name(
+      "add",
+    ),
+    { case (Expr(e1), ML.`-`(_), Expr(e2)) => AST.Apply(symbols("-"), List(e1, e2), Type.Undef, e1.line) }: @name("sub"),
+    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) => AST.Apply(symbols("*"), List(e1, e2), Type.Undef, e1.line) }: @name(
+      "mul",
+    ),
+    { case (Expr(e1), ML.`/`(_), Expr(e2)) => AST.Apply(symbols("/"), List(e1, e2), Type.Undef, e1.line) }: @name("div"),
     { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTADD"), List(e1, e2), e1.line)
+      AST.Apply(symbols("DOTADD"), List(e1, e2), Type.Undef, e1.line)
     }: @name("dotadd"),
     { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTSUB"), List(e1, e2), e1.line)
+      AST.Apply(symbols("DOTSUB"), List(e1, e2), Type.Undef, e1.line)
     }: @name("dotsub"),
     { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTMUL"), List(e1, e2), e1.line)
+      AST.Apply(symbols("DOTMUL"), List(e1, e2), Type.Undef, e1.line)
     }: @name("dotmul"),
     { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTDIV"), List(e1, e2), e1.line)
+      AST.Apply(symbols("DOTDIV"), List(e1, e2), Type.Undef, e1.line)
     }: @name("dotdiv"),
-    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("'"), List(e), e.line) },
+    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("TRANSPOSE"), List(e), Type.Undef, e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
     { case Matrix(m) => m },
     { case (FunctionName(name), ML.`\\(`(_), Varargs(args), ML.`\\)`(_)) =>
-      AST.Apply(symbols(name), args, args.headOption.map(_.line).getOrElse(-1))
+      AST.Apply(symbols(name), args, Type.Undef, args.headOption.map(_.line).getOrElse(-1))
     },
   )
 

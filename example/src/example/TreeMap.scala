@@ -15,7 +15,7 @@ trait TreeAccumulator[X]:
     case AST.SymbolRef(_, _, _) => x
     case AST.VectorRef(vector, element, _) => foldTree(foldTree(x, vector), element)
     case AST.MatrixRef(matrix, row, col, _) => foldNullableTree(foldNullableTree(foldTree(x, matrix), row), col)
-    case AST.Apply(ref, args, _) => foldTrees(foldTree(x, ref), args)
+    case AST.Apply(ref, args, _, _) => foldTrees(foldTree(x, ref), args)
     case AST.Range(start, end, _) => foldTree(foldTree(x, start), end)
     case AST.Assign(varRef, expr, _) => foldTree(foldTree(x, varRef), expr)
     case AST.If(condition, thenBlock, elseBlock, _) =>

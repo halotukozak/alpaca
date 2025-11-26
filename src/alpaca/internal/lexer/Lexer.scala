@@ -4,6 +4,7 @@ package lexer
 
 import scala.NamedTuple.NamedTuple
 import scala.util.matching.Regex
+import NamedTuple.AnyNamedTuple
 
 /**
  * Type alias for lexer rule definitions.
@@ -27,7 +28,6 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   type ThisToken = Token[?, Ctx, ?]
 
   val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
-
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -48,7 +48,8 @@ def lexerImpl[Ctx <: LexerCtx: Type](
 
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
           compileNameAndPattern[t](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } => '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
+            case '{ $tokenInfo: TokenInfo[name] } =>
+              '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
         case '{ type t <: ValidName; Token.apply[t]($value: String)(using $ctx) }
             if value.asTerm.symbol == tree.symbol =>

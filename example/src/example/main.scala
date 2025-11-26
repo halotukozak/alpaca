@@ -1,39 +1,36 @@
 package example
 
-import alpaca.internal.lexer.LazyReader
 import alpaca.*
+import alpaca.internal.lexer.LazyReader
 
-import java.nio.file.Files
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
+import scala.collection.mutable
+import scala.jdk.CollectionConverters.*
 import scala.util.Using
-import example.TreePrinter.printTree
 import scala.util.control.NonFatal
 
 @main
-def main = Files
-  .list(Path.of("example/src/example/in"))
-  .forEach: file =>
-    try
-      println(s"Processing file: $file")
-      val tokens = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
-      val (_, ast) = MatrixParser.parse(tokens)
-      // ast.nn.printTree()
+def main() =
+//  Files
+//    .list(Path.of("example/src/example/in"))
+//    .toList
+//    .asScala
+  Option(Path.of("example/src/example/in/example3.m"))
+    .foreach: file =>
+      try
+        println(s"Processing file: $file")
+        val tokens = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
+        val (_, ast) = MatrixParser.parse(tokens)
+        TreePrinter.printTree(ast.nn)()
 
-      val globalScope = Scope(null, ast.nn, false, symbols, Map.empty)
-      val scoped = MatrixScoper.visit(ast.nn)(globalScope)
+        val globalScope = Scope(ast.nn, null, false, symbols)
+        val scoped = MatrixScoper.visit(ast.nn)(globalScope).get
+        val typed = MatrixTyper.visit(ast.nn)().get
+        val globalEnv = Env(null, mutable.Map.empty, globalFunctions.to(mutable.Map))
+        val result = MatrixInterpreter.visit(typed)(globalEnv)
 
-    catch
-      case NonFatal(e) =>
-        println(s"Error processing file $file: ${e.getMessage}")
-
-//#
-//#     scoper = MatrixScoper()
-//#     scoper.visit_all(ast)
-//#     # print(ast)
-//#     type_checker = MatrixTypeChecker()
-//#     type_checker.visit_all(ast)
-//#     # print(ast)
-//#     quit_if_failed(type_checker)
-//#
-//#     interpreter = MatrixInterpreter()
-//#     interpreter.eval_all(ast)
+        println(s"Result: $result")
+      catch
+        case NonFatal(e) =>
+          println(s"Error processing file $file: \n${e.getMessage}")
+          e.printStackTrace()

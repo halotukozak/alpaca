@@ -65,7 +65,7 @@ final class JsonTest extends AnyFunSuite:
 
     withLazyReader("true") { input =>
       val tokens = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse[Any](tokens)
+      val (_, result) = JsonParser.parse(tokens)
       assert(result == true)
     }
 
@@ -85,7 +85,7 @@ final class JsonTest extends AnyFunSuite:
       }
       """) { input =>
       val tokens = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse[Any](tokens)
+      val (_, result) = JsonParser.parse(tokens)
 
       val expected = Map(
         "name" -> "John Doe",
@@ -121,7 +121,7 @@ final class JsonTest extends AnyFunSuite:
       ]
       """) { input =>
       val tokens = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse[Any](tokens)
+      val (_, result) = JsonParser.parse(tokens)
 
       val expected = List(
         Map("id" -> 1.0, "name" -> "Alice"),
@@ -148,7 +148,7 @@ final class JsonTest extends AnyFunSuite:
       }
       """) { input =>
       val tokens = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse[Any](tokens)
+      val (_, result) = JsonParser.parse(tokens)
 
       val expected = Map(
         "menu" -> Map(

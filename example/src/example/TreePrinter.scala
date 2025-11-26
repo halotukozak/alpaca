@@ -2,11 +2,14 @@ package example
 
 import example.AST.*
 
-trait TreePrinter[-T <: AST.Tree]:
+trait TreePrinter[T <: AST.Tree]:
   def apply(ident: Int, tree: T): Unit
 
 object TreePrinter:
-  extension [T <: AST.Tree: TreePrinter as printer](tree: T) def printTree(indent: Int = 0): Unit = printer(indent, tree)
+  extension [T <: AST.Tree: TreePrinter as printer](tree: T)
+    def printTree(indent: Int = 0): Unit =
+      println(tree.line)
+      printer(indent, tree)
 
   given TreePrinter[AST.Tree] = (indent, tree) =>
     tree match

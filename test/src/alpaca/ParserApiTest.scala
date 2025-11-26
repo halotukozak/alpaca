@@ -78,29 +78,29 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   test("basic recognition of various tokens and literals") {
     val lexems = CalcLexer.tokenize("a = 3 + 4 * (5 + 6)")
 
-    CalcParser.parse[R](lexems) should matchPattern:
+    CalcParser.parse(lexems) should matchPattern:
       case (ctx: CalcContext, _) if ctx.names("a") == 47 =>
 
     val lexems2 = CalcLexer.tokenize("3 + 4 * (5 + 6)")
 
-    CalcParser.parse[R](lexems2) should matchPattern:
+    CalcParser.parse(lexems2) should matchPattern:
       case (_, 47) =>
   }
 
   test("ebnf") {
     val lexems = CalcLexer.tokenize("a()")
 
-    CalcParser.parse[R](lexems) should matchPattern:
+    CalcParser.parse(lexems) should matchPattern:
       case (_, ("a", None)) =>
 
     val lexems1 = CalcLexer.tokenize("a(2+3)")
 
-    CalcParser.parse[R](lexems1) should matchPattern:
+    CalcParser.parse(lexems1) should matchPattern:
       case (_, ("a", Some(Seq(5)))) =>
 
     val lexems2 = CalcLexer.tokenize("a(2+3,4+5)")
 
-    CalcParser.parse[R](lexems2) should matchPattern:
+    CalcParser.parse(lexems2) should matchPattern:
       case (_, ("a", Some(Seq(5, 9)))) =>
   }
 
@@ -114,16 +114,16 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       }
     }
 
-    ApiParser.parse[R](CalcLexer.tokenize("1,,")) should matchPattern:
+    ApiParser.parse(CalcLexer.tokenize("1,,")) should matchPattern:
       case (_, (1, None, Nil)) =>
 
-    ApiParser.parse[R](CalcLexer.tokenize("1,2,")) should matchPattern:
+    ApiParser.parse(CalcLexer.tokenize("1,2,")) should matchPattern:
       case (_, (1, Some(2), Nil)) =>
 
-    ApiParser.parse[R](CalcLexer.tokenize("1,2,1 2 3")) should matchPattern:
+    ApiParser.parse(CalcLexer.tokenize("1,2,1 2 3")) should matchPattern:
       case (_, (1, Some(2), List(1, 2, 3))) =>
 
-    ApiParser.parse[R](CalcLexer.tokenize("1,,3")) should matchPattern:
+    ApiParser.parse(CalcLexer.tokenize("1,,3")) should matchPattern:
       case (_, (1, None, List(3))) =>
   }
 

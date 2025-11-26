@@ -76,10 +76,10 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
 
-private[internal] given [T: ToExpr]: ToExpr[T | Null] with
+private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
     case null => '{ null }
-    case value => Expr(value)
+    case value => toExpr(value.asInstanceOf[T])
 
 // todo: it's temporary, remove when we have a proper timeout implementation
 inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =

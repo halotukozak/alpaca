@@ -9,7 +9,7 @@ final class LexerTest extends AnyFunSuite with Matchers {
   test("tokenize simple identifier") {
     val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
     val result = Lexer.tokenize("hello")
-    assert(result == List(Lexem("IDENTIFIER", "hello")))
+    assert(result == List(Lexeme("IDENTIFIER", "hello", Map.empty)))
   }
 
   test("tokenize with whitespace ignored") {
@@ -22,9 +22,9 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
     assert(
       result == List(
-        Lexem("NUMBER", "42"),
-        Lexem("PLUS", ()),
-        Lexem("NUMBER", "13"),
+        Lexeme("NUMBER", "42", Map.empty),
+        Lexeme("PLUS", (), Map.empty),
+        Lexeme("NUMBER", "13", Map.empty),
       ),
     )
   }
@@ -59,15 +59,15 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
     assert(
       result == List(
-        Lexem("LPAREN", ()),
-        Lexem("IDENTIFIER", "x"),
-        Lexem("PLUS", ()),
-        Lexem("NUMBER", "42"),
-        Lexem("RPAREN", ()),
-        Lexem("MULTIPLY", ()),
-        Lexem("IDENTIFIER", "y"),
-        Lexem("MINUS", ()),
-        Lexem("NUMBER", "1"),
+        Lexeme("LPAREN", (), Map.empty),
+        Lexeme("IDENTIFIER", "x", Map.empty),
+        Lexeme("PLUS", (), Map.empty),
+        Lexeme("NUMBER", "42", Map.empty),
+        Lexeme("RPAREN", (), Map.empty),
+        Lexeme("MULTIPLY", (), Map.empty),
+        Lexeme("IDENTIFIER", "y", Map.empty),
+        Lexeme("MINUS", (), Map.empty),
+        Lexeme("NUMBER", "1", Map.empty),
       ),
     )
   }
@@ -96,15 +96,15 @@ final class LexerTest extends AnyFunSuite with Matchers {
 
       assert(
         result == List(
-          Lexem("LPAREN", ()),
-          Lexem("IDENTIFIER", "x"),
-          Lexem("PLUS", ()),
-          Lexem("NUMBER", "42"),
-          Lexem("RPAREN", ()),
-          Lexem("MULTIPLY", ()),
-          Lexem("IDENTIFIER", "y"),
-          Lexem("MINUS", ()),
-          Lexem("NUMBER", "1"),
+          Lexeme("LPAREN", (), Map.empty),
+          Lexeme("IDENTIFIER", "x", Map.empty),
+          Lexeme("PLUS", (), Map.empty),
+          Lexeme("NUMBER", "42", Map.empty),
+          Lexeme("RPAREN", (), Map.empty),
+          Lexeme("MULTIPLY", (), Map.empty),
+          Lexeme("IDENTIFIER", "y", Map.empty),
+          Lexeme("MINUS", (), Map.empty),
+          Lexeme("NUMBER", "1", Map.empty),
         ),
       )
     }

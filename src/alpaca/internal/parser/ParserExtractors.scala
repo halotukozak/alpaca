@@ -61,6 +61,17 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     case skipTypedOrTest(
           Unapply(
             Select(
+              Select(_, name),
+              "unapply",
+            ),
+            Nil,
+            List(extractBind(bind)),
+          ),
+        ) =>
+      (symbol = Terminal(name), bind = bind, others = Nil)
+    case skipTypedOrTest(
+          Unapply(
+            Select(
               TypeApply(
                 Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
                 List(asInstanceOfType),

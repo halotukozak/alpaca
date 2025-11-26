@@ -59,8 +59,7 @@ object AST {
     val tpe: Type.Numerical = Type.Numerical
     override def children: List[Tree] = List(matrix, row, col).collect { case t: Tree => t }
 
-  case class Apply(ref: SymbolRef, args: List[Expr], line: Int) extends Expr:
-    val tpe: Type = ref.tpe
+  case class Apply(ref: SymbolRef, args: List[Expr], tpe: Type, line: Int) extends Expr:
     override def children: List[Tree] = ref :: args
 
   case class Range(start: Expr, end: Expr, line: Int) extends Expr:
@@ -69,11 +68,13 @@ object AST {
 
   case class Assign(ref: Ref, expr: Expr, line: Int) extends Statement:
     override def children: List[Tree] = List(ref, expr)
+
   case class If(condition: Expr, thenBlock: Block, elseBlock: Block | Null, line: Int) extends Statement:
-    override def children: List[Tree] = List(condition, thenBlock) ++ Option.fromNullable(elseBlock)
+    override def children: List[Tree] = List(condition, thenBlock) ++ Option(elseBlock)
 
   case class While(condition: Expr, body: Block, line: Int) extends Statement:
     override def children: List[Tree] = List(condition, body)
+
   case class For(varRef: SymbolRef, range: Range, body: Block, line: Int) extends Statement:
     override def children: List[Tree] = List(varRef, range, body)
 

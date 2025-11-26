@@ -21,7 +21,7 @@ private[internal] trait Showable[-T]:
   extension (t: T) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
-extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
+extension (sc: StringContext) private[internal] def show(args: Any*): Shown = sc.s(args*)
 
 /**
  * An opaque type representing a string that has been shown.
@@ -51,9 +51,9 @@ private[internal] object Showable {
   given Showable[Int] = fromToString
 
   /** Showable instance for nullable types. */
-  given [T: Showable]: Showable[T | Null] =
+  given [T: Showable as showable]: Showable[T | Null] =
     case null => ""
-    case value => show"$value"
+    case value => showable.show(value.asInstanceOf[T])
 
   // todo: add names
   given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
