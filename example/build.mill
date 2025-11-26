@@ -36,10 +36,6 @@ object `package` extends ScalaModule {
   )
 
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak:_3:0.0.1",
-    mvn"com.github.marianobarrios:dregex:0.9.0",
-    mvn"org.jparsec:jparsec:3.1",
-    mvn"org.slf4j:slf4j-api:1.7.36",
-    mvn"org.slf4j:slf4j-simple:1.7.36",
+    mvn"io.github.halotukozak:_3:0.0.0-313-09a718",
   )
 }
