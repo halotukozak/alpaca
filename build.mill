@@ -61,6 +61,8 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     )
   }
 
+  def artifactName = "alpaca"
+
   def publishVersion = Task(VcsVersion.vcsState().format())
 
   def pomSettings = PomSettings(
