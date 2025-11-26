@@ -12,15 +12,15 @@ import scala.util.control.NonFatal
 @main
 def main() =
 //  Files
-//    .list(Path.of("example/src/example/in"))
+//    .list(Path.of("src/example/in"))
 //    .toList
 //    .asScala
-  Option(Path.of("example/src/example/in/example3.m"))
+  Option(Path.of("src/example/in/example3.m"))
     .foreach: file =>
       try
         println(s"Processing file: $file")
-        val tokens = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
-        val (_, ast) = MatrixParser.parse(tokens)
+        val (_, lexems) = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
+        val (_, ast) = MatrixParser.parse(lexems)
         TreePrinter.printTree(ast.nn)()
 
         val globalScope = Scope(ast.nn, null, false, symbols)

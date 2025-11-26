@@ -6,6 +6,8 @@ import alpaca.{Production as P, *}
 import java.util.jar.Attributes.Name
 
 object MatrixParser extends Parser {
+  extension (sth: Any) def line = -1
+
   val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
     AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull)
   }
@@ -77,17 +79,17 @@ object MatrixParser extends Parser {
     )
   }
 
-  def AsssignOp: Rule[AST.Expr] = rule(
-    { case (Expr(e1), ML.ADDASSIGN(_), Expr(e2)) => AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case (Expr(e1), ML.SUBASSIGN(_), Expr(e2)) => AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case (Expr(e1), ML.MULASSIGN(_), Expr(e2)) => AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case (Expr(e1), ML.DIVASSIGN(_), Expr(e2)) => AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case (Expr(e1), ML.`=`(_), Expr(e2)) => AST.Apply(symbols("="), scala.List(e1, e2), Type.Undef, e1.line) },
+  def AsssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
+    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line) },
+    { case ML.`=`(_) => (e1, e2) => e2 },
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op, v.line) },
-    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op, el.line) },
+    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
+    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
   )
 
   def FunctionName = rule(
