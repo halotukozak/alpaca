@@ -3,6 +3,7 @@ package internal
 package lexer
 
 import scala.util.matching.Regex.Match
+import language.experimental.relaxedLambdaSyntax
 
 /**
  * A hook for updating context between lexing stages.
@@ -44,8 +45,7 @@ private[alpaca] object BetweenStages {
 
     val betweenStages = Expr.ofList {
       parents
-        .map:
-          case '[type ctx >: Ctx <: LexerCtx; ctx] =>
+        .map: case '[type ctx >: Ctx <: LexerCtx; ctx] =>
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))

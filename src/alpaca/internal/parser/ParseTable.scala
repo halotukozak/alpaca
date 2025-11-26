@@ -6,6 +6,7 @@ import alpaca.internal.parser.ParseAction.{Reduction, Shift}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * An opaque type representing the LR parse table.
@@ -42,7 +43,7 @@ private[parser] object ParseTable {
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val rows = states.map: i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show))
 
       Csv(headers, rows)
 
@@ -100,9 +101,8 @@ private[parser] object ParseTable {
     while states.sizeIs > currStateId do {
       val currState = states(currStateId)
 
-      for item <- currState if item.isLastItem do {
+      for item <- currState if item.isLastItem do 
         addToTable(item.lookAhead, Reduction(item.production))
-      }
 
       for stepSymbol <- currState.possibleSteps do {
         val newState = currState.nextState(stepSymbol, productions, firstSet)
@@ -127,12 +127,11 @@ private[parser] object ParseTable {
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
-      else {
+      else 
         val padding = width - text.length
         val leftPad = padding / 2
         val rightPad = padding - leftPad
         (" " * leftPad) + text + (" " * rightPad)
-      }
 
     val result = new StringBuilder
     result.append(centerText("State"))

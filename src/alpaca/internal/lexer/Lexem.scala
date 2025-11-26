@@ -16,12 +16,10 @@ package lexer
 private[alpaca] final case class Lexem[+Name <: ValidName, +Value](name: Name, value: Value)
 //todo: (attributes: Map[String, Any] = Map.empty) extends Selectable
 
-private[alpaca] object Lexem {
-
+private[alpaca] object Lexem:
   /**
    * A special end-of-file lexem used to signal the end of input.
    *
    * This is used internally by the parser to detect when all input has been consumed.
    */
   val EOF: Lexem["$", String] = Lexem("$", "")
-}

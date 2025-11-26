@@ -1,6 +1,7 @@
 package alpaca
 package integration
 
+import scala.language.experimental.relaxedLambdaSyntax
 import org.scalatest.funsuite.AnyFunSuite
 
 final class JsonTest extends AnyFunSuite:
@@ -30,36 +31,35 @@ final class JsonTest extends AnyFunSuite:
       val root: Rule[Any] = rule { case Value(value) => value }
 
       val Value: Rule[Any] = rule(
-        { case JsonLexer.Null(n) => n.value },
-        { case JsonLexer.Bool(b) => b.value },
-        { case JsonLexer.Number(n) => n.value },
-        { case JsonLexer.String(s) => s.value },
-        { case Object(obj) => obj },
-        { case Array(arr) => arr },
+        case JsonLexer.Null(n) => n.value,
+        case JsonLexer.Bool(b) => b.value,
+        case JsonLexer.Number(n) => n.value,
+        case JsonLexer.String(s) => s.value,
+        case Object(obj) => obj,
+        case Array(arr) => arr,
       )
 
       val Object: Rule[Map[String, Any]] = rule(
-        { case (JsonLexer.`{`(_), JsonLexer.`}`(_)) => Map.empty[String, Any] },
-        { case (JsonLexer.`{`(_), ObjectMembers(members), JsonLexer.`}`(_)) => members.toMap },
+        case (JsonLexer.`{`(_), JsonLexer.`}`(_)) => Map.empty[String, Any],
+        case (JsonLexer.`{`(_), ObjectMembers(members), JsonLexer.`}`(_)) => members.toMap,
       )
 
       val ObjectMembers: Rule[List[(String, Any)]] = rule(
-        { case ObjectMember(member) => scala.List(member) },
-        { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
+        case ObjectMember(member) => scala.List(member),
+        case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member,
       )
 
-      val ObjectMember: Rule[(String, Any)] = rule { case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) =>
+      val ObjectMember: Rule[(String, Any)] = rule: case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) =>
         (s.value, v)
-      }
 
       val Array: Rule[List[Any]] = rule(
-        { case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil },
-        { case (JsonLexer.`[`(_), ArrayElements(elems), JsonLexer.`]`(_)) => elems },
+        case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil,
+        case (JsonLexer.`[`(_), ArrayElements(elems), JsonLexer.`]`(_)) => elems,
       )
 
       val ArrayElements: Rule[List[Any]] = rule(
-        { case Value(v) => scala.List(v) },
-        { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
+        case Value(v) => scala.List(v),
+        case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v,
       )
     }
 

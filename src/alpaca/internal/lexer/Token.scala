@@ -45,13 +45,12 @@ object TokenInfo {
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] = {
+  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] =
     import quotes.reflect.*
     ValidName.check(name)
     ConstantType(StringConstant(name)).asType match
       case '[type nameTpe <: ValidName; nameTpe] =>
         '{ TokenInfo[nameTpe](${ Expr(name).asExprOf[nameTpe] }, ${ Expr(nextName()) }, ${ Expr(regex) }) }
-  }
 
   /**
    * Generates a unique name for a regex capture group.

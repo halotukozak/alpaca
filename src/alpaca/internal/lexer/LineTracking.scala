@@ -8,11 +8,10 @@ package lexer
  * This trait adds line number tracking to a lexer context. The line
  * number is incremented each time a newline character is matched.
  */
-trait LineTracking extends LexerCtx {
+trait LineTracking extends LexerCtx:
 
   /** The current line number (1-based). */
   var line: Int
-}
 
 object LineTracking:
 
