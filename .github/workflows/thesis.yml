@@ -24,6 +24,10 @@ jobs:
           root_file: alpaca.tex
           working_directory: thesis/src
           latexmk_use_xelatex: true
+          latexmk_shell_escape: true
+          extra_system_packages: "biber"
+          pre_compile: "export max_print_line=1000"
+          args: "-f"
 
       - name: Install PDF comparison tools
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
