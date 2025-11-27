@@ -2,6 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.internal.{AlgorithmError, Empty, LexerErrorRecovery, SyntaxError}
+
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 
