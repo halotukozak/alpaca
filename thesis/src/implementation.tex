@@ -7,7 +7,7 @@
 \subsection{Wprowadzenie do studium przypadku}\label{subsec:wprowadzenie-do-studium-przypadku}
 
 Niniejszy rozdział prezentuje praktyczną implementację systemu analizy leksykalnej (leksera) wykorzystującego zaawansowane mechanizmy metaprogramowania Scali 3.
-Przedstawiony kod stanowi przykład zastosowania technik opisanych w poprzednich rozdziałach do rozwiązania rzeczywistego problemu inżynierskiego: automatycznej generacji wydajnego analizatora leksykalnego z definicji wysokopoziomowej w formie języka dziedzinowego (DSL).
+Przedstawiony kod stanowi przykład zastosowania technik opisanych w poprzednim rozdziale do rozwiązania rzeczywistego problemu inżynierskiego: automatycznej generacji wydajnego analizatora leksykalnego z definicji wysokopoziomowej w formie języka dziedzinowego (DSL).
 
 System \texttt{alpaca.lexer} implementuje transformację deklaratywnych reguł tokenizacji zapisanych jako funkcja częściowa (ang. \textit{partial function}) w kod procedualny wykonywany w czasie kompilacji.
 Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy, włączając generację klas w czasie kompilacji, transformację drzew AST oraz wyspecjalizowane typy refinement.
@@ -163,11 +163,11 @@ Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analiz
 
 Makro wykonuje następujące kroki:
 \begin{enumerate}
-    \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
-    \item Transformacja wzorców dopasowania na produkcje gramatyczne
-    \item Konstrukcja automatów LR(1) i tabel parsowania
-    \item Generacja tabel akcji semantycznych
-    \item Walidacja gramatyki i rozwiązywanie konfliktów
+  \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
+  \item Transformacja wzorców dopasowania na produkcje gramatyczne
+  \item Konstrukcja automatów LR(1) i tabel parsowania
+  \item Generacja tabel akcji semantycznych
+  \item Walidacja gramatyki i rozwiązywanie konfliktów
 \end{enumerate}
 
 \subsubsection{Ekstrakcja produkcji z wzorców}\label{subsubsec:ekstrakcja-produkcji-z-wzorcow}
@@ -208,10 +208,10 @@ Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w 
 
 W tym podejściu:
 \begin{itemize}
-    \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
-    \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargerMethod()}
-    \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
-    \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
+  \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
+  \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargerMethod()}
+  \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
+  \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
 \end{itemize}
 
 Ta technika skutecznie obchodzi limit rozmiaru metody, ponieważ każda pomocnicza metoda zawiera tylko kilka instrukcji bajtowych, niezależnie od rozmiaru całej tabeli.
@@ -224,9 +224,9 @@ Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany pr
 Kolejnym istotnym wyzwaniem jest zapewnienie bezpieczeństwa typów w akcjach semantycznych podczas transformacji kodu z kontekstu makra do wygenerowanych tabel.
 Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
 \begin{itemize}
-    \item Kontekstu parsera (\texttt{ctx})
-    \item Wartości z dopasowanych symboli gramatycznych
-    \item Zewnętrznych funkcji i wartości
+  \item Kontekstu parsera (\texttt{ctx})
+  \item Wartości z dopasowanych symboli gramatycznych
+  \item Zewnętrznych funkcji i wartości
 \end{itemize}
 
 Problem polega na tym, że te referencje muszą zostać przepisane podczas przenoszenia kodu akcji z miejsca definicji do tabeli akcji.
@@ -236,10 +236,10 @@ Funkcja \texttt{createAction} realizuje tę transformację:
 
 Kluczowe aspekty implementacji:
 \begin{enumerate}
-    \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
-    \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
-    \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
-    \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
+  \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
+  \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
+  \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
+  \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 \end{enumerate}
 
 \subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:rozwiazywanie-konfliktow-gramatycznych}
@@ -256,10 +256,10 @@ override val resolutions = Set(
 
 Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podczas konstrukcji tabeli parsowania:
 \begin{enumerate}
-    \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
-    \item Konsultuje zdefiniowane przez użytkownika relacje precedencji
-    \item Wybiera odpowiednią akcję zgodnie z deklaracją
-    \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
+  \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
+  \item Konsultuje zdefiniowane przez użytkownika relacje precedencji
+  \item Wybiera odpowiednią akcję zgodnie z deklaracją
+  \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
 \end{enumerate}
 
 To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne deklaracje \texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w Yacc.
@@ -277,10 +277,10 @@ Implementacja \texttt{ToExpr[ParseTable]} jest szczególnie interesująca, gdyż
 
 Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
 \begin{itemize}
-    \item Tworzenie nowych symboli (\texttt{Symbol.newVal}) reprezentujących zmienne w generowanym kodzie
-    \item Konstrukcja definicji wartości (\texttt{ValDef}) z przypisaniem początkowym
-    \item Generacja listy wyrażeń manipulujących builderem
-    \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
+  \item Tworzenie nowych symboli (\texttt{Symbol.newVal}) reprezentujących zmienne w generowanym kodzie
+  \item Konstrukcja definicji wartości (\texttt{ValDef}) z przypisaniem początkowym
+  \item Generacja listy wyrażeń manipulujących builderem
+  \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
 \end{itemize}
 
 \subsection{Podsumowanie implementacji parsera}\label{subsec:podsumowanie-implementacji-parsera}
@@ -289,11 +289,11 @@ Implementacja generatora parserów w systemie ALPACA demonstruje zaawansowane za
 Kluczowe osiągnięcia obejmują:
 
 \begin{itemize}
-    \item \textbf{Automatyczna konstrukcja tabel LR(1)} w czasie kompilacji eliminująca potrzebę osobnego kroku generacji kodu
-    \item \textbf{Pełna integracja z systemem typów Scali}, zapewniająca bezpieczeństwo typów w akcjach semantycznych
-    \item \textbf{Eleganckie obejście ograniczeń platformy JVM} poprzez inteligentną fragmentację generowanego kodu
-    \item \textbf{Deklaratywny mechanizm rozwiązywania konfliktów} oferujący większą elastyczność niż tradycyjne narzędzia
-    \item \textbf{Natychmiastowa walidacja gramatyk} podczas kompilacji, z czytelnymi komunikatami o~błędach
+  \item \textbf{Automatyczna konstrukcja tabel LR(1)} w czasie kompilacji eliminująca potrzebę osobnego kroku generacji kodu
+  \item \textbf{Pełna integracja z systemem typów Scali}, zapewniająca bezpieczeństwo typów w akcjach semantycznych
+  \item \textbf{Eleganckie obejście ograniczeń platformy JVM} poprzez inteligentną fragmentację generowanego kodu
+  \item \textbf{Deklaratywny mechanizm rozwiązywania konfliktów} oferujący większą elastyczność niż tradycyjne narzędzia
+  \item \textbf{Natychmiastowa walidacja gramatyk} podczas kompilacji, z czytelnymi komunikatami o~błędach
 \end{itemize}
 
 Problemy napotkane i rozwiązane podczas implementacji, szczególnie ograniczenie rozmiaru metod JVM, ilustrują istotne aspekty praktycznego metaprogramowania: generowany kod musi nie tylko być poprawny funkcjonalnie, ale również respektować wszystkie techniczne ograniczenia platformy docelowej.

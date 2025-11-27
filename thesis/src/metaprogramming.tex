@@ -11,8 +11,8 @@ W tym modelu kod może być wykonywany w różnych fazach: w czasie kompilacji (
 
 \subsection{Quotes i Splices}\label{subsec:cytaty-i-wstawki}
 Kluczowymi koncepcjami w systemie metaprogramowania Scali 3 są \textit{quotes} i \textit{splices}\cite{stucki2018unification,stucki2021multistage}.
-\textit{Quotes}, oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i traktowania go jako danych\cite{scala3-reflection,epfl-dotty-reflection}.
-\textit{Splices}, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i wstawienie wyniku do otaczającego kontekstu\cite{scala3-reflection,epfl-dotty-reflection,scala3-guides-quotes}.
+\textit{Quotes}, oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i traktowania go jako danych\cite{scala3-reflection}.
+\textit{Splices}, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i wstawienie wyniku do otaczającego kontekstu\cite{scala3-reflection,scala3-guides-quotes}.
 
 Formalna semantyka tych konstrukcji została przedstawiona w pracy Stuckiego, Brachthäusera i Odersky'ego\cite{stucki2021multistage}, gdzie \textit{quotes} i \textit{splices} są traktowane jako prymitywne formy w typowanych drzewach składniowych (ang. \textit{typed abstract syntax trees)}.
 Autorzy dowodzą, że system zachowuje bezpieczeństwo typów oraz higieniczność, zapewniając, że wygenerowany kod nie może przypadkowo powiązać identyfikatorów z niewłaściwymi zmiennymi\cite{stucki2021multistage}.
@@ -43,13 +43,13 @@ Ta reprezentacja gwarantuje bezpieczeństwo typów na poziomie języka metaprogr
 Scala 3 wspiera analizę kodu poprzez dopasowanie wzorców w \textit{quotes} (ang. \textit{quote pattern matching})\cite{stucki2020thesis,stucki2021multistage}.
 Mechanizm ten pozwala na dekonstrukcję kawałków kodu i ekstrakcję podwyrażeń\cite{stucki2021multistage}.
 
-Stucki, Brachthäuser i Odersky\cite{stucki2021multistage} wprowadzają wzorce wiążące (ang. \textit{bind patterns}) postaci \verb|$x| oraz wzorce HOAS (ang. \textit{Higher-Order Abstract Syntax}) postaci \verb|$f(y)|, które pozwalają na ekstrakcję podwyrażeń potencjalnie zawierających zmienne z zewnętrznego kontekstu\cite{stucki2021multistage}.
-System gwarantuje, że ekstrahowane wyrażenia są zamknięte względem definicji wewnątrz wzorca, zapobiegając wyciekom zakresu\cite{stucki2021multistage}.
+Stucki, Brachthäuser i Odersky\cite{stucki2021multistage} wprowadzają wzorce wiążące (ang. \textit{bind patterns}) postaci \verb|$x| oraz wzorce HOAS (ang. \textit{Higher-Order Abstract Syntax}) postaci \verb|$f(y)|, które pozwalają na ekstrakcję podwyrażeń potencjalnie zawierających zmienne z zewnętrznego kontekstu.
+System gwarantuje, że ekstrahowane wyrażenia są zamknięte względem definicji wewnątrz wzorca, zapobiegając wyciekom zakresu.
 
 \subsection{Refleksja TASTy}\label{subsec:refleksja-tasty}
-Dla przypadków wymagających głębszej analizy kodu, Scala 3 oferuje API refleksji TASTy\cite{scala3-reflection,epfl-dotty-reflection,scala3-guides-reflection}.
+Dla przypadków wymagających głębszej analizy kodu, Scala 3 oferuje API refleksji TASTy\cite{scala3-reflection,scala3-guides-reflection}.
 TASTy jest binarnym formatem serializacji typowanych drzew składniowych używanym przez kompilator Scali 3\cite{stucki2020thesis}.
 
-API refleksji dostarcza szczegółowy widok na strukturę kodu, włączając typy, symbole oraz pozycje w kodzie źródłowym\cite{scala3-reflection,scala3-guides-reflection}.
+API refleksji dostarcza szczegółowy widok na strukturę kodu, włączając typy, symbole oraz pozycje w kodzie źródłowym.
 Jest dostępne poprzez obiekt \texttt{reflect} zdefiniowany w typie \texttt{Quotes}, który jest przekazywany kontekstualnie do makr\cite{scala3-reflection,scala3-guides-reflection}.
 
