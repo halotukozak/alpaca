@@ -6,11 +6,11 @@
 
 \subsection{Wprowadzenie do studium przypadku}\label{subsec:wprowadzenie-do-studium-przypadku}
 
-Niniejszy rozdział prezentuje praktyczną implementację systemu analizy leksykalnej (leksera) wykorzystującego zaawansowane mechanizmy metaprogramowania Scali 3.
+Niniejszy rozdział prezentuje praktyczną implementację systemu analizy leksykalnej (leksera) wykorzystującego zaawansowane mechanizmy metaprogramowania Scali 3\cite{scala3-metaprogramming}.
 Przedstawiony kod stanowi przykład zastosowania technik opisanych w poprzednim rozdziale do rozwiązania rzeczywistego problemu inżynierskiego: automatycznej generacji wydajnego analizatora leksykalnego z definicji wysokopoziomowej w formie języka dziedzinowego (DSL).
 
 System \texttt{alpaca.lexer} implementuje transformację deklaratywnych reguł tokenizacji zapisanych jako funkcja częściowa (ang. \textit{partial function}) w kod procedualny wykonywany w czasie kompilacji.
-Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy, włączając generację klas w czasie kompilacji, transformację drzew AST oraz wyspecjalizowane typy refinement.
+Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy\cite{scala3-reflection}, włączając generację klas w czasie kompilacji, transformację drzew AST\cite{scala3-guides-reflection} oraz wyspecjalizowane typy refinement.
 
 \subsection{Architektura systemu leksera}\label{subsec:architektura-systemu-leksera}
 
@@ -27,13 +27,13 @@ Główny punkt wejścia systemu stanowi metoda \texttt{lexer}:
 
 \lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-02-entrypoint}, linerange={29-38}]{../../src/alpaca/lexer.scala}
 
-Modyfikator \texttt{transparent inline} zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów.
+Modyfikator \texttt{transparent inline} zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów\cite{stucki2020inlining}.
 Użycie parametrów kontekstowych (\texttt{using}) realizuje wzorzec dependency injection na poziomie systemu typów.
 
 \subsubsection{Implementacja makra}\label{subsubsec:implementacja-makra}
 
-Makro przyjmuje wyrażenie reprezentujące reguły leksera jako \texttt{Expr[Ctx ?=> LexerDefinition[Ctx]]} oraz instancje kontekstualnych klas pomocniczych.
-Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy.
+Makro przyjmuje wyrażenie reprezentujące reguły leksera jako \texttt{Expr[Ctx ?=> LexerDefinition[Ctx]]} oraz instancje kontekstualnych klas pomocniczych\cite{scala3-reference-macros}.
+Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy\cite{scala3-guides-quotes}.
 
 \subsection{Analiza drzewa składni abstrakcyjnej}\label{subsec:analiza-drzewa-skladni-abstrakcyjnej}
 
@@ -43,7 +43,7 @@ Kluczowym krokiem implementacji jest ekstrakcja reguł z definicji funkcji czę�
 
 \lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:lexer-04-extract-cases}, linerange={37}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
-Ten fragment kodu wykorzystuje dopasowanie wzorców w \textit{quotes} do dekonstrukcji typowanego AST funkcji częściowej.
+Ten fragment kodu wykorzystuje dopasowanie wzorców w \textit{quotes} do dekonstrukcji typowanego AST funkcji częściowej\cite{scala3-guides-quotes}.
 Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \texttt{Match} zawiera listę przypadków \texttt{CaseDef}.
 
 \subsection{Transformacja i adaptacja referencji}\label{subsec:transformacja-i-adaptacja-referencji}
@@ -54,9 +54,9 @@ Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi ref
 
 \lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:lexer-06-replace-with-new-ctx}, linerange={40-43}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
-Transformacja ta realizuje proces znany jako \("\)re-owning\("\) w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
+Transformacja ta realizuje proces znany jako \("\)re-owning\("\) w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST\cite{stucki2020thesis}. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
 
-Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy.
+Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy\cite{scala3-guides-reflection}.
 Umożliwia to tzw. re-owning — przeniesienie fragmentów kodu między różnymi właścicielami symboli bez ręcznego przepisywania drzew.
 
 \subsection{Ekstrakcja i kompilacja wzorców}\label{subsec:ekstrakcja-i-kompilacja-wzorcow}
@@ -67,25 +67,25 @@ Funkcja \texttt{extractSimple} implementuje logikę dopasowania różnych typów
 
 \lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}, linerange={45-48,52,56,63}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
-Wykorzystuje ona dopasowanie wzorców w \textit{quotes} z ekstraktorem typów, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
+Wykorzystuje ona dopasowanie wzorców w \textit{quotes} z ekstraktorem typów\cite{scala3-guides-quotes}, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
 Konstrukcja \texttt{type t <: ValidName} w wzorcu wiąże parametr typu do zmiennej wzorca \texttt{t}, umożliwiając jego późniejsze wykorzystanie.
 
 \subsection{Analiza wzorców: klasa CompileNameAndPattern}
 \label{subsec:compile-name-pattern}
 
-Klasa \texttt{CompileNameAndPattern} stanowi kluczowy komponent systemu analizy leksykalnej, odpowiedzialny za ekstrakcję i walidację wzorców tokenów podczas ekspansji makra.
+Klasa \texttt{CompileNameAndPattern} stanowi kluczowy komponent systemu analizy leksykalnej, odpowiedzialny za ekstrakcję i walidację wzorców tokenów podczas ekspansji makra\cite{scala3-reference-macros}.
 Jej głównym zadaniem jest transformacja różnorodnych form wzorców występujących w definicjach DSL na ujednolicone struktury \texttt{TokenInfo}, które następnie są wykorzystywane do generacji finalnego kodu leksera.
 
 Implementacja wykorzystuje rekurencyjne przetwarzanie drzewa AST z zastosowaniem optymalizacji rekurencji ogonowej (\texttt{@tailrec}), co zapewnia efektywność działania nawet dla złożonych wzorców z wieloma alternatywami.
 
 \subsection{Generacja klasy anonimowej}\label{subsec:generacja-klasy-anonimowej}
 
-Kluczowym mechanizmem implementacyjnym makra \texttt{lexer} jest programatyczna konstrukcja klasy anonimowej w~czasie kompilacji.
-Proces ten wykorzystuje API refleksji TASTy do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM.
+Kluczowym mechanizmem implementacyjnym makra \texttt{lexer} jest programatyczna konstrukcja klasy anonimowej w~czasie kompilacji\cite{stucki2021multistage}.
+Proces ten wykorzystuje API refleksji TASTy\cite{scala3-reflection} do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM.
 
 \subsubsection{Konstrukcja symbolu klasy}\label{subsubsec:konstrukcja-symbolu-klasy}
 
-Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez wywołanie \texttt{Symbol.newClass}:
+Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez wywołanie \texttt{Symbol.newClass}\cite{scala3-guides-reflection}:
 
 Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 \begin{itemize}
@@ -114,17 +114,17 @@ Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora.
 
 \subsection{Typy rafinowane (refinement types)}\label{subsec:typy-rafinowane}
 
-Mechanizm typów rafinowanych stanowi fundamentalną cechę systemu typów Scali umożliwiającą precyzyjne wyrażenie struktury typów w~czasie kompilacji.
+Mechanizm typów rafinowanych stanowi fundamentalną cechę systemu typów Scali umożliwiającą precyzyjne wyrażenie struktury typów w~czasie kompilacji\cite{scala3-selectable}.
 W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie informacji o~polach tokenów bezpośrednio do typu zwracanego przez makro.
 
 \subsubsection{Proces rafinowania typu}\label{subsubsec:proces-rafinowania-typu}
 
-Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego:
+Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego\cite{scala3-guides-reflection}:
 
 
 \lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={228-232}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
-Funkcja \texttt{Refinement(tpe, name, memberType)} tworzy nowy typ będący rozszerzeniem typu \texttt{tpe} o~członka \texttt{name} typu \texttt{memberType}.
+Funkcja \texttt{Refinement(tpe, name, memberType)} tworzy nowy typ będący rozszerzeniem typu \texttt{tpe} o~członka \texttt{name} typu \texttt{memberType}\cite{scala3-reflection}.
 Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu w~czasie wykonania.
 
 \subsubsection{Wynikowy typ}\label{subsubsec:wynikowy-typ}
@@ -157,8 +157,8 @@ W naszym podejściu makro generuje definicję \texttt{type Fields} zawierającą
 
 \subsubsection{Eliminacja narzutu wykonania w~czasie działania programu}\label{subsubsec:eliminacja-narzutu-wykonania}
 
-Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji.
-Dostęp do tokenów odbywa się poprzez bezpośrednie odwołanie do pola klasy, co po kompilacji do kodu bajtowego JVM redukuje się do instrukcji \texttt{getfield} — operacji o~złożoności O(1) bez żadnego narzutu pośrednictwa.
+Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji\cite{stucki2020inlining}.
+Dostęp do tokenów odbywa się poprzez bezpośrednie odwołanie do pola klasy, co po kompilacji do kodu bajtowego JVM\cite{lindholm2014java} redukuje się do instrukcji \texttt{getfield} — operacji o~złożoności O(1) bez żadnego narzutu pośrednictwa.
 
 Alternatywne podejście oparte na strukturze mapującej (np.\ \texttt{Map[String, Token]}) wymagałoby:
 \begin{itemize}
@@ -172,7 +172,7 @@ co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość
 
 \subsubsection{Bezpieczeństwo typów na poziomie systemu}\label{subsubsec:bezpieczenstwo-typow}
 
-Dzięki typom rafinowanym każdy token posiada precyzyjny typ znany kompilatorowi.
+Dzięki typom rafinowanym każdy token posiada precyzyjny typ znany kompilatorowi\cite{scala3-selectable}.
 System typów weryfikuje poprawność wszystkich operacji w~czasie kompilacji, eliminując możliwość błędów związanych z~niepoprawnym typowaniem wartości tokenów.
 
 \subsubsection{Integracja z~narzędziami deweloperskimi}\label{subsubsec:integracja-z-narzedzimi}
@@ -189,12 +189,12 @@ Te funkcjonalności są niemożliwe do realizacji w~przypadku dostępu przez str
 
 \subsubsection{Statyczna detekcja konfliktów wzorców}\label{subsubsec:statyczna-detekcja-konfliktow}
 
-Makro przeprowadza analizę wszystkich wzorców w~czasie kompilacji, wykrywając potencjalne konflikty nakładających się wyrażeń regularnych.
+Makro przeprowadza analizę wszystkich wzorców w~czasie kompilacji\cite{scala3-reference-macros}, wykrywając potencjalne konflikty nakładających się wyrażeń regularnych.
 Mechanizm ten zapewnia, że błędy konfiguracji są wykrywane na etapie kompilacji, a~nie w~czasie wykonania programu, co jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania.
 
 \subsubsection{Typowanie strukturalne z~gwarancjami nominalnymi}\label{subsubsec:typowanie-strukturalne}
 
-Zastosowanie typów rafinowanych łączy zalety typowania strukturalnego (elastyczność w~dostępie do składowych) z~bezpieczeństwem typowania nominalnego (jednoznaczna identyfikacja typów).
+Zastosowanie typów rafinowanych\cite{scala3-selectable} łączy zalety typowania strukturalnego (elastyczność w~dostępie do składowych) z~bezpieczeństwem typowania nominalnego (jednoznaczna identyfikacja typów).
 Każde pole w~typie rafinowanym ma precyzyjny typ nominalny, podczas gdy dostęp do tych pól odbywa się przez nazwę, co zapewnia elastyczność interfejsu.
 
 \subsection{Analiza alternatywnych rozwiązań}\label{subsec:analiza-alternatywnych-rozwiazan}
@@ -247,8 +247,8 @@ class MyLexer extends Tokenization[DefaultGlobalCtx] {
 \subsubsection{Walidacja wzorców regularnych}\label{subsubsec:walidacja-wzorcow-regularnych}
 
 System wykorzystuje pomocniczą klasę \texttt{RegexChecker} do walidacji wzorców:
-Mechanizm ten sprawdza poprawność składni wyrażeń regularnych już w czasie kompilacji i raportuje błędy z dokładną lokalizacją wzorca.
-Metoda \texttt{report.errorAndAbort} jest częścią API kompilatora do raportowania błędów w czasie kompilacji.
+Mechanizm ten sprawdza poprawność składni wyrażeń regularnych już w czasie kompilacji i raportuje błędy z dokładną lokalizacją wzorca\cite{scala3-reference-macros}.
+Metoda \texttt{report.errorAndAbort} jest częścią API kompilatora do raportowania błędów w czasie kompilacji\cite{scala3-guides-macros}.
 Przerwanie kompilacji w przypadku niepoprawnych wzorców zapewnia, że błędy konfiguracji są wykrywane możliwie wcześnie.
 
 \subsubsection{Obsługa nieobsługiwanych konstrukcji}\label{subsubsec:obsuga-nieobsugiwanych-konstrukcji}
