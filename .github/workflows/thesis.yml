@@ -33,7 +33,10 @@ jobs:
           mv alpaca.pdf alpaca-new.pdf
           
           # Extract the original PDF from git (safe method that doesn't affect working directory)
-          git show HEAD:thesis/src/alpaca.pdf > alpaca-original.pdf
+          if ! git show HEAD:thesis/src/alpaca.pdf > alpaca-original.pdf 2>/dev/null; then
+            echo "::error::Could not extract alpaca.pdf from git. Make sure the PDF is committed to the repository."
+            exit 1
+          fi
           
           # Extract text content from both PDFs for comparison
           if pdftotext alpaca-original.pdf alpaca-original.txt; then
@@ -63,9 +66,7 @@ jobs:
             # Allow small size differences due to metadata/timestamps
             # 1KB tolerance accounts for PDF metadata variations (creation date, producer info, etc.)
             SIZE_DIFF=$((NEW_SIZE - ORIGINAL_SIZE))
-            if [ "$SIZE_DIFF" -lt 0 ]; then
-              SIZE_DIFF=$((-SIZE_DIFF))
-            fi
+            SIZE_DIFF=${SIZE_DIFF#-}
             
             if [ "$SIZE_DIFF" -gt 1024 ]; then
               echo "::error::LaTeX output has changed! PDF size differs significantly (original: $ORIGINAL_SIZE bytes, new: $NEW_SIZE bytes)."
