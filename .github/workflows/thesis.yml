@@ -68,7 +68,7 @@ jobs:
             # Allow small size differences due to metadata/timestamps
             # 1KB tolerance accounts for PDF metadata variations (creation date, producer info, etc.)
             SIZE_DIFF=$((NEW_SIZE - ORIGINAL_SIZE))
-            SIZE_DIFF=${SIZE_DIFF#-}
+            SIZE_DIFF=$(( SIZE_DIFF < 0 ? -SIZE_DIFF : SIZE_DIFF ))
             
             if [ "$SIZE_DIFF" -gt 1024 ]; then
               echo "::error::LaTeX output has changed! PDF size differs significantly (original: $ORIGINAL_SIZE bytes, new: $NEW_SIZE bytes)."
