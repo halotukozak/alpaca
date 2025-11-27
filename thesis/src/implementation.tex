@@ -80,18 +80,197 @@ Implementacja wykorzystuje rekurencyjne przetwarzanie drzewa AST z zastosowaniem
 
 \subsection{Generacja klasy anonimowej}\label{subsec:generacja-klasy-anonimowej}
 
-Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest konstruowana programatycznie: (1) tworzymy symbol klasy przez \texttt{Symbol.newClass} wraz z listą deklaracji pól i typów; (2) budujemy ciało klasy (\texttt{ClassDef}) zawierające \texttt{ValDef} dla każdego zdefiniowanego tokena oraz pola \texttt{tokens} i \texttt{byName}; (3) określamy rodzica przez wywołanie konstruktora \texttt{Tokenization[Ctx]} z wymaganymi zależnościami; (4) instancjonujemy klasę i nadajemy jej typ zrafinowany przez kolejne \texttt{Refinement} odpowiadające polom-tokenom.
+Kluczowym mechanizmem implementacyjnym makra \texttt{lexer} jest programatyczna konstrukcja klasy anonimowej w~czasie kompilacji.
+Proces ten wykorzystuje API refleksji TASTy do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM.
+
+\subsubsection{Konstrukcja symbolu klasy}\label{subsubsec:konstrukcja-symbolu-klasy}
+
+Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez wywołanie \texttt{Symbol.newClass} (linie 201-207 w~\texttt{Lexer.scala}):
+
+\lstinputlisting[language=scala,caption={Wywołanie \texttt{Symbol.newClass} do utworzenia symbolu klasy anonimowej},label={lst:lexer-13-symbol-newclass}, linerange={201-207}]{../../src/alpaca/lexer/Lexer.scala}
+
+Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
+\begin{itemize}
+    \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
+    \item \textbf{Symbol.freshName("\$anon")} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
+    \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
+    \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
+    \item \textbf{None} — opcjonalna klasa companion (niewykorzystana w~tym przypadku)
+\end{itemize}
+
+\subsubsection{Definicja członków klasy}\label{subsubsec:definicja-czlonkow-klasy}
+
+Funkcja \texttt{decls} (linie 143-199) konstruuje pełną listę deklaracji dla klasy anonimowej:
+
+\begin{enumerate}
+    \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \texttt{DefinedToken[Name, Ctx, Value]}
+    \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
+    \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
+    \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
+    \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
+\end{enumerate}
+
+\subsubsection{Materiałizacja klasy}\label{subsubsec:materializacja-klasy}
+
+Po zdefiniowaniu symbolu klasy następuje konstrukcja jej ciała (linie 209-255).
+Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora (linia 274).
+Pełny proces generacji i~instancjowania przedstawia listing~\ref{lst:lexer-14-anon-class}.
 
 \lstinputlisting[language=scala,caption={Generacja i instancjowanie anonimowej klasy \texttt{Tokenization[Ctx]} z typem rafinowanym},label={lst:lexer-14-anon-class}, linerange={192-264}]{../../src/alpaca/lexer/Lexer.scala}
 
-\subsubsection{Typy refinement}\label{subsubsec:typy-refinement}
+\subsection{Typy rafinowane (refinement types)}\label{subsec:typy-rafinowane}
 
-Zwracany typ jest stopniowo rafinowany dla każdego tokena:
+Mechanizm typów rafinowanych stanowi fundamentalną cechę systemu typów Scali umożliwiającą precyzyjne wyrażenie struktury typów w~czasie kompilacji.
+W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie informacji o~polach tokenów bezpośrednio do typu zwracanego przez makro.
 
-\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={253-258}]{../../src/alpaca/lexer/Lexer.scala}
+\subsubsection{Proces rafinowania typu}\label{subsubsec:proces-rafinowania-typu}
 
-\texttt{Refinement(tpe, name, memberType)} tworzy typ refinement dodający członka o podanej nazwie i typie do bazowego typu.
-Pozwala to kompilatorowi śledzić, że zwrócony obiekt ma pola odpowiadające poszczególnym tokenom, umożliwiając dostęp do nich z pełnym wsparciem systemu typów.
+Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego (linie 267-272):
+
+\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={267-276}]{../../src/alpaca/lexer/Lexer.scala}
+
+Funkcja \texttt{Refinement(tpe, name, memberType)} tworzy nowy typ będący rozszerzeniem typu \texttt{tpe} o~członka \texttt{name} typu \texttt{memberType}.
+Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu w~czasie wykonania.
+
+\subsubsection{Typ przecięcia (intersection type)}\label{subsubsec:typ-przeciecia}
+
+Wynikowy typ ma formę typu przecięcia (ang. \textit{intersection type}):
+
+\begin{verbatim}
+Tokenization[Ctx] & { 
+  val TOKEN1: DefinedToken["TOKEN1", Ctx, Type1]
+  val TOKEN2: DefinedToken["TOKEN2", Ctx, Type2]
+  ...
+}
+\end{verbatim}
+
+Ten typ reprezentuje wartości będące jednocześnie instancjami \texttt{Tokenization[Ctx]} oraz posiadające określone pola strukturalne.
+Kompilator Scali wykorzystuje tę informację do:
+\begin{itemize}
+    \item Walidacji dostępu do pól w~czasie kompilacji
+    \item Zapewnienia inferowania precyzyjnych typów
+    \item Umożliwienia refaktoryzacji z~pełnym wsparciem IDE
+\end{itemize}
+
+\subsection{Uzasadnienie wybranego podejścia implementacyjnego}\label{subsec:uzasadnienie-wybranego-podejscia}
+
+\subsubsection{Eliminacja narzutu wykonania w~czasie działania programu}\label{subsubsec:eliminacja-narzutu-wykonania}
+
+Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji.
+Dostęp do tokenów odbywa się poprzez bezpośrednie odwołanie do pola klasy, co po kompilacji do kodu bajtowego JVM redukuje się do instrukcji \texttt{getfield} — operacji o~złożoności O(1) bez żadnego narzutu pośrednictwa.
+
+Alternatywne podejście oparte na strukturze mapującej (np.\ \texttt{Map[String, Token]}) wymagałoby:
+\begin{itemize}
+    \item Obliczenia funkcji haszującej dla klucza
+    \item Przeszukiwania tablicy haszującej
+    \item Potencjalnej obsługi kolizji
+    \item Dynamicznego rzutowania typu
+\end{itemize}
+
+co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator JIT.
+
+\subsubsection{Bezpieczeństwo typów na poziomie systemu}\label{subsubsec:bezpieczenstwo-typow}
+
+Dzięki typom rafinowanym każdy token posiada precyzyjny typ znany kompilatorowi.
+System typów weryfikuje poprawność wszystkich operacji w~czasie kompilacji, eliminując możliwość błędów związanych z~niepoprawnym typowaniem wartości tokenów.
+
+\subsubsection{Integracja z~narzędziami deweloperskimi}\label{subsubsec:integracja-z-narzedzimi}
+
+Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do:
+\begin{itemize}
+    \item Automatycznego uzupełniania nazw tokenów
+    \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
+    \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
+    \item Wykrywania błędów składniowych przed kompilacją
+\end{itemize}
+
+Te funkcjonalności są niemożliwe do realizacji w~przypadku dostępu przez struktury dynamiczne.
+
+\subsubsection{Statyczna detekcja konfliktów wzorców}\label{subsubsec:statyczna-detekcja-konfliktow}
+
+Makro przeprowadza analizę wszystkich wzorców w~czasie kompilacji, wykrywając potencjalne konflikty nakładających się wyrażeń regularnych.
+Mechanizm ten zapewnia, że błędy konfiguracji są wykrywane na etapie kompilacji, a~nie w~czasie wykonania programu, co jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania.
+
+\subsubsection{Typowanie strukturalne z~gwarancjami nominalnymi}\label{subsubsec:typowanie-strukturalne}
+
+Zastosowanie typów rafinowanych łączy zalety typowania strukturalnego (elastyczność w~dostępie do składowych) z~bezpieczeństwem typowania nominalnego (jednoznaczna identyfikacja typów).
+Każde pole w~typie rafinowanym ma precyzyjny typ nominalny, podczas gdy dostęp do tych pól odbywa się przez nazwę, co zapewnia elastyczność interfejsu.
+
+\subsection{Analiza alternatywnych rozwiązań}\label{subsec:analiza-alternatywnych-rozwiazan}
+
+\subsubsection{Podejście oparte na mapowaniu dynamicznym}\label{subsubsec:podejscie-mapowanie-dynamiczne}
+
+Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przechowywania tokenów:
+
+\begin{lstlisting}[language=scala,caption={Podejście oparte na mapowaniu dynamicznym}]
+class SimpleLexer {
+  val tokens: Map[String, Token[?, ?, ?]] = Map(
+    "NUMBER" -> ...,
+    "PLUS" -> ...
+  )
+  def apply(name: String): Token[?, ?, ?] = tokens(name)
+}
+\end{lstlisting}
+
+\textbf{Wady tego podejścia:}
+\begin{itemize}
+    \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
+    \item Utrata informacji o~typach: zwracany typ to egzystencjalny \texttt{Token[?, ?, ?]}
+    \item Narzut wydajnościowy operacji haszowania i~przeszukiwania
+    \item Brak wsparcia narzędzi deweloperskich
+\end{itemize}
+
+\subsubsection{Podejście oparte na jawnej definicji klasy}\label{subsubsec:podejscie-jawna-definicja}
+
+Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
+
+\begin{lstlisting}[language=scala,caption={Podejście oparte na jawnej definicji klasy}]
+class MyLexer extends Tokenization[DefaultGlobalCtx] {
+  val NUMBER = DefinedToken[...]
+  val PLUS = DefinedToken[...]
+  protected def compiled: Regex = "(?<token0>[0-9]+)|(?<token1>\\+)".r
+  // ...
+}
+\end{lstlisting}
+
+\textbf{Wady tego podejścia:}
+\begin{itemize}
+    \item Wysoki poziom redundancji kodu (\textit{boilerplate})
+    \item Konieczność ręcznej kompilacji wyrażeń regularnych
+    \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
+    \item Brak mechanizmu DSL ułatwiającego definicję reguł
+\end{itemize}
+
+\subsection{Podsumowanie korzyści}\label{subsec:podsumowanie-korzysci-anon-class}
+
+Zastosowanie klas anonimowych i~typów rafinowanych w~implementacji systemu ALPACA zapewnia kompleksowe rozwiązanie łączące w~sobie zaawansowane techniki metaprogramowania z~pragmatycznymi rozwiązaniami inżynierskimi.
+
+Tabela~\ref{tab:benefits-anon-class} przedstawia syntetyczne zestawienie korzyści wynikających z~przyjętego podejścia implementacyjnego.
+
+\begin{table}[h]
+\centering
+\caption{Korzyści wynikające z zastosowania klas anonimowych i typów rafinowanych}
+\label{tab:benefits-anon-class}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Aspekt} & \textbf{Korzyść} \\
+\hline
+Wydajność & Zerowy narzut wykonania, bezpośredni dostęp do pól \\
+\hline
+Bezpieczeństwo typów & Pełna weryfikacja w czasie kompilacji \\
+\hline
+Ergonomia & Przejrzysty DSL bez kodu pomocniczego \\
+\hline
+Narzędzia & Pełne wsparcie IDE i refaktoryzacji \\
+\hline
+Walidacja & Statyczna detekcja konfliktów i błędów konfiguracji \\
+\hline
+Integracja & Bezproblemowa współpraca z systemem typów Scali \\
+\hline
+\end{tabular}
+\end{table}
+
+System dostarcza rozwiązanie o~wysokim poziomie abstrakcji przy zachowaniu maksymalnej wydajności i~bezpieczeństwa.
 
 \subsection{Walidacja i obsługa błędów}\label{subsec:walidacja-i-obsuga-bedow}
 
