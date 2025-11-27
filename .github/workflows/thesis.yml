@@ -6,7 +6,7 @@ on:
       - '*'
   push:
     branches:
-      - '*'
+      - master
 
 jobs:
   check-latex:
@@ -32,15 +32,21 @@ jobs:
           # Store the newly compiled PDF
           mv alpaca.pdf alpaca-new.pdf
           
-          # Restore the original PDF from git
-          git checkout HEAD -- alpaca.pdf
-          
-          # Compare the PDFs using diff-pdf or a simple hash comparison
-          # PDFs can have timestamps, so we compare content excluding metadata
+          # Extract the original PDF from git (safe method that doesn't affect working directory)
+          git show HEAD:thesis/src/alpaca.pdf > alpaca-original.pdf
           
           # Extract text content from both PDFs for comparison
-          pdftotext alpaca.pdf alpaca-original.txt 2>/dev/null || true
-          pdftotext alpaca-new.pdf alpaca-new.txt 2>/dev/null || true
+          if pdftotext alpaca-original.pdf alpaca-original.txt; then
+            echo "Successfully extracted text from original PDF"
+          else
+            echo "Warning: Could not extract text from original PDF, will use size comparison"
+          fi
+          
+          if pdftotext alpaca-new.pdf alpaca-new.txt; then
+            echo "Successfully extracted text from new PDF"
+          else
+            echo "Warning: Could not extract text from new PDF, will use size comparison"
+          fi
           
           if [ -f alpaca-original.txt ] && [ -f alpaca-new.txt ]; then
             if ! diff -q alpaca-original.txt alpaca-new.txt > /dev/null 2>&1; then
@@ -51,12 +57,15 @@ jobs:
             fi
           else
             # Fallback: compare file sizes as a rough check
-            ORIGINAL_SIZE=$(stat -c%s alpaca.pdf)
+            ORIGINAL_SIZE=$(stat -c%s alpaca-original.pdf)
             NEW_SIZE=$(stat -c%s alpaca-new.pdf)
             
-            # Allow small size differences (< 1KB) due to metadata/timestamps
+            # Allow small size differences due to metadata/timestamps
+            # 1KB tolerance accounts for PDF metadata variations (creation date, producer info, etc.)
             SIZE_DIFF=$((NEW_SIZE - ORIGINAL_SIZE))
-            SIZE_DIFF=${SIZE_DIFF#-}  # absolute value
+            if [ "$SIZE_DIFF" -lt 0 ]; then
+              SIZE_DIFF=$((-SIZE_DIFF))
+            fi
             
             if [ "$SIZE_DIFF" -gt 1024 ]; then
               echo "::error::LaTeX output has changed! PDF size differs significantly (original: $ORIGINAL_SIZE bytes, new: $NEW_SIZE bytes)."
