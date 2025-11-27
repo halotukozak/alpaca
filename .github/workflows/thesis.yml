@@ -23,7 +23,7 @@ jobs:
         with:
           root_file: alpaca.tex
           working_directory: thesis/src
-          latexmk_use_lualatex: true
+          latexmk_use_xelatex: true
 
       - name: Install PDF comparison tools
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
