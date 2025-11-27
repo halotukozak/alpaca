@@ -3,7 +3,7 @@ package internal
 package parser
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{DefinedToken, Lexem, Token}
+import alpaca.internal.lexer.{DefinedToken, Lexeme, Token}
 import alpaca.internal.parser.*
 
 import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
@@ -22,23 +22,15 @@ abstract class Parser[Ctx <: ParserCtx](
   empty: Empty[Ctx],
   tables: Tables[Ctx],
 ) {
-  extension (token: DefinedToken[?, ?, ?]) {
-    @compileTimeOnly(RuleOnly)
-    inline def unapply(x: Any): Option[token.LexemTpe] = dummy
-    @compileTimeOnly(RuleOnly)
-    inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = dummy
-    @compileTimeOnly(RuleOnly)
-    inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = dummy
-  }
 
   /**
    * The root rule of the grammar.
    *
    * This is the starting point for parsing.
    */
-  def root: Rule[?]
+  val root: Rule[?]
 
-  def resolutions: Set[ConflictResolution] = Set.empty
+  val resolutions: Set[ConflictResolution] = Set.empty
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -51,11 +43,14 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings[?, ?]): (ctx: Ctx, result: R | Null) = {
-    type State = (index: Int, node: R | Lexem[?, ?] | Null)
+  private[alpaca] def unsafeParse[R](
+    lexems: List[Lexeme[?, ?]],
+  )(using debugSettings: DebugSettings,
+  ): (ctx: Ctx, result: R | Null) = {
+    type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
-    @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
+    @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
@@ -73,7 +68,7 @@ abstract class Parser[Ctx <: ParserCtx](
               lexems,
               (
                 gotoState,
-                tables.actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+                tables.actionTable(prod)(ctx, children).asInstanceOf[Node],
               ) :: newStack,
             )
           }
@@ -85,11 +80,11 @@ abstract class Parser[Ctx <: ParserCtx](
           val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
           loop(
             lexems,
-            (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+            (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack,
           )
     }
 
-    ctx -> loop(lexems :+ Lexem.EOF, (0, null) :: Nil)
+    ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
   }
 
   /**

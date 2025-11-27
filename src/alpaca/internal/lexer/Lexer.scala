@@ -4,6 +4,7 @@ package lexer
 
 import scala.NamedTuple.NamedTuple
 import scala.util.matching.Regex
+import NamedTuple.AnyNamedTuple
 
 /**
  * Type alias for lexer rule definitions.
@@ -20,17 +21,13 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
-  debugSettings: Expr[DebugSettings[?, ?]],
+)(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx]] = {
   import quotes.reflect.*
-
-  given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
-
   type ThisToken = Token[?, Ctx, ?]
 
   val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
-
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -51,7 +48,8 @@ def lexerImpl[Ctx <: LexerCtx: Type](
 
         case '{ type t <: ValidName; Token.apply[t](using $ctx) } =>
           compileNameAndPattern[t](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } => '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
+            case '{ $tokenInfo: TokenInfo[name] } =>
+              '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
         case '{ type t <: ValidName; Token.apply[t]($value: String)(using $ctx) }
             if value.asTerm.symbol == tree.symbol =>
@@ -71,7 +69,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
 
-      val tokens = extractSimple('{ identity })
+      val tokens = extractSimple('{ _ => () })
         .lift(body.asExprOf[ThisToken])
         .orElse:
           body match
