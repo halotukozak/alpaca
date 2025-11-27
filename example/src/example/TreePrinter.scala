@@ -8,7 +8,6 @@ trait TreePrinter[T <: AST.Tree]:
 object TreePrinter:
   extension [T <: AST.Tree: TreePrinter as printer](tree: T)
     def printTree(indent: Int = 0): Unit =
-      println(tree.line)
       printer(indent, tree)
 
   given TreePrinter[AST.Tree] = (indent, tree) =>

@@ -35,51 +35,37 @@ object AST {
     def tpe: Type
     def line: Int
 
-  object Expr {
-//    def traverse[T <: Type](expr: AST.Expr[Type.VarArg[T]]): Seq[AST.Expr[T]] =
-//      throw NotImplementedError(expr.toString)
-
-    def traverse(expr: AST.Expr): Seq[AST.Expr] =
-      throw NotImplementedError(expr.toString)
+  object Expr:
+    type Of[T <: Type] = Expr { type Tpe = T }
 
     def unapply(expr: AST.Expr): Some[Type] = Some(expr.tpe)
-  }
 
   case class Literal(tpe: Type, value: Type.ToScala[tpe.type], line: Int) extends Expr
 
   sealed trait Ref extends Expr
 
-  case class SymbolRef(tpe: Type, name: String, line: Int) extends Ref
+  case class SymbolRef(var tpe: Type, name: String, line: Int) extends Ref
 
   case class VectorRef(vector: SymbolRef, element: Expr, line: Int) extends Ref:
     val tpe: Type.Numerical = Type.Numerical
-    override def children: List[Tree] = List(vector, element)
 
   case class MatrixRef(matrix: SymbolRef, row: Expr | Null, col: Expr | Null, line: Int) extends Ref:
     val tpe: Type.Numerical = Type.Numerical
-    override def children: List[Tree] = List(matrix, row, col).collect { case t: Tree => t }
 
-  case class Apply(ref: SymbolRef, args: List[Expr], tpe: Type, line: Int) extends Expr:
-    override def children: List[Tree] = ref :: args
+  case class Apply(ref: SymbolRef, args: List[Expr], tpe: Type, line: Int) extends Expr
 
   case class Range(start: Expr, end: Expr, line: Int) extends Expr:
     val tpe: Type.Range = Type.Range
-    override def children: List[Tree] = List(start, end)
 
-  case class Assign(ref: Ref, expr: Expr, line: Int) extends Statement:
-    override def children: List[Tree] = List(ref, expr)
+  case class Assign(ref: Ref, expr: Expr, line: Int) extends Statement
 
-  case class If(condition: Expr, thenBlock: Block, elseBlock: Block | Null, line: Int) extends Statement:
-    override def children: List[Tree] = List(condition, thenBlock) ++ Option(elseBlock)
+  case class If(condition: Expr, thenBlock: Block, elseBlock: Block | Null, line: Int) extends Statement
 
-  case class While(condition: Expr, body: Block, line: Int) extends Statement:
-    override def children: List[Tree] = List(condition, body)
+  case class While(condition: Expr, body: Block, line: Int) extends Statement
 
-  case class For(varRef: SymbolRef, range: Range, body: Block, line: Int) extends Statement:
-    override def children: List[Tree] = List(varRef, range, body)
+  case class For(varRef: SymbolRef, range: Range, body: Block, line: Int) extends Statement
 
-  case class Return(expr: Expr, line: Int) extends Statement:
-    override def children: List[Tree] = List(expr)
+  case class Return(expr: Expr, line: Int) extends Statement
 
   case class Continue(line: Int) extends Statement
 

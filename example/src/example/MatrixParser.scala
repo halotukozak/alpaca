@@ -4,9 +4,19 @@ import MatrixLexer as ML
 
 import alpaca.{Production as P, *}
 import java.util.jar.Attributes.Name
+import scala.reflect.ClassTag
+import scala.util.chaining.scalaUtilChainingOps
 
 object MatrixParser extends Parser {
-  extension (sth: Any) def line = -1
+  extension [T](sth: T)(using ct: ClassTag[T])
+    def line: Int =
+      ct.runtimeClass
+        .getDeclaredField("fields")
+        .nn
+        .tap(_.setAccessible(true))
+        .get(sth)
+        .asInstanceOf[Map[String, ?]]("line")
+        .asInstanceOf[Int]
 
   val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
     AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull)

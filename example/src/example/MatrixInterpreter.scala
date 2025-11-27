@@ -15,7 +15,7 @@ enum Exit extends RuntimeException with NoStackTrace:
 case class Env(
   parent: Env | Null,
   memory: mutable.Map[String, Any] = mutable.Map.empty,
-  functions: mutable.Map[String, Function[Seq[?], ?]] = mutable.Map.empty,
+  functions: mutable.Map[String, DynamicFunction] = mutable.Map.empty,
 ):
 
   def contains(name: String): Boolean =
@@ -25,6 +25,7 @@ case class Env(
     if this.memory.contains(name) then this.memory(name) = value
     else if this.parent != null && this.parent.contains(name) then this.parent.update(name, value)
     else this.memory(name) = value
+
   def getValue[T](name: String, line: Int): T =
     this.memory
       .get(name)
@@ -37,7 +38,7 @@ case class Env(
       .getOrElse:
         throw MatrixRuntimeException(s"Variable $name not found", line)
 
-  def getFunction(name: String, line: Int): Function[Seq[?], ?] =
+  def getFunction(name: String, line: Int): DynamicFunction =
     this.functions
       .get(name)
       .orElse:
@@ -175,7 +176,7 @@ object MatrixInterpreter:
 
   given MatrixInterpreter[AST.Apply] =
     case (AST.Apply(ref, args, _, line), env) =>
-      env.getFunction(ref.name, line).apply(args.map(_.visit(env)))
+      env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
 
   given MatrixInterpreter[AST.Range] =
     case (AST.Range(start, end, _), env) =>

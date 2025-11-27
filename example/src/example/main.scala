@@ -15,7 +15,7 @@ def main() =
 //    .list(Path.of("src/example/in"))
 //    .toList
 //    .asScala
-  Option(Path.of("src/example/in/example3.m"))
+  Option(Path.of("src/example/in/init.m"))
     .foreach: file =>
       try
         println(s"Processing file: $file")
@@ -25,7 +25,10 @@ def main() =
 
         val globalScope = Scope(ast.nn, null, false, symbols)
         val scoped = MatrixScoper.visit(ast.nn)(globalScope).get
-        val typed = MatrixTyper.visit(ast.nn)().get
+
+        val initialTypeEnv: TypeEnv = symbols.map((name, sym) => name -> sym.tpe)
+        val (typed, _) = MatrixTyper.visit(ast.nn)(initialTypeEnv).get
+
         val globalEnv = Env(null, mutable.Map.empty, globalFunctions.to(mutable.Map))
         val result = MatrixInterpreter.visit(typed)(globalEnv)
 

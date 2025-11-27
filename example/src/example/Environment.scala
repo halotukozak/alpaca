@@ -1,48 +1,51 @@
 package example
 
-type Numerical = Int | Float
+import example.Numerical.{*, given}
 import example.Matrix.*
 import example.Vector.*
 
 import scala.math.Ordered.orderingToOrdered
 import scala.reflect.TypeTest
 
-extension (x: Numerical)
-  infix def plus(y: Numerical): Numerical =
-    (x, y) match
-      case (a: Int, b: Int) => a + b
-      case (a: Float, b: Float) => a + b
-      case (a: Int, b: Float) => a + b
-      case (a: Float, b: Int) => a + b
+type Numerical = Int | Float
 
-  infix def minus(y: Numerical): Numerical =
-    (x, y) match
-      case (a: Int, b: Int) => a - b
-      case (a: Float, b: Float) => a - b
-      case (a: Int, b: Float) => a - b
-      case (a: Float, b: Int) => a - b
+object Numerical:
+  extension (x: Numerical)
+    def +(y: Numerical): Numerical =
+      (x, y) match
+        case (a: Int, b: Int) => a + b
+        case (a: Float, b: Float) => a + b
+        case (a: Int, b: Float) => a + b
+        case (a: Float, b: Int) => a + b
 
-  infix def times(y: Numerical): Numerical =
-    (x, y) match
-      case (a: Int, b: Int) => a * b
-      case (a: Float, b: Float) => a * b
-      case (a: Int, b: Float) => a * b
-      case (a: Float, b: Int) => a * b
+    def -(y: Numerical): Numerical =
+      (x, y) match
+        case (a: Int, b: Int) => a - b
+        case (a: Float, b: Float) => a - b
+        case (a: Int, b: Float) => a - b
+        case (a: Float, b: Int) => a - b
 
-  infix def div(y: Numerical): Numerical =
-    (x, y) match
-      case (a: Int, b: Int) => a / b
-      case (a: Float, b: Float) => a / b
-      case (a: Int, b: Float) => a / b
-      case (a: Float, b: Int) => a / b
+    def *(y: Numerical): Numerical =
+      (x, y) match
+        case (a: Int, b: Int) => a * b
+        case (a: Float, b: Float) => a * b
+        case (a: Int, b: Float) => a * b
+        case (a: Float, b: Int) => a * b
 
-given Ordering[Numerical] with
-  def compare(x: Numerical, y: Numerical): Int =
-    (x, y) match
-      case (a: Int, b: Int) => a.compareTo(b)
-      case (a: Float, b: Float) => a.compareTo(b)
-      case (a: Int, b: Float) => a.toFloat.compareTo(b)
-      case (a: Float, b: Int) => a.compareTo(b.toFloat)
+    def /(y: Numerical): Numerical =
+      (x, y) match
+        case (a: Int, b: Int) => a / b
+        case (a: Float, b: Float) => a / b
+        case (a: Int, b: Float) => a / b
+        case (a: Float, b: Int) => a / b
+
+  given Ordering[Numerical] with
+    def compare(x: Numerical, y: Numerical): Int =
+      (x, y) match
+        case (a: Int, b: Int) => a.compareTo(b)
+        case (a: Float, b: Float) => a.compareTo(b)
+        case (a: Int, b: Float) => a.toFloat.compareTo(b)
+        case (a: Float, b: Int) => a.compareTo(b.toFloat)
 
 opaque type Vector = Array[Numerical]
 
@@ -60,20 +63,17 @@ object Vector:
     def apply(index: Int): Numerical =
       source(index)
 
-    // def iterator: Iterator[Int | Float] =
-    //   source.iterator
+    def +(other: Vector): Vector =
+      for (v, w) <- source zip source yield Numerical.+(v)(w)
 
-    def dotAdd(other: Vector): Vector =
-      for (v, w) <- source zip source yield v.plus(w)
+    def -(other: Vector): Vector =
+      for (v, w) <- source zip source yield Numerical.-(v)(w)
 
-    def dotSub(other: Vector): Vector =
-      for (v, w) <- source zip source yield v.minus(w)
+    def *(other: Vector): Vector =
+      for (v, w) <- source zip source yield Numerical.*(v)(w)
 
-    def dotMul(other: Vector): Vector =
-      for (v, w) <- source zip source yield v.times(w)
-
-    def dotDiv(other: Vector): Vector =
-      for (v, w) <- source zip source yield v.div(w)
+    def /(other: Vector): Vector =
+      for (v, w) <- source zip source yield Numerical./(v)(w)
 
 opaque type Matrix = Array[Vector]
 
@@ -93,44 +93,44 @@ object Matrix:
       source(row)
 
     def +(other: Matrix): Matrix =
-      Matrix(for (v: Vector, w: Vector) <- source zip source yield v.dotAdd(w))
+      Matrix(for (v, w) <- source zip source yield Vector.+(v)(w))
 
     def -(other: Matrix): Matrix =
-      Matrix(for (v: Vector, w: Vector) <- source zip source yield v.dotSub(w))
+      Matrix(for (v, w) <- source zip source yield Vector.-(v)(w))
 
     def *(other: Matrix): Matrix =
-      Matrix(for (v: Vector, w: Vector) <- source zip source yield v.dotMul(w))
+      Matrix(for (v, w) <- source zip source yield Vector.*(v)(w))
 
     def /(other: Matrix): Matrix =
-      Matrix(for (v: Vector, w: Vector) <- source zip source yield v.dotDiv(w))
+      Matrix(for (v, w) <- source zip source yield Vector./(v)(w))
 
-type DynamicFunction = PartialFunction[Seq[?], ?]
+type DynamicFunction = PartialFunction[Tuple, ?]
 
 val globalFunctions = Map[String, DynamicFunction](
-  "+" -> { case Seq(a: Numerical, b: Numerical) => a.plus(b) },
-  "-" -> { case Seq(a: Numerical, b: Numerical) => a.minus(b) },
-  "*" -> { case Seq(a: Numerical, b: Numerical) => a.times(b) },
-  "/" -> { case Seq(a: Numerical, b: Numerical) => a.div(b) },
-  "PRINT" -> { args => println(args.mkString(" ")) },
-  "ZEROS" -> { case Seq(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(0)))) },
-  "ONES" -> { case Seq(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
-  "EYE" -> { case Seq(n: Int) => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
+  "+" -> { case (a: Numerical, b: Numerical) => a + b },
+  "-" -> { case (a: Numerical, b: Numerical) => a - b },
+  "*" -> { case (a: Numerical, b: Numerical) => a * b },
+  "/" -> { case (a: Numerical, b: Numerical) => a / b },
+  "PRINT" -> { args => println(args.toList.mkString(" ")) },
+  "ZEROS" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(0)))) },
+  "ONES" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
+  "EYE" -> { case (n: Int) *: EmptyTuple => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
   "INIT" -> { args =>
     args.head match
       case n: Numerical => Vector(args.asInstanceOf[Iterable[Numerical]])
       case _ => Matrix(args.asInstanceOf[Iterable[Vector]])
   },
-  "==" -> { case Seq(a: Numerical, b: Numerical) => a == b },
-  "!=" -> { case Seq(a: Numerical, b: Numerical) => a != b },
-  "<=" -> { case Seq(a: Numerical, b: Numerical) => a <= b },
-  ">=" -> { case Seq(a: Numerical, b: Numerical) => a >= b },
-  "<" -> { case Seq(a: Numerical, b: Numerical) => a < b },
-  ">" -> { case Seq(a: Numerical, b: Numerical) => a > b },
-  "DOTADD" -> { case Seq(a: Matrix, b: Matrix) => a + b },
-  "DOTSUBB" -> { case Seq(a: Matrix, b: Matrix) => a - b },
-  "DOTMUL" -> { case Seq(a: Matrix, b: Matrix) => a * b },
-  "DOTDIV" -> { case Seq(a: Matrix, b: Matrix) => a / b },
-  "TRANSPOSE" -> { case Seq(m: Matrix) =>
+  "==" -> { case (a: Numerical, b: Numerical) => a == b },
+  "!=" -> { case (a: Numerical, b: Numerical) => a != b },
+  "<=" -> { case (a: Numerical, b: Numerical) => a <= b },
+  ">=" -> { case (a: Numerical, b: Numerical) => a >= b },
+  "<" -> { case (a: Numerical, b: Numerical) => a < b },
+  ">" -> { case (a: Numerical, b: Numerical) => a > b },
+  "DOTADD" -> { case (a: Matrix, b: Matrix) => a + b },
+  "DOTSUBB" -> { case (a: Matrix, b: Matrix) => a - b },
+  "DOTMUL" -> { case (a: Matrix, b: Matrix) => a * b },
+  "DOTDIV" -> { case (a: Matrix, b: Matrix) => a / b },
+  "TRANSPOSE" -> { case (m: Matrix) *: EmptyTuple =>
     val rows = m.length
     val cols = m.head.length
     Matrix.tabulate(cols, rows)((i, j) => m(j)(i))

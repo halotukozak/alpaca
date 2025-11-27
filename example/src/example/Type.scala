@@ -1,4 +1,7 @@
 package example
+
+import scala.collection.mutable
+import scala.compiletime.ops.boolean.*
 import scala.compiletime.ops.int.*
 
 sealed trait Type(val isFinal: Boolean = true):
@@ -10,6 +13,7 @@ sealed trait Type(val isFinal: Boolean = true):
     case _ => isSubtype(other)
 
   protected def isSubtype(other: Type): Boolean
+
   def >=(other: Type): Boolean = other <= this
 
 object Type:
@@ -50,17 +54,28 @@ object Type:
 
   case class AnyOf(all: Set[Type]) extends Type(false):
     override def toString = all.mkString(" | ")
+
     override def <=(other: Type): Boolean = all.forall(_ <= other)
+
     override protected def isSubtype(other: Type): Boolean = false // Should not be called via <=
 
+  type IsVarArg[X] <: Boolean = X match
+    case Type.VarArg[?] => true
+    case _ => false
+
+  type IsValidTuple[X] <: Boolean = X match
+    case EmptyTuple => true
+    case Type *: t => IsValidTuple[t]
+    case _ => false
+
   case class Function(
-    args: Tuple,
+    args: Tuple | Type.VarArg[?],
     result: Type,
-  )(using args.type <:< TupleFactory[Tuple.Size[args.type], Type],
+  )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type:
     def takes(provided: List[Type]) = args match
       case _: EmptyTuple => provided.isEmpty
-      case Type.VarArg(tpe) *: EmptyTuple => provided.forall(_ <= tpe)
+      case Type.VarArg(tpe) => provided.forall(_ <= tpe)
       case args: Tuple =>
         args.toList
           .zip(provided)
@@ -68,42 +83,53 @@ object Type:
             case (a: Type, b: Type) => b <= a
             case _ => false
 
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Function(args, result) =>
-        def validArgs = this.args.toList
-          .zip(args.toList)
-          .forall:
-            case (a: Type, b: Type) => a <= b
-            case _ => false
+    override protected def isSubtype(other: Type): Boolean = (this, other) match
+      case (Type.Function(args: Type.VarArg[?], result), Type.Function(args2: Type.VarArg[?], result2)) =>
+        args <= args2 && result <= result2
 
-        def validResult = this.result <= result
-        validResult && validArgs
+      case (Type.Function(args: Tuple, result), Type.Function(args2: Tuple, result2)) =>
+        args.zip(args2).toList.forall { case (a: Type, b: Type) => a <= b } && result <= result2
+
       case _ => false
 
-  case class FunctionTypeFactory(
-    args: Tuple,
+  object OverloadedFunction:
+    def apply[T <: Type](arg: T, resultHint: Type, resultTypeFactory: AST.Expr.Of[T] => Result[Type])
+      : OverloadedFunction =
+      new OverloadedFunction(
+        Tuple(arg),
+        resultHint,
+        { case expr *: EmptyTuple => resultTypeFactory(expr) },
+      )
+
+  type Args[X <: Tuple | Type.VarArg[?]] = X match
+    case Type.VarArg[tpe] => List[AST.Expr.Of[tpe]]
+    case h *: t => TupleFactory[Tuple.Size[h *: t], AST.Expr.Of[h]]
+    case EmptyTuple => Unit
+
+  case class OverloadedFunction(
+    args: Tuple | Type.VarArg[?],
     resultHint: Type,
-    resultTypeFactory: TupleFactory[Tuple.Size[args.type], AST.Expr] => Result[Type],
-  )(using ev: args.type <:< TupleFactory[Tuple.Size[args.type], Type],
+    resultTypeFactory: Args[args.type] => Result[Type],
+  )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type(false):
-    override def toString =
-      s"TypeFunction: [$resultTypeFactory] => $args -> $resultHint" // todo: sth more informative
+    override def toString = s"OverloadedFunction: $args => $resultHint" // todo: sth more informative
 
-    def apply(exprs: TupleFactory[Tuple.Size[args.type], AST.Expr]): Result[Function] =
-      resultTypeFactory(exprs).map(res => Function(this.args, res))
+    private def unsafeResult(arguments: scala.Any) =
+      resultTypeFactory(arguments.asInstanceOf[Args[args.type]]).map(Function(args, _))
 
-    def apply(exprs: List[AST.Expr]): Result[Function] =
-      exprs.toTuple match
-        case tuple
-            if tuple.size == args.size &&
-              tuple.toList
-                .zip(args.toList)
-                .forall:
-                  case (AST.Expr(tpe), arg: Type) => tpe <= arg
-                  case _ => false
-            =>
-          apply(tuple.asInstanceOf[TupleFactory[Tuple.Size[args.type], AST.Expr]])
-        case _ => Result.error(Type.Function(args, resultHint), s"Invalid arguments: $exprs")
+    def apply(exprs: List[AST.Expr]): Result[Function] = args match
+      case EmptyTuple if exprs.isEmpty => unsafeResult(EmptyTuple)
+      case Type.VarArg(tpe) if exprs.forall(_.tpe <= tpe) => unsafeResult(exprs)
+      case args: Tuple if {
+            args.toList
+              .zip(exprs)
+              .forall:
+                case (a: Type, AST.Expr(b)) => b <= a
+                case _ => false
+          } =>
+        unsafeResult(exprs.toTuple)
+
+      case _ => Result.error(Type.Function(args, resultHint), s"Invalid arguments: $exprs, expected: $args")
 
     override protected def isSubtype(other: Type): Boolean = other match
       case Type.Function(args, result) => this.resultHint <= resultHint
@@ -133,9 +159,9 @@ object Type:
       case _ => false
   }
 
-//  case class VarArg[T <: Type](`type`: T) extends Type(false)
-  case class VarArg(tpe: Type) extends Type(false):
+  case class VarArg[+T <: Type](tpe: T) extends Type(false):
     override def toString = s"$tpe*"
+
     override protected def isSubtype(other: Type): Boolean = other match
       case Type.VarArg(tpe) => tpe <= this.tpe
       case _ => false
@@ -174,23 +200,6 @@ object Type:
       case Type.Range => true
       case _ => false
 
-  object FunctionTypeFactory:
-    def apply(arg: Type, resultHint: Type, resultTypeFactory: AST.Expr => Result[Type]) =
-      new FunctionTypeFactory(
-        Tuple(arg),
-        resultHint,
-        { case tpe *: EmptyTuple => resultTypeFactory(tpe) },
-      )
-    def varargs(
-      arg: Type.VarArg,
-      resultHint: Type,
-      resultTypeFactory: Seq[AST.Expr] => Result[Type],
-    ) = new FunctionTypeFactory(
-      Tuple(arg),
-      resultHint,
-      { case vararg *: EmptyTuple => resultTypeFactory(AST.Expr.traverse(vararg)) },
-    )
-
 type TupleFactory[N <: scala.Int, X] = N match
   case 0 => EmptyTuple
   case S[n] => X *: TupleFactory[n, X]
@@ -199,3 +208,126 @@ extension [T](list: List[T])
   def toTuple: Tuple = list match
     case Nil => EmptyTuple
     case h :: t => h *: t.toTuple
+
+val unary_numerical_type = Type.Function(Tuple(Type.Int), Type.Int) | Type.Function(Tuple(Type.Float), Type.Float)
+val unary_vector_type = Type.OverloadedFunction(
+  arg = Type.Vector(),
+  resultHint = Type.Vector(),
+  resultTypeFactory = expr => Result.Success(expr.tpe),
+)
+val unary_matrix_type = Type.OverloadedFunction(
+  arg = Type.Matrix(),
+  resultHint = Type.Matrix(),
+  resultTypeFactory = expr => Result.Success(expr.tpe),
+)
+
+val binary_numerical_type = Type.Function((Type.Int, Type.Int), Type.Int) |
+  Type.Function((Type.Numerical, Type.Numerical), Type.Float)
+
+val binary_numerical_condition_type = Type.Function((Type.Numerical, Type.Numerical), Type.Bool)
+
+val binary_matrix_type = Type.OverloadedFunction(
+  args = (Type.Matrix(), Type.Matrix()),
+  resultHint = Type.Matrix(),
+  resultTypeFactory =
+    case (AST.Expr(a: Type.Matrix), AST.Expr(b: Type.Matrix)) =>
+      val errors = mutable.Set.empty[String]
+      val warns = mutable.Set.empty[String]
+
+      var rows: Int | Null = null
+      var cols: Int | Null = null
+
+      if (a.rows == null) || (b.rows == null) then warns += "Matrix rows could not be inferred"
+      else if a.rows != b.rows then errors += s"Matrix rows mismatch: ${a.rows} != ${b.rows}"
+      else rows = a.rows
+
+      if (a.cols == null) || (b.cols == null) then warns += "Matrix columns could not be inferred"
+      else if a.cols != b.cols then errors += s"Matrix columns mismatch: ${a.cols} != ${b.cols}"
+      else cols = a.cols
+
+      if errors.nonEmpty then Result.error(Type.Matrix(rows, cols), errors.toSeq*)
+      else if warns.nonEmpty then Result.warn(Type.Matrix(rows, cols), warns.toSeq*)
+      else Result.Success(Type.Matrix(rows, cols)),
+)
+
+val binary_vector_type = Type.OverloadedFunction(
+  args = (Type.Vector(), Type.Vector()),
+  resultHint = Type.Vector(),
+  resultTypeFactory =
+    case (AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
+      if (a.arity == null) || (b.arity == null) then Result.warn(Type.Matrix(), "Vector arity could not be inferred")
+      else if a.arity != b.arity then Result.error(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
+      else Result.Success(Type.Vector(a.arity)),
+)
+
+val scalar_type = Type.OverloadedFunction(
+  args = (Type.Matrix(), Type.Numerical),
+  resultHint = Type.Matrix(),
+  resultTypeFactory =
+    case (expr, args) => Result.Success(expr.tpe),
+) | Type.OverloadedFunction(
+  args = (Type.Vector(), Type.Numerical),
+  resultHint = Type.Vector(),
+  resultTypeFactory =
+    case (expr, args) => Result.Success(expr.tpe),
+)
+
+val matrix_type = Type.OverloadedFunction(
+  arg = Type.Int,
+  resultHint = Type.Matrix(),
+  resultTypeFactory =
+    case AST.Literal(_, n: Int, _) => Result.Success(Type.Matrix(n, n))
+    case _ => Result.warn(Type.Matrix(), "Matrix size could not be inferred"),
+)
+
+val symbols: Map[String, AST.SymbolRef] = Map(
+  // unary
+  "UMINUS" -> (unary_numerical_type | unary_vector_type | unary_matrix_type),
+  "TRANSPOSE" -> Type.OverloadedFunction(
+    arg = Type.Matrix(),
+    resultHint = Type.Matrix(),
+    resultTypeFactory = expr =>
+      val tpe = expr.tpe.asInstanceOf[Type.Matrix]
+      Result.Success(Type.Matrix(tpe.cols, tpe.rows)),
+  ),
+  "EYE" -> matrix_type,
+  "ZEROS" -> matrix_type,
+  "ONES" -> matrix_type,
+
+  // binary
+  "+" -> binary_numerical_type,
+  "-" -> binary_numerical_type,
+  "*" -> (binary_numerical_type | scalar_type | binary_matrix_type | Type.Function(Tuple(Type.String), Type.Int)),
+  "/" -> (binary_numerical_type | scalar_type),
+  "==" -> binary_numerical_condition_type,
+  "!=" -> binary_numerical_condition_type,
+  "<=" -> binary_numerical_condition_type,
+  ">=" -> binary_numerical_condition_type,
+  ">" -> binary_numerical_condition_type,
+  "<" -> binary_numerical_condition_type,
+  "DOTADD" -> (binary_matrix_type | binary_vector_type),
+  "DOTSUB" -> (binary_matrix_type | binary_vector_type),
+  "DOTMUL" -> (binary_matrix_type | binary_vector_type),
+  "DOTDIV" -> (binary_matrix_type | binary_vector_type),
+
+  // varargs
+  "INIT" ->
+    (Type.OverloadedFunction(
+      args = Type.VarArg(Type.Numerical),
+      resultHint = Type.Vector(),
+      resultTypeFactory = args => Result.Success(Type.Vector(args.size)),
+    ) | Type.OverloadedFunction(
+      args = Type.VarArg(Type.Vector()),
+      resultHint = Type.Matrix(),
+      resultTypeFactory = args =>
+        args.map(_.tpe.asInstanceOf[Type.Vector].arity).distinct match
+          case Seq(arity) =>
+            Result.Success(Type.Matrix(args.size, arity))
+          case arities =>
+            if !arities.contains(null) then
+              Result.warn(Type.Matrix(args.size), s"Vector arities $arities are not the same")
+            else Result.warn(Type.Matrix(), "Cannot infer matrix size"),
+    )),
+  "PRINT" -> Type.Function(Tuple(Type.VarArg(Type.Any)), Type.Unit),
+).map:
+  case (name, tpe) => name -> AST.SymbolRef(tpe, name, -1)
