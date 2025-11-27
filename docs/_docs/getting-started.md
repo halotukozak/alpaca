@@ -176,6 +176,35 @@ if finalCtx.braces.nonEmpty then
   throw RuntimeException("Unclosed braces: " + finalCtx.braces.mkString)
 ```
 
+### Using Context in the Parser
+
+You can also use context in the parser to track state during parsing. Here's an example that counts expression depth:
+
+```scala sc:nocompile
+import alpaca.*
+
+// Define a parser context
+case class ExprContext(var depth: Int = 0) extends ParserCtx
+
+object ExprParser extends Parser[ExprContext]:
+  val root: Rule[Int] = rule { case Expr(e) => e }
+
+  val Expr: Rule[Int] = rule(
+    { case (Expr(l), MyLexer.PLUS(_), Term(r)) => 
+        ctx.depth += 1
+        l + r 
+    },
+    { case Term(t) => t }
+  )
+
+  val Term: Rule[Int] = rule { case (MyLexer.NUM(n)) => n.value.toInt }
+
+// Usage
+val (_, lexemes) = MyLexer.tokenize("1 + 2 + 3")
+val (parserCtx, result) = ExprParser.parse(lexemes)
+println(s"Result: $result, Depth: ${parserCtx.depth}")
+```
+
 ### Token Extractors
 
 Tokens can carry values extracted from the input:
