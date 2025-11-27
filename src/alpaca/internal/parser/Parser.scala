@@ -46,6 +46,10 @@ abstract class Parser[Ctx <: ParserCtx](
    * This method builds the parse table at compile time and uses it to
    * parse the input lexems using an LR parsing algorithm.
    *
+   * If the context extends `ParserErrorRecovery`, syntax errors are collected
+   * and the parser attempts to continue by skipping unexpected tokens.
+   * Otherwise, the parser returns null on parse failure.
+   *
    * @tparam R the result type
    * @param lexems   the list of lexems to parse
    * @param debugSettings parser settings (optional)
@@ -55,38 +59,66 @@ abstract class Parser[Ctx <: ParserCtx](
     type State = (index: Int, node: R | Lexem[?, ?] | Null)
     val ctx = empty()
 
-    @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
-      val nextSymbol = Terminal(lexems.head.name)
-      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
-        case ParseAction.Shift(gotoState) =>
-          loop(lexems.tail, (gotoState, lexems.head) :: stack)
+    def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
+      @tailrec def innerLoop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
+        if lexems.isEmpty then return null // Safety check
 
-        case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
-          val newStack = stack.drop(rhs.size)
-          val newState = newStack.head
+        val currentLexem = lexems.head
+        val nextSymbol = Terminal(currentLexem.name)
+        val currentState = stack.head.index
 
-          if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
-          else {
-            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
-            val children = stack.take(rhs.size).map(_.node).reverse
-            loop(
-              lexems,
-              (
-                gotoState,
-                tables.actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
-              ) :: newStack,
-            )
-          }
+        tables.parseTable.get(currentState, nextSymbol) match
+          case Some(action) =>
+            action.runtimeChecked match
+              case ParseAction.Shift(gotoState) =>
+                innerLoop(lexems.tail, (gotoState, currentLexem) :: stack)
 
-        case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
-          stack.head.node.asInstanceOf[R | Null]
+              case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
+                val newStack = stack.drop(rhs.size)
+                val newState = newStack.head
 
-        case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
-          loop(
-            lexems,
-            (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
-          )
+                if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+                else {
+                  val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
+                  val children = stack.take(rhs.size).map(_.node).reverse
+                  innerLoop(
+                    lexems,
+                    (
+                      gotoState,
+                      tables.actionTable(prod)(ctx, children).asInstanceOf[R | Lexem[?, ?] | Null],
+                    ) :: newStack,
+                  )
+                }
+
+              case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
+                stack.head.node.asInstanceOf[R | Null]
+
+              case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
+                val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
+                innerLoop(
+                  lexems,
+                  (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
+                )
+
+          case None =>
+            // No valid action found - handle error recovery or return null
+            ctx match
+              case errCtx: ParserErrorRecovery =>
+                // Record the error
+                val expected = tables.parseTable.expectedTerminals(currentState)
+                errCtx.parserErrors += SyntaxError.UnexpectedToken(currentLexem, expected)
+
+                // Panic mode error recovery: skip tokens until we find one we can use
+                val remainingLexems = lexems.tail
+                if remainingLexems.isEmpty then null
+                else innerLoop(remainingLexems, stack)
+
+              case _ =>
+                // No error recovery - return null to indicate parse failure
+                null
+      }
+
+      innerLoop(lexems, stack)
     }
 
     ctx -> loop(lexems :+ Lexem.EOF, (0, null) :: Nil)

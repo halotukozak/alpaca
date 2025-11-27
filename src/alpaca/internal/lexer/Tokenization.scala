@@ -37,8 +37,9 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * Tokenizes the input character sequence.
    *
    * Processes the input from start to finish, matching tokens and building
-   * a list of lexems. Throws a RuntimeException if an unexpected character
-   * is encountered.
+   * a list of lexems. If the context extends `LexerErrorRecovery`, unexpected
+   * characters are collected as errors and lexing continues. Otherwise, a
+   * RuntimeException is thrown for unexpected characters.
    *
    * @param input the input to tokenize
    * @param empty implicit Empty instance to create the initial context
@@ -50,17 +51,42 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
         case 0 =>
           acc.reverse
         case _ =>
-          val m = compiled.findPrefixMatchOf(globalCtx.text) getOrElse {
-            // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-            throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
-          }
-          val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
-            throw new AlgorithmError(s"$m matched but no token defined for it")
-          }
-          betweenStages(token, m, globalCtx)
-          val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem
-          loop(globalCtx)(lexem ::: acc)
+          compiled.findPrefixMatchOf(globalCtx.text) match
+            case Some(m) =>
+              val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
+                throw new AlgorithmError(s"$m matched but no token defined for it")
+              }
+              betweenStages(token, m, globalCtx)
+              val lexem = List(token).collect:
+                case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem
+              loop(globalCtx)(lexem ::: acc)
+
+            case None =>
+              // No match found - handle error recovery or throw
+              globalCtx match
+                case errCtx: LexerErrorRecovery =>
+                  // Record the error with position info if available
+                  val position = globalCtx match
+                    case pt: PositionTracking => pt.position
+                    case _                    => 0
+                  val line = globalCtx match
+                    case lt: LineTracking => lt.line
+                    case _                => 0
+                  errCtx.lexerErrors += SyntaxError.UnexpectedChar(
+                    globalCtx.text.charAt(0),
+                    position,
+                    line,
+                  )
+                  // Skip the problematic character and continue
+                  globalCtx.text = globalCtx.text.from(1)
+                  // Update position tracking if available
+                  globalCtx match
+                    case pt: PositionTracking => pt.position += 1
+                    case _                    => ()
+                  loop(globalCtx)(acc)
+
+                case _ =>
+                  throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
 
     val initialContext = empty()
     initialContext.text = input
