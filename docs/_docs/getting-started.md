@@ -140,21 +140,40 @@ alpaca/
 
 ### Contextual Lexing and Parsing
 
-Alpaca supports context-aware lexing and parsing, allowing you to maintain state during tokenization and parsing:
+Alpaca supports context-aware lexing and parsing, allowing you to maintain state during tokenization and parsing. Here's an example that tracks brace matching:
 
 ```scala
 import alpaca.*
+import scala.collection.mutable.Stack
 
-case class MyContext(
+case class BraceContext(
   var text: CharSequence = "",
-  var depth: Int = 0
+  val braces: Stack[Char] = Stack()
 ) extends LexerCtx
 
-val contextAwareLexer = lexer[MyContext]:
+val braceLexer = lexer[BraceContext]:
+  case "\\(" => 
+    ctx.braces.push('(')
+    Token["LPAREN"]
+  case "\\)" => 
+    if ctx.braces.isEmpty || ctx.braces.pop() != '(' then
+      throw RuntimeException("Mismatched parenthesis")
+    Token["RPAREN"]
   case "\\{" => 
-    ctx.depth += 1
+    ctx.braces.push('{')
     Token["LBRACE"]
-  case "\\}" => Token["RBRACE"]
+  case "\\}" => 
+    if ctx.braces.isEmpty || ctx.braces.pop() != '{' then
+      throw RuntimeException("Mismatched brace")
+    Token["RBRACE"]
+  case "\\s+" => Token.Ignored
+  case "[a-zA-Z]+" => Token["ID"]
+
+// Usage
+val input = "{ foo ( bar ) }"
+val (finalCtx, lexemes) = braceLexer.tokenize(input)
+if finalCtx.braces.nonEmpty then
+  throw RuntimeException("Unclosed braces: " + finalCtx.braces.mkString)
 ```
 
 ### Token Extractors
