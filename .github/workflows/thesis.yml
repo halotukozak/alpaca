@@ -1,0 +1,68 @@
+name: Check Thesis LaTeX Output
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+
+jobs:
+  check-latex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: alpaca.tex
+          working_directory: thesis/src
+          latexmk_use_lualatex: true
+
+      - name: Install PDF comparison tools
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Compare PDF output
+        working-directory: thesis/src
+        run: |
+          # Store the newly compiled PDF
+          mv alpaca.pdf alpaca-new.pdf
+          
+          # Restore the original PDF from git
+          git checkout HEAD -- alpaca.pdf
+          
+          # Compare the PDFs using diff-pdf or a simple hash comparison
+          # PDFs can have timestamps, so we compare content excluding metadata
+          
+          # Extract text content from both PDFs for comparison
+          pdftotext alpaca.pdf alpaca-original.txt 2>/dev/null || true
+          pdftotext alpaca-new.pdf alpaca-new.txt 2>/dev/null || true
+          
+          if [ -f alpaca-original.txt ] && [ -f alpaca-new.txt ]; then
+            if ! diff -q alpaca-original.txt alpaca-new.txt > /dev/null 2>&1; then
+              echo "::error::LaTeX output has changed! The thesis PDF content differs from the committed version."
+              echo "Please recompile the thesis and commit the updated PDF."
+              diff alpaca-original.txt alpaca-new.txt || true
+              exit 1
+            fi
+          else
+            # Fallback: compare file sizes as a rough check
+            ORIGINAL_SIZE=$(stat -c%s alpaca.pdf)
+            NEW_SIZE=$(stat -c%s alpaca-new.pdf)
+            
+            # Allow small size differences (< 1KB) due to metadata/timestamps
+            SIZE_DIFF=$((NEW_SIZE - ORIGINAL_SIZE))
+            SIZE_DIFF=${SIZE_DIFF#-}  # absolute value
+            
+            if [ "$SIZE_DIFF" -gt 1024 ]; then
+              echo "::error::LaTeX output has changed! PDF size differs significantly (original: $ORIGINAL_SIZE bytes, new: $NEW_SIZE bytes)."
+              echo "Please recompile the thesis and commit the updated PDF."
+              exit 1
+            fi
+          fi
+          
+          echo "✓ LaTeX output is consistent with the committed PDF."
