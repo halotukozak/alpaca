@@ -186,6 +186,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
             case Some(set) => Some(set + extractKey(after))
             case None => Some(Set(extractKey(after))),
   ).tap: table =>
+    table.verifyNoConflicts
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
   val root = table

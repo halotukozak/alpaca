@@ -5,6 +5,7 @@ package parser
 import alpaca.internal.lexer.Token
 
 import scala.annotation.{compileTimeOnly, tailrec}
+import scala.collection.mutable
 
 /**
  * Type representing a key in the conflict resolution table.
@@ -64,6 +65,27 @@ private[parser] object ConflictResolutionTable {
       }
 
       winsOver(first, second) orElse winsOver(second, first)
+    }
+
+    def verifyNoConflicts: Unit = {
+      enum VisitState:
+        case Unvisited
+        case Visited
+        case Processed
+
+      val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
+
+      def visit(node: ConflictKey, path: List[ConflictKey] = Nil): Unit =
+        visited(node) match
+          case VisitState.Unvisited =>
+            visited.update(node, VisitState.Visited)
+            for neighbor <- table.getOrElse(node, Set.empty) do visit(neighbor, path :+ node)
+            visited.update(node, VisitState.Processed)
+          case VisitState.Visited =>
+            throw InconsistentConflictResolution(node, path)
+          case VisitState.Processed => // Already fully processed
+
+      for node <- table.keys do visit(node)
     }
 
   /**
