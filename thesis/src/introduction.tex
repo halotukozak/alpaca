@@ -19,11 +19,11 @@ Celem pracy inżynierskiej jest stworzenie narzędzia \textit{ALPACA} (Another L
 Projekt ma na celu stworzenie nowoczesnego narzędzia do generowania lekserów i parserów w języku Scala, łączącego zalety istniejących rozwiązań z nowoczesnym podejściem technologicznym.
 Jego główne cele to:
 \begin{enumerate}
-    \item Stworzenie intuicyjnego API\@.
-    \item Opracowanie obszernej dokumentacji.
-    \item Rozbudowana diagnostyka błędów.
-    \item Poprawa wydajności względem rozwiązań w języku Python.
-    \item Integracja z popularnymi środowiskami programistycznymi (IDE).
+  \item Stworzenie intuicyjnego API\@.
+  \item Opracowanie obszernej dokumentacji.
+  \item Rozbudowana diagnostyka błędów.
+  \item Poprawa wydajności względem rozwiązań w języku Python.
+  \item Integracja z popularnymi środowiskami programistycznymi (IDE).
 \end{enumerate}
 
 Proponowane rozwiązanie łączy nowoczesne podejście technologiczne z praktycznym zastosowaniem w edukacji i programowaniu.
@@ -60,18 +60,18 @@ Ponadto należy zaznaczyć, iż autor projektu informuje o braku dalszego rozwoj
 
 Przykład \ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
 \begin{itemize}
-    \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
-    Literały muszą być zawarte w cudzysłowie, a „zmienna” odpowiada za matchowany „typ”.
-    \item Nazwa metody oznacza „typ” zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
-    \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|% prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
-    \item  Argument \verb|p| pozwala na dostęp do kontekstu produkcji (np. numeru linii), ale także do zmiennych w patternu match w adnotacji.
-    Jeśli zdefiniowany jest więcej niż jeden, to dodajemy numer do accesora, np. \verb|expr1| jest odwołaniem się do drugiego wyrażenie \verb|expr|.
-    Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
+  \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
+        Literały muszą być zawarte w cudzysłowie, a „zmienna” odpowiada za matchowany „typ”.
+  \item Nazwa metody oznacza „typ” zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
+  \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|% prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
+  \item  Argument \verb|p| pozwala na dostęp do kontekstu produkcji (np. numeru linii), ale także do zmiennych w patternu match w adnotacji.
+        Jeśli zdefiniowany jest więcej niż jeden, to dodajemy numer do accesora, np. \verb|expr1| jest odwołaniem się do drugiego wyrażenie \verb|expr|.
+        Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
 \end{itemize}
 
 \lstinputlisting[language=Python,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:python-parser}]{listings/chapter1/sly-parser.py}
 
-Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone, co obrazuje przykład \ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z fragmentu kodu \ref{lst:lstlisting}.
+Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone, co obrazuje przykład \ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z fragmentu kodu \ref{lst:not-working-sly}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji \verb|Lexer|.
 \lstinputlisting[language=Python,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:not-working-sly}]{listings/chapter1/not-working-sly.py}
 
@@ -116,8 +116,8 @@ Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń pars
 Zgodnie z przykładem \ref{lst:parboiled2-error}, raportowanie błędów jest bardzo ograniczone (problem z implementacją wynika jedynie z różnic w liczbie parametrów funkcji).
 
 \lstinputlisting[firstline=7, lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
-Niewielki fragment (14 z 133 linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z prezentacji Li Haoyi na temat \textit{FastParse}\cite{fastparse-talk}.
-},label={lst:parboiled2-error}]{listings/chapter1/parboiled2-error}
+      Niewielki fragment (14 z 133 linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z prezentacji Li Haoyi na temat \textit{FastParse}\cite{fastparse-talk}.
+    },label={lst:parboiled2-error}]{listings/chapter1/parboiled2-error}
 
 \subsection{FastParse}
 \label{subsec:fastparse}
@@ -136,60 +136,60 @@ Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe ko
 \label{subsec:podsumowanie}
 
 \begin{table}[ht]
-    \centering
-    \begin{tabular}{L|CCCC}
-        \toprule
-        \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
-        \midrule
-        Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
-        \arrayrulecolor{gray}
-        \hline
-        Język użycia            & regex, BNF, akcje w C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w Scali   \\
-        \hline
-        Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
-        \hline
-        Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
-        \hline
-        Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
-        \hline
-        Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
-        \hline
-        Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
-        \hline
-        Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
-        \hline
-        Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
-        \hline
-        Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
-        \hline
-        Generowania kodu        & nie                                       & nie                  & tak                & nie                  \\
-        \hline
-        \toprule
-        Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
-        \midrule
-        Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
-        \hline
-        Język użycia            & DSL w Scali                               & DSL w Scali          & DSL w Scali        & Scala                \\
-        \hline
-        Wydajność               & wysoka                                    & umiarkowana          & wysoka             & TODO                 \\
-        \hline
-        Łatwość użycia          & niska                                     & średnia              & średnia            & TODO                 \\
-        \hline
-        Aktywne wsparcie        & nie                                       & nie                  & tak                & TODO                 \\
-        \hline
-        Diagnostyka błędów      & dobra                                     & niska                & dobra              & TODO                 \\
-        \hline
-        Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & TODO                 \\
-        \hline
-        Popularność             & średnia                                   & niska                & rosnąca            & TODO                 \\
-        \hline
-        Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & TODO                 \\
-        \hline
-        Wsparcie do debugowania & dobre                                     & dobre                & dobre              & TODO                 \\
-        \hline
-        Generowania kodu        & nie                                       & nie                  & nie                & TODO                 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Porównanie wybranych narzędzi do generowania lekserów i parserów}
-    \label{tab:porownanie-alternatyw}
+  \centering
+  \begin{tabular}{L|CCCC}
+    \toprule
+    \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
+    \midrule
+    Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
+    \arrayrulecolor{gray}
+    \hline
+    Język użycia            & regex, BNF, akcje w C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w Scali   \\
+    \hline
+    Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
+    \hline
+    Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
+    \hline
+    Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
+    \hline
+    Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
+    \hline
+    Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
+    \hline
+    Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
+    \hline
+    Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
+    \hline
+    Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
+    \hline
+    Generowania kodu        & nie                                       & nie                  & tak                & nie                  \\
+    \hline
+    \toprule
+    Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
+    \midrule
+    Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
+    \hline
+    Język użycia            & DSL w Scali                               & DSL w Scali          & DSL w Scali        & Scala                \\
+    \hline
+    Wydajność               & wysoka                                    & umiarkowana          & wysoka             & TODO                 \\
+    \hline
+    Łatwość użycia          & niska                                     & średnia              & średnia            & TODO                 \\
+    \hline
+    Aktywne wsparcie        & nie                                       & nie                  & tak                & TODO                 \\
+    \hline
+    Diagnostyka błędów      & dobra                                     & niska                & dobra              & TODO                 \\
+    \hline
+    Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & TODO                 \\
+    \hline
+    Popularność             & średnia                                   & niska                & rosnąca            & TODO                 \\
+    \hline
+    Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & TODO                 \\
+    \hline
+    Wsparcie do debugowania & dobre                                     & dobre                & dobre              & TODO                 \\
+    \hline
+    Generowania kodu        & nie                                       & nie                  & nie                & TODO                 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Porównanie wybranych narzędzi do generowania lekserów i parserów}
+  \label{tab:porownanie-alternatyw}
 \end{table}

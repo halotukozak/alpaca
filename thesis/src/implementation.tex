@@ -18,14 +18,14 @@ Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy, włączając
 
 System oferuje użytkownikowi przejrzysty interfejs DSL oparty na dopasowaniu wzorców:
 
-\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-01-lexerdefinition}, linerange={21}]{../../src/alpaca/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-01-lexerdefinition}, linerange={16}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
 Definicja \texttt{LexerDefinition} reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w idiomatycznej składni Scali.
 
 Główny punkt wejścia systemu stanowi metoda \texttt{lexer}:
 
-\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-02-entrypoint}, linerange={44-52}]{../../src/alpaca/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-02-entrypoint}, linerange={29-38}]{../../src/alpaca/lexer.scala}
 
 Modyfikator \texttt{transparent inline} zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów.
 Użycie parametrów kontekstowych (\texttt{using}) realizuje wzorzec dependency injection na poziomie systemu typów.
@@ -41,7 +41,7 @@ Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy.
 
 Kluczowym krokiem implementacji jest ekstrakcja reguł z definicji funkcji częściowej:
 
-\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:lexer-04-extract-cases}, linerange={72}]{../../src/alpaca/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:lexer-04-extract-cases}, linerange={37}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
 Ten fragment kodu wykorzystuje dopasowanie wzorców w \textit{quotes} do dekonstrukcji typowanego AST funkcji częściowej.
 Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \texttt{Match} zawiera listę przypadków \texttt{CaseDef}.
@@ -52,12 +52,12 @@ Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezent
 
 Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
 
-\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:lexer-06-replace-with-new-ctx}, linerange={75-78}]{../../src/alpaca/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:lexer-06-replace-with-new-ctx}, linerange={40-43}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
 Transformacja ta realizuje proces znany jako \("\)re-owning\("\) w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
 
 Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy.
-Umożliwia to tzw. re-owning — przeniesienie fragmentów kodu między różnymi właścicielami symboli bez ręcznego przepisywania drzew (por. \ref{subsubsec:core-replacerefs}).
+Umożliwia to tzw. re-owning — przeniesienie fragmentów kodu między różnymi właścicielami symboli bez ręcznego przepisywania drzew.
 
 \subsection{Ekstrakcja i kompilacja wzorców}\label{subsec:ekstrakcja-i-kompilacja-wzorcow}
 
@@ -65,7 +65,7 @@ Umożliwia to tzw. re-owning — przeniesienie fragmentów kodu między różnym
 
 Funkcja \texttt{extractSimple} implementuje logikę dopasowania różnych typów definicji tokenów:
 
-\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}, linerange={80-85,99-108}]{../../src/alpaca/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}, linerange={45-48,52,56,63}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
 Wykorzystuje ona dopasowanie wzorców w \textit{quotes} z ekstraktorem typów, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
 Konstrukcja \texttt{type t <: ValidName} w wzorcu wiąże parametr typu do zmiennej wzorca \texttt{t}, umożliwiając jego późniejsze wykorzystanie.
@@ -85,38 +85,32 @@ Proces ten wykorzystuje API refleksji TASTy do dynamicznego tworzenia struktur t
 
 \subsubsection{Konstrukcja symbolu klasy}\label{subsubsec:konstrukcja-symbolu-klasy}
 
-Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez wywołanie \texttt{Symbol.newClass} (linie 201-207 w~\texttt{Lexer.scala}):
-
-\lstinputlisting[language=scala,caption={Wywołanie \texttt{Symbol.newClass} do utworzenia symbolu klasy anonimowej},label={lst:lexer-13-symbol-newclass}, linerange={201-207}]{../../src/alpaca/lexer/Lexer.scala}
+Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez wywołanie \texttt{Symbol.newClass}:
 
 Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 \begin{itemize}
-    \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
-    \item \textbf{Symbol.freshName("\$anon")} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
-    \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
-    \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
-    \item \textbf{None} — opcjonalna klasa companion (niewykorzystana w~tym przypadku)
+  \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
+  \item \textbf{Symbol.freshName("\$anon")} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
+  \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
+  \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
 \subsubsection{Definicja członków klasy}\label{subsubsec:definicja-czlonkow-klasy}
 
-Funkcja \texttt{decls} (linie 143-199) konstruuje pełną listę deklaracji dla klasy anonimowej:
+Funkcja \texttt{decls} konstruuje pełną listę deklaracji dla klasy anonimowej:
 
 \begin{enumerate}
-    \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \texttt{DefinedToken[Name, Ctx, Value]}
-    \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
-    \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
-    \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
-    \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
+  \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \texttt{DefinedToken[Name, Ctx, Value]}
+  \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
+  \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
+  \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
+  \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
 \end{enumerate}
 
-\subsubsection{Materiałizacja klasy}\label{subsubsec:materializacja-klasy}
+\subsubsection{Materializacja klasy}\label{subsubsec:materializacja-klasy}
 
-Po zdefiniowaniu symbolu klasy następuje konstrukcja jej ciała (linie 209-255).
-Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora (linia 274).
-Pełny proces generacji i~instancjowania przedstawia listing~\ref{lst:lexer-14-anon-class}.
-
-\lstinputlisting[language=scala,caption={Generacja i instancjowanie anonimowej klasy \texttt{Tokenization[Ctx]} z typem rafinowanym},label={lst:lexer-14-anon-class}, linerange={192-264}]{../../src/alpaca/lexer/Lexer.scala}
+Po zdefiniowaniu symbolu klasy następuje konstrukcja jej ciała.
+Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora.
 
 \subsection{Typy rafinowane (refinement types)}\label{subsec:typy-rafinowane}
 
@@ -125,32 +119,39 @@ W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie inform
 
 \subsubsection{Proces rafinowania typu}\label{subsubsec:proces-rafinowania-typu}
 
-Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego (linie 267-272):
+Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego:
 
-\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={267-276}]{../../src/alpaca/lexer/Lexer.scala}
+
+\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={228-232}]{../../src/alpaca/internal/lexer/Lexer.scala}
 
 Funkcja \texttt{Refinement(tpe, name, memberType)} tworzy nowy typ będący rozszerzeniem typu \texttt{tpe} o~członka \texttt{name} typu \texttt{memberType}.
 Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu w~czasie wykonania.
 
-\subsubsection{Typ przecięcia (intersection type)}\label{subsubsec:typ-przeciecia}
+\subsubsection{Wynikowy typ}\label{subsubsec:wynikowy-typ}
 
 Wynikowy typ ma formę typu przecięcia (ang. \textit{intersection type}):
 
-\begin{verbatim}
+\begin{lstlisting}[language=scala,caption={Wynikowy typ leksera},label={lst:lexer-15-result-type}]
 Tokenization[Ctx] & { 
-  val TOKEN1: DefinedToken["TOKEN1", Ctx, Type1]
-  val TOKEN2: DefinedToken["TOKEN2", Ctx, Type2]
+  val TOKEN1: DefinedToken["NAME1", Ctx, Type1]
+  val TOKEN2: DefinedToken["NAME2", Ctx, Type2]
   ...
 }
-\end{verbatim}
+\end{lstlisting}
 
-Ten typ reprezentuje wartości będące jednocześnie instancjami \texttt{Tokenization[Ctx]} oraz posiadające określone pola strukturalne.
-Kompilator Scali wykorzystuje tę informację do:
+Ten typ reprezentuje wartości będące jednocześnie instancjami \texttt{Tokenization[Ctx]} oraz posiadające określone pola strukturalne (ang. \emph{computed field names}).
+
+Dostęp do pól tokenów odbywa się poprzez \verb|trait Selectable|, który jest implementowany przez klasę generowaną przez makro. Mechanizm działania typów strukturalnych został szczegółowo opisany w dokumentacji Scali \cite{scala3-selectable}.
+Aby mechanizm \texttt{Selectable} działał poprawnie ze strukturalnymi typami i nie wymagał refleksji, klasa generowana przez makro musi implementować \verb|type Fields <: NamedTuple.AnyNamedTuple|\cite{scala3-computed-field-names}.
+W naszym podejściu makro generuje definicję \texttt{type Fields} zawierającą wszystkie zdefiniowane tokeny i ich typy, dzięki czemu:
 \begin{itemize}
-    \item Walidacji dostępu do pól w~czasie kompilacji
-    \item Zapewnienia inferowania precyzyjnych typów
-    \item Umożliwienia refaktoryzacji z~pełnym wsparciem IDE
+  \item IDE oraz kompilator znają z góry dostępne pola i ich typy (pełne uzupełnianie i sprawdzanie typów),
+  \item wywołanie \texttt{c.NAZWA} jest bezpieczne typowo mimo mechanizmu dynamicznego wyboru nazwy.
 \end{itemize}
+
+
+\lstinputlisting[language=scala,caption={Tworzenie typuFields},label={lst:lexer-16-refinements}, linerange={116-125}]{../../src/alpaca/internal/lexer/Lexer.scala}
+
 
 \subsection{Uzasadnienie wybranego podejścia implementacyjnego}\label{subsec:uzasadnienie-wybranego-podejscia}
 
@@ -161,13 +162,13 @@ Dostęp do tokenów odbywa się poprzez bezpośrednie odwołanie do pola klasy, 
 
 Alternatywne podejście oparte na strukturze mapującej (np.\ \texttt{Map[String, Token]}) wymagałoby:
 \begin{itemize}
-    \item Obliczenia funkcji haszującej dla klucza
-    \item Przeszukiwania tablicy haszującej
-    \item Potencjalnej obsługi kolizji
-    \item Dynamicznego rzutowania typu
+  \item Obliczenia funkcji haszującej dla klucza
+  \item Przeszukiwania tablicy haszującej
+  \item Potencjalnej obsługi kolizji
+  \item Dynamicznego rzutowania typu
 \end{itemize}
 
-co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator JIT.
+co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator.
 
 \subsubsection{Bezpieczeństwo typów na poziomie systemu}\label{subsubsec:bezpieczenstwo-typow}
 
@@ -178,10 +179,10 @@ System typów weryfikuje poprawność wszystkich operacji w~czasie kompilacji, e
 
 Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do:
 \begin{itemize}
-    \item Automatycznego uzupełniania nazw tokenów
-    \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
-    \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
-    \item Wykrywania błędów składniowych przed kompilacją
+  \item Automatycznego uzupełniania nazw tokenów
+  \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
+  \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
+  \item Wykrywania błędów składniowych przed kompilacją
 \end{itemize}
 
 Te funkcjonalności są niemożliwe do realizacji w~przypadku dostępu przez struktury dynamiczne.
@@ -214,10 +215,10 @@ class SimpleLexer {
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
-    \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
-    \item Utrata informacji o~typach: zwracany typ to egzystencjalny \texttt{Token[?, ?, ?]}
-    \item Narzut wydajnościowy operacji haszowania i~przeszukiwania
-    \item Brak wsparcia narzędzi deweloperskich
+  \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
+  \item Utrata informacji o~typach: zwracany typ to egzystencjalny \texttt{Token[?, ?, ?]}
+  \item Narzut wydajnościowy operacji haszowania i~przeszukiwania
+  \item Brak wsparcia narzędzi deweloperskich
 \end{itemize}
 
 \subsubsection{Podejście oparte na jawnej definicji klasy}\label{subsubsec:podejscie-jawna-definicja}
@@ -235,50 +236,18 @@ class MyLexer extends Tokenization[DefaultGlobalCtx] {
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
-    \item Wysoki poziom redundancji kodu (\textit{boilerplate})
-    \item Konieczność ręcznej kompilacji wyrażeń regularnych
-    \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
-    \item Brak mechanizmu DSL ułatwiającego definicję reguł
+  \item Wysoki poziom redundancji kodu (\textit{boilerplate})
+  \item Konieczność ręcznej kompilacji wyrażeń regularnych
+  \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
+  \item Brak mechanizmu DSL ułatwiającego definicję reguł
 \end{itemize}
-
-\subsection{Podsumowanie korzyści}\label{subsec:podsumowanie-korzysci-anon-class}
-
-Zastosowanie klas anonimowych i~typów rafinowanych w~implementacji systemu ALPACA zapewnia kompleksowe rozwiązanie łączące w~sobie zaawansowane techniki metaprogramowania z~pragmatycznymi rozwiązaniami inżynierskimi.
-
-Tabela~\ref{tab:benefits-anon-class} przedstawia syntetyczne zestawienie korzyści wynikających z~przyjętego podejścia implementacyjnego.
-
-\begin{table}[h]
-\centering
-\caption{Korzyści wynikające z zastosowania klas anonimowych i typów rafinowanych}
-\label{tab:benefits-anon-class}
-\begin{tabular}{|l|p{8cm}|}
-\hline
-\textbf{Aspekt} & \textbf{Korzyść} \\
-\hline
-Wydajność & Zerowy narzut wykonania, bezpośredni dostęp do pól \\
-\hline
-Bezpieczeństwo typów & Pełna weryfikacja w czasie kompilacji \\
-\hline
-Ergonomia & Przejrzysty DSL bez kodu pomocniczego \\
-\hline
-Narzędzia & Pełne wsparcie IDE i refaktoryzacji \\
-\hline
-Walidacja & Statyczna detekcja konfliktów i błędów konfiguracji \\
-\hline
-Integracja & Bezproblemowa współpraca z systemem typów Scali \\
-\hline
-\end{tabular}
-\end{table}
-
-System dostarcza rozwiązanie o~wysokim poziomie abstrakcji przy zachowaniu maksymalnej wydajności i~bezpieczeństwa.
 
 \subsection{Walidacja i obsługa błędów}\label{subsec:walidacja-i-obsuga-bedow}
 
 \subsubsection{Walidacja wzorców regularnych}\label{subsubsec:walidacja-wzorcow-regularnych}
 
 System wykorzystuje pomocniczą klasę \texttt{RegexChecker} do walidacji wzorców:
-
-Poniższy mechanizm sprawdza poprawność składni wyrażeń regularnych już w czasie kompilacji i raportuje błędy z dokładną lokalizacją wzorca.
+Mechanizm ten sprawdza poprawność składni wyrażeń regularnych już w czasie kompilacji i raportuje błędy z dokładną lokalizacją wzorca.
 Metoda \texttt{report.errorAndAbort} jest częścią API kompilatora do raportowania błędów w czasie kompilacji.
 Przerwanie kompilacji w przypadku niepoprawnych wzorców zapewnia, że błędy konfiguracji są wykrywane możliwie wcześnie.
 
@@ -308,7 +277,7 @@ Implementacja parsera reprezentuje znacznie bardziej złożone wyzwanie inżynie
 
 Użytkownik definiuje parser poprzez dziedziczenie po klasie bazowej \texttt{Parser[Ctx]}:
 
-\lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:parser-01-base}, linerange={31-36}]{../../src/alpaca/parser/Parser.scala}
+\lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:parser-01-base}, linerange={31-36}]{../../src/alpaca/parser.scala}
 
 Typ parametryczny \texttt{Ctx} reprezentuje globalny kontekst parsera, umożliwiający przechowywanie stanu między akcjami semantycznymi (np.\ tablicę symboli).
 Parametr kontekstualny \texttt{tables: Tables[Ctx]} jest automatycznie generowany przez makro i zawiera tabele parsowania oraz akcji semantycznych.
@@ -318,14 +287,7 @@ Parametr kontekstualny \texttt{tables: Tables[Ctx]} jest automatycznie generowan
 Reguły gramatyczne definiowane są jako wartości typu \texttt{Rule[R]}, gdzie \texttt{R} określa typ wyniku redukcji:
 
 \begin{lstlisting}[language=scala,caption={Przykład definicji reguł parsera},label={lst:parser-02-rules}]
-object CalcParser extends Parser[EmptyGlobalCtx] {
-  val Expr: Rule[Int] = rule(
-    { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
-    { case Lexer.NUMBER(n) => n.value }
-  )
-  
-  val root = rule { case Expr(result) => result }
-}
+object CalcParser extends Parser[EmptyGlobalCtx] {  val Expr: Rule[Int] = rule(    { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },    { case Lexer.NUMBER(n) => n.value },  )  val root = rule { case Expr(result) => result }}
 \end{lstlisting}
 
 Składnia wykorzystuje dopasowanie wzorców Scali do wyrażenia produkcji gramatycznych.
@@ -338,7 +300,7 @@ Na przykład wzorzec \texttt{\{ case (Expr(a), Lexer.PLUS(\_), Expr(b)) => a + b
 
 Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analizuje definicję parsera i generuje tabele w czasie kompilacji:
 
-\lstinputlisting[language=scala,caption={Sygnatura makra createTablesImpl},label={lst:parser-03-create-tables}, linerange={61-65}]{../../src/alpaca/parser/createTables.scala}
+\lstinputlisting[language=scala,caption={Sygnatura makra createTablesImpl},label={lst:parser-03-create-tables}, linerange={61-65}]{../../src/alpaca/internal/parser/createTables.scala}
 
 Makro wykonuje następujące kroki:
 \begin{enumerate}
@@ -353,7 +315,7 @@ Makro wykonuje następujące kroki:
 
 Funkcja \texttt{extractEBNF} dokonuje transformacji wzorców dopasowania na produkcje gramatyczne:
 
-\lstinputlisting[language=scala,caption={Ekstrakcja produkcji gramatycznych z wzorców},label={lst:parser-04-extract-ebnf}, linerange={80-95}]{../../src/alpaca/parser/createTables.scala}
+% \lstinputlisting[language=scala,caption={Ekstrakcja produkcji gramatycznych z wzorców},label={lst:parser-04-extract-ebnf}, linerange={80-95}]{../../src/alpaca/internal/parser/createTables.scala}
 
 Kluczowym wyzwaniem jest zachowanie poprawności referencji do symboli przy przenoszeniu kodu akcji semantycznej z kontekstu definicji reguły do wygenerowanej tabeli akcji.
 Wymaga to zastosowania techniki \textit{re-owning} symboli, realizowanej przez klasę \texttt{ReplaceRefs}.
@@ -369,13 +331,7 @@ Dla złożonych gramatyk z dużą liczbą stanów i produkcji, wygenerowane tabe
 Problem manifestował się podczas próby wyrażenia tabeli parsowania jako literału mapowego w kodzie:
 
 \begin{lstlisting}[language=scala,caption={Naiwna implementacja prowadząca do przekroczenia limitu},label={lst:parser-05-naive}]
-// Ta implementacja generuje jeden duży literal mapy
-'{ Map(
-  (0, Terminal("PLUS")) -> Shift(1),
-  (0, Terminal("NUMBER")) -> Shift(2),
-  // ... tysiące kolejnych wpisów ...
-  (999, Terminal("EOF")) -> Reduction(prod)
-)}
+// Ta implementacja generuje jeden duży literal mapy'{  Map(    (0, Terminal("PLUS")) -> Shift(1),    (0, Terminal("NUMBER")) -> Shift(2),    // ... tysiące kolejnych wpisów ...    (999, Terminal("EOF")) -> Reduction(prod),  )}
 \end{lstlisting}
 
 Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \texttt{java.lang.ClassFormatError: Code length too large}.
@@ -383,7 +339,7 @@ Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wp
 \textbf{Rozwiązanie:} Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji metod}.
 Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
 
-\lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:parser-06-fragment}, linerange={182-189}]{../../src/alpaca/parser/ParseTable.scala}
+\lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:parser-06-fragment}, linerange={182-189}]{../../src/alpaca/internal/parser/ParseTable.scala}
 
 W tym podejściu:
 \begin{itemize}
@@ -411,7 +367,7 @@ Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
 Problem polega na tym, że te referencje muszą zostać przepisane podczas przenoszenia kodu akcji z miejsca definicji do tabeli akcji.
 Funkcja \texttt{createAction} realizuje tę transformację:
 
-\lstinputlisting[language=scala,caption={Tworzenie akcji semantycznej z zachowaniem referencji},label={lst:parser-07-create-action}, linerange={82-95}]{../../src/alpaca/parser/createTables.scala}
+% \lstinputlisting[language=scala,caption={Tworzenie akcji semantycznej z zachowaniem referencji},label={lst:parser-07-create-action}, linerange={82-95}]{../../src/alpaca/internal/parser/createTables.scala}
 
 Kluczowe aspekty implementacji:
 \begin{enumerate}
@@ -427,10 +383,7 @@ Parser LR może napotkać konflikty typu shift-reduce lub reduce-reduce podczas 
 System ALPACA oferuje deklaratywny mechanizm rozwiązywania takich konfliktów poprzez relacje precedencji:
 
 \begin{lstlisting}[language=scala,caption={Deklaracja rozwiązań konfliktów},label={lst:parser-08-conflicts}]
-override val resolutions = Set(
-  P.ofName("times").before(Lexer.PLUS),
-  P.ofName("plus").after(Lexer.TIMES)
-)
+override val resolutions = Set(  P.ofName("times").before(Lexer.PLUS),  P.ofName("plus").after(Lexer.TIMES),)
 \end{lstlisting}
 
 Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podczas konstrukcji tabeli parsowania:
@@ -441,7 +394,8 @@ Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podcz
   \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
 \end{enumerate}
 
-To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne deklaracje \texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w Yacc.
+To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne narzędzia
+\texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w Yacc.
 
 \subsection{Generacja kodu tabel}\label{subsec:generacja-kodu-tabel}
 
@@ -452,7 +406,7 @@ Realizowane jest to poprzez implementację instancji \texttt{ToExpr} dla typów 
 
 Implementacja \texttt{ToExpr[ParseTable]} jest szczególnie interesująca, gdyż musi radzić sobie z~potencjalnie dużymi tabelami (patrz \ref{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}):
 
-\lstinputlisting[language=scala,caption={Implementacja ToExpr dla ParseTable},label={lst:parser-09-toexpr}, linerange={161-194}]{../../src/alpaca/parser/ParseTable.scala}
+\lstinputlisting[language=scala,caption={Implementacja ToExpr dla ParseTable},label={lst:parser-09-toexpr}, linerange={161-194}]{../../src/alpaca/internal/parser/ParseTable.scala}
 
 Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
 \begin{itemize}
