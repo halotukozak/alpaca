@@ -112,9 +112,9 @@ final class CompilationTheoryTest extends AnyFunSuite:
       { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) }: @name("sub"),
       { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) }: @name("mul"),
       { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) }: @name("div"),
-      { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) => ASTNode(".+", scala.List(lhs, rhs)) }: @name(
-        "matrixAdd",
-      ),
+      { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) =>
+        ASTNode(".+", scala.List(lhs, rhs))
+      }: @name("matrixAdd"),
       { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) => ASTNode(".-", scala.List(lhs, rhs)) }: @name(
         "matrixSub",
       ),
