@@ -425,3 +425,117 @@ Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
   \item Generacja listy wyrażeń manipulujących builderem
   \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
 \end{itemize}
+
+\section{Narzędzia pomocnicze}\label{sec:narzedzia-pomocnicze}
+
+System ALPACA wykorzystuje zestaw wewnętrznych narzędzi pomocniczych, które ułatwiają manipulację typami oraz ekspansję makr.
+
+\subsection{Empty}\label{subsec:empty}
+
+Klasa typu \texttt{Empty[T]} umożliwia tworzenie pustych instancji typów produktowych (klas przypadków) poprzez wykorzystanie wartości domyślnych parametrów konstruktora.
+
+\begin{lstlisting}[language=scala,caption={Definicja typu Empty},label={lst:utils-01-empty}]
+private[alpaca] trait Empty[T] extends (() => T)
+\end{lstlisting}
+
+Obiekt towarzyszący \texttt{Empty} zapewnia automatyczną derywację dla dowolnego typu produktowego z parametrami domyślnymi.
+Ta derywacja oparta na makrach wykorzystuje wartości domyślne parametrów konstruktora do utworzenia fabryki dla danego typu.
+
+\begin{lstlisting}[language=scala,caption={Użycie Empty},label={lst:utils-02-empty-usage}]
+case class Config(name: String = "default", count: Int = 0)
+
+// Automatycznie derywuje instancję Empty
+val empty = summon[Empty[Config]]
+val instance: Config = empty() // Config("default", 0)
+\end{lstlisting}
+
+\subsection{ReplaceRefs}\label{subsec:replacerefs}
+
+Klasa \texttt{ReplaceRefs} stanowi implementację \texttt{TreeMap}, która zastępuje referencje do symboli w drzewie AST.
+
+\begin{lstlisting}[language=scala,caption={Definicja klasy ReplaceRefs},label={lst:utils-03-replacerefs}]
+private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)
+\end{lstlisting}
+
+\texttt{ReplaceRefs} jest używana podczas ekspansji makr do transformacji drzew poprzez zastępowanie referencji do określonych symboli termami zastępczymi.
+Jest to przydatne przy adaptacji kodu z jednego kontekstu do drugiego.
+
+Dla podanej sekwencji par \texttt{(symbol do znalezienia, term zastępczy)} tworzy \texttt{TreeMap}, który podstawia wszystkie referencje do znalezionych symboli odpowiednimi termami zastępczymi.
+
+\begin{lstlisting}[language=scala,caption={Użycie ReplaceRefs},label={lst:utils-04-replacerefs-usage}]
+val replaceRefs = ReplaceRefs()
+val treeMap = replaceRefs((findSymbol, replaceTerm))
+val transformedTree = treeMap.transformTree(originalTree)(owner)
+\end{lstlisting}
+
+\subsection{CreateLambda}\label{subsec:createlambda}
+
+Klasa \texttt{CreateLambda} jest pomocnikiem do tworzenia wyrażeń lambda podczas ekspansji makr.
+
+\begin{lstlisting}[language=scala,caption={Definicja klasy CreateLambda},label={lst:utils-05-createlambda}]
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)
+\end{lstlisting}
+
+\texttt{CreateLambda} umożliwia programatyczną konstrukcję wyrażeń funkcyjnych poprzez specyfikację sposobu budowania ciała funkcji na podstawie symboli parametrów.
+
+\begin{lstlisting}[language=scala,caption={Użycie CreateLambda},label={lst:utils-06-createlambda-usage}]
+val createLambda = CreateLambda()
+val lambdaExpr: Expr[Int => Int] = createLambda[Int => Int] {
+  case (sym, List(arg)) =>
+    // Buduj ciało drzewa używając symbolu metody i drzew argumentów
+    buildBody(arg)
+}
+\end{lstlisting}
+
+\subsection{Copyable}\label{subsec:copyable}
+
+Klasa typu \texttt{Copyable[T]} dostarcza funkcję do kopiowania instancji typu T.
+Jest używana wewnętrznie do tworzenia zmodyfikowanych kopii obiektów kontekstowych.
+
+\begin{lstlisting}[language=scala,caption={Definicja typu Copyable},label={lst:utils-07-copyable}]
+@implicitNotFound("${T} should be a case class.")
+private[alpaca] trait Copyable[T] extends (T => T)
+\end{lstlisting}
+
+Obiekt towarzyszący \texttt{Copyable} zapewnia automatyczną derywację dla dowolnego typu produktowego (klasy przypadku) z wykorzystaniem \texttt{Mirror.ProductOf}.
+
+\begin{lstlisting}[language=scala,caption={Użycie Copyable},label={lst:utils-08-copyable-usage}]
+case class User(name: String, age: Int)
+
+// Automatycznie derywuje instancję Copyable
+val copyable = summon[Copyable[User]]
+val user = User("Alice", 30)
+val copied: User = copyable(user) // User("Alice", 30)
+\end{lstlisting}
+
+\subsection{Default}\label{subsec:default}
+
+Klasa typu \texttt{Default[T]} dostarcza sposób na uzyskanie wartości domyślnych dla różnych typów.
+Jest używana wewnętrznie do dostarczania wartości zapasowych w razie potrzeby.
+
+\begin{lstlisting}[language=scala,caption={Definicja typu Default},label={lst:utils-09-default}]
+private[internal] trait Default[+T] extends (() => T)
+\end{lstlisting}
+
+Obiekt towarzyszący \texttt{Default} dostarcza instancje given dla typów podstawowych:
+
+\begin{itemize}
+  \item \texttt{Default[Unit]} -- zwraca \texttt{()}
+  \item \texttt{Default[Boolean]} -- zwraca \texttt{false}
+  \item \texttt{Default[Int]} -- zwraca \texttt{0}
+  \item \texttt{Default[String]} -- zwraca \texttt{""}
+  \item \texttt{Default[Nothing]} -- rzuca \texttt{NoSuchElementException}
+  \item \texttt{Default[Expr[T]]} -- zwraca \texttt{'\{ ??? \}} (wymaga Quotes)
+  \item \texttt{Default[List[T]]} -- zwraca \texttt{Nil} (wymaga Quotes)
+  \item \texttt{Default[quotes.reflect.Tree]} -- zwraca \texttt{'\{ ??? \}.asTerm} (wymaga Quotes)
+  \item \texttt{Default[quotes.reflect.TypeRepr]} -- zwraca \texttt{TypeRepr.of[Nothing]} (wymaga Quotes)
+  \item \texttt{Default[T <: Tuple]} -- zwraca krotkę z wartościami domyślnymi dla każdego elementu
+\end{itemize}
+
+\begin{lstlisting}[language=scala,caption={Użycie Default},label={lst:utils-10-default-usage}]
+val defaultInt = summon[Default[Int]]
+val value: Int = defaultInt() // 0
+
+val defaultString = summon[Default[String]]
+val str: String = defaultString() // ""
+\end{lstlisting}
