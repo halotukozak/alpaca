@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.NamedTuple.NamedTuple
+import scala.concurrent.duration.FiniteDuration
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
@@ -75,7 +76,29 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
 
-private[internal] given [T: ToExpr]: ToExpr[T | Null] with
+private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
     case null => '{ null }
-    case value => Expr(value)
+    case value => toExpr(value.asInstanceOf[T])
+
+// todo: it's temporary, remove when we have a proper timeout implementation
+inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
+  import scala.concurrent.{Await, Future}
+  import scala.concurrent.duration._
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val future = Future(block)
+  Await.result(future, debugSettings.timeout.seconds)
+
+given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] with
+  def apply(x: Expr[DebugSettings]): DebugSettings =
+    import quotes.reflect.*
+    x match
+      case '{ DebugSettings($enabled, $directory, $timeout) } =>
+        DebugSettings(
+          enabled = enabled.valueOrAbort,
+          directory = directory.valueOrAbort,
+          timeout = timeout.valueOrAbort,
+        )
+      case _ =>
+        report.errorAndAbort("DebugSettings must be defined inline")

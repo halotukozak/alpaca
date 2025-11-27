@@ -4,6 +4,9 @@ import alpaca.internal.*
 import alpaca.internal.lexer.*
 
 import scala.annotation.compileTimeOnly
+import NamedTuple.AnyNamedTuple
+import java.util.jar.Attributes.Name
+import scala.collection.mutable
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -34,9 +37,9 @@ transparent inline def lexer[Ctx <: LexerCtx](
   copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
 )(using inline
-  debugSettings: DebugSettings[?, ?],
+  debugSettings: DebugSettings,
 ): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages }, '{ debugSettings }) }
+  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages })(using '{ debugSettings }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token {
@@ -89,8 +92,8 @@ transparent inline given ctx(using c: LexerCtx): c.type = c
  */
 trait LexerCtx {
 
-  /** The last lexem that was created. */
-  var lastLexem: Lexem[?, ?] = compiletime.uninitialized
+  /** The last lexeme that was created. */
+  var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
 
   /** The raw string that was matched for the last token. */
   var lastRawMatched: String = compiletime.uninitialized
@@ -121,11 +124,15 @@ object LexerCtx:
   given BetweenStages[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched.nn
-      ctx.lastLexem = Lexem(info.name, remapping(ctx))
+      val ctxAsProduct = ctx.asInstanceOf[Product]
+      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
+        ("text" -> ctx.lastRawMatched)
+      ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
     case (IgnoredToken(_, modifyCtx), m, ctx) =>
+      ctx.lastRawMatched = m.matched.nn
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
