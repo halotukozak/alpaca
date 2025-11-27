@@ -30,6 +30,30 @@ private[parser] object ParseTable {
       catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
 
     /**
+     * Gets the parse action for a given state and symbol, returning None if not found.
+     *
+     * @param state the current parser state
+     * @param symbol the symbol being processed
+     * @return Some(action) if found, None otherwise
+     */
+    def get(state: Int, symbol: Symbol): Option[ParseAction] =
+      table.get((state, symbol))
+
+    /**
+     * Gets the set of expected terminal symbols for a given state.
+     *
+     * This is useful for error recovery and error message generation.
+     *
+     * @param state the current parser state
+     * @return the set of terminal symbol names that have valid actions in this state
+     */
+    def expectedTerminals(state: Int): Set[String] =
+      table.keysIterator
+        .filter(key => key.state == state && key.stepSymbol.isInstanceOf[Terminal])
+        .map(_.stepSymbol.name)
+        .toSet
+
+    /**
      * Converts the parse table to CSV format for debugging.
      *
      * Creates a table with states as rows and symbols as columns,
