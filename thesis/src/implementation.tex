@@ -18,14 +18,14 @@ Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy\cite{scala3-r
 
 System oferuje użytkownikowi przejrzysty interfejs DSL oparty na dopasowaniu wzorców:
 
-\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-01-lexerdefinition}, linerange={16}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-definition}]{listings/implementation/01-lexer-definition.scala}
 
 Definicja \texttt{LexerDefinition} reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w idiomatycznej składni Scali.
 
 Główny punkt wejścia systemu stanowi metoda \texttt{lexer}:
 
-\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-02-entrypoint}, linerange={29-38}]{../../src/alpaca/lexer.scala}
+\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-entrypoint}]{listings/implementation/02-lexer-entrypoint.scala}
 
 Modyfikator \texttt{transparent inline} zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów.
 Użycie parametrów kontekstowych (\texttt{using}) realizuje wzorzec dependency injection na poziomie systemu typów.
@@ -41,7 +41,7 @@ Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy\cite{st
 
 Kluczowym krokiem implementacji jest ekstrakcja reguł z definicji funkcji częściowej:
 
-\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:lexer-04-extract-cases}, linerange={37}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:extract-cases}]{listings/implementation/03-extract-case.scala}
 
 Ten fragment kodu wykorzystuje dopasowanie wzorców w \textit{quotes} do dekonstrukcji\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \texttt{Match} zawiera listę przypadków \texttt{CaseDef}.
@@ -52,7 +52,7 @@ Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezent
 
 Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
 
-\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:lexer-06-replace-with-new-ctx}, linerange={40-43}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:replace-with-new-ctx}]{listings/implementation/04-replace-refs-with-new-ctx.scala}
 
 Transformacja ta realizuje proces znany jako \("\)re-owning\("\) w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
 Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy\cite{scala3-guides-reflection}.
@@ -63,7 +63,7 @@ Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejśc
 
 Funkcja \texttt{extractSimple} implementuje logikę dopasowania różnych typów definicji tokenów:
 
-\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}, linerange={45-48,52,56,63}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}]{listings/implementation/05-extract-simple.scala}
 
 Wykorzystuje ona dopasowanie wzorców w \textit{quotes} z ekstraktorem typów\cite{scala3-guides-quotes}, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
 Konstrukcja \texttt{type t <: ValidName} w wzorcu wiąże parametr typu do zmiennej wzorca \texttt{t}, umożliwiając jego późniejsze wykorzystanie.
@@ -120,7 +120,7 @@ W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie inform
 Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego\cite{scala3-guides-reflection}:
 
 
-\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:lexer-15-refinements}, linerange={228-232}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o pola tokenów},label={lst:refinements}]{listings/implementation/06-refinements.scala}
 
 Funkcja \texttt{Refinement(tpe, name, memberType)} tworzy nowy typ będący rozszerzeniem typu.
 Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu w~czasie wykonania.
@@ -148,7 +148,7 @@ W naszym podejściu makro generuje definicję \texttt{type Fields} zawierającą
 \end{itemize}
 
 
-\lstinputlisting[language=scala,caption={Tworzenie typuFields},label={lst:lexer-16-refinements}, linerange={116-125}]{../../src/alpaca/internal/lexer/Lexer.scala}
+\lstinputlisting[language=scala,caption={Tworzenie typuFields},label={lst:fields}]{listings/implementation/07-fields.scala}
 
 
 \subsection{Uzasadnienie wybranego podejścia implementacyjnego}\label{subsec:uzasadnienie-wybranego-podejscia}
