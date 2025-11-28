@@ -194,7 +194,7 @@ Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe ko
     \label{tab:porownanie-alternatyw}
 \end{table}
 
-\subsection{Analiza ryzyka}
+\section{Analiza ryzyka}
 \label{subsec:analiza-ryzyka}
 
 Realizacja projektu wiąże się z szeregiem potencjalnych zagrożeń, które mogą wpłynąć na jego przebieg oraz ostateczny rezultat. Poniżej przedstawiono najważniejsze ryzyka zidentyfikowane na etapie planowania, wraz z proponowanymi działaniami minimalizującymi ich wpływ:
@@ -204,7 +204,7 @@ Realizacja projektu wiąże się z szeregiem potencjalnych zagrożeń, które mo
     Implementacja narzędzi takich jak lekser i parser od podstaw stanowi złożone wyzwanie wymagające zaawansowanej wiedzy z zakresu teorii kompilacji oraz algorytmiki. Może to prowadzić do opóźnień lub nawet uniemożliwić realizację projektu. W celu ograniczenia tego ryzyka przeprowadzono pogłębioną analizę zagadnień związanych z gramatykami formalnymi, automatami skończonymi oraz wyrażeniami regularnymi. Wykorzystano również istniejące rozwiązania jako punkt odniesienia w zakresie projektowania architektury systemu.
     
     \item \textbf{Wydajność rozwiązania:}
-    Jednym z głównych założeń projektu jest stworzenie narzędzia o wyższej wydajności niż analogiczne rozwiązania dostępne w języku Python. Niespełnienie tego założenia mogłoby znacząco ograniczyć użyteczność biblioteki. W celu zapewnienia wysokiej efektywności obliczeniowej wybrano język Scala, a kluczowe elementy analizatora syntaktycznego realizowane są z wykorzystaniem makr kompilacyjnych, co pozwala na przeniesienie części obliczeń na etap kompilacji i znaczące przyspieszenie działania programu w czasie wykonywania.
+    Jednym z głównych założeń projektu jest stworzenie narzędzia o wyższej wydajności niż analogiczne rozwiązania dostępne w języku Python. Niespełnienie tego założenia mogłoby znacząco ograniczyć użyteczność biblioteki. W celu zapewnienia wysokiej efektywności obliczeniowej wybrano język Scala, a kluczowe elementy analizatora syntaktycznego realizowane są z wykorzystaniem metod metaprogramowania, co pozwala na przeniesienie części obliczeń na etap kompilacji i znaczące przyspieszenie działania programu w czasie wykonywania.
     
     \item \textbf{Brak kompatybilności z popularnymi zintegrowanymi środowiskami programistycznymi (IDE):}
     Istniejące narzędzia do generowania analizatorów często nie oferują wsparcia dla współczesnych środowisk IDE, co utrudnia ich użycie i debugowanie. Projekt zakłada implementację biblioteki w czystym języku Scala, bez wykorzystania dedykowanego języka dziedzinowego (DSL), co umożliwia jej integrację z popularnymi narzędziami deweloperskimi wspierającymi Scalę, takimi jak IntelliJ IDEA czy Metals.
