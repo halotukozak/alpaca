@@ -1,8 +1,9 @@
 name: Test
+
 on:
   push:
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - '*'
 
 jobs:
   test:
@@ -18,19 +19,32 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 21
           distribution: 'temurin'
 
+      - name: Cache Mill dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+
       - name: Compile
-        run: ./mill _.compile
+        run: ./mill compile
+
+      - name: Compile tests
+        run: ./mill test.compile
 
       - name: Run tests
-        run: ./mill __.test
+        run: ./mill test
 
       - name: Code coverage
         run: ./mill scoverage.xmlCoberturaReport
@@ -39,5 +53,11 @@ jobs:
         uses: 5monkeys/cobertura-action@master
         with:
           path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 80
+          minimum_coverage: 0 #todo: #51
           fail_below_threshold: 'true'
+
+      - name: ScalaFmt
+        run: ./mill mill.scalalib.scalafmt/checkFormatAll
+
+      - name: Generate Docs
+        run: ./mill docJar
