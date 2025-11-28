@@ -54,18 +54,20 @@ final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Sy
           |""".stripMargin,
   )
 
-def show(x: ConflictKey): String = x match
-  case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
-  case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-  case p: Production => show"Reduction(${p.name})"
-  case s: String => show"Shift($s)"
-
 final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])
   extends ConflictException(
-    show"""
-          |Inconsistent conflict resolution detected:
-          |${path.dropWhile(_ != node).map(show).mkShow(" before ")} before ${show(node)}
-          |There are elements being both before and after ${show(node)} at the same time.
-          |Consider revising the before/after rules to eliminate cycles
-          |""".stripMargin,
+    {
+      given Showable[ConflictKey] =
+        case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
+        case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
+        case p: Production => show"Reduction(${p.name})"
+        case s: String => show"Shift($s)"
+
+      show"""
+            |Inconsistent conflict resolution detected:
+            |${path.dropWhile(_ != node).mkShow(" before ")} before $node
+            |There are elements being both before and after $node at the same time.
+            |Consider revising the before/after rules to eliminate cycles
+            |""".stripMargin
+    },
   )
