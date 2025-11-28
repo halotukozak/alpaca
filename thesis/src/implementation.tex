@@ -54,7 +54,7 @@ Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi ref
 
 \lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:replace-with-new-ctx}]{listings/implementation/04-replace-refs-with-new-ctx.scala}
 
-Transformacja ta realizuje proces znany jako \("\)re-owning\("\) w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
+Transformacja ta realizuje proces znany jako ``re-owning'' w terminologii kompilatorów — zmianę właściciela (owner) symboli w AST. Jest to konieczne, ponieważ kod oryginalnie odnoszący się do parametru makra musi zostać przepisany, aby odnosił się do parametru metody w wygenerowanej klasie.
 Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy\cite{scala3-guides-reflection}.
 
 \subsection{Ekstrakcja i kompilacja wzorców}\label{subsec:ekstrakcja-i-kompilacja-wzorcow}
