@@ -92,7 +92,7 @@ W~celu optymalizacji ilości operacji wejścia/wyjścia, analizator leksykalny m
 \label{subsec:lexer-impl-regexchecker}
 Przed wygenerowaniem analizatora leksykalnego, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod kątem pokrywania reguł. Wykrywa on dwa typy problemów:
 \begin{itemize}
-    \item \textbf{Subsumpcja}~\cite{brzozowski1963derivatives} --- sytuacja, w~której późniejszy wzorzec jest całkowicie pokryty przez wcześniejszy.
+    \item \textbf{Subsumpcja}~\cite{brzozowski1964derivatives} --- sytuacja, w~której późniejszy wzorzec jest całkowicie pokryty przez wcześniejszy.
     \item \textbf{Pokrycie prefiksów} --- sytuacja, w~której wzorce nakładają się na siebie częściowo, co może prowadzić do niejednoznaczności w~dopasowaniu wzorca przez silnik wyrażeń regularnych.
 \end{itemize}
 Wykrycie jednej z~powyższych zależności powoduje błąd kompilacji z~czytelnym i~jasnym komunikatem, dzięki czemu nieosiągalne tokeny są eliminowane przed uruchomieniem programu.
