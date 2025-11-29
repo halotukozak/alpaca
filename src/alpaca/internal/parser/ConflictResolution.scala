@@ -78,22 +78,32 @@ private[parser] object ConflictResolutionTable {
 
     def verifyNoConflicts(): Unit = {
       enum VisitState:
-        case Unvisited
-        case Visited
-        case Processed
+        case Unvisited, Visited, Processed
+
+      enum Action:
+        case Enter(node: ConflictKey, path: List[ConflictKey] = Nil)
+        case Leave(node: ConflictKey)
 
       val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
 
-      def visit(node: ConflictKey, path: List[ConflictKey] = Nil): Unit = visited(node) match
-        case VisitState.Unvisited =>
-          visited.update(node, VisitState.Visited)
-          for neighbor <- table.getOrElse(node, Set.empty) do visit(neighbor, node :: path)
-          visited.update(node, VisitState.Processed)
-        case VisitState.Visited =>
-          throw InconsistentConflictResolution(node, path.reverse)
-        case VisitState.Processed => // Already fully processed
+      @tailrec
+      def loop(stack: List[Action]): Unit = stack match
+        case Nil => // Done
 
-      for node <- table.keys do visit(node)
+        case Action.Leave(node) :: rest =>
+          visited(node) = VisitState.Processed
+          loop(rest)
+
+        case Action.Enter(node, path) :: rest =>
+          visited(node) match
+            case VisitState.Processed => loop(rest)
+            case VisitState.Visited => throw InconsistentConflictResolution(node, path.reverse)
+            case VisitState.Unvisited =>
+              visited(node) = VisitState.Visited
+              val neighbors = table.getOrElse(node, Set.empty).map(Action.Enter(_, node :: path)).toList
+              loop(neighbors ::: List(Action.Leave(node)) ::: rest)
+
+      for node <- table.keys do loop(Action.Enter(node) :: Nil)
     }
 
   /**
