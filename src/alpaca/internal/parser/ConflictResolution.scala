@@ -12,7 +12,16 @@ import scala.collection.mutable
  *
  * A conflict key can be either a Production or a String (token name).
  */
-private[parser] type ConflictKey = Production | String
+opaque private[parser] type ConflictKey = Production | String
+
+object ConflictKey:
+  inline def apply(key: Production | String): ConflictKey = key
+
+  given Showable[ConflictKey] =
+    case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
+    case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
+    case p: Production => show"Reduction(${p.name})"
+    case s: String => show"Shift($s)"
 
 /**
  * Opaque type representing a table of conflict resolution rules.
@@ -67,7 +76,7 @@ private[parser] object ConflictResolutionTable {
       winsOver(first, second) orElse winsOver(second, first)
     }
 
-    def verifyNoConflicts() = {
+    def verifyNoConflicts(): Unit = {
       enum VisitState:
         case Unvisited
         case Visited

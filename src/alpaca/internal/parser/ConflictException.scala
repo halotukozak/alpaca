@@ -54,20 +54,20 @@ final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Sy
           |""".stripMargin,
   )
 
+/**
+ * Exception thrown when before/after rules introduce a cycle.
+ *
+ * This arises when conflict-resolution metadata marks elements as
+ * both preceding and following the same node, so the ordering
+ * constraints cannot be satisfied.
+ *
+ * @param node the node detected in the cycle
+ * @param path the chain of nodes showing the inconsistent ordering
+ */
 final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])
-  extends ConflictException(
-    {
-      given Showable[ConflictKey] =
-        case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
-        case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-        case p: Production => show"Reduction(${p.name})"
-        case s: String => show"Shift($s)"
-
-      show"""
-            |Inconsistent conflict resolution detected:
-            |${path.dropWhile(_ != node).mkShow(" before ")} before $node
-            |There are elements being both before and after $node at the same time.
-            |Consider revising the before/after rules to eliminate cycles
-            |""".stripMargin
-    },
-  )
+  extends ConflictException(show"""
+                                  |Inconsistent conflict resolution detected:
+                                  |${path.dropWhile(_ != node).mkShow(" before ")} before $node
+                                  |There are elements being both before and after $node at the same time.
+                                  |Consider revising the before/after rules to eliminate cycles
+                                  |""".stripMargin)
