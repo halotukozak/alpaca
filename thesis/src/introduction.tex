@@ -47,7 +47,7 @@ Celem pracy jest zaprojektowanie i~zaimplementowanie narzędzia \textit{ALPACA} 
 \section{Motywacja projektu}
 \label{sec:motywacja-projektu}
 
-Istniejące narzędzia do konstrukcji analizatorów leksykalnych i~składniowych wykazują szereg ograniczeń utrudniających ich zastosowanie w~kontekście nowoczesnych języków programowania oraz środowisk deweloperskich.
+Istniejące narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych wykazują szereg ograniczeń utrudniających ich zastosowanie w~kontekście nowoczesnych języków programowania oraz środowisk deweloperskich.
 Identyfikacja tych ograniczeń stanowiła punkt wyjścia dla projektu~\textit{ALPACA}.
 
 Projekt~\textit{ALPACA} stanowi narzędzie do~generowania lekserów i~parserów w~języku Scala, łączące zalety istniejących rozwiązań poprzez:
@@ -65,7 +65,7 @@ Może ono służyć jako narzędzie dydaktyczne, ułatwiając naukę teorii komp
 \section{Przegląd istniejących rozwiązań}
 \label{sec:przeglad-istniejacych-rozwiazan}
 
-Narzędzia do konstrukcji analizatorów leksykalnych i~składniowych można sklasyfikować według strategii implementacyjnej na trzy główne kategorie: generatory kodu, biblioteki interpretowane oraz kombinatory parserów.
+Narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych można sklasyfikować według strategii implementacyjnej na trzy główne kategorie: generatory kodu, biblioteki interpretowane oraz kombinatory parserów.
 
 \subsection{Generatory kodu}
 \label{subsec:generatory-kodu}
@@ -84,14 +84,14 @@ Ponieważ \textit{Lex} i~\textit{Yacc} zostały zaprojektowane do współpracy z
 Rozszerzanie tych narzędzi o~dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w~porównaniu z~nowoczesnymi alternatywami.
 
-\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby w~technologii Yacc},label={lst:ruby-parser}]{listings/introduction/01-ruby-parser.y}
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:ruby-parser}]{listings/introduction/01-ruby-parser.y}
 
 \subsubsection{ANTLR}
 \label{subsubsec:antlr}
 
 \textit{ANTLR}~\cite{parr2004s} to rozwiązanie inspirowane narzędziami \textit{Lex} i~\textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
 Jego twórcy opracowali dedykowany język DSL, znany jako Grammar~v4, który umożliwia definiowanie składni analizowanego języka.
-Na podstawie tej definicji \textit{ANTLR} generuje parser w~wybranym przez użytkownika języku programowania, takim jak Python, Java, C++ lub JavaScript.
+Na~podstawie tej definicji \textit{ANTLR} generuje parser w~wybranym przez użytkownika języku programowania, takim jak Python, Java, C++ lub JavaScript.
 
 Wspomaganie pracy z~\textit{ANTLR} w~znacznym stopniu ułatwiają dedykowane wtyczki do środowisk Visual Studio Code oraz IntelliJ IDEA\@.
 Oferują one funkcjonalności, takie jak kolorowanie składni, autouzupełnianie kodu, nawigację do definicji leksemów oraz walidację błędów, co znacząco przyspiesza proces tworzenia parserów.
@@ -134,9 +134,9 @@ Mechanizm ten eliminuje potrzebę jawnej deklaracji reguł, ale utrudnia śledze
 \paragraph{Priorytet operatorów}
 W~krotce \texttt{precedence} definiowane jest pierwszeństwo operatorów, jednakże dodanie \texttt{\%~prec} pozwala nadpisać priorytet dla konkretnej reguły składniowej.
 
-\paragraph{Dostęp do kontekstu}
-Argument~\texttt{p} pozwala na dostęp do kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
-Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.\ \texttt{expr1} jest odwołaniem do drugiego wyrażenia \texttt{expr}.
+\paragraph{Dostęp do~kontekstu}
+Argument~\texttt{p} pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
+Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\texttt{expr1} jest odwołaniem do drugiego wyrażenia \texttt{expr}.
 
 \lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/02-sly-parser.py}
 
@@ -166,7 +166,7 @@ Z~podsumowania artykułu na temat \textit{ScalaBison}~\cite{boyland2010tool} wia
 Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o~błędach niż te generowane przez pierwowzór \textit{bison}, a~także szybkość parsowania i~wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM\@.
 
 Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i~stworzone w~celach akademickich.
-Korzysta z~przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i~liczba funkcjonalności jest bardzo ograniczona w~porównaniu do np.\ technologii \textit{SLY}.
+Korzysta z~przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i~liczba funkcjonalności jest bardzo ograniczona w~porównaniu do np.~technologii \textit{SLY}.
 
 \subsubsection{parboiled2}
 \label{subsubsec:parboiled-2}
@@ -174,7 +174,7 @@ Korzysta z~przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji 
 \textit{parboiled2}~\cite{myltsev2019parboiled2} to biblioteka w~Scali umożliwiająca lekkie i~szybkie parsowanie dowolnego tekstu wejściowego.
 Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń parsujących (PEG), który działa w~czasie kompilacji i~tłumaczy definicję reguły gramatycznej na odpowiadający jej bytecode JVM\@.
 Ze względu na skomplikowany i~nieintuicyjny DSL, bariera wejścia dla nowych użytkowników jest wysoka.
-Zgodnie z~przykładem~\ref{lst:parboiled2-error}, raportowanie błędów jest bardzo ograniczone (problem z~implementacją wynika jedynie z~różnic w~liczbie parametrów funkcji).
+Zgodnie z~przykładem~\ref{lst:parboiled2-error}, komunikaty błędów nie zawierają informacji o~kontekście syntaktycznym oraz nie sugerują możliwych poprawek (problem z~implementacją wynika jedynie z~różnic w~liczbie parametrów funkcji).
 
 \lstinputlisting[firstline=7,lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
             Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.

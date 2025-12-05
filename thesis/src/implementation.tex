@@ -7,7 +7,7 @@
 \subsection{Wprowadzenie do studium przypadku}\label{subsec:wprowadzenie-do-studium-przypadku}
 
 Rozdział przedstawia implementację systemu analizy leksykalnej wykorzystującego mechanizmy metaprogramowania Scali~3~\cite{scala3-reference-macros}.
-Implementacja stanowi studium przypadku zastosowania technik opisanych w~rozdziale poprzednim w~kontekście automatycznej generacji analizatora leksykalnego.
+Implementacja stanowi studium przypadku zastosowania technik opisanych w~rozdziale drugim w~kontekście automatycznej generacji analizatora leksykalnego.
 System transformuje deklaratywne reguły tokenizacji, wyrażone w~języku dziedzinowym (DSL), w~kod proceduralny wykonywany w~czasie kompilacji, wykorzystując refleksję TASTy~\cite{scala3-reflection} oraz typy rafinowane~\cite{scala3-selectable}.
 
 System \texttt{alpaca.lexer} implementuje transformację deklaratywnych reguł tokenizacji zapisanych jako funkcja częściowa (ang.~\emph{partial function}) w~kod proceduralny wykonywany w~czasie kompilacji.
@@ -55,7 +55,7 @@ Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi ref
 \lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:replace-with-new-ctx}]{listings/implementation/04-replace-refs-with-new-ctx.scala}
 
 Transformacja realizuje proces przepisania właściciela (\textit{re-owning}) symboli w~AST, polegający na modyfikacji referencji kontekstowych w~celu dostosowania ich do nowego zakresu leksykalnego~\cite{scala3-guides-reflection}.
-Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na podane termy\cite{scala3-guides-reflection}.
+Klasa \texttt{ReplaceRefs} udostępnia \texttt{TreeMap}, który podczas przejścia po AST podmienia referencje do wskazanych symboli na~podane termy\cite{scala3-guides-reflection}.
 
 \subsection[Ekstrakcja i kompilacja wzorców]{Ekstrakcja i~kompilacja wzorców}\label{subsec:ekstrakcja-i-kompilacja-wzorcow}
 
@@ -263,12 +263,12 @@ Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 
 \subsection{Wprowadzenie do generatora parserów}\label{subsec:wprowadzenie-do-generatora-parserow}
 
-Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
+Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
 Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
 Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
 \begin{itemize}
-  \item Konstrukcja tabel LR(1) w czasie kompilacji z wykorzystaniem makr
+  \item Konstrukcja tabel LR(1) w~czasie kompilacji z wykorzystaniem makr
   \item Integracja z systemem typów Scali w akcjach semantycznych
   \item Obejście ograniczenia rozmiaru metod JVM poprzez fragmentację generowanego kodu
   \item Deklaratywny mechanizm rozwiązywania konfliktów gramatycznych
@@ -302,7 +302,7 @@ Na przykład wzorzec \texttt{\{ case (Expr(a), CalcLexer.PLUS(\_), Expr(b)) => a
 
 \subsubsection{Makro createTablesImpl}\label{subsubsec:makro-createtablesimpl}
 
-Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analizuje definicję parsera i generuje tabele w czasie kompilacji:
+Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analizuje definicję parsera i generuje tabele w~czasie kompilacji:
 
 Makro wykonuje następujące kroki:
 \begin{enumerate}
@@ -327,7 +327,7 @@ Wymaga to zastosowania techniki \textit{re-owning} symboli, realizowanej przez k
 \subsubsection{Problem ograniczenia rozmiaru metod JVM}\label{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}
 
 Jednym z kluczowych wyzwań technicznych napotkanych podczas implementacji było ograniczenie rozmiaru metod w maszynach wirtualnych JVM.
-Zgodnie ze specyfikacją JVM\cite{lindholm2014java}, rozmiar kodu bajtowego pojedynczej metody nie może przekroczyć 65536 bajtów (64~KB).
+Zgodnie ze specyfikacją JVM\cite{lindholm2014java}, rozmiar kodu bajtowego pojedynczej metody nie może przekroczyć 65536~bajtów (64~KB).
 Dla złożonych gramatyk z dużą liczbą stanów i produkcji, wygenerowane tabele parsowania mogą zawierać tysiące wpisów, co przy naiwnej implementacji prowadziło do przekroczenia tego limitu.
 
 Problem manifestował się podczas próby wyrażenia tabeli parsowania jako literału mapowego w kodzie:
@@ -382,7 +382,7 @@ Funkcja \texttt{createAction} realizuje tę transformację:
 Kluczowe aspekty implementacji:
 \begin{enumerate}
   \item Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
-  \item Referencje do kontekstu parsera są zastępowane parametrem funkcji
+  \item Referencje do~kontekstu parsera są zastępowane parametrem funkcji
   \item Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
   \item System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 \end{enumerate}
@@ -412,7 +412,7 @@ To podejście umożliwia wyrażenie precedencji i łączności operatorów w spo
 
 \subsubsection{Implementacja ToExpr dla złożonych struktur}\label{subsubsec:implementacja-toexpr-dla-zlozonych-struktur}
 
-System wymaga konwersji struktur danych w czasie kompilacji (wartości) na kod (wyrażenia \texttt{Expr[T]}).
+System wymaga konwersji struktur danych w~czasie kompilacji (wartości) na kod (wyrażenia \texttt{Expr[T]}).
 Realizowane jest to poprzez implementację instancji \texttt{ToExpr} dla typów \texttt{ParseTable} i \texttt{ActionTable}.
 
 Implementacja \texttt{ToExpr[ParseTable]} jest szczególnie interesująca, gdyż musi radzić sobie z~potencjalnie dużymi tabelami (patrz~\ref{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}):
@@ -465,7 +465,7 @@ Klasa typu~\texttt{Empty[T]} rozwiązuje ten problem poprzez automatyczną deryw
 private[alpaca] trait Empty[T] extends (() => T)
 \end{lstlisting}
 
-Typ~\texttt{Empty[T]} jest reprezentowany jako funkcja zerargumentowa~\texttt{() => T}, co~umożliwia leniwe tworzenie instancji (\textit{lazy instantiation}). Atrybut~\texttt{private[alpaca]} ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
+Typ~\texttt{Empty[T]} jest reprezentowany jako funkcja zerargumentowa~\texttt{() => T}, co~umożliwia leniwą inicjalizację instancji (\textit{lazy instantiation}). Atrybut~\texttt{private[alpaca]} ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 
 \subsubsection{Mechanizm derywacji}
 Derywacja instancji~\texttt{Empty[T]} wykorzystuje mechanizm~\texttt{Mirror.ProductOf[T]} wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
