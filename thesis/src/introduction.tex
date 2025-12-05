@@ -84,7 +84,7 @@ Ponieważ \textit{Lex} i~\textit{Yacc} zostały zaprojektowane do współpracy z
 Rozszerzanie tych narzędzi o~dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w~porównaniu z~nowoczesnymi alternatywami.
 
-\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:ruby-parser}]{listings/introduction/01-ruby-parser.y}
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:ruby-parser}]{listings/introduction/intro-01-ruby-parser.y}
 
 \subsubsection{ANTLR}
 \label{subsubsec:antlr}
@@ -138,14 +138,14 @@ W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakż
 Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
-\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/02-sly-parser.py}
+\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/intro-02-sly-parser.py}
 
 Komunikaty błędów w~bibliotece \textit{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:sly-result}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
 
-\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:not-working-sly}]{listings/introduction/03-not-working-sly.py}
+\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:not-working-sly}]{listings/introduction/intro-03-not-working-sly.py}
 
-\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \textit{SLY}},label={lst:sly-result}]{listings/introduction/04-not-working-result}
+\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \textit{SLY}},label={lst:sly-result}]{listings/introduction/intro-04-not-working-result}
 
 \subsection{Kombinatory parserów}
 \label{subsec:kombinatory-parserow}
@@ -178,7 +178,7 @@ Zgodnie z~przykładem~\ref{lst:parboiled2-error}, komunikaty błędów nie zawie
 
 \lstinputlisting[firstline=7,lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
             Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
-        },label={lst:parboiled2-error}]{listings/introduction/05-parboiled2-error}
+        },label={lst:parboiled2-error}]{listings/introduction/intro-05-parboiled2-error}
 
 \subsubsection{FastParse}
 \label{subsubsec:fastparse}

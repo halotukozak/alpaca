@@ -18,14 +18,14 @@ Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy~\cite{scala3-
 
 System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
 
-\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-definition}]{listings/implementation/01-lexer-definition.scala}
+\lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-definition}]{listings/implementation/lexer-01-definition.scala}
 
 Definicja \verb|LexerDefinition| reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w~idiomatycznej składni Scali.
 
 Metoda \verb|lexer| definiuje główny interfejs systemu:
 
-\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-entrypoint}]{listings/implementation/02-lexer-entrypoint.scala}
+\lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-entrypoint}]{listings/implementation/lexer-02-entrypoint.scala}
 
 Modyfikator \verb|transparent inline| zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów.
 Użycie parametrów kontekstowych (\verb|using|) realizuje wzorzec dependency injection na poziomie systemu typów.
@@ -41,7 +41,7 @@ Parametr \verb|using Quotes| dostarcza dostępu do API refleksji TASTy~\cite{stu
 
 Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji częściowej:
 
-\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:extract-cases}]{listings/implementation/03-extract-case.scala}
+\lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:extract-cases}]{listings/implementation/lexer-03-extract-case.scala}
 
 Fragment ten wykorzystuje dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \verb|Lambda(\_, Match(\_, cases))| odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \verb|Match| zawiera listę przypadków \verb|CaseDef|.
@@ -52,7 +52,7 @@ Struktura \verb|Lambda(\_, Match(\_, cases))| odpowiada wewnętrznej reprezentac
 
 Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
 
-\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:replace-with-new-ctx}]{listings/implementation/04-replace-refs-with-new-ctx.scala}
+\lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:replace-with-new-ctx}]{listings/implementation/lexer-04-replace-refs-with-new-ctx.scala}
 
 Transformacja realizuje proces przepisania właściciela (\textit{re-owning}) symboli w~AST, polegający na modyfikacji referencji kontekstowych w~celu dostosowania ich do nowego zakresu leksykalnego~\cite{scala3-guides-reflection}.
 Klasa \verb|ReplaceRefs| udostępnia \verb|TreeMap|, który podczas przejścia po AST podmienia referencje do wskazanych symboli na~podane termy\cite{scala3-guides-reflection}.
@@ -63,7 +63,7 @@ Klasa \verb|ReplaceRefs| udostępnia \verb|TreeMap|, który podczas przejścia p
 
 Funkcja \verb|extractSimple| implementuje logikę dopasowania różnych typów definicji tokenów:
 
-\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}]{listings/implementation/05-extract-simple.scala}
+\lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}]{listings/implementation/lexer-05-extract-simple.scala}
 
 Wykorzystuje ona dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) z~ekstraktorem typów\cite{scala3-guides-quotes}, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
 Konstrukcja \verb|type t <: ValidName| w~wzorcu wiąże parametr typu do zmiennej wzorca \verb|t|, umożliwiając jego późniejsze wykorzystanie.
@@ -122,7 +122,7 @@ W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie inform
 Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego\cite{scala3-guides-reflection}:
 
 
-\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o~pola tokenów},label={lst:refinements}]{listings/implementation/06-refinements.scala}
+\lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o~pola tokenów},label={lst:refinements}]{listings/implementation/lexer-06-refinements.scala}
 
 Funkcja \verb|Refinement(tpe, name, memberType)| tworzy nowy typ będący rozszerzeniem typu.
 Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu w~czasie wykonania.
@@ -146,7 +146,7 @@ W~naszym podejściu makro generuje definicję \verb|type Fields| zawierającą w
 \end{itemize}
 
 
-\lstinputlisting[language=scala,caption={Tworzenie typuFields},label={lst:fields}]{listings/implementation/07-fields.scala}
+\lstinputlisting[language=scala,caption={Tworzenie typuFields},label={lst:fields}]{listings/implementation/lexer-07-fields.scala}
 
 \subsection{Uzasadnienie wybranego podejścia implementacyjnego}\label{subsec:uzasadnienie-wybranego-podejscia}
 
@@ -199,7 +199,7 @@ Każde pole w~typie rafinowanym ma precyzyjny typ nominalny, podczas gdy dostęp
 
 Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przechowywania tokenów:
 
-\lstinputlisting[language=scala,caption={Podejście oparte na mapowaniu dynamicznym},label={lst:lstlisting-dynamic-mapping}]{listings/implementation/lstlisting-dynamic-mapping.scala}
+\lstinputlisting[language=scala,caption={Podejście oparte na mapowaniu dynamicznym},label={lst:lstlisting-dynamic-mapping}]{listings/implementation/lexer-12-dynamic-mapping.scala}
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
@@ -213,7 +213,7 @@ Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przecho
 
 Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
 
-\lstinputlisting[language=scala,caption={Podejście oparte na jawnej definicji klasy},label={lst:lstlisting-explicit-lexer}]{listings/implementation/lstlisting-explicit-lexer.scala}
+\lstinputlisting[language=scala,caption={Podejście oparte na jawnej definicji klasy},label={lst:lstlisting-explicit-lexer}]{listings/implementation/lexer-13-explicit-lexer.scala}
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
@@ -429,7 +429,7 @@ Klasa typu~\verb|Empty[T]| rozwiązuje ten problem poprzez automatyczną derywac
 
 \subsubsection{Definicja}
 
-\lstinputlisting[language=scala,caption={Definicja klasy typu Empty[T]}]{listings/implementation/code_6.scala}
+\lstinputlisting[language=scala,caption={Definicja klasy typu Empty[T]},label={lst:empty}]{listings/implementation/lexer-08-empty.scala}
 
 Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\textit{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 
@@ -439,7 +439,7 @@ Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~warto�
 
 \subsubsection{Przykład użycia}
 
-\lstinputlisting[language=scala,caption={Użycie Empty[T]}]{listings/implementation/code_7.scala}
+\lstinputlisting[language=scala,caption={Użycie Empty[T]},label={lst:empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
 
 \subsubsection[Alternatywy i ich ograniczenia]{Alternatywy i~ich ograniczenia}
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego.
@@ -528,7 +528,7 @@ Klasa typu~\verb|Copyable[T]| rozwiązuje ten problem poprzez derywację funkcji
 
 \subsubsection{Definicja}
 
-\lstinputlisting[language=scala,caption={Definicja klasy typu Copyable[T]}]{listings/implementation/code_12.scala}
+\lstinputlisting[language=scala,caption={Definicja klasy typu Copyable[T]},label={lst:copyable}]{listings/implementation/lexer-10-copyable.scala}
 
 Anotacja~\verb|@implicitNotFound| dostarcza czytelny komunikat o błędzie w~przypadku próby użycia~\verb|Copyable[T]| dla typu niebędącego klasą przypadku.
 
@@ -538,7 +538,7 @@ Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie w
 
 \subsubsection{Przykład użycia}
 
-\lstinputlisting[language=scala,caption={Użycie Copyable[T]}]{listings/implementation/code_13.scala}
+\lstinputlisting[language=scala,caption={Użycie Copyable[T]},label={lst:copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
 
 \subsubsection{Uwaga techniczna}
 Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\textit{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.

@@ -19,7 +19,7 @@ Wstawki, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generują
 \paragraph[Przykład użycia cytatów i wstawek]{Przykład użycia cytatów i~wstawek}
 Poniższy przykład ilustruje podstawowe wykorzystanie cytatów i~wstawek w~makrach:
 
-\lstinputlisting[language=Scala,caption={Proste makro z wykorzystaniem cytatów i~wstawek},label={lst:meta-quotes-example}]{listings/metaprogramming/meta-quotes-example.scala}
+\lstinputlisting[language=Scala,caption={Proste makro z wykorzystaniem cytatów i~wstawek},label={lst:meta-quotes-example}]{listings/metaprogramming/meta-01-quotes-example.scala}
 
 W~powyższym przykładzie:
 \begin{itemize}
@@ -38,12 +38,12 @@ Zmienne lokalne mogą być używane tylko na tym samym poziomie etapowania, na k
 \paragraph{Przykład naruszenia bezpieczeństwa międzyetapowego}
 Następujący kod \textbf{nie skompiluje się}, ponieważ narusza zasady bezpieczeństwa międzyetapowego:
 
-\lstinputlisting[language=Scala,caption={Błąd bezpieczeństwa międzyetapowego (kod nie kompiluje się)},label={lst:meta-cross-stage-error}]{listings/metaprogramming/meta-cross-stage-error.scala}
+\lstinputlisting[language=Scala,caption={Błąd bezpieczeństwa międzyetapowego (kod nie kompiluje się)},label={lst:meta-cross-stage-error}]{listings/metaprogramming/meta-02-cross-stage-error.scala}
 
 Kompilator wykryje ten błąd i~zgłosi komunikat: \texttt{error: access to value localVar from wrong staging level}.
 Aby poprawnie odnieść się do~wartości z~otaczającego kontekstu, należy użyć mechanizmu \verb|Expr.apply|:
 
-\lstinputlisting[language=Scala,caption={Poprawne przeniesienie wartości między etapami},label={lst:meta-cross-stage-correct}]{listings/metaprogramming/meta-cross-stage-correct.scala}
+\lstinputlisting[language=Scala,caption={Poprawne przeniesienie wartości między etapami},label={lst:meta-cross-stage-correct}]{listings/metaprogramming/meta-03-cross-stage-correct.scala}
 
 System również zapewnia, że typy generyczne używane w~wyższym poziomie etapowania niż ich definicja wymagają instancji klasy typu \verb|Type[T]|, która niesie reprezentację typu niepoddaną wymazywaniu (ang.~\emph{type erasure})~\cite{stucki2020thesis}.
 To podejście rozwiązuje problem wymazywania typów generycznych w~JVM, zachowując informację o~typach potrzebną w~kolejnych etapach kompilacji.
@@ -59,7 +59,7 @@ Gwarantuje on, że wywołanie oznaczonej nim metody lub wartości zostanie w~ca�
 Jest to instrukcja dla kompilatora, a~nie tylko sugestia, jak w~niektórych innych językach~\cite{lilis2019survey}.
 
 \paragraph{Przykład definicji inline}
-\lstinputlisting[language=Scala,caption={Użycie modyfikatora inline dla optymalizacji},label={lst:meta-inline-example}]{listings/metaprogramming/meta-inline-example.scala}
+\lstinputlisting[language=Scala,caption={Użycie modyfikatora inline dla optymalizacji},label={lst:meta-inline-example}]{listings/metaprogramming/meta-04-inline-example.scala}
 
 Modyfikator \verb|inline| różni się od zwykłych funkcji tym, że \textbf{gwarantuje} wstawienie kodu, podczas gdy standardowe funkcje mogą być zinlinowane przez kompilator jako optymalizacja, ale nie muszą.
 
@@ -71,7 +71,7 @@ Makra manipulują wartościami typu \verb|Expr[T]|, transformując je lub generu
 Ta reprezentacja gwarantuje bezpieczeństwo typów na poziomie języka metaprogramowania~\cite{scala3-reflection}.
 
 \paragraph{Przykład makra generującego kod}
-\lstinputlisting[language=Scala,caption={Makro generujące kod inspekcji typu},label={lst:meta-macro-example}]{listings/metaprogramming/meta-macro-example.scala}
+\lstinputlisting[language=Scala,caption={Makro generujące kod inspekcji typu},label={lst:meta-macro-example}]{listings/metaprogramming/meta-05-macro-example.scala}
 
 W~powyższym przykładzie makro \verb|showType| wykorzystuje refleksję TASTy (sekcja~\ref{subsec:refleksja-tasty}) do~uzyskania reprezentacji typu w~czasie kompilacji i~wygenerowania kodu zwracającego jego nazwę.
 
@@ -83,7 +83,7 @@ Stucki, Brachthäuser i~Odersky~\cite{stucki2021multistage} wprowadzają wzorce 
 System gwarantuje, że ekstrahowane wyrażenia są zamknięte względem definicji wewnątrz wzorca, zapobiegając wyciekom zakresu.
 
 \paragraph{Przykład dopasowania wzorców kodu}
-\lstinputlisting[language=Scala,caption={Optymalizacja wyrażeń algebraicznych poprzez dopasowanie wzorców},label={lst:meta-pattern-matching}]{listings/metaprogramming/meta-pattern-matching.scala}
+\lstinputlisting[language=Scala,caption={Optymalizacja wyrażeń algebraicznych poprzez dopasowanie wzorców},label={lst:meta-pattern-matching}]{listings/metaprogramming/meta-06-pattern-matching.scala}
 
 Makro \verb|optimize| rozpoznaje wzorce wyrażeń arytmetycznych i~zastępuje je uproszczonymi wersjami w~czasie kompilacji, eliminując zbędne operacje.
 
@@ -106,7 +106,7 @@ System refleksji TASTy definiuje następującą hierarchię typów:
 \end{itemize}
 
 \paragraph{Przykład użycia refleksji TASTy}
-\lstinputlisting[language=Scala,caption={Inspekcja struktury klasy przypadku za pomocą refleksji TASTy},label={lst:meta-tasty-reflection}]{listings/metaprogramming/meta-tasty-reflection.scala}
+\lstinputlisting[language=Scala,caption={Inspekcja struktury klasy przypadku za pomocą refleksji TASTy},label={lst:meta-tasty-reflection}]{listings/metaprogramming/meta-07-tasty-reflection.scala}
 
 Makro \verb|inspectFields| wykorzystuje refleksję TASTy do~ekstrakcji nazw pól klasy przypadku w~czasie kompilacji, co pozwala na~generowanie kodu specyficznego dla struktury typu bez ręcznej specyfikacji.
 
