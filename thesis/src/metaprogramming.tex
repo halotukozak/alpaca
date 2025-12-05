@@ -9,12 +9,12 @@ W~przeciwieństwie do poprzedniego systemu, który eksponował wewnętrzne mecha
 Podstawą teoretyczną systemu metaprogramowania w~Scali~3 jest programowanie wieloetapowe (ang.~\emph{multi-stage programming}), paradygmat pozwalający na odróżnienie różnych etapów wykonania programu~\cite{scala3-staging,stucki2020thesis}.
 W~tym modelu kod może być wykonywany w~różnych fazach: w~czasie kompilacji (ang.~\emph{compile-time}) lub w~czasie wykonania (ang.~\emph{runtime})~\cite{scala3-staging}.
 
-\subsection[Quotes i Splices]{Quotes i~Splices}\label{subsec:cytaty-i-wstawki}
-Kluczowymi koncepcjami w~systemie metaprogramowania Scali~3 są \emph{quotes} i~\emph{splices}~\cite{stucki2018unification,stucki2021multistage}.
-\emph{Quotes}, oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i~traktowania go jako danych~\cite{scala3-reflection}.
-\emph{Splices}, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i~wstawienie wyniku do otaczającego kontekstu~\cite{scala3-reflection,scala3-guides-quotes}.
+\subsection[Cytaty i wstawki]{Cytaty i~wstawki}\label{subsec:cytaty-i-wstawki}
+Kluczowymi koncepcjami w~systemie metaprogramowania Scali~3 są cytaty (ang.~\emph{quotes}) i~wstawki (ang.~\emph{splices})~\cite{stucki2018unification,stucki2021multistage}.
+Cytaty (ang.~\emph{quotes}), oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i~traktowania go jako danych~\cite{scala3-reflection}.
+Wstawki (ang.~\emph{splices}), oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i~wstawienie wyniku do otaczającego kontekstu~\cite{scala3-reflection,scala3-guides-quotes}.
 
-Formalna semantyka tych konstrukcji została przedstawiona w~pracy Stuckiego, Brachthäusera i~Odersky'ego~\cite{stucki2021multistage}, gdzie \emph{quotes} i~\emph{splices} są traktowane jako prymitywne formy w~typowanych drzewach składniowych (ang.~\emph{typed abstract syntax trees}).
+Formalna semantyka tych konstrukcji została przedstawiona w~pracy Stuckiego, Brachthäusera i~Odersky'ego~\cite{stucki2021multistage}, gdzie cytaty (ang.~\emph{quotes}) i~wstawki (ang.~\emph{splices}) są traktowane jako prymitywne formy w~typowanych drzewach składniowych (ang.~\emph{typed abstract syntax trees}).
 Autorzy dowodzą, że system zachowuje bezpieczeństwo typów oraz higieniczność, zapewniając, że wygenerowany kod nie może przypadkowo powiązać identyfikatorów z~niewłaściwymi zmiennymi~\cite{stucki2021multistage}.
 
 \subsection{Bezpieczeństwo międzyetapowe}\label{subsec:bezpieczenstwo-miedzyetapowe}
@@ -35,13 +35,13 @@ Gwarantuje on, że wywołanie oznaczonej nim metody lub wartości zostanie w~ca�
 Jest to instrukcja dla kompilatora, a~nie tylko sugestia, jak w~niektórych innych językach~\cite{lilis2019survey}.
 
 \subsection{Makra oparte na wyrażeniach}\label{subsec:makra-oparte-na-wyrazeniach}
-Makra w~Scali~3 są zdefiniowane jako metody \verb|inline| zawierające \emph{splice} najwyższego poziomu (ang.~\emph{top-level splice})~\cite{scala3-reference-macros,scala3-guides-macros}, czyli taki, który nie jest zagnieżdżony w~żadnym \emph{Quotes} i~jest wykonywany w~czasie kompilacji~\cite{scala3-staging,scala3-reference-macros}.
+Makra w~Scali~3 są zdefiniowane jako metody \verb|inline| zawierające wstawkę najwyższego poziomu (ang.~\emph{top-level splice})~\cite{scala3-reference-macros,scala3-guides-macros}, czyli taki, który nie jest zagnieżdżony w~żadnym cytacie (ang.~\emph{quote}) i~jest wykonywany w~czasie kompilacji~\cite{scala3-staging,scala3-reference-macros}.
 
 Typ \texttt{Expr[T]} reprezentuje wyrażenie Scali o~typie \texttt{T} jako typowane drzewo składniowe~\cite{scala3-reflection,scala3-guides-macros}.
 Makra manipulują wartościami typu \texttt{Expr[T]}, transformując je lub generując nowe wyrażenia~\cite{scala3-guides-macros}.
 Ta reprezentacja gwarantuje bezpieczeństwo typów na poziomie języka metaprogramowania~\cite{scala3-reflection}.
 
-\subsection{Dopasowanie wzorców kodu}\label{subsec:dopasowanie-wzorcow-kodu}
+\subsection{Dopasowanie wzorców w~cytatach kodu}\label{subsec:dopasowanie-wzorcow-kodu}
 Scala~3 wspiera analizę kodu poprzez dopasowanie wzorców w~cytatach kodu (ang.~\emph{quote pattern matching})~\cite{stucki2020thesis,stucki2021multistage}.
 Mechanizm ten pozwala na dekonstrukcję kawałków kodu i~ekstrakcję podwyrażeń~\cite{stucki2021multistage}.
 

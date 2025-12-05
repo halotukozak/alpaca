@@ -16,14 +16,14 @@ Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy~\cite{scala3-
 
 \subsection{Interfejs użytkownika}\label{subsec:interfejs-uzytkownika}
 
-System definiuje interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
+System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
 
 \lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-definition}]{listings/implementation/01-lexer-definition.scala}
 
 Definicja \texttt{LexerDefinition} reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w~idiomatycznej składni Scali.
 
-Metoda \texttt{lexer} stanowi główny interfejs systemu:
+Metoda \texttt{lexer} definiuje główny interfejs systemu:
 
 \lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:lexer-entrypoint}]{listings/implementation/02-lexer-entrypoint.scala}
 
@@ -43,12 +43,12 @@ Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji czę�
 
 \lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:extract-cases}]{listings/implementation/03-extract-case.scala}
 
-Fragment ten wykorzystuje dopasowanie wzorców w~\textit{quotes} do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
+Fragment ten wykorzystuje dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \texttt{Match} zawiera listę przypadków \texttt{CaseDef}.
 
 \subsubsection{Transformacja i~adaptacja referencji}\label{subsubsec:transformacja-i-adaptacja-referencji}
 
-\paragraph{Klasa replacerefs}\label{par:klasa-replacerefs}
+\subsubsection{Klasa replacerefs}\label{par:klasa-replacerefs}
 
 Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
 
@@ -65,7 +65,7 @@ Funkcja \texttt{extractSimple} implementuje logikę dopasowania różnych typów
 
 \lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:lexer-08-extract-simple}]{listings/implementation/05-extract-simple.scala}
 
-Wykorzystuje ona dopasowanie wzorców w~\textit{quotes} z~ekstraktorem typów\cite{scala3-guides-quotes}, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
+Wykorzystuje ona dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) z~ekstraktorem typów\cite{scala3-guides-quotes}, umożliwiając rozróżnienie różnych wariantów definicji tokenów na poziomie typów.
 Konstrukcja \texttt{type t <: ValidName} w~wzorcu wiąże parametr typu do zmiennej wzorca \texttt{t}, umożliwiając jego późniejsze wykorzystanie.
 
 Ekstrakcja definicji tokenów wymaga następnie ich analizy i~walidacji, co realizuje klasa \texttt{CompileNameAndPattern}.
@@ -326,7 +326,7 @@ Wymaga to zastosowania techniki \textit{re-owning} symboli, realizowanej przez k
 
 \subsubsection{Problem ograniczenia rozmiaru metod JVM}\label{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}
 
-Jednym z najbardziej interesujących wyzwań technicznych napotkanych podczas implementacji było ograniczenie rozmiaru metod w maszynach wirtualnych JVM.
+Jednym z kluczowych wyzwań technicznych napotkanych podczas implementacji było ograniczenie rozmiaru metod w maszynach wirtualnych JVM.
 Zgodnie ze specyfikacją JVM\cite{lindholm2014java}, rozmiar kodu bajtowego pojedynczej metody nie może przekroczyć 65536 bajtów (64~KB).
 Dla złożonych gramatyk z dużą liczbą stanów i produkcji, wygenerowane tabele parsowania mogą zawierać tysiące wpisów, co przy naiwnej implementacji prowadziło do przekroczenia tego limitu.
 
@@ -448,7 +448,7 @@ Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makr
 Klasa typu~\texttt{Empty[T]} stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\textit{product types})~\cite{pierce2002}.
 W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają klasom przypadku (\textit{case classes}) oraz krotkom (\textit{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
 
-\paragraph{Motywacja}
+\subsubsection{Motywacja}
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba utworzenia instancji typu~\texttt{T} bez znajomości jego konkretnej struktury.
 Standardowe podejście wymagałoby:
 \begin{itemize}
@@ -459,7 +459,7 @@ Standardowe podejście wymagałoby:
 
 Klasa typu~\texttt{Empty[T]} rozwiązuje ten problem poprzez automatyczną derywację funkcji konstruującej na~podstawie wartości domyślnych parametrów konstruktora~\cite{scala3-derivation}.
 
-\paragraph{Definicja}
+\subsubsection{Definicja}
 
 \begin{lstlisting}[language=scala,caption={Definicja klasy typu Empty[T] umożliwiającej konstrukcję wartości domyślnych},label={lst:utils-01-empty}]
 private[alpaca] trait Empty[T] extends (() => T)
@@ -467,22 +467,22 @@ private[alpaca] trait Empty[T] extends (() => T)
 
 Typ~\texttt{Empty[T]} jest reprezentowany jako funkcja zerargumentowa~\texttt{() => T}, co~umożliwia leniwe tworzenie instancji (\textit{lazy instantiation}). Atrybut~\texttt{private[alpaca]} ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 
-\paragraph{Mechanizm derywacji}
+\subsubsection{Mechanizm derywacji}
 Derywacja instancji~\texttt{Empty[T]} wykorzystuje mechanizm~\texttt{Mirror.ProductOf[T]} wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
 Kompilator automatycznie generuje kod konstruujący instancję~\texttt{T} z~wartości domyślnych, weryfikując przy~tym ich dostępność.
 
-\paragraph{Przykład użycia}
+\subsubsection{Przykład użycia}
 
 \begin{lstlisting}[language=scala,caption={Użycie Empty[T] do~konstrukcji instancji z~wartościami domyślnymi},label={lst:utils-02-empty-usage}]
 case class Config(  name: String = "default",  count: Int = 0,) // Kompilator automatycznie derywuje instancję Empty[Config]val empty = summon[Empty[Config]]val instance: Config = empty() // Config("default", 0)
 \end{lstlisting}
 
-\paragraph[Alternatywy i ich ograniczenia]{Alternatywy i~ich ograniczenia}
+\subsubsection[Alternatywy i ich ograniczenia]{Alternatywy i~ich ograniczenia}
 Bez mechanizmu~\texttt{Empty[T]} konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\texttt{T}, co~wyeliminowałoby zalety programowania generycznego.
 
 Mechanizm~\texttt{Empty[T]} eliminuje te problemy poprzez derywację w~czasie kompilacji, zachowując bezpieczeństwo typów oraz zerowy narzut wykonania.
 
-\paragraph{Ograniczenia}
+\subsubsection{Ograniczenia}
 Mechanizm derywacji wymaga, aby:
 \begin{itemize}
   \item typ~\texttt{T} był typem produktowym (klasa przypadku lub krotka),
@@ -497,18 +497,18 @@ Naruszenie tych warunków prowadzi do~błędu kompilacji z~komunikatem wskazują
 Klasa~\texttt{ReplaceRefs} rozszerza~\texttt{TreeMap} — abstrakcyjną klasę bazową dla transformacji drzew składni abstrakcyjnej w~systemie refleksji TASTy~\cite{scala3-guides-reflection}.
 Klasa~\texttt{TreeMap} definiuje wzorzec projektowy odwiedzającego (\textit{visitor pattern})~\cite{gamma1994} dla typowanego AST Scali~3, umożliwiając rekurencyjne przetwarzanie węzłów drzewa z~zachowaniem bezpieczeństwa typów.
 
-\paragraph{Motywacja}
+\subsubsection{Motywacja}
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba adaptacji fragmentów kodu z~jednego kontekstu leksykalnego do~innego.
 Przykładem jest sytuacja, w~której kod oryginalnie odnoszący się do~parametru makra~\texttt{ctx} musi zostać przepisany tak, aby odnosił się do~parametru metody w~wygenerowanej klasie~\texttt{newCtx}.
 Proces ten, znany jako \textit{re-owning}~\cite{scala3-guides-reflection}, wymaga systematycznej zamiany wszystkich referencji do~starego symbolu nowymi referencjami.
 
-\paragraph{Definicja}
+\subsubsection{Definicja}
 
 \begin{lstlisting}[language=scala,caption={Definicja klasy ReplaceRefs rozszerzającej TreeMap},label={lst:utils-03-replacerefs}]
 private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)
 \end{lstlisting}
 
-\paragraph{Mechanizm działania}
+\subsubsection{Mechanizm działania}
 Klasa~\texttt{ReplaceRefs} implementuje metodę~\texttt{transformTree}, która:
 \begin{enumerate}
   \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
@@ -519,7 +519,7 @@ Klasa~\texttt{ReplaceRefs} implementuje metodę~\texttt{transformTree}, która:
 
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
 
-\paragraph{Przykład użycia}
+\subsubsection{Przykład użycia}
 Poniższy fragment ilustruje zastąpienie referencji do~parametru makra~\texttt{oldCtx} nowym symbolem~\texttt{newCtx} w~ciele wygenerowanej metody:
 
 \begin{lstlisting}[language=scala,caption={Użycie ReplaceRefs w~kontekście ekspansji makra},label={lst:utils-04-replacerefs-usage}]
@@ -543,17 +543,17 @@ W~rezultacie kod oryginalnie odnoszący się do~\texttt{oldCtx.field} jest trans
 Klasa~\texttt{CreateLambda} umożliwia programatyczną konstrukcję wyrażeń funkcyjnych (lambda) w~czasie kompilacji.
 W~kontekście makr kompilacyjnych bezpośrednie użycie składni lambda języka Scala jest niemożliwe, ponieważ makro operuje na~reprezentacjach AST, a nie na~kodzie źródłowym~\cite{scala3-guides-macros}.
 
-\paragraph{Motywacja}
+\subsubsection{Motywacja}
 Podczas generacji kodu w~makrach często zachodzi potrzeba utworzenia funkcji, której ciało jest konstruowane dynamicznie na~podstawie analizy typów lub struktur danych dostępnych w~czasie kompilacji.
 Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahuje wartości z~dopasowanych tokenów i~konstruuje węzeł AST. Parametry takiej funkcji (symbole tokenów) są znane dopiero w~momencie ekspansji makra, co~uniemożliwia użycie statycznej składni lambda.
 
-\paragraph{Definicja}
+\subsubsection{Definicja}
 
 \begin{lstlisting}[language=scala,caption={Definicja klasy CreateLambda do~programatycznej konstrukcji wyrażeń lambda},label={lst:utils-05-createlambda}]
 private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)
 \end{lstlisting}
 
-\paragraph{Mechanizm działania}
+\subsubsection{Mechanizm działania}
 Klasa~\texttt{CreateLambda} implementuje algorytm konstrukcji wyrażeń lambda poprzez:
 \begin{enumerate}
   \item utworzenie świeżego symbolu dla każdego parametru funkcji,
@@ -564,7 +564,7 @@ Klasa~\texttt{CreateLambda} implementuje algorytm konstrukcji wyrażeń lambda p
 
 Mechanizm ten jest analogiczny do~konstrukcji~\texttt{Lambda} w~systemie refleksji TASTy~\cite{scala3-guides-reflection}, ale oferuje wyższy poziom abstrakcji poprzez automatyczne zarządzanie symbolami i~kontekstem właściciela.
 
-\paragraph{Przykład użycia}
+\subsubsection{Przykład użycia}
 
 \begin{lstlisting}[language=scala,caption={Użycie CreateLambda do~konstrukcji wyrażenia funkcyjnego},label={lst:utils-06-createlambda-usage}]
 val createLambda = CreateLambda()val lambdaExpr: Expr[Int => Int] = createLambda[Int => Int] { case (methodSymbol, List(argTree)) =>  // Konstrukcja ciała funkcji na podstawie symbolu metody i argumentów  buildBody(argTree)}
@@ -575,12 +575,12 @@ val createLambda = CreateLambda()val lambdaExpr: Expr[Int => Int] = createLambda
 Klasa typu~\texttt{Copyable[T]} definiuje operację kopiowania (\textit{shallow copy}) dla typów produktowych.
 W~systemie~\textit{ALPACA} kopiowanie jest wykorzystywane do~tworzenia nowych instancji kontekstu parsera z~modyfikowanymi polami (np.~aktualizacja numeru wiersza po~napotkaniu znaku nowej linii), bez konieczności ręcznej rekonstrukcji całej struktury.
 
-\paragraph{Motywacja}
+\subsubsection{Motywacja}
 Klasy przypadku w~Scali oferują automatycznie generowaną metodę~\texttt{copy}, która umożliwia tworzenie zmodyfikowanych kopii instancji.
 Jednak w~kontekście programowania generycznego, gdzie typ~\texttt{T} jest parametrem, dostęp do~metody~\texttt{copy} wymaga refleksji strukturalnej~\cite{scala3-selectable}, co~wprowadza narzut wydajnościowy.
 Klasa typu~\texttt{Copyable[T]} rozwiązuje ten problem poprzez derywację funkcji kopiującej w~czasie kompilacji, eliminując narzut wykonania.
 
-\paragraph{Definicja}
+\subsubsection{Definicja}
 
 \begin{lstlisting}[language=scala,caption={Definicja klasy typu Copyable[T] definiującej operację kopiowania},label={lst:utils-07-copyable}]
 @implicitNotFound("${T} should be a case class.") private[alpaca] trait Copyable[T] extends (T => T)
@@ -588,21 +588,21 @@ Klasa typu~\texttt{Copyable[T]} rozwiązuje ten problem poprzez derywację funkc
 
 Anotacja~\texttt{@implicitNotFound} dostarcza czytelny komunikat o błędzie w~przypadku próby użycia~\texttt{Copyable[T]} dla typu niebędącego klasą przypadku.
 
-\paragraph{Mechanizm derywacji}
+\subsubsection{Mechanizm derywacji}
 Derywacja instancji~\texttt{Copyable[T]} wykorzystuje mechanizm~\texttt{Mirror.ProductOf[T]}, który umożliwia dekonstrukcję instancji typu produktowego do~krotki wartości pól, a~następnie rekonstrukcję nowej instancji z~tej krotki.
 Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie wykonania~\cite{scala3-derivation}.
 
-\paragraph{Przykład użycia}
+\subsubsection{Przykład użycia}
 
 \begin{lstlisting}[language=scala,caption={Użycie Copyable[T] do~generycznego kopiowania instancji},label={lst:utils-08-copyable-usage}]
 case class User(  name: String,  age: Int,) // Kompilator automatycznie derywuje instancję Copyable[User]val copy = summon[Copyable[User]]val user = User("Alice", 30)val copied: User = copy(user) // User("Alice", 30)
 \end{lstlisting}
 
-\paragraph{Uwaga techniczna}
+\subsubsection{Uwaga techniczna}
 Operacja kopiowania realizowana przez~\texttt{Copyable[T]} jest kopią płytką (\textit{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
 Dla kontekstów parsera, które zawierają głównie typy wartościowe oraz niemodyfikowalne struktury, ograniczenie to~nie stanowi problemu.
 
-\paragraph{Analiza wydajności}
+\subsubsection{Analiza wydajności}
 Teoretycznie, operacja kopiowania realizowana przez~\texttt{Copyable[T]} powinna być równoważna wywołaniu metody~\texttt{copy}, ponieważ obie sprowadzają się do~konstrukcji nowej instancji z~tych samych wartości pól.
 W~praktyce~\texttt{Copyable[T]} eliminuje narzut związany z~refleksją strukturalną, który występowałby przy dostępie do~\texttt{copy} w~kontekście generycznym.
 
@@ -614,14 +614,14 @@ W~kontekście systemu~\textit{ALPACA} korzyść z~unifikacji interfejsu (klasa t
 Ekosystem Scali oferuje biblioteki dedykowane programowaniu generycznemu, takie jak Shapeless~\cite{shapeless} i~Magnolia~\cite{magnolia}, które realizują derywację klas typów dla typów produktowych i~sumarycznych.
 Wybór własnej implementacji narzędzi~\texttt{Empty[T]} i~\texttt{Copyable[T]} w~systemie~\textit{ALPACA} wynikał z~następujących przesłanek:
 
-\paragraph{Minimalizacja zależności}
+\subsubsection{Minimalizacja zależności}
 Biblioteki takie jak Shapeless wprowadzają znaczące zależności oraz wydłużają czas kompilacji ze~względu na~złożone mechanizmy derywacji oparte na~typach zależnych.
 Dla projektu o~wąskim zakresie funkcjonalności koszt ten jest nieuzasadniony.
 
-\paragraph[Wykorzystanie natywnych mechanizmów Scali 3]{Wykorzystanie natywnych mechanizmów Scali~3}
+\subsubsection[Wykorzystanie natywnych mechanizmów Scali 3]{Wykorzystanie natywnych mechanizmów Scali~3}
 Scala~3 wprowadza mechanizm~\texttt{Mirror}~\cite{scala3-derivation}, który eliminuje potrzebę stosowania makr w~stylu Shapeless, redukując złożoność implementacji.
 Własna implementacja oparta na~\texttt{Mirror} jest prostsza, bardziej czytelna oraz lepiej wspierana przez narzędzia IDE niż rozwiązania oparte na~starszych mechanizmach metaprogramowania.
 
-\paragraph{Kontrola nad komunikatami błędów}
+\subsubsection{Kontrola nad komunikatami błędów}
 Biblioteki generyczne generują często nieczytelne komunikaty błędów związane z~wewnętrznymi abstrakcjami.
 Własna implementacja pozwala dostosować komunikaty błędów do~kontekstu systemu~\textit{ALPACA}.
