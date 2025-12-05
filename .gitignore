@@ -48,4 +48,5 @@ build/
 
 debug/
 src/alpaca/local.scala
+example/src/example/local.scala
 thesis/src/.texpadtmp/

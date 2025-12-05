@@ -46,18 +46,15 @@ private[internal] object Csv {
      */
 
     // todo extract show for Tuple
-    // todo make it working
     inline def toCsv: Csv = Csv(
-//      compiletime
-//        .constValueTuple[N]
-//        .zip(compiletime.summonAll[Tuple.Map[N, Showable]])
-//        .toList
-//        .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-//      rows.map(
-//        _.zip(compiletime.summonAll[Tuple.Map[V, Showable]]).toList
-//          .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-//      ),
-      List("not implemented yet"),
-      List(List("not implemented yet")),
+      compiletime
+        .constValueTuple[N]
+        .zip(compiletime.summonAll[Tuple.Map[N, Showable]])
+        .toList
+        .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
+      rows.map(
+        _.zip(compiletime.summonAll[Tuple.Map[V, Showable]]).toList
+          .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
+      ),
     )
 }

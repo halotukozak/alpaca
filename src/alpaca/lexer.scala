@@ -170,3 +170,10 @@ object LexerCtx:
   ) extends LexerCtx
       with PositionTracking
       with LineTracking
+
+extension (lexeme: Lexeme[?, ?])
+  // todo
+  def selectDynamic(name: String): Any =
+    lexeme.fields(name)
+
+  def line: Int = lexeme.selectDynamic("line").asInstanceOf[Int]
