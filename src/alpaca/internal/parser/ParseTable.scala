@@ -183,8 +183,8 @@ private[parser] object ParseTable {
       val additions = entries
         .map(entry =>
           '{
-            def avoidTooLargerMethod(): Unit = $builder += ${ Expr(entry) }
-            avoidTooLargerMethod()
+            def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
+            avoidTooLargeMethod()
           }.asTerm,
         )
         .toList
