@@ -431,24 +431,24 @@ Implementacja systemu~\textit{ALPACA} wykorzystuje zaawansowane mechanizmy metap
 
 Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
 \begin{itemize}
-\item \textbf{Empty[T]} — generyczna konstrukcja wartości domyślnych dla typów produktowych,
-\item \textbf{ReplaceRefs} — transformacja drzew AST poprzez podstawianie symboli,
-\item \textbf{CreateLambda} — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
-\item \textbf{Copyable[T]} — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
+  \item \textbf{Empty[T]} — generyczna konstrukcja wartości domyślnych dla typów produktowych,
+  \item \textbf{ReplaceRefs} — transformacja drzew AST poprzez podstawianie symboli,
+  \item \textbf{CreateLambda} — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
+  \item \textbf{Copyable[T]} — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
 \end{itemize}
 
 Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\textit{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.
 
 \subsection{Empty[T] — konstrukcja wartości domyślnych}\label{subsec:empty}
 
-Klasa typu~\texttt{Empty[T]} stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\textit{product types})~\cite{pierce2002}. W~systemie typów Scali typy produktowe odpowiadają klasom przypadku (\textit{case classes}) oraz krotkom (\textit{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
+Klasa typu~\texttt{Empty[T]} stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\textit{product types})~\cite{pierce2002}. W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają klasom przypadku (\textit{case classes}) oraz krotkom (\textit{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
 
 \paragraph{Motywacja}
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba utworzenia instancji typu~\texttt{T} bez znajomości jego konkretnej struktury. Standardowe podejście wymagałoby:
 \begin{itemize}
-\item ręcznej specyfikacji wartości wszystkich pól,
-\item naruszenia abstrakcji poprzez dostęp do wewnętrznej struktury typu,
-\item utraty bezpieczeństwa typów w~przypadku zmiany definicji~\texttt{T}.
+  \item ręcznej specyfikacji wartości wszystkich pól,
+  \item naruszenia abstrakcji poprzez dostęp do wewnętrznej struktury typu,
+  \item utraty bezpieczeństwa typów w~przypadku zmiany definicji~\texttt{T}.
 \end{itemize}
 
 Klasa typu~\texttt{Empty[T]} rozwiązuje ten problem poprzez automatyczną derywację funkcji konstruującej na~podstawie wartości domyślnych parametrów konstruktora~\cite{scala3-derivation}.
@@ -474,12 +474,17 @@ val empty = summon[Empty[Config]]
 val instance: Config = empty() // Config("default", 0)
 \end{lstlisting}
 
+\paragraph{Alternatywy i~ich ograniczenia}
+Bez mechanizmu~\texttt{Empty[T]} konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\texttt{T}, co~wyeliminowałoby zalety programowania generycznego.
+
+Mechanizm~\texttt{Empty[T]} eliminuje te problemy poprzez derywację w~czasie kompilacji, zachowując bezpieczeństwo typów oraz zerowy narzut wykonania.
+
 \paragraph{Ograniczenia}
 Mechanizm derywacji wymaga, aby:
 \begin{itemize}
-\item typ~\texttt{T} był typem produktowym (klasa przypadku lub krotka),
-\item wszystkie parametry konstruktora posiadały wartości domyślne,
-\item wartości domyślne były obliczalne w~czasie kompilacji.
+  \item typ~\texttt{T} był typem produktowym (klasa przypadku lub krotka),
+  \item wszystkie parametry konstruktora posiadały wartości domyślne,
+  \item wartości domyślne były obliczalne w~czasie kompilacji.
 \end{itemize}
 
 Naruszenie tych warunków prowadzi do~błędu kompilacji z~komunikatem wskazującym brakujące wartości domyślne.
@@ -500,10 +505,10 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)
 \paragraph{Mechanizm działania}
 Klasa~\texttt{ReplaceRefs} implementuje metodę~\texttt{transformTree}, która:
 \begin{enumerate}
-\item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
-\item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
-\item zastępuje te referencje odpowiednimi termami zastępczymi,
-\item zachowuje strukturę typów oraz kontekst właściciela symbolu (\textit{owner}).
+  \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
+  \item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
+  \item zastępuje te referencje odpowiednimi termami zastępczymi,
+  \item zachowuje strukturę typów oraz kontekst właściciela symbolu (\textit{owner}).
 \end{enumerate}
 
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
@@ -543,10 +548,10 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)
 \paragraph{Mechanizm działania}
 Klasa~\texttt{CreateLambda} implementuje algorytm konstrukcji wyrażeń lambda poprzez:
 \begin{enumerate}
-\item utworzenie świeżego symbolu dla każdego parametru funkcji,
-\item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,
-\item konstrukcję węzła~\texttt{Lambda} w~AST z~odpowiednimi typami parametrów i~zwracanym,
-\item weryfikację typowania wyniku.
+  \item utworzenie świeżego symbolu dla każdego parametru funkcji,
+  \item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,
+  \item konstrukcję węzła~\texttt{Lambda} w~AST z~odpowiednimi typami parametrów i~zwracanym,
+  \item weryfikację typowania wyniku.
 \end{enumerate}
 
 Mechanizm ten jest analogiczny do~konstrukcji~\texttt{Lambda} w~systemie refleksji TASTy~\cite{scala3-guides-reflection}, ale oferuje wyższy poziom abstrakcji poprzez automatyczne zarządzanie symbolami i~kontekstem właściciela.
@@ -594,6 +599,11 @@ val copied: User = copy(user) // User("Alice", 30)
 
 \paragraph{Uwaga techniczna}
 Operacja kopiowania realizowana przez~\texttt{Copyable[T]} jest kopią płytką (\textit{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze. Dla kontekstów parsera, które zawierają głównie typy wartościowe oraz niemodyfikowalne struktury, ograniczenie to~nie stanowi problemu.
+
+\paragraph{Analiza wydajności}
+Teoretycznie, operacja kopiowania realizowana przez~\texttt{Copyable[T]} powinna być równoważna wywołaniu metody~\texttt{copy}, ponieważ obie sprowadzają się do~konstrukcji nowej instancji z~tych samych wartości pól. W~praktyce~\texttt{Copyable[T]} eliminuje narzut związany z~refleksją strukturalną, który występowałby przy dostępie do~\texttt{copy} w~kontekście generycznym.
+
+Empiryczna weryfikacja tego założenia wykracza poza zakres niniejszej pracy. W~kontekście systemu~\textit{ALPACA} korzyść z~unifikacji interfejsu (klasa typu) przewyższa potencjalne różnice wydajnościowe, które są pomijalnie małe dla operacji kopiowania struktur o~niewielkim rozmiarze (kilka pól).
 
 \subsection{Porównanie z~istniejącymi bibliotekami}\label{subsec:porownanie-narzedzi}
 
