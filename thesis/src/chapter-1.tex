@@ -5,8 +5,8 @@
 \section{Charakterystyka problemu}
 \label{sec:charakterystyka-problemu}
 
-Analizatory leksykalne (\textit{lexers}) i~składniowe (\textit{parsers}) stanowią fundamentalne komponenty procesu kompilacji, realizując odpowiednio fazę analizy leksykalnej i~syntaktycznej~\cite{aho2006}.
-Analizator leksykalny transformuje ciąg znaków wejściowych w~strumień tokenów (leksemów) zgodnie z~regułami języka regularnego~\cite{hopcroft2006}, podczas gdy analizator składniowy weryfikuje zgodność strumienia tokenów z~gramatyką bezkontekstową języka, konstruując drzewo składni abstrakcyjnej (AST, \textit{Abstract Syntax Tree})~\cite{aho2006}.
+Analizatory leksykalne (ang.~\textit{lexers}) i~składniowe (ang.~\textit{parsers}) stanowią fundamentalne komponenty procesu kompilacji, realizując odpowiednio fazę analizy leksykalnej i~syntaktycznej~\cite{aho2006}.
+Analizator leksykalny transformuje ciąg znaków wejściowych w~strumień tokenów (leksemów) zgodnie z~regułami języka regularnego~\cite{hopcroft2006}, podczas gdy analizator składniowy weryfikuje zgodność strumienia tokenów z~gramatyką bezkontekstową języka, konstruując drzewo składni abstrakcyjnej (ang.~\textit{Abstract Syntax Tree}, AST)~\cite{aho2006}.
 
 \subsection{Podstawy teoretyczne}
 \label{subsec:podstawy-teoretyczne}
@@ -16,10 +16,10 @@ W~hierarchii Chomsky'ego języki dzieli się na cztery klasy według mocy wyrazu
 Analizatory leksykalne operują na językach regularnych (typ~3), które są rozpoznawane przez automaty skończone~\cite{hopcroft2006}, podczas gdy parsery składniowe obsługują języki bezkontekstowe (typ~2), rozpoznawane przez automaty ze stosem~\cite{aho2006}.
 
 Wyrażenia regularne stanowią notację deklaratywną dla języków regularnych i~mogą być mechanicznie przekształcone w~automaty skończone za pomocą konstrukcji Thompsona~\cite{thompson1968}.
-Automaty deterministyczne (DFA) gwarantują liniową złożoność czasową rozpoznawania~$O(n)$, podczas gdy niedeterministyczne (NFA) mogą wymagać przeszukiwania z~nawrotami (\textit{backtracking}).
+Automaty deterministyczne (DFA) gwarantują liniową złożoność czasową rozpoznawania~$O(n)$, podczas gdy niedeterministyczne (NFA) mogą wymagać przeszukiwania z~nawrotami (ang.~\textit{backtracking}).
 
 Gramatyki bezkontekstowe (CFG) definiują strukturę syntaktyczną języków programowania.
-Parsery dla CFG dzielą się na dwie główne kategorie: parsery zstępujące (\textit{top-down}), takie jak LL($k$)~\cite{lewis1968}, oraz parsery wstępujące (\textit{bottom-up}), takie jak LR($k$)~\cite{knuth1965}.
+Parsery dla CFG dzielą się na dwie główne kategorie: parsery zstępujące (ang.~\textit{top-down}), takie jak LL($k$)~\cite{lewis1968}, oraz parsery wstępujące (ang.~\textit{bottom-up}), takie jak LR($k$)~\cite{knuth1965}.
 Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, złożonością implementacji oraz jakością komunikatów błędów.
 
 
@@ -43,27 +43,7 @@ Celem pracy inżynierskiej jest stworzenie narzędzia \textit{ALPACA} (\textit{A
 Istniejące narzędzia do konstrukcji analizatorów leksykalnych i~składniowych wykazują szereg ograniczeń utrudniających ich zastosowanie w~kontekście nowoczesnych języków programowania oraz środowisk deweloperskich.
 Identyfikacja tych ograniczeń stanowiła punkt wyjścia dla projektu~\textit{ALPACA}.
 
-\subsection{Luka w~dostępnych rozwiązaniach}
-\label{subsec:luka-badawcza}
-
-Analiza literatury oraz istniejących implementacji (sekcja~\ref{sec:przeglad-istniejacych-rozwiazan}) ujawniła następujące problemy:
-
-\paragraph{Kompromis między wydajnością a~użytecznością}
-Narzędzia oparte na generacji kodu (Yacc, ANTLR) osiągają wysoką wydajność, ale wymagają nauki dedykowanego języka dziedzinowego (DSL) oraz dodatkowego kroku kompilacji.
-Biblioteki kombinatorów parserów (FastParse, parboiled2) oferują interfejs zintegrowany z~językiem gospodarza, ale kosztem spadku wydajności związanej z~interpretacją reguł w~czasie wykonania~\cite{fastparse-docs}.
-
-\paragraph{Niska jakość komunikatów błędów}
-Systemy generujące parsery tabelowe (Yacc, Bison) produkują komunikaty błędów o~niskiej wartości diagnostycznej, często ograniczające się do ogólnego komunikatu \enquote{syntax error}.
-Przyczyna tkwi w~braku kontekstu syntaktycznego dostępnego w~automatach LR(1) po wykryciu błędu.
-
-\paragraph{Brak integracji z~nowoczesnymi środowiskami IDE}
-Narzędzia historyczne (Lex, Yacc) nie oferują wsparcia dla współczesnych środowisk programistycznych, co utrudnia debugowanie i~analizę gramatyk.
-Nowe rozwiązania (ANTLR) wymagają dedykowanych pluginów, co ogranicza ich adopcję.
-
-\subsection{Cele projektu}
-\label{subsec:cele-projektu}
-
-Projekt~\textit{ALPACA} ma na celu eliminację wymienionych ograniczeń poprzez:
+Projekt~\textit{ALPACA} ma na celu stworzenie nowoczesnego narzędzia do generowania lekserów i parserów w języku Scala, łączącego zalety istniejących rozwiązań z nowoczesnym podejściem technologicznym poprzez:
 
 \begin{enumerate}
     \item \textbf{Połączenie wydajności generatorów kodu z~użytecznością bibliotek} --- wykorzystanie makr kompilacyjnych Scali~3 pozwala przenieść część obliczeń na etap kompilacji, zachowując interfejs programistyczny zintegrowany z~systemem typów języka.
@@ -86,7 +66,7 @@ Narzędzia do konstrukcji analizatorów leksykalnych i~składniowych można skla
 \label{subsec:generatory-kodu}
 
 Generatory kodu transformują deklaratywne specyfikacje gramatyk w~kod źródłowy parsera w~języku docelowym.
-Proces ten odbywa się przed kompilacją programu głównego i~wymaga dodatkowego narzędzia w~łańcuchu budowania (\textit{build chain}).
+Proces ten odbywa się przed kompilacją programu głównego i~wymaga dodatkowego narzędzia w~łańcuchu budowania (ang.~\textit{build chain}).
 
 \subsubsection{Lex i~Yacc}
 \label{subsubsec:lex-yacc}
@@ -131,7 +111,7 @@ Parser jest wykonywany w~czasie działania programu, co eliminuje krok generacji
 Oferują elastyczne podejście do budowy parserów, umożliwiając samodzielną implementację obsługi leksemów, budowę drzewa AST, czy dodatkowe funkcjonalności takie jak obliczanie numeru linii w~lekserze.
 
 Głównym ograniczeniem PLY i~SLY jest implementacja w~języku Python.
-Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te charakteryzują się niską wydajnością, a~brak statycznego typowania utrudnia wykrywanie błędów na etapie kompilacji.
+Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te charakteryzują się niską wydajnością, a~brak statycznego typowania utrudnia wykrywanie błędów na etapie tworzenia leksera lub parsera.
 Mechanizm refleksji wykorzystywany przez bibliotekę~\textit{SLY} (inspekcja nazw metod i~typów) powoduje generowanie ostrzeżeń przez analizatory statyczne środowiska PyCharm.
 Ponadto należy zaznaczyć, iż autor projektu informuje o~braku dalszego rozwoju tych narzędzi~\cite{sly-github}.
 
@@ -294,8 +274,6 @@ Następujące aspekty wykraczają poza zakres pracy:
 \begin{itemize}
     \item \textbf{Optymalizacje stanów parsera:} System generuje kanoniczne stany LR(1) bez minimalizacji do LALR(1), co może prowadzić do większych tablic akcji.
     Implementacja minimalizacji stanowi kierunek przyszłych badań.
-
-    \item \textbf{Obsługa gramatyk niejednoznacznych:} Parser wykrywa konflikty shift/reduce i~reduce/reduce, ale nie oferuje mechanizmu automatycznego rozwiązywania niejednoznaczności (poza priorytetami operatorów).
 
     \item \textbf{Ewaluacja empiryczna w~kontekście dydaktycznym:} Weryfikacja użyteczności systemu w~środowisku akademickim (badanie z~udziałem studentów) wykracza poza zakres pracy i~stanowi kierunek przyszłych badań.
 \end{itemize}
