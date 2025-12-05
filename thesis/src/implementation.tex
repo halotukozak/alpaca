@@ -10,14 +10,13 @@ Rozdział przedstawia implementację systemu analizy leksykalnej wykorzystujące
 Implementacja stanowi studium przypadku zastosowania technik opisanych w~rozdziale poprzednim w~kontekście automatycznej generacji analizatora leksykalnego.
 System transformuje deklaratywne reguły tokenizacji, wyrażone w~języku dziedzinowym (DSL), w~kod proceduralny wykonywany w~czasie kompilacji, wykorzystując refleksję TASTy~\cite{scala3-reflection} oraz typy rafinowane~\cite{scala3-selectable}.
 
-System \texttt{alpaca.lexer} implementuje transformację deklaratywnych reguł tokenizacji zapisanych jako funkcja częściowa (ang.~\textit{partial function}) w~kod procedualny wykonywany w~czasie kompilacji.
-Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy\cite{scala3-reflection}, włączając generację klas w~czasie kompilacji, transformację drzew AST\cite{scala3-guides-reflection} oraz wyspecjalizowane typy refinement.
+System \texttt{alpaca.lexer} implementuje transformację deklaratywnych reguł tokenizacji zapisanych jako funkcja częściowa (ang.~\emph{partial function}) w~kod proceduralny wykonywany w~czasie kompilacji.
+Celem tej transformacji jest wyeliminowanie narzutu analizy wyrażeń regularnych i~budowy automatów w~czasie działania aplikacji, a~także zapewnienie bezpieczeństwa typów dla wygenerowanych tokenów.
+Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy~\cite{scala3-reflection}, włączając generację klas w~czasie kompilacji, transformację drzew AST~\cite{scala3-guides-reflection} oraz wyspecjalizowane typy refinement.
 
-\subsection{Architektura systemu leksera}\label{subsec:architektura-systemu-leksera}
+\subsection{Interfejs użytkownika}\label{subsec:interfejs-uzytkownika}
 
-\subsubsection{Interfejs użytkownika}\label{subsubsec:interfejs-uzytkownika}
-
-System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
+System definiuje interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
 
 \lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:lexer-definition}]{listings/implementation/01-lexer-definition.scala}
 
@@ -31,12 +30,12 @@ Metoda \texttt{lexer} stanowi główny interfejs systemu:
 Modyfikator \texttt{transparent inline} zapewnia, że zwracany typ będzie dokładnie odpowiadał wygenerowanej strukturze, włączając typy refinement dla poszczególnych tokenów.
 Użycie parametrów kontekstowych (\texttt{using}) realizuje wzorzec dependency injection na poziomie systemu typów.
 
-\subsubsection{Implementacja makra}\label{subsubsec:implementacja-makra}
+\subsection{Implementacja makra}\label{subsec:implementacja-makra}
 
-Makro przyjmuje wyrażenie reprezentujące reguły leksera jako \verb|Expr[Ctx ?=> LexerDefinition[Ctx]]| oraz instancje kontekstualnych klas pomocniczych.
-Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy\cite{stucki2020inlining,scala3-guides-quotes,scala3-reference-macros}.
+Makro przyjmuje wyrażenie reprezentujące reguły analizatora leksykalnego jako \verb|Expr[Ctx ?=> LexerDefinition[Ctx]]| oraz instancje kontekstualnych klas pomocniczych.
+Parametr \texttt{using Quotes} dostarcza dostępu do API refleksji TASTy~\cite{stucki2020inlining,scala3-guides-quotes,scala3-reference-macros}.
 
-\subsection{Analiza drzewa składni abstrakcyjnej}\label{subsec:analiza-drzewa-skladni-abstrakcyjnej}
+\subsection{Analiza i~transformacja drzewa składni}\label{subsec:analiza-i-transformacja-drzewa-skladni}
 
 \subsubsection{Dekonstrukcja funkcji częściowej}\label{subsubsec:dekonstrukcja-funkcji-czesciowej}
 
@@ -47,9 +46,9 @@ Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji czę�
 Fragment ten wykorzystuje dopasowanie wzorców w~\textit{quotes} do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \texttt{Lambda(\_, Match(\_, cases))} odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \texttt{Match} zawiera listę przypadków \texttt{CaseDef}.
 
-\subsection[Transformacja i adaptacja referencji]{Transformacja i~adaptacja referencji}\label{subsec:transformacja-i-adaptacja-referencji}
+\subsubsection{Transformacja i~adaptacja referencji}\label{subsubsec:transformacja-i-adaptacja-referencji}
 
-\subsubsection{Klasa replacerefs}\label{subsubsec:klasa-replacerefs}
+\paragraph{Klasa replacerefs}\label{par:klasa-replacerefs}
 
 Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
 
@@ -90,10 +89,10 @@ Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez
 
 Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 \begin{itemize}
-    \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
-    \item \textbf{Symbol.freshName(``\$anon'')} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
-    \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
-    \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
+  \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
+  \item \textbf{Symbol.freshName(``\$anon'')} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
+  \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
+  \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
 \subsubsection{Definicja członków klasy}\label{subsubsec:definicja-czlonkow-klasy}
@@ -101,11 +100,11 @@ Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 Funkcja \texttt{decls} konstruuje pełną listę deklaracji dla klasy anonimowej:
 
 \begin{enumerate}
-    \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|
-    \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
-    \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
-    \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
-    \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
+  \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|
+  \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
+  \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
+  \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
+  \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
 \end{enumerate}
 
 \subsubsection{Materializacja klasy}\label{subsubsec:materializacja-klasy}
@@ -148,8 +147,8 @@ W~prezentowanym rozwiązaniu narzut ten jest eliminowany poprzez precyzyjne typo
 Aby mechanizm \texttt{Selectable} działał poprawnie ze strukturalnymi typami i~nie wymagał refleksji, klasa generowana przez makro musi implementować \verb|type Fields <: NamedTuple.AnyNamedTuple|\cite{scala3-computed-field-names}.
 W~naszym podejściu makro generuje definicję \texttt{type Fields} zawierającą wszystkie zdefiniowane tokeny i~ich typy, dzięki czemu:
 \begin{itemize}
-    \item IDE i~kompilator dysponują informacją o~dostępnych polach i~ich typach (pełne uzupełnianie i~sprawdzanie typów),
-    \item wywołanie \texttt{c.NAZWA} jest bezpieczne typowo mimo mechanizmu dynamicznego wyboru nazwy.
+  \item IDE i~kompilator dysponują informacją o~dostępnych polach i~ich typach (pełne uzupełnianie i~sprawdzanie typów),
+  \item wywołanie \texttt{c.NAZWA} jest bezpieczne typowo mimo mechanizmu dynamicznego wyboru nazwy.
 \end{itemize}
 
 
@@ -165,10 +164,10 @@ Teoretycznie eliminuje to narzut związany z~operacjami dynamicznymi, choć peł
 
 Alternatywne podejście oparte na strukturze mapującej (np.\ \texttt{Map[String, Token]}) wymagałoby:
 \begin{itemize}
-    \item Obliczenia funkcji haszującej dla klucza
-    \item Przeszukiwania tablicy haszującej
-    \item Potencjalnej obsługi kolizji
-    \item Dynamicznego rzutowania typu
+  \item Obliczenia funkcji haszującej dla klucza
+  \item Przeszukiwania tablicy haszującej
+  \item Potencjalnej obsługi kolizji
+  \item Dynamicznego rzutowania typu
 \end{itemize}
 
 co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator.
@@ -182,10 +181,10 @@ System typów weryfikuje poprawność wszystkich operacji w~czasie kompilacji, e
 
 Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do:
 \begin{itemize}
-    \item Automatycznego uzupełniania nazw tokenów
-    \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
-    \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
-    \item Wykrywania błędów składniowych przed kompilacją
+  \item Automatycznego uzupełniania nazw tokenów
+  \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
+  \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
+  \item Wykrywania błędów składniowych przed kompilacją
 \end{itemize}
 
 Te funkcjonalności są niemożliwe do realizacji w~przypadku dostępu przez struktury dynamiczne.
@@ -218,10 +217,10 @@ class SimpleLexer {
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
-    \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
-    \item Utrata informacji o~typach: zwracany typ to egzystencjalny \texttt{Token[?, ?, ?]}
-    \item Narzut wydajnościowy operacji haszowania i~przeszukiwania
-    \item Brak wsparcia narzędzi deweloperskich
+  \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
+  \item Utrata informacji o~typach: zwracany typ to egzystencjalny \texttt{Token[?, ?, ?]}
+  \item Narzut wydajnościowy operacji haszowania i~przeszukiwania
+  \item Brak wsparcia narzędzi deweloperskich
 \end{itemize}
 
 \subsubsection{Podejście oparte na jawnej definicji klasy}\label{subsubsec:podejscie-jawna-definicja}
@@ -239,10 +238,10 @@ class MyLexer extends Tokenization[DefaultGlobalCtx] {
 
 \textbf{Wady tego podejścia:}
 \begin{itemize}
-    \item Wysoki poziom redundancji kodu (\textit{boilerplate})
-    \item Konieczność ręcznej kompilacji wyrażeń regularnych
-    \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
-    \item Brak mechanizmu DSL ułatwiającego definicję reguł
+  \item Wysoki poziom redundancji kodu (\textit{boilerplate})
+  \item Konieczność ręcznej kompilacji wyrażeń regularnych
+  \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
+  \item Brak mechanizmu DSL ułatwiającego definicję reguł
 \end{itemize}
 
 \subsection[Walidacja i obsługa błędów]{Walidacja i~obsługa błędów}\label{subsec:walidacja-i-obsuga-bedow}
@@ -269,11 +268,11 @@ Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna
 
 Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
 \begin{itemize}
-    \item Konstrukcja tabel LR(1) w czasie kompilacji z wykorzystaniem makr
-    \item Integracja z systemem typów Scali w akcjach semantycznych
-    \item Obejście ograniczenia rozmiaru metod JVM poprzez fragmentację generowanego kodu
-    \item Deklaratywny mechanizm rozwiązywania konfliktów gramatycznych
-    \item Walidacja gramatyk podczas kompilacji z komunikatami o~błędach
+  \item Konstrukcja tabel LR(1) w czasie kompilacji z wykorzystaniem makr
+  \item Integracja z systemem typów Scali w akcjach semantycznych
+  \item Obejście ograniczenia rozmiaru metod JVM poprzez fragmentację generowanego kodu
+  \item Deklaratywny mechanizm rozwiązywania konfliktów gramatycznych
+  \item Walidacja gramatyk podczas kompilacji z komunikatami o~błędach
 \end{itemize}
 
 W~szczególności ograniczenie rozmiaru metod JVM ilustruje istotny aspekt praktycznego metaprogramowania: generowany kod musi nie tylko być poprawny funkcjonalnie, ale również respektować wszystkie techniczne ograniczenia platformy docelowej.
@@ -307,11 +306,11 @@ Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analiz
 
 Makro wykonuje następujące kroki:
 \begin{enumerate}
-    \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
-    \item Transformacja wzorców dopasowania na produkcje gramatyczne
-    \item Konstrukcja automatów LR(1) i tabel parsowania
-    \item Generacja tabel akcji semantycznych
-    \item Walidacja gramatyki i rozwiązywanie konfliktów
+  \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
+  \item Transformacja wzorców dopasowania na produkcje gramatyczne
+  \item Konstrukcja automatów LR(1) i tabel parsowania
+  \item Generacja tabel akcji semantycznych
+  \item Walidacja gramatyki i rozwiązywanie konfliktów
 \end{enumerate}
 
 \subsubsection{Ekstrakcja produkcji z wzorców}\label{subsubsec:ekstrakcja-produkcji-z-wzorcow}
@@ -353,14 +352,15 @@ Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w 
 
 W tym podejściu:
 \begin{itemize}
-    \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
-    \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargeMethod()}
-    \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
-    \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
+  \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
+  \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargeMethod()}
+  \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
+  \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
 \end{itemize}
 
-Ta technika skutecznie obchodzi limit rozmiaru metody, ponieważ każda pomocnicza metoda zawiera tylko kilka instrukcji bajtowych, niezależnie od rozmiaru całej tabeli.
-Dodatkowo, kompilator JIT może efektywnie zoptymalizować i zinlinować te małe metody w czasie wykonania, eliminując narzut wydajnościowy.
+Zastosowana technika fragmentacji skutecznie eliminuje problem przekroczenia limitu rozmiaru metody.
+Każda metoda pomocnicza zawiera jedynie kilka instrukcji bajtowych (typowo 5--10 w~zależności od złożoności wpisu tabeli), co~gwarantuje zgodność ze~specyfikacją JVM~\cite{lindholm2014java}.
+Dodatkowo kompilator JIT może efektywnie zoptymalizować te~metody poprzez \textbf{inlining}, eliminując narzut wywołań funkcji w~czasie wykonania.
 
 Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany przez makra musi respektować wszystkie ograniczenia platformy docelowej, które normalnie są niewidoczne dla programistów piszących kod ręcznie.
 
@@ -369,9 +369,9 @@ Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany pr
 Kolejnym istotnym wyzwaniem jest zapewnienie bezpieczeństwa typów w akcjach semantycznych podczas transformacji kodu z kontekstu makra do wygenerowanych tabel.
 Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
 \begin{itemize}
-    \item Kontekstu parsera (\texttt{ctx})
-    \item Wartości z dopasowanych symboli gramatycznych
-    \item Zewnętrznych funkcji i wartości
+  \item Kontekstu parsera (\texttt{ctx})
+  \item Wartości z dopasowanych symboli gramatycznych
+  \item Zewnętrznych funkcji i wartości
 \end{itemize}
 
 Problem polega na tym, że te referencje muszą zostać przepisane podczas przenoszenia kodu akcji z miejsca definicji do tabeli akcji.
@@ -381,10 +381,10 @@ Funkcja \texttt{createAction} realizuje tę transformację:
 
 Kluczowe aspekty implementacji:
 \begin{enumerate}
-    \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
-    \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
-    \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
-    \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
+  \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
+  \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
+  \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
+  \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 \end{enumerate}
 
 \subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:rozwiazywanie-konfliktow-gramatycznych}
@@ -399,10 +399,10 @@ override val resolutions = Set(P.ofName("times").before(Lexer.PLUS), P.ofName("p
 
 Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podczas konstrukcji tabeli parsowania:
 \begin{enumerate}
-    \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
-    \item Analizuje zdefiniowane przez użytkownika relacje precedencji
-    \item Wybiera odpowiednią akcję zgodnie z deklaracją
-    \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
+  \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
+  \item Analizuje zdefiniowane przez użytkownika relacje precedencji
+  \item Wybiera odpowiednią akcję zgodnie z deklaracją
+  \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
 \end{enumerate}
 
 To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne narzędzia
@@ -421,10 +421,10 @@ Implementacja \texttt{ToExpr[ParseTable]} jest szczególnie interesująca, gdyż
 
 Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
 \begin{itemize}
-    \item Tworzenie nowych symboli (\texttt{Symbol.newVal}) reprezentujących zmienne w generowanym kodzie
-    \item Konstrukcja definicji wartości (\texttt{ValDef}) z przypisaniem początkowym
-    \item Generacja listy wyrażeń manipulujących builderem
-    \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
+  \item Tworzenie nowych symboli (\texttt{Symbol.newVal}) reprezentujących zmienne w generowanym kodzie
+  \item Konstrukcja definicji wartości (\texttt{ValDef}) z przypisaniem początkowym
+  \item Generacja listy wyrażeń manipulujących builderem
+  \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
 \end{itemize}
 
 
@@ -435,10 +435,10 @@ Realizacja tych mechanizmów wymaga zestawu narzędzi pomocniczych abstrahujący
 
 Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
 \begin{itemize}
-    \item \textbf{Empty[T]} — generyczna konstrukcja wartości domyślnych dla typów produktowych,
-    \item \textbf{ReplaceRefs} — transformacja drzew AST poprzez podstawianie symboli,
-    \item \textbf{CreateLambda} — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
-    \item \textbf{Copyable[T]} — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
+  \item \textbf{Empty[T]} — generyczna konstrukcja wartości domyślnych dla typów produktowych,
+  \item \textbf{ReplaceRefs} — transformacja drzew AST poprzez podstawianie symboli,
+  \item \textbf{CreateLambda} — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
+  \item \textbf{Copyable[T]} — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
 \end{itemize}
 
 Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\textit{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.
@@ -452,9 +452,9 @@ W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają 
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba utworzenia instancji typu~\texttt{T} bez znajomości jego konkretnej struktury.
 Standardowe podejście wymagałoby:
 \begin{itemize}
-    \item ręcznej specyfikacji wartości wszystkich pól,
-    \item naruszenia abstrakcji poprzez dostęp do wewnętrznej struktury typu,
-    \item utraty bezpieczeństwa typów w~przypadku zmiany definicji~\texttt{T}.
+  \item ręcznej specyfikacji wartości wszystkich pól,
+  \item naruszenia abstrakcji poprzez dostęp do wewnętrznej struktury typu,
+  \item utraty bezpieczeństwa typów w~przypadku zmiany definicji~\texttt{T}.
 \end{itemize}
 
 Klasa typu~\texttt{Empty[T]} rozwiązuje ten problem poprzez automatyczną derywację funkcji konstruującej na~podstawie wartości domyślnych parametrów konstruktora~\cite{scala3-derivation}.
@@ -485,9 +485,9 @@ Mechanizm~\texttt{Empty[T]} eliminuje te problemy poprzez derywację w~czasie ko
 \paragraph{Ograniczenia}
 Mechanizm derywacji wymaga, aby:
 \begin{itemize}
-    \item typ~\texttt{T} był typem produktowym (klasa przypadku lub krotka),
-    \item wszystkie parametry konstruktora miały wartości domyślne,
-    \item wartości domyślne były obliczalne w~czasie kompilacji.
+  \item typ~\texttt{T} był typem produktowym (klasa przypadku lub krotka),
+  \item wszystkie parametry konstruktora miały wartości domyślne,
+  \item wartości domyślne były obliczalne w~czasie kompilacji.
 \end{itemize}
 
 Naruszenie tych warunków prowadzi do~błędu kompilacji z~komunikatem wskazującym brakujące wartości domyślne.
@@ -511,10 +511,10 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)
 \paragraph{Mechanizm działania}
 Klasa~\texttt{ReplaceRefs} implementuje metodę~\texttt{transformTree}, która:
 \begin{enumerate}
-    \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
-    \item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
-    \item zastępuje te referencje odpowiednimi termami zastępczymi,
-    \item zachowuje strukturę typów oraz kontekst właściciela symbolu (\textit{owner}).
+  \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
+  \item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
+  \item zastępuje te referencje odpowiednimi termami zastępczymi,
+  \item zachowuje strukturę typów oraz kontekst właściciela symbolu (\textit{owner}).
 \end{enumerate}
 
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
@@ -556,10 +556,10 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)
 \paragraph{Mechanizm działania}
 Klasa~\texttt{CreateLambda} implementuje algorytm konstrukcji wyrażeń lambda poprzez:
 \begin{enumerate}
-    \item utworzenie świeżego symbolu dla każdego parametru funkcji,
-    \item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,
-    \item konstrukcję węzła~\texttt{Lambda} w~AST z~odpowiednimi typami parametrów i~zwracanym,
-    \item weryfikację typowania wyniku.
+  \item utworzenie świeżego symbolu dla każdego parametru funkcji,
+  \item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,
+  \item konstrukcję węzła~\texttt{Lambda} w~AST z~odpowiednimi typami parametrów i~zwracanym,
+  \item weryfikację typowania wyniku.
 \end{enumerate}
 
 Mechanizm ten jest analogiczny do~konstrukcji~\texttt{Lambda} w~systemie refleksji TASTy~\cite{scala3-guides-reflection}, ale oferuje wyższy poziom abstrakcji poprzez automatyczne zarządzanie symbolami i~kontekstem właściciela.
