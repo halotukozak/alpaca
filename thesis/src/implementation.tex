@@ -255,3 +255,172 @@ Kod jawnie sygnalizuje nieobsługiwane przypadki:
 Obsługiwane są wyłącznie jasno zdefiniowane formy wzorców; w~przypadku napotkania innej konstrukcji kompilacja jest przerywana z~komunikatem zawierającym szczegóły AST, co upraszcza diagnostykę i~utrzymuje zasadę fail-fast.
 Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić nieobsługiwane konstrukcje niż milcząco generować niepoprawny kod.
 
+
+\section{Praktyczna implementacja generatora parserów z wykorzystaniem makr w Scali 3}\label{sec:praktyczna-implementacja-generatora-parserow-z-wykorzystaniem-makr-w-scali-3}
+
+\subsection{Wprowadzenie do generatora parserów}\label{subsec:wprowadzenie-do-generatora-parserow}
+
+Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
+Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
+
+Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
+\begin{itemize}
+  \item Konstrukcja tabel LR(1) w czasie kompilacji z wykorzystaniem makr
+  \item Integracja z systemem typów Scali w akcjach semantycznych
+  \item Obejście ograniczenia rozmiaru metod JVM poprzez fragmentację generowanego kodu
+  \item Deklaratywny mechanizm rozwiązywania konfliktów gramatycznych
+  \item Walidacja gramatyk podczas kompilacji z komunikatami o~błędach
+\end{itemize}
+
+W~szczególności ograniczenie rozmiaru metod JVM ilustruje istotny aspekt praktycznego metaprogramowania: generowany kod musi nie tylko być poprawny funkcjonalnie, ale również respektować wszystkie techniczne ograniczenia platformy docelowej.
+
+
+
+\subsection{Interfejs API parsera}\label{subsec:interfejs-api-parsera}
+
+\subsubsection{Definicja parsera}\label{subsubsec:definicja-parsera}
+
+Użytkownik definiuje parser poprzez dziedziczenie po klasie bazowej \texttt{Parser[Ctx]}:
+
+\lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:parser-01-base},linerange={19-24}]{../../src/alpaca/internal/parser/Parser.scala}
+
+Typ parametryczny \texttt{Ctx} reprezentuje globalny kontekst parsera, umożliwiający przechowywanie stanu między akcjami semantycznymi (np.\ tablicę symboli).
+Parametr kontekstualny \texttt{tables: Tables[Ctx]} jest automatycznie generowany przez makro i zawiera tabele parsowania oraz akcji semantycznych.
+
+\subsubsection{Definicja reguł gramatycznych}\label{subsubsec:definicja-regul-gramatycznych}
+
+Reguły gramatyczne definiowane są jako wartości typu \texttt{Rule[R]}, gdzie \texttt{R} określa typ wyniku redukcji:
+
+\lstinputlisting[language=scala,caption={Przykład definicji reguł parsera},label={lst:parser-02-rules},linerange={21-25}]{../../test/src/alpaca/integration/MainTest.scala}
+
+Składnia wykorzystuje dopasowanie wzorców Scali do wyrażenia produkcji gramatycznych.
+Każdy przypadek (\texttt{case}) reprezentuje pojedynczą produkcję, gdzie lewa strona wzorca odpowiada prawej stronie produkcji gramatycznej, a wyrażenie po strzałce~(\texttt{=>}) definiuje akcję semantyczną.
+Na przykład wzorzec \texttt{\{ case (Expr(a), CalcLexer.PLUS(\_), Expr(b)) => a + b \}} odpowiada produkcji \texttt{Expr → Expr PLUS Expr} z~akcją sumującą wartości podwyrażeń.
+
+\subsection{Generacja tabel parsowania w czasie kompilacji}\label{subsec:generacja-tabel-parsowania-w-czasie-kompilacji}
+
+\subsubsection{Makro createTablesImpl}\label{subsubsec:makro-createtablesimpl}
+
+Centralnym elementem systemu jest makro \texttt{createTablesImpl}, które analizuje definicję parsera i generuje tabele w czasie kompilacji:
+
+Makro wykonuje następujące kroki:
+\begin{enumerate}
+  \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
+  \item Transformacja wzorców dopasowania na produkcje gramatyczne
+  \item Konstrukcja automatów LR(1) i tabel parsowania
+  \item Generacja tabel akcji semantycznych
+  \item Walidacja gramatyki i rozwiązywanie konfliktów
+\end{enumerate}
+
+\subsubsection{Ekstrakcja produkcji z wzorców}\label{subsubsec:ekstrakcja-produkcji-z-wzorcow}
+
+Funkcja \texttt{extractEBNF} dokonuje transformacji wzorców dopasowania na produkcje gramatyczne:
+
+% \lstinputlisting[language=scala,caption={Ekstrakcja produkcji gramatycznych z wzorców},label={lst:parser-04-extract-ebnf}, linerange={80-95}]{../../src/alpaca/internal/parser/createTables.scala}
+
+Kluczowym wyzwaniem jest zachowanie poprawności referencji do symboli przy przenoszeniu kodu akcji semantycznej z kontekstu definicji reguły do wygenerowanej tabeli akcji.
+Wymaga to zastosowania techniki \textit{re-owning} symboli, realizowanej przez klasę \texttt{ReplaceRefs}.
+
+\subsection{Trudne problemy rozwiązane w implementacji}\label{subsec:trudne-problemy-rozwiazane-w-implementacji}
+
+\subsubsection{Problem ograniczenia rozmiaru metod JVM}\label{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}
+
+Jednym z najbardziej interesujących wyzwań technicznych napotkanych podczas implementacji było ograniczenie rozmiaru metod w maszynach wirtualnych JVM.
+Zgodnie ze specyfikacją JVM\cite{lindholm2014java}, rozmiar kodu bajtowego pojedynczej metody nie może przekroczyć 65536 bajtów (64~KB).
+Dla złożonych gramatyk z dużą liczbą stanów i produkcji, wygenerowane tabele parsowania mogą zawierać tysiące wpisów, co przy naiwnej implementacji prowadziło do przekroczenia tego limitu.
+
+Problem manifestował się podczas próby wyrażenia tabeli parsowania jako literału mapowego w kodzie:
+
+\begin{lstlisting}[language=scala,caption={Naiwna implementacja prowadząca do przekroczenia limitu},label={lst:parser-05-naive}]
+'{
+    Map(
+      (0, Terminal("PLUS")) -> Shift(1),
+      (0, Terminal("NUMBER")) -> Shift(2),
+      ...
+      (999, Terminal("EOF")) -> Reduction(prod),
+    )
+  }
+\end{lstlisting}
+
+Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \texttt{Method too large}\cite{method-too-large}.
+
+\textbf{Rozwiązanie:} Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji metod}.
+Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
+
+\lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:parser-06-fragment}, linerange={182-189}]{../../src/alpaca/internal/parser/ParseTable.scala}
+
+W tym podejściu:
+\begin{itemize}
+  \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
+  \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargeMethod()}
+  \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
+  \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
+\end{itemize}
+
+Ta technika skutecznie obchodzi limit rozmiaru metody, ponieważ każda pomocnicza metoda zawiera tylko kilka instrukcji bajtowych, niezależnie od rozmiaru całej tabeli.
+Dodatkowo, kompilator JIT może efektywnie zoptymalizować i zinlinować te małe metody w czasie wykonania, eliminując narzut wydajnościowy.
+
+Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany przez makra musi respektować wszystkie ograniczenia platformy docelowej, które normalnie są niewidoczne dla programistów piszących kod ręcznie.
+
+\subsubsection{Zachowanie bezpieczeństwa typów w akcjach semantycznych}\label{subsubsec:zachowanie-bezpieczenstwa-typow-w-akcjach-semantycznych}
+
+Kolejnym istotnym wyzwaniem jest zapewnienie bezpieczeństwa typów w akcjach semantycznych podczas transformacji kodu z kontekstu makra do wygenerowanych tabel.
+Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
+\begin{itemize}
+  \item Kontekstu parsera (\texttt{ctx})
+  \item Wartości z dopasowanych symboli gramatycznych
+  \item Zewnętrznych funkcji i wartości
+\end{itemize}
+
+Problem polega na tym, że te referencje muszą zostać przepisane podczas przenoszenia kodu akcji z miejsca definicji do tabeli akcji.
+Funkcja \texttt{createAction} realizuje tę transformację:
+
+\lstinputlisting[language=scala,caption={Tworzenie akcji semantycznej z zachowaniem referencji},label={lst:parser-07-create-action}, linerange={72-84}]{../../src/alpaca/internal/parser/createTables.scala}
+
+Kluczowe aspekty implementacji:
+\begin{enumerate}
+  \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
+  \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
+  \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
+  \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
+\end{enumerate}
+
+\subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:rozwiazywanie-konfliktow-gramatycznych}
+
+Parser LR może napotkać konflikty typu shift-reduce lub reduce-reduce podczas konstrukcji tabel parsowania.
+System ALPACA oferuje deklaratywny mechanizm rozwiązywania takich konfliktów poprzez relacje precedencji:
+
+\begin{lstlisting}[language=scala,caption={Deklaracja rozwiązań konfliktów},label={lst:parser-08-conflicts}]
+override val resolutions = Set(P.ofName("times").before(Lexer.PLUS), P.ofName("plus").after(Lexer.TIMES))
+\end{lstlisting}
+
+
+Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podczas konstrukcji tabeli parsowania:
+\begin{enumerate}
+  \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
+  \item Analizuje zdefiniowane przez użytkownika relacje precedencji
+  \item Wybiera odpowiednią akcję zgodnie z deklaracją
+  \item Zgłasza błąd kompilacji dla nierozwiązanych konfliktów
+\end{enumerate}
+
+To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne narzędzia
+\texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w SLY\cite{sly}.
+
+\subsection{Generacja kodu tabel}\label{subsec:generacja-kodu-tabel}
+
+\subsubsection{Implementacja ToExpr dla złożonych struktur}\label{subsubsec:implementacja-toexpr-dla-zlozonych-struktur}
+
+System wymaga konwersji struktur danych w czasie kompilacji (wartości) na kod (wyrażenia \texttt{Expr[T]}).
+Realizowane jest to poprzez implementację instancji \texttt{ToExpr} dla typów \texttt{ParseTable} i \texttt{ActionTable}.
+
+Implementacja \texttt{ToExpr[ParseTable]} jest szczególnie interesująca, gdyż musi radzić sobie z~potencjalnie dużymi tabelami (patrz \ref{subsubsec:problem-ograniczenia-rozmiaru-metod-jvm}):
+
+\lstinputlisting[language=scala,caption={Implementacja ToExpr dla ParseTable},label={lst:parser-09-toexpr}, linerange={161-194}]{../../src/alpaca/internal/parser/ParseTable.scala}
+
+Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
+\begin{itemize}
+  \item Tworzenie nowych symboli (\texttt{Symbol.newVal}) reprezentujących zmienne w generowanym kodzie
+  \item Konstrukcja definicji wartości (\texttt{ValDef}) z przypisaniem początkowym
+  \item Generacja listy wyrażeń manipulujących builderem
+  \item Składanie wszystkiego w blok kodu (\texttt{Block}) z finalnym wynikiem
+\end{itemize}
