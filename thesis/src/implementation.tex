@@ -256,24 +256,23 @@ Obsługiwane są wyłącznie jasno zdefiniowane formy wzorców; w przypadku napo
 Ta strategia jest zgodna z zasadą fail-fast - lepiej jest wyraźnie odrzucić nieobsługiwane konstrukcje niż milcząco generować niepoprawny kod.
 
 
-Parser
-
 \section{Praktyczna implementacja generatora parserów z wykorzystaniem makr w Scali 3}\label{sec:praktyczna-implementacja-generatora-parserow-z-wykorzystaniem-makr-w-scali-3}
 
 \subsection{Wprowadzenie do generatora parserów}\label{subsec:wprowadzenie-do-generatora-parserow}
 
-Implementacja generatora parserów w systemie ALPACA demonstruje zaawansowane zastosowanie metaprogramowania Scali 3 do rozwiązywania rzeczywistych problemów inżynierskich.
-Kluczowe osiągnięcia obejmują:
+Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
+Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
+Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
 \begin{itemize}
-  \item \textbf{Automatyczna konstrukcja tabel LR(1)} w czasie kompilacji eliminująca potrzebę osobnego kroku generacji kodu
-  \item \textbf{Pełna integracja z systemem typów Scali}, zapewniająca bezpieczeństwo typów w akcjach semantycznych
-  \item \textbf{Eleganckie obejście ograniczeń platformy JVM} poprzez inteligentną fragmentację generowanego kodu
-  \item \textbf{Deklaratywny mechanizm rozwiązywania konfliktów} oferujący większą elastyczność niż tradycyjne narzędzia
-  \item \textbf{Natychmiastowa walidacja gramatyk} podczas kompilacji, z czytelnymi komunikatami o~błędach
+  \item Konstrukcja tabel LR(1) w czasie kompilacji z wykorzystaniem makr
+  \item Integracja z systemem typów Scali w akcjach semantycznych
+  \item Obejście ograniczenia rozmiaru metod JVM poprzez fragmentację generowanego kodu
+  \item Deklaratywny mechanizm rozwiązywania konfliktów gramatycznych
+  \item Walidacja gramatyk podczas kompilacji z komunikatami o~błędach
 \end{itemize}
 
-Problemy napotkane i rozwiązane podczas implementacji, szczególnie ograniczenie rozmiaru metod JVM, ilustrują istotne aspekty praktycznego metaprogramowania: generowany kod musi nie tylko być poprawny funkcjonalnie, ale również respektować wszystkie techniczne ograniczenia platformy docelowej.
+W~szczególności ograniczenie rozmiaru metod JVM ilustruje istotny aspekt praktycznego metaprogramowania: generowany kod musi nie tylko być poprawny funkcjonalnie, ale również respektować wszystkie techniczne ograniczenia platformy docelowej.
 
 
 
@@ -353,7 +352,7 @@ Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w 
 W tym podejściu:
 \begin{itemize}
   \item Tworzymy builder mapy jako zmienną lokalną (\texttt{Map.newBuilder})
-  \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargerMethod()}
+  \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \texttt{avoidTooLargeMethod()}
   \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
   \item Końcowy wynik jest uzyskiwany przez wywołanie \texttt{builder.result()}
 \end{itemize}
@@ -405,7 +404,7 @@ Implementacja wykorzystuje klasę \texttt{ConflictResolutionTable}, która podcz
 \end{enumerate}
 
 To podejście umożliwia wyrażenie precedencji i łączności operatorów w sposób bardziej naturalny niż tradycyjne narzędzia
-\texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w SLY/cite{sly}.
+\texttt{\%left}, \texttt{\%right} i~\texttt{\%nonassoc} w SLY\cite{sly}.
 
 \subsection{Generacja kodu tabel}\label{subsec:generacja-kodu-tabel}
 
