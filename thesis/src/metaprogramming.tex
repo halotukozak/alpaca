@@ -1,4 +1,4 @@
-\chapter{Metaprogramowanie w~Scali~3}
+\chapter[Metaprogramowanie w Scali 3]{Metaprogramowanie w~Scali~3}
 \label{ch:metaprogramowanie-w-scali-3}
 
 
@@ -9,7 +9,7 @@ W~przeciwieństwie do poprzedniego systemu, który eksponował wewnętrzne mecha
 Podstawą teoretyczną systemu metaprogramowania w~Scali~3 jest programowanie wieloetapowe (ang.~\textit{multi-stage programming}), paradygmat pozwalający na odróżnienie różnych etapów wykonania programu~\cite{scala3-staging,stucki2020thesis}.
 W~tym modelu kod może być wykonywany w~różnych fazach: w~czasie kompilacji (ang.~\textit{compile-time}) lub w~czasie wykonania (ang.~\textit{runtime})~\cite{scala3-staging}.
 
-\subsection{Quotes i~Splices}\label{subsec:cytaty-i-wstawki}
+\subsection[Quotes i Splices]{Quotes i~Splices}\label{subsec:cytaty-i-wstawki}
 Kluczowymi koncepcjami w~systemie metaprogramowania Scali~3 są \textit{quotes} i~\textit{splices}\cite{stucki2018unification,stucki2021multistage}.
 \textit{Quotes}, oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i~traktowania go jako danych~\cite{scala3-reflection}.
 \textit{Splices}, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i~wstawienie wyniku do otaczającego kontekstu~\cite{scala3-reflection,scala3-guides-quotes}.
@@ -25,7 +25,7 @@ System również zapewnia, że typy generyczne używane w~wyższym poziomie etap
 To podejście rozwiązuje problem wymazywania typów generycznych w~JVM, zachowując informację o~typach potrzebną w~kolejnych etapach kompilacji.
 
 
-\section{Mechanizmy metaprogramowania w~Scali~3}\label{sec:mechanizmy-metaprogramowania-w-scali-3}
+\section[Mechanizmy metaprogramowania w Scali 3]{Mechanizmy metaprogramowania w~Scali~3}\label{sec:mechanizmy-metaprogramowania-w-scali-3}
 
 \subsection{Definicje inline}\label{subsec:definicje-inline}
 Najprostszym narzędziem metaprogramowania jest modyfikator \verb|inline|~\cite{stucki2020semantics-preserving}.
