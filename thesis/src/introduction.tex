@@ -132,16 +132,16 @@ Parser automatycznie identyfikuje wszystkie metody o~danej nazwie jako alternaty
 Mechanizm ten eliminuje potrzebę jawnej deklaracji reguł, ale utrudnia śledzenie struktury gramatyki.
 
 \paragraph{Priorytet operatorów}
-W~krotce \texttt{precedence} definiowane jest pierwszeństwo operatorów, jednakże dodanie \texttt{\%~prec} pozwala nadpisać priorytet dla konkretnej reguły składniowej.
+W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakże dodanie \verb|\%~prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
 
-\paragraph{Dostęp do~kontekstu}
-Argument~\texttt{p} pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
-Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\texttt{expr1} jest odwołaniem do drugiego wyrażenia \texttt{expr}.
+\paragraph[Dostęp do kontekstu]{Dostęp do~kontekstu}
+Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
+Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
 \lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/02-sly-parser.py}
 
 Komunikaty błędów w~bibliotece \textit{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:sly-result}.
-Okazuje się, że problemem był brak atrybutu \texttt{ignore\_comment} w~definicji \texttt{Lexer}.
+Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
 
 \lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:not-working-sly}]{listings/introduction/03-not-working-sly.py}
 
