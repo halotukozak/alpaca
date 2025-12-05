@@ -89,10 +89,10 @@ Anonimowa klasa implementująca \texttt{Tokenization[Ctx]} jest tworzona poprzez
 
 Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 \begin{itemize}
-  \item \textbf{Symbol.spliceOwner} — właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
-  \item \textbf{Symbol.freshName(``\$anon'')} — generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
-  \item \textbf{List(TypeRepr.of[Tokenization[Ctx]])} — lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
-  \item \textbf{decls} — funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
+  \item \verb|Symbol.spliceOwner| --- właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
+  \item \verb|Symbol.freshName(``\$anon'')| --- generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
+  \item \verb|List(TypeRepr.of[Tokenization[Ctx]])| --- lista typów bazowych, w~tym przypadku pojedyncza implementacja abstrakcyjnej klasy \texttt{Tokenization}
+  \item \verb|decls| --- funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
 \subsubsection{Definicja członków klasy}\label{subsubsec:definicja-czlonkow-klasy}
@@ -100,11 +100,11 @@ Metoda \texttt{Symbol.newClass} przyjmuje następujące parametry:
 Funkcja \texttt{decls} konstruuje pełną listę deklaracji dla klasy anonimowej:
 
 \begin{enumerate}
-  \item \textbf{Pola tokenów} — dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|
-  \item \textbf{Type alias Fields} — typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów
-  \item \textbf{Pole compiled} — wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów
-  \item \textbf{Pole tokens} — lista wszystkich zdefiniowanych tokenów (włączając ignorowane)
-  \item \textbf{Pole byName} — mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie
+  \item dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|.
+  \item \verb|Type alias Fields| --- typ pomocniczy w~formie \texttt{NamedTuple} ułatwiający strukturalny dostęp do tokenów.
+  \item \verb|Pole compiled| ---li wartość typu \texttt{Regex} zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów.
+  \item \verb|Pole tokens| --- lista wszystkich zdefiniowanych tokenów (włączając ignorowane).
+  \item \verb|Pole byName| --- czyli mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie.
 \end{enumerate}
 
 \subsubsection{Materializacja klasy}\label{subsubsec:materializacja-klasy}
@@ -381,10 +381,10 @@ Funkcja \texttt{createAction} realizuje tę transformację:
 
 Kluczowe aspekty implementacji:
 \begin{enumerate}
-  \item \textbf{Parametryzacja akcji:} Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
-  \item \textbf{Re-owning symboli:} Referencje do kontekstu parsera są zastępowane parametrem funkcji
-  \item \textbf{Ekstrakcja wartości:} Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
-  \item \textbf{Rzutowanie typów:} System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
+  \item Akcja jest transformowana w funkcję przyjmującą kontekst (\texttt{ctx}) oraz listę dzieci w drzewie parsowania (\texttt{param})
+  \item Referencje do kontekstu parsera są zastępowane parametrem funkcji
+  \item Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
+  \item System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 \end{enumerate}
 
 \subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:rozwiazywanie-konfliktow-gramatycznych}
@@ -435,10 +435,10 @@ Realizacja tych mechanizmów wymaga zestawu narzędzi pomocniczych abstrahujący
 
 Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
 \begin{itemize}
-  \item \textbf{Empty[T]} — generyczna konstrukcja wartości domyślnych dla typów produktowych,
-  \item \textbf{ReplaceRefs} — transformacja drzew AST poprzez podstawianie symboli,
-  \item \textbf{CreateLambda} — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
-  \item \textbf{Copyable[T]} — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
+  \item \verb|Empty[T]| — generyczna konstrukcja wartości domyślnych dla typów produktowych,
+  \item \verb|ReplaceRefs| — transformacja drzew AST poprzez podstawianie symboli,
+  \item \verb|CreateLambda| — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
+  \item \verb|Copyable[T]| — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
 \end{itemize}
 
 Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\textit{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.

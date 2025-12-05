@@ -29,16 +29,16 @@ Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, zło
 W~niniejszej pracy przyjęto tezę, zgodnie z~którą wykorzystanie metaprogramowania w~języku Scala~3 (makra kompilacyjne, typy rafinowane) umożliwia konstrukcję systemu generującego analizatory leksykalne i~składniowe charakteryzujących się następującymi właściwościami:
 
 \begin{enumerate}
-    \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
-    \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@.
-    \item diagnostyka błędów --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
+  \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
+  \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@.
+  \item diagnostyka błędów --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
 \end{enumerate}
 
 W~ramach weryfikacji tezy sformułowano następujące pytania badawcze:
 \begin{enumerate}
-    \item Czy możliwe jest osiągnięcie wydajności zbliżonej do~generatorów kodu przy zachowaniu elastyczności bibliotek kombinatorów poprzez zastosowanie metaprogramowania?
-    \item W~jakim stopniu wykorzystanie typów rafinowanych w~Scali~3 wpływa na~bezpieczeństwo typów i~komfort pracy z~wygenerowanym parserem?
-    \item Jakie ograniczenia maszyny wirtualnej Java (JVM) wpływają na~proces generacji kodu w~czasie kompilacji i~jak można je efektywnie niwelować?
+  \item Czy możliwe jest osiągnięcie wydajności zbliżonej do~generatorów kodu przy zachowaniu elastyczności bibliotek kombinatorów poprzez zastosowanie metaprogramowania?
+  \item W~jakim stopniu wykorzystanie typów rafinowanych w~Scali~3 wpływa na~bezpieczeństwo typów i~komfort pracy z~wygenerowanym parserem?
+  \item Jakie ograniczenia maszyny wirtualnej Java (JVM) wpływają na~proces generacji kodu w~czasie kompilacji i~jak można je efektywnie niwelować?
 \end{enumerate}
 
 Celem pracy jest zaprojektowanie i~zaimplementowanie narzędzia \textit{ALPACA} (\textit{Another Lexer Parser And Compiler Alpaca}) w~języku Scala, które implementuje funkcjonalności powszechnie stosowane w~budowie analizatorów leksykalnych i~składniowych, weryfikując postawioną tezę.
@@ -53,11 +53,9 @@ Identyfikacja tych ograniczeń stanowiła punkt wyjścia dla projektu~\textit{AL
 Projekt~\textit{ALPACA} stanowi narzędzie do~generowania lekserów i~parserów w~języku Scala, łączące zalety istniejących rozwiązań poprzez:
 
 \begin{enumerate}
-    \item \textbf{Połączenie wydajności generatorów kodu z~użytecznością bibliotek} --- wykorzystanie makr kompilacyjnych Scali~3 pozwala przenieść część obliczeń na~etap kompilacji, zachowując interfejs programistyczny zintegrowany z~systemem typów języka.
-
-    \item \textbf{Generowanie komunikatów błędów w~oparciu o~kontekst parsera~LR(1)} --- parser ma dostęp do~pełnej informacji o~stanach automatu, co umożliwia identyfikację oczekiwanych terminali i~generowanie sugestii naprawy.
-
-    \item \textbf{Natywną integrację ze~środowiskami IDE} --- implementacja w~czystym języku Scala eliminuje konieczność stosowania dedykowanych pluginów, wykorzystując istniejące wsparcie dla języka (IntelliJ IDEA, Metals).
+  \item Połączenie wydajności generatorów kodu z~użytecznością bibliotek, czyli wykorzystanie makr kompilacyjnych Scali~3, co pozwala przenieść część obliczeń na~etap kompilacji, zachowując interfejs programistyczny zintegrowany z~systemem typów języka.
+  \item Generowanie komunikatów błędów w~oparciu o~kontekst parsera~LR(1).
+  \item Natywną integrację ze~środowiskami IDE, gdyż implementacja w~czystym języku Scala eliminuje konieczność stosowania dedykowanych pluginów, wykorzystując istniejące wsparcie dla języka (IntelliJ IDEA, Metals).
 \end{enumerate}
 
 Proponowane rozwiązanie łączy nowoczesne podejście technologiczne z~praktycznym zastosowaniem w~edukacji i~programowaniu.
@@ -159,7 +157,7 @@ Podejście to łączy elastyczność bibliotek z~czytelną składnią zbliżoną
 \label{subsubsec:scala-parser-combinators}
 
 Biblioteka \textit{Scala parser combinators}~\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z~dokumentacji: \enquote{Trudno jest jednak zrozumieć ich działanie i~jak zacząć.
-    Po skompilowaniu i~uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a~standardowa dokumentacja nie jest zbyt pomocna}~\cite{parser-combinators-readme}.
+  Po skompilowaniu i~uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a~standardowa dokumentacja nie jest zbyt pomocna}~\cite{parser-combinators-readme}.
 
 \subsubsection{ScalaBison}
 \label{subsubsec:scala-bison}
@@ -179,8 +177,8 @@ Niestety próg wejścia ze względu na skomplikowany i~nieintuicyjny DSL jest wy
 Zgodnie z~przykładem~\ref{lst:parboiled2-error}, raportowanie błędów jest bardzo ograniczone (problem z~implementacją wynika jedynie z~różnic w~liczbie parametrów funkcji).
 
 \lstinputlisting[firstline=7,lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
-            Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
-        },label={lst:parboiled2-error}]{listings/introduction/05-parboiled2-error}
+      Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
+    },label={lst:parboiled2-error}]{listings/introduction/05-parboiled2-error}
 
 \subsubsection{FastParse}
 \label{subsubsec:fastparse}
@@ -204,71 +202,71 @@ Biblioteki kombinatorów (FastParse, parboiled2) oferują interfejs zintegrowany
 
 Żadne z~analizowanych rozwiązań nie łączy jednocześnie:
 \begin{itemize}
-    \item wysokiej wydajności (generacja kodu w~czasie kompilacji),
-    \item interfejsu API zintegrowanego z~systemem typów języka,
-    \item komunikatów błędów zawierających kontekst syntaktyczny,
-    \item natywnej integracji ze środowiskami IDE bez dedykowanych pluginów.
+  \item wysokiej wydajności (generacja kodu w~czasie kompilacji),
+  \item interfejsu API zintegrowanego z~systemem typów języka,
+  \item komunikatów błędów zawierających kontekst syntaktyczny,
+  \item natywnej integracji ze środowiskami IDE bez dedykowanych pluginów.
 \end{itemize}
 
 Luka ta stanowi motywację dla projektu~\textit{ALPACA}, który wykorzystuje makra kompilacyjne Scali~3 do osiągnięcia tych celów jednocześnie.
 
 \begin{table}[ht]
-    \centering
-    \begin{tabular}{L|CCCC}
-        \toprule
-        \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
-        \midrule
-        Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
-        \arrayrulecolor{gray}
-        \hline
-        Język użycia            & regex, BNF, akcje w~C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w~Scali   \\
-        \hline
-        Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
-        \hline
-        Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
-        \hline
-        Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
-        \hline
-        Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
-        \hline
-        Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
-        \hline
-        Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
-        \hline
-        Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
-        \hline
-        Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
-        \hline
-        Generowanie kodu        & nie                                       & nie                  & tak                & nie                  \\
-        \hline
-        \toprule
-        Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
-        \midrule
-        Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
-        \hline
-        Język użycia            & DSL w~Scali                               & DSL w~Scali          & DSL w~Scali        & Scala                \\
-        \hline
-        Wydajność               & wysoka                                    & umiarkowana          & wysoka             & wysoka               \\
-        \hline
-        Łatwość użycia          & niska                                     & średnia              & średnia            & wysoka               \\
-        \hline
-        Aktywne wsparcie        & nie                                       & nie                  & tak                & tak                  \\
-        \hline
-        Diagnostyka błędów      & dobra                                     & niska                & dobra              & dobra                \\
-        \hline
-        Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & dobra                \\
-        \hline
-        Popularność             & średnia                                   & niska                & rosnąca            & niska                \\
-        \hline
-        Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & wsparcie dla Scali   \\
-        \hline
-        Wsparcie do debugowania & dobre                                     & dobre                & dobre              & dobre                \\
-        \hline
-        Generowanie kodu        & nie                                       & nie                  & nie                & tak                  \\
-        \bottomrule
-    \end{tabular}
-    \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych}
-    \label{tab:porownanie-alternatyw}
+  \centering
+  \begin{tabular}{L|CCCC}
+    \toprule
+    \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
+    \midrule
+    Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
+    \arrayrulecolor{gray}
+    \hline
+    Język użycia            & regex, BNF, akcje w~C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w~Scali   \\
+    \hline
+    Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
+    \hline
+    Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
+    \hline
+    Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
+    \hline
+    Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
+    \hline
+    Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
+    \hline
+    Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
+    \hline
+    Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
+    \hline
+    Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
+    \hline
+    Generowanie kodu        & nie                                       & nie                  & tak                & nie                  \\
+    \hline
+    \toprule
+    Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
+    \midrule
+    Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
+    \hline
+    Język użycia            & DSL w~Scali                               & DSL w~Scali          & DSL w~Scali        & Scala                \\
+    \hline
+    Wydajność               & wysoka                                    & umiarkowana          & wysoka             & wysoka               \\
+    \hline
+    Łatwość użycia          & niska                                     & średnia              & średnia            & wysoka               \\
+    \hline
+    Aktywne wsparcie        & nie                                       & nie                  & tak                & tak                  \\
+    \hline
+    Diagnostyka błędów      & dobra                                     & niska                & dobra              & dobra                \\
+    \hline
+    Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & dobra                \\
+    \hline
+    Popularność             & średnia                                   & niska                & rosnąca            & niska                \\
+    \hline
+    Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & wsparcie dla Scali   \\
+    \hline
+    Wsparcie do debugowania & dobre                                     & dobre                & dobre              & dobre                \\
+    \hline
+    Generowanie kodu        & nie                                       & nie                  & nie                & tak                  \\
+    \bottomrule
+  \end{tabular}
+  \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych}
+  \label{tab:porownanie-alternatyw}
 \end{table}
 
 
@@ -279,8 +277,8 @@ Niniejsza praca koncentruje się na implementacji parsera LR(1) oraz analizatora
 Następujące aspekty wykraczają poza zakres pracy:
 
 \begin{itemize}
-    \item \textbf{Optymalizacje stanów parsera:} System generuje kanoniczne stany LR(1) bez minimalizacji do LALR(1), co może prowadzić do większych tablic akcji.
-          Implementacja minimalizacji stanowi kierunek przyszłych badań.
+  \item System generuje kanoniczne stany LR(1) bez minimalizacji do LALR(1), co może prowadzić do większych tablic akcji.
+        Implementacja minimalizacji stanowi potencjalny kierunek przyszłych badań.
 
-    \item \textbf{Ewaluacja empiryczna w~kontekście dydaktycznym:} Weryfikacja użyteczności systemu w~środowisku akademickim (badanie z~udziałem studentów) wykracza poza zakres pracy i~stanowi kierunek przyszłych badań.
+  \item Ewaluacja empiryczna w~kontekście dydaktycznym, czyli weryfikacja użyteczności systemu w~środowisku akademickim (badanie z~udziałem studentów) wykracza poza zakres pracy i~stanowi kierunek przyszłych badań.
 \end{itemize}
