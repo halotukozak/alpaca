@@ -4,29 +4,29 @@
 \section{Teoretyczne podstawy działania parserów}
 \label{sec:parser-theory}
 
-Parser przekształca strumień tokenów w strukturę składniową (AST), rozstrzygając zgodność wejścia z gramatyką. Klasyczne podejścia bazują na automatach skończonych rozszerzonych o stos (PDA) oraz na algorytmach predykcyjnych lub analizie przesuwająco-redukcyjnej.
+Parser przekształca strumień tokenów w strukturę danych (zazwyczaj jest to drzewo składniowe), rozstrzygając zgodność wejścia z gramatyką. Klasyczne podejścia bazują na automatach skończonych rozszerzonych o stos (PDA)\cite{pushdown-automaton-wiki} oraz na algorytmach predykcyjnych\cite{predictive-parsing} lub analizie przesuwająco-redukcyjnej\cite{shift-reduce-parser}.
 
 \subsection{Gramatyki i typy parserów}
-Gramatyka bezkontekstowa (CFG) składa się z nieterminali, terminali (tokenów), symbolu startowego i produkcji. Parsery dzieli się na:
+Gramatyka bezkontekstowa (CFG) składa się z nieterminali, terminali (tokenów), symbolu startowego i produkcji. Wśród klas parserów wyróżnia się:
 \begin{itemize}
-    \item \textbf{LL(k)} (zstępujące, predykcyjne) — konstruują lewostronne wyprowadzenia, wybierając produkcje na podstawie prefiksu wejścia (lookahead). Wymagają gramatyk bez lewostronnej rekurencji i z niekolidującymi zbiorami FIRST/FOLLOW.
-    \item \textbf{LR(k)} (wstępujące, shift-reduce) — rekonstruują prawostronne wyprowadzenia wstecz, używając stosu stanów automatu LR. Radzą sobie z większą klasą gramatyk, w tym lewostronnie rekurencyjnych.
+    \item \textbf{LL(k)}\cite{ll-parser-wiki} (zstępujące, predykcyjne) — konstruują lewostronne wyprowadzenia, wybierając produkcje na podstawie prefiksu wejścia (lookahead). Wymagają gramatyk bez lewostronnej rekurencji i z niekolidującymi zbiorami FIRST/FOLLOW.
+    \item \textbf{LR(k)}\cite{lr-parser-wiki} (wstępujące, shift-reduce) — rekonstruują prawostronne wyprowadzenia wstecz, używając stosu stanów automatu LR. Radzą sobie z większą klasą gramatyk, w tym lewostronnie rekurencyjnych.
 \end{itemize}
 
 \subsection{Automat ze stosem}
 Parser można modelować jako deterministyczny automat ze stosem (PDA): stan określa pozycję w tablicach parsera, stos przechowuje nieterminale/stan, a wejście dostarcza tokeny. Przejścia to operacje \textit{shift} (przesunięcie tokenu na stos) i zastąpienie prawej strony produkcji nieterminalem i przeskok do nowego stanu (\textit{reduce}).
 
 \subsection{Tabele sterujące}
-Parsery tabelowe (LL i LR) działają w stałym czasie na token. Tabela akcji LR mapuje parę (stan, lookahead) na \textit{shift}, \textit{reduce}, \textit{accept} lub \textit{error}; tabela goto określa przejścia po redukcjach. W LL analogiczną rolę pełni tabela predykcji (nieterminal × lookahead → produkcja).
+Parsery tabelowe (LL i LR) działają w stałym czasie na token\cite{knuth1965lr}. Tabela akcji LR mapuje parę (stan, lookahead) na \textit{shift}, \textit{reduce}, \textit{accept} lub \textit{error}; tabela goto określa przejścia po redukcjach. W LL analogiczną rolę pełni tabela predykcji (nieterminal × lookahead → produkcja)\cite{ll-parser-wiki}.
 
 \subsection{Rozstrzyganie konfliktów}
 Konflikty \textit{shift/reduce} i \textit{reduce/reduce} pojawiają się, gdy tabela parsera jest niedeterministyczna.
-Najczęściej rozwiązuje się je przez zmianę gramatyki lub zwiększenie lookaheadu.
+Najczęściej rozwiązuje się je przez zmianę gramatyki lub zwiększenie lookaheadu\cite{illinois-parsing-conflicts}.
 
 W parserach LL problemy zwykle wynikają z lewostronnej rekurencji i wspólnych prefiksów (konieczna
 lewostronna faktoryzacja). W parserach LR konflikty najczęściej biorą się ze zbliżonych prefiksów wielu produkcji
 (np.\ \texttt{if--then} vs.\ \texttt{if--then--else}) oraz z niejednoznaczności w wyrażeniach
-arytmetycznych.
+arytmetycznych.\cite{ll-parser-wiki}
 
 \section{Wybór klasy parsera w Alpaca}
 \label{sec:parser-lr1-choice}
@@ -76,10 +76,10 @@ z przewidywalnością działania i stabilnym czasem parsowania.
 Wygenerowanie parsera LR(1) w Alpaca to sekwencja algorytmów wykonywanych w czasie kompilacji. Poniżej opisano, krok po kroku, jak deklaratywna gramatyka staje się deterministyczną tabelą akcji.
 
 \subsection{Wyznaczanie zbiorów FIRST}
-Na bazie produkcji wyliczany jest \texttt{FirstSet} (iteracyjnie do punktu stałego), który określa możliwe terminale po kropce. Algorytm przechodzi po wszystkich produkcjach, dodając:
+Na bazie produkcji wyliczany jest \texttt{FirstSet} (iteracyjnie do punktu stałego)\cite{first-set-geeksforgeeks}, który określa możliwe terminale po kropce. Algorytm przechodzi po wszystkich produkcjach, dodając:
 \begin{itemize}
     \item pierwszy terminal z prawej strony produkcji,
-    \item w przypadku nieterminali — wszystkie terminale z ich FIRST (z wyjątkiem $\varepsilon$), a jeśli mogą generować $\varepsilon$, iteruje dalej po kolejnych symbolach produkcji,
+    \item w przypadku nieterminali — wszystkie terminale z ich FIRST (z wyjątkiem $\varepsilon$ - terminala oznaczającego pusty ciąg), a jeśli mogą generować $\varepsilon$, iteruje dalej po kolejnych symbolach produkcji,
     \item $\varepsilon$ dla produkcji pustych.
 \end{itemize}
 
@@ -89,7 +89,7 @@ Pętla powtarza się, aż zbiory FIRST przestaną się zmieniać (punkt stały)
 
 \subsection{Budowa automatów LR(1)}
 Stan początkowy to domknięcie elementu \texttt{S' → • root, \$}. Kolejne stany są
-budowane klasycznym schematem \textit{closure}/\textit{goto} i deduplikowane, tak aby
+budowane klasycznym schematem \textit{closure}/\textit{goto}\cite{agh-lr1-parsers} i deduplikowane, tak aby
 otrzymać deterministyczny automat LR(1).
 
 \subsubsection{Funkcja \texttt{closure}}

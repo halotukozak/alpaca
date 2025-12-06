@@ -4,17 +4,17 @@
 \section{Teoretyczne podstawy}
 \label{sec:lexer-theory}
 
-Lekser (analizator leksykalny) realizuje pierwszy etap przetwarzania źródła: przekształca ciąg znaków w strumień tokenów, które są ,,atomami'' składni dla parsera.
-Klasyczna konstrukcja opiera się na połączeniu teorii formalnych języków i automatów skończonych.
+Lekser (analizator leksykalny) realizuje pierwszy etap przetwarzania źródła: przekształca ciąg znaków w strumień tokenów, które są ,,atomami'' składni dla parsera\cite{cornell-lexing}.
+Klasyczna konstrukcja opiera się na połączeniu teorii formalnych języków i automatów skończonych\cite{lexical-analysis-wiki}.
 
 \subsection{Opis języka tokenów}
 \label{subsec:lexer-theory-lang}
 Każda klasa tokenów jest opisana przez język regularny: zbiór słów akceptowanych przez wyrażenie regularne.
-Zbiór reguł tokenów tworzy sumę języków regularnych; ich unia jest również językiem regularnym, co pozwala kompilować je do jednego automatu deterministycznego.
+Zbiór reguł tokenów tworzy sumę języków regularnych; ich unia jest również językiem regularnym\cite{jezyki-formalne-automaty}, co pozwala kompilować je do jednego automatu deterministycznego.
 
 \subsection{Automaty skończone}
 \label{subsec:lexer-theory-dfa}
-Wyrażenia regularne są mechanicznie tłumaczone na NFA (np. konstrukcją Thompsona), następnie deterministyczne DFA powstaje w wyniku potęgowania i ewentualnej minimalizacji stanów.
+Wyrażenia regularne są mechanicznie tłumaczone na NFA (np. konstrukcją Thompsona\cite{thompson-construction}), następnie deterministyczne DFA powstaje w wyniku potęgowania i ewentualnej minimalizacji stanów.
 DFA konsumuje wejście znak po znaku, zachowując jednoznaczny stan aktywny i wskazując, czy aktualny prefiks odpowiada dowolnemu z tokenów.
 
 \subsection{Strategia wyboru dopasowania}
@@ -33,8 +33,8 @@ W sytuacji, gdy DFA nie ma przejścia dla bieżącego znaku, ogłasza błąd lek
 \section{Automaty DFA a wyrażenia regularne w Alpaca}
 \label{sec:dfa-vs-regex}
 
-Kanoniczna metoda budowy leksera zakłada konstrukcję deterministycznego automatu skończonego z zestawu wyrażeń regularnych, jednak w \texttt{alpaca.lexer} podejście to zostało zastąpione praktycznym rozwiązaniem opartym na bibliotecznym silniku wyrażeń regularnych. 
-Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce operatorem alternatywy \texttt{|} w jedno wyrażenie regularne z nazwanymi grupami, co umożliwia identyfikację dopasowanej reguły poprzez pojedyncze wywołanie \texttt{findPrefixMatchOf}, która zwraca nazwę dopasowanej grupy oraz jej zawartość.
+Kanoniczna metoda budowy leksera\cite{lexical-analysis-wiki} zakłada konstrukcję deterministycznego automatu skończonego z zestawu wyrażeń regularnych, jednak w \texttt{alpaca.lexer} podejście to zostało zastąpione praktycznym rozwiązaniem opartym na bibliotecznym silniku wyrażeń regularnych\cite{scala-regex-api}. 
+Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce operatorem alternatywy \texttt{|} w jedno wyrażenie regularne.
 
 \subsection{Zalety podejścia}
 \label{subsec:pattern-matching-pros}
@@ -92,7 +92,7 @@ W celu uniknięcia nadmiernego zużycia pamięci, lekser analizuje wejście w sp
 \label{subsec:lexer-impl-regexchecker}
 Przed wygenerowaniem skanera, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod kątem pokrywania reguł. Wykrywa ono dwa typy problemów:
 \begin{itemize}
-    \item \textbf{Subsumpcję} — sytuację, w której późniejszy wzorzec jest całkowicie pokryty przez wcześniejszy.
+    \item \textbf{Subsumpcję}\cite{subsumpcja-wiki} — sytuację, w której późniejszy wzorzec jest całkowicie pokryty przez wcześniejszy.
     \item \textbf{Pokrycie prefiksów} — sytuację, w której wzorce nakładają się na siebie częściowo, co może prowadzić do niejednoznaczności w dopasowaniu wzorca przez silnik wyrażeń regularnych.
 \end{itemize}
 Wykrycie jednej z powyższych zależności powoduje błąd kompilacji z czytelnym i jasnym komunikatem, dzięki czemu ,,martwe'' tokeny są eliminowane przed uruchomieniem programu.
