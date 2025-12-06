@@ -28,10 +28,10 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
       val root = rule { case Expr(expr) => expr }
     }""").loneElement.message should
       include("""
-                |Shift "+" vs Reduce Expr -> Expr + Expr
+                |Shift "+ ($plus)" vs Reduce Expr -> Expr + ($plus) Expr
                 |In situation like:
-                |Expr + Expr + ...
-                |Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
+                |Expr + ($plus) Expr + ($plus) ...
+                |Consider marking production Expr -> Expr + ($plus) Expr to be alwaysBefore or alwaysAfter "+ ($plus)"
                 |""".stripMargin)
   }
 
