@@ -1,139 +1,149 @@
 \chapter{Algorytmy analizy składniowej}
+
 \label{ch:parser-algorithmic}
+
 
 \section{Teoretyczne podstawy działania parserów}
 \label{sec:parser-theory}
 
-Parser przekształca strumień tokenów w strukturę danych (zazwyczaj jest to drzewo składniowe), rozstrzygając zgodność wejścia z gramatyką. Klasyczne podejścia bazują na automatach skończonych rozszerzonych o stos (PDA)\cite{pushdown-automaton-wiki} oraz na algorytmach predykcyjnych\cite{predictive-parsing} lub analizie przesuwająco-redukcyjnej\cite{shift-reduce-parser}.
+Analizator składniowy przekształca strumień tokenów w~strukturę danych (zazwyczaj drzewo składniowe), rozstrzygając zgodność wejścia z~zadeklarowaną gramatyką.
+Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pushdown automaton})~\cite{pushdown-automaton-wiki} oraz na~algorytmach predykcyjnych~\cite{predictive-parsing} lub~analizie przesuwająco-redukcyjnej~\cite{shift-reduce-parser}.
 
-\subsection{Gramatyki i typy parserów}
-Gramatyka bezkontekstowa (CFG) składa się z nieterminali, terminali (tokenów), symbolu startowego i produkcji. Wśród klas parserów wyróżnia się:
+\subsection{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:grammar-parser-classes}
+
+Gramatyka bezkontekstowa (CFG) definiowana jest poprzez nieterminale, terminale (tokeny), symbol startowy oraz zbiór produkcji.
+Wśród klas parserów wyróżnia się~dwie główne:
+
 \begin{itemize}
-    \item \textbf{LL(k)}\cite{ll-parser-wiki} (zstępujące, predykcyjne) — konstruują lewostronne wyprowadzenia, wybierając produkcje na podstawie prefiksu wejścia (lookahead). Wymagają gramatyk bez lewostronnej rekurencji i z niekolidującymi zbiorami FIRST/FOLLOW.
-    \item \textbf{LR(k)}\cite{lr-parser-wiki} (wstępujące, shift-reduce) — rekonstruują prawostronne wyprowadzenia wstecz, używając stosu stanów automatu LR. Radzą sobie z większą klasą gramatyk, w tym lewostronnie rekurencyjnych.
+    \item \textbf{LL(k)} (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
+    Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
+    \item \textbf{LR(k)} (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR.
+    Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
 \end{itemize}
 
-\subsection{Automat ze stosem}
-Parser można modelować jako deterministyczny automat ze stosem (PDA): stan określa pozycję w tablicach parsera, stos przechowuje nieterminale/stan, a wejście dostarcza tokeny. Przejścia to operacje \textit{shift} (przesunięcie tokenu na stos) i zastąpienie prawej strony produkcji nieterminalem i przeskok do nowego stanu (\textit{reduce}).
+\subsection{Modelowanie automatu ze~stosem}
+\label{subsec:pushdown-automaton-model}
+
+Parser można sformalizować jako deterministyczny automat ze~stosem (PDA): stan określa aktualną pozycję w~tabelach parsera, stos przechowuje nieterminale i~stany pośrednie, a~wejście dostarcza sekwencję tokenów.
+Przejścia realizują dwie operacje: \textit{shift} (przesunięcie tokenu na~stos) oraz \textit{reduce} (zastąpienie prawej strony produkcji nieterminalem i~przejście do~nowego stanu).
 
 \subsection{Tabele sterujące}
-Parsery tabelowe (LL i LR) działają w stałym czasie na token\cite{knuth1965lr}. Tabela akcji LR mapuje parę (stan, lookahead) na \textit{shift}, \textit{reduce}, \textit{accept} lub \textit{error}; tabela goto określa przejścia po redukcjach. W LL analogiczną rolę pełni tabela predykcji (nieterminal × lookahead → produkcja)\cite{ll-parser-wiki}.
+\label{subsec:parse-tables}
+
+Parsery tabelowe (LL i~LR) charakteryzują się~stałą złożonością czasową na~każdy token~\cite{knuth1965lr}.
+Tabela akcji parsera LR mapuje parę (stan, prefiks wejścia) na~akcję: \textit{shift}, \textit{reduce}, \textit{accept}, lub~\textit{error}.
+Tabela \texttt{goto} określa przejścia po~redukcjach do~nowych stanów.
+W~parserach LL analogiczną rolę spełnia tabela predykcji (nieterminal~$\times$~prefiks~wejścia~$\to$~produkcja)~\cite{ll-parser-wiki}.
 
 \subsection{Rozstrzyganie konfliktów}
-Konflikty \textit{shift/reduce} i \textit{reduce/reduce} pojawiają się, gdy tabela parsera jest niedeterministyczna.
-Najczęściej rozwiązuje się je przez zmianę gramatyki lub zwiększenie lookaheadu\cite{illinois-parsing-conflicts}.
+\label{subsec:conflict-resolution}
+Konflikty \textit{shift/reduce} i~\textit{reduce/reduce} pojawiają się, gdy tabela parsera byłaby niedeterministyczna (wielokrotny wpis dla tej samej pary stan-prefiks wejścia).
+Rozwiązania tradycyjne obejmują zmianę gramatyki lub~zwiększenie prefiksu wejścia~\cite{illinois-parsing-conflicts}.
+W~parserach LL problemy wynikają typowo z~lewostronnej rekurencji i~wspólnych prefiksów (wymagająca lewostronnej faktoryzacji).
+W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~[translate:\texttt{if--then}] vs.~[translate:\texttt{if--then--else}]) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
 
-W parserach LL problemy zwykle wynikają z lewostronnej rekurencji i wspólnych prefiksów (konieczna
-lewostronna faktoryzacja). W parserach LR konflikty najczęściej biorą się ze zbliżonych prefiksów wielu produkcji
-(np.\ \texttt{if--then} vs.\ \texttt{if--then--else}) oraz z niejednoznaczności w wyrażeniach
-arytmetycznych.\cite{ll-parser-wiki}
 
-\section{Wybór klasy parsera w Alpaca}
-\label{sec:parser-lr1-choice}
+\section{Dobór klasy parsera w~systemie ALPACA}\label{sec:parser-lr1-choice}
 
-Alpaca generuje parsery klasy LR(1), czyli deterministyczne analizatory korzystające
-z pełnego jednego tokena lookaheadu oraz kanonicznych stanów LR. Taki wybór łączy
-wysoką moc wyrazu (obsługa lewostronnej rekurencji, gramatyk o złożonej składni)
-z przewidywalnością działania i stabilnym czasem parsowania.
+System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR.
+Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania.
 
-\subsection{Zalety LR(1) w Alpaca}
+\subsection{Zalety podejścia LR(1) w~ALPACA}\label{subsec:lr1-advantages}
+
 \begin{itemize}
-    \item LR(1) obejmuje znacznie więcej konstrukcji niż LL(k)
-    i unika wymuszonych przeróbek gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
-    Dzięki temu specyfikacja pozostaje bliższa naturalnej formie języka.
+    \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
+    Specyfikacja pozostaje zbliżona do~naturalnej formy języka.
 
-    \item Pełny lookahead eliminuje typowe dla SLR i LALR konflikty,
-    które wynikają z nadmiernie szerokich FOLLOW-ów. Dzięki temu w gramatyce pojawia się mniej konfliktów.
+    \item Pełny zbiór prefiksów wejścia eliminuje konflikty typowe dla~SLR i~LALR wynikające z~nadmiernie szerokich zbiorów \texttt{FOLLOW}.
+    W~rezultacie specyfikacja wymaga mniej manualnych deklaracji rozwiązywania konfliktów.
 
-    \item Stany LR(1) pozwalają jasno wskazać, jaki był oczekiwany token
-    w danym miejscu; pozwala to na bardziej precyzyjne komunikaty dotyczące błędów składniowych.
+    \item Stany LR(1) jawnie wskazują, jaki token był oczekiwany w~danym miejscu.
+    Informacja ta umożliwia generowanie precyzyjnych komunikatów błędów składniowych z~kontekstem.
 
-    \item Każdy krok analizatora to pojedynczy dostęp do tabeli (\texttt{shift/reduce}),
-    co zapewnia stabilną wydajność liniową dla całego wejścia.
+    \item Każdy krok parsera to pojedynczy dostęp do~tabeli akcji (operacja \textit{shift}/\textit{reduce}), gwarantując liniową złożoność czasową względem długości wejścia.
 
-    \item Każda redukcja LR(1) jednoznacznie
-    odpowiada konkretnej produkcji, oraz ma dostęp do terminali które ją tworzą,
-    więc akcje semantyczne mogą bezpośrednio tworzyć węzły AST.
+    \item Każda redukcja LR(1) jednoznacznie odpowiada konkretnej produkcji i~ma~dostęp do~wszystkich terminali ją tworzących.
+    Akcje semantyczne mogą zatem bezpośrednio konstruować węzły drzewa składni abstrakcyjnej.
+
 \end{itemize}
 
-\subsection{Koszty i kompromisy}
+\subsection{Koszty i~ograniczenia}
+\label{subsec:lr1-costs}
+
 \begin{itemize}
-    \item Kanoniczne LR(1) może generować znacznie więcej stanów niż SLR/LALR.
+    \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
 
-    \item Obliczanie zbiorów closure i goto dla LR(1) jest bardziej
-    kosztowne niż w uproszczonych wariantach, co wpływa na czas kompilacji i rozmiar generatora.
+    \item Obliczanie zbiorów domknięcia (ang.~\emph{closure}) i~przejść (ang.~\emph{goto}) dla~LR(1) wymaga więcej obliczeń niż~w~uproszczonych wariantach, wpływając na~czas kompilacji oraz rozmiar generatora.
 
-    \item Parser LR(1) jest deterministyczny składniowo, ale nie semantycznie; wciąż trzeba
-    rozwiązywać niejednoznaczności (np. ``dangling else'') poprzez jawne reguły priorytetów.
+    \item Parser jest deterministyczny na~poziomie składniowym, lecz~wciąż muszą zostać rozwiązane niejednoznaczności (np.~[translate:\texttt{dangling else}]) poprzez jawne reguły precedencji operatorów.
 
-    \item Choć klasa jest szeroka,
-    nadal istnieją konstrukcje wymagające przekształceń.
+    \item Choć klasa jest szeroka, nadal istnieją konstrukcje wymagające przekształceń w~celu dopasowania do~ograniczeń LR(1).
 \end{itemize}
 
-\section{Konstrukcja tablic parsera LR(1) w Alpaca}
+
+\section{Konstrukcja tabel parsera LR(1) w~ALPACA}
 \label{sec:parser-impl-overview}
 
-Wygenerowanie parsera LR(1) w Alpaca to sekwencja algorytmów wykonywanych w czasie kompilacji. Poniżej opisano, krok po kroku, jak deklaratywna gramatyka staje się deterministyczną tabelą akcji.
+Generowanie parsera LR(1) w~ALPACA stanowi sekwencję algorytmów realizowanych w~czasie kompilacji.
+Poniżej opisano, etap po~etapie, transformację deklaratywnej specyfikacji gramatyki w~deterministyczną tabelę akcji.
 
-\subsection{Wyznaczanie zbiorów FIRST}
-Na bazie produkcji wyliczany jest \texttt{FirstSet} (iteracyjnie do punktu stałego)\cite{first-set-geeksforgeeks}, który określa możliwe terminale po kropce. Algorytm przechodzi po wszystkich produkcjach, dodając:
+\subsection{Wyznaczanie zbiorów FIRST}\label{subsec:first-sets}
+
+Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{first-set-geeksforgeeks}.
+\texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N.
+
+Algorytm iteruje po~wszystkich produkcjach, dodając:
+
 \begin{itemize}
-    \item pierwszy terminal z prawej strony produkcji,
-    \item w przypadku nieterminali — wszystkie terminale z ich FIRST (z wyjątkiem $\varepsilon$ - terminala oznaczającego pusty ciąg), a jeśli mogą generować $\varepsilon$, iteruje dalej po kolejnych symbolach produkcji,
-    \item $\varepsilon$ dla produkcji pustych.
+    \item Pierwszy terminal z~prawej strony produkcji.
+    \item W~przypadku nieterminala---wszystkie terminale ze~zbioru \texttt{FIRST} tego nieterminala (z~wyjątkiem symbolu pustego $\varepsilon$). Jeśli nieterminal może generować $\varepsilon$, algorytm kontynuuje do~kolejnych symboli produkcji.
+    \item Symbol $\varepsilon$ dla~produkcji mogących generować pusty ciąg.
 \end{itemize}
 
-\lstinputlisting[language=scala,caption={Implementacja metody addImports używanej podczas wyznaczania zbiorów FIRST},label={lst:add-imports-impl}]{listings/chapter5/add-imports-impl.scala}
+Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} przestają~się~zmieniać).
 
-Pętla powtarza się, aż zbiory FIRST przestaną się zmieniać (punkt stały)
+\lstinputlisting[language=scala,caption={Implementacja metody obliczającej zbiory FIRST},label={lst:add-imports-impl}]{listings/chapter5/add-imports-impl.scala}
 
 \subsection{Budowa automatów LR(1)}
-Stan początkowy to domknięcie elementu \texttt{S' → • root, \$}. Kolejne stany są
-budowane klasycznym schematem \textit{closure}/\textit{goto}\cite{agh-lr1-parsers} i deduplikowane, tak aby
-otrzymać deterministyczny automat LR(1).
+\label{subsec:lr1-automata-construction}
+Stan początkowy to~domknięcie elementu \texttt{S'~→~•~root,~\$}, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
+Kolejne stany konstruowane są~klasycznym schematem \textit{closure}/\textit{goto}~\cite{agh-lr1-parsers} i~deduplikowane, aby~otrzymać deterministyczny automat LR(1).
 
-\subsubsection{Funkcja \texttt{closure}}
-Dla elementu z nieterminalem po kropce (\(A \to \alpha \,\bullet\, B \beta,\, a\))
-algorytm:
+\subsubsection{Funkcja \texttt{closure}}\label{subsubsec:closure-function}
+
+Dla~elementu zawierającego nieterminal po~kropce (\textit{A}~$\to$~$\alpha$~$\bullet$~\textit{B}~$\beta$~,~\textit{a}), funkcja ~\texttt{closure} realizuje następujące kroki:
+
 \begin{itemize}
-    \item wylicza zbiór lookaheadów \(FIRST(\beta a)\), tj.\ \(FIRST(\beta)\)
-          bez \(\varepsilon\) oraz, jeśli \(\varepsilon \in FIRST(\beta)\), dodaje także \(a\),
-    \item dla każdego takiego lookaheadu \(x\) dodaje elementy
-          \(B \to \bullet \gamma, x\) dla wszystkich produkcji \(B \to \gamma\),
-    \item rekurencyjnie domyka nowo dodane elementy, dopóki dodawanie kolejnych produkcji
-          nie generuje nowych elementów (closure osiąga punkt stały).
+    \item Oblicza zbiór możliwych prefiksów wejścia: \(FIRST(\beta \, a) = FIRST(\beta)\) bez~$\varepsilon$, a~jeśli~$\varepsilon~\in~FIRST(\beta)$, dodaje także~\textit{a}.
+    \item Dla~każdego prefiksu wejścia~\(x\) dodaje elementy \textit{B}~$\to$~$\bullet$~$\gamma$~,~\textit{x} dla~wszystkich produkcji \textit{B}~$\to$~$\gamma$.
+    \item Rekurencyjnie domyka nowo dodane elementy, kontynuując proces, dopóki nie~zostaną dodane nowe produkcje (punkt stały domknięcia).
 \end{itemize}
-W efekcie stan zawiera pełen zbiór ,,przewidywań'' dla wszystkich nieterminali,
-które mogą pojawić się w tej pozycji po kropce.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji `closure`},label={lst:lr1-closure}]{listings/chapter5/lr1-closure.scala}
+W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali, które mogą pojawić się~w~tej pozycji.
+
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}},label={lst:lr1-closure}]{listings/chapter5/lr1-closure.scala}
 
 \subsubsection{Funkcja \texttt{goto}}
-Dla zadanego stanu i symbolu \(s\) po kropce, funkcja \texttt{goto} przesuwa kropkę
-we wszystkich elementach z tym symbolem i domyka wynik, korzystając z produkcji
-i wcześniej policzonych zbiorów FIRST.
+\label{subsubsec:goto-function}
+Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesunięcie kropki we~wszystkich elementach zawierających ten symbol, a~następnie stosuje \texttt{closure} do~wyniku, korzystając z~wcześniej obliczonych zbiorów \texttt{FIRST}.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji `goto`},label={lst:lr1-goto}]{listings/chapter5/lr1-goto.scala}
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}},label={lst:lr1-goto}]{listings/chapter5/lr1-goto.scala}
 
-\subsubsection{Główny algorytm budowy automatów LR(1)}
-Konstrukcja automatów LR(1) rozpoczyna się od stanu początkowego i iteracyjnie dodaje nowe stany, dopóki wszystkie przejścia nie zostaną odkryte. Proces ten można podzielić na cztery główne etapy:
+\subsubsection{Główny algorytm budowy LR(1)}
+\label{subsubsec:main-lr1-algorithm}
+
+Konstrukcja automatu LR(1) rozpoczyna się~od~stanu początkowego i~iteracyjnie dodaje nowe stany, dopóki wszystkie możliwe przejścia nie~zostaną odkryte.
+Proces można podzielić na~cztery główne etapy:
+
 \begin{itemize}
-    \item Domknięcie elementu \texttt{S' → • root, \$} tworzy stan~0.
-    \item Dla każdego stanu zbierane są symbole, które mogą wystąpić po kropce;
-          dla każdego takiego symbolu wyliczany jest stan docelowy funkcją \texttt{goto}. Jeśli
-          stan docelowy już istnieje, do tabeli dopisywany jest \textit{shift} do jego ID; w przeciwnym
-          razie stan otrzymuje nowe ID, jest dodawany do listy stanów, a \textit{shift} wskazuje na niego.
-    \item Elementy z kropką na końcu produkcji dodają akcje
-          \textit{reduce} dla swoich lookaheadów; w szczególnym przypadku element
-          \texttt{S' → root •, \$} generuje akcję \textit{accept} dla symbolu \texttt{\$}.
-    \item Algorytm powtarza te kroki, dopóki nie zostaną przetworzone
-          wszystkie utworzone stany; identyczne zestawy elementów nie tworzą nowych stanów,
-          dzięki czemu automat pozostaje deterministyczny.
+    \item Domknięcie elementu \texttt{S'~→~•~root,~\$} tworzy stan~0 (stan początkowy automatu).
+    \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce. Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}. Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \textit{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\textit{shift} wskazuje na~nowy stan.
+    \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \textit{reduce} dla~swoich prefiksów wejścia. Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \textit{accept} dla~symbolu \texttt{\$}.
+    \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów. Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
 \end{itemize}
 
 \lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1)},label={lst:lr1-build}]{listings/chapter5/lr1-build.scala}
 
-Stany są kolekcjami \texttt{Item}-ów przechowywanymi w posortowanym zbiorze, więc są porównywane
-strukturalnie po zawartości, a nie po referencji.
+Stany są~przechowywane w~posortowanych zbiorach strukturalnych, dzięki czemu są~porównywane na~podstawie zawartości (nie~referencji), co~umożliwia naturalną deduplikację.
 
 % TODO: implement error resolution cycle identification and cover the the whole topic here
