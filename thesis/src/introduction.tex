@@ -1,195 +1,284 @@
-\chapter{Cel prac i wizja projektu}
+\chapter[Cel pracy i wizja projektu]{Cel pracy i~wizja projektu}
 \label{ch:cel-wizja}
 
 
 \section{Charakterystyka problemu}
 \label{sec:charakterystyka-problemu}
-Leksery i parsery są kluczowymi elementami w procesie tworzenia interpreterów i kompilatorów języków programowania.
-Pozwalają one przekształcić kod źródłowy napisany przez programistę na reprezentację wewnętrzną, wykorzystywaną później przez dalsze etapy przetwarzania kodu.
 
-Analiza leksykalna wykonywana przez lekser polega na rozdzieleniu kodu źródłowego na jednostki logiczne, zwane leksemami.
-Parser natomiast wykonuje analizę składniową w celu ustalenia struktury gramatycznej tekstu i jej zgodności z gramatyką języka.
+Analizatory leksykalne (ang.~\emph{lexers}) i~składniowe (ang.~\emph{parsers}) stanowią fundamentalne komponenty procesu kompilacji, realizując odpowiednio fazę analizy leksykalnej i~syntaktycznej~\cite{aho2006}.
+Analizator leksykalny segmentuje ciąg znaków wejściowych na strumień tokenów (leksemów) zgodnie z~regułami języka regularnego~\cite{hopcroft2006}, podczas gdy analizator składniowy weryfikuje zgodność strumienia tokenów z~gramatyką bezkontekstową języka, konstruując drzewo składni abstrakcyjnej (AST, ang.~\emph{Abstract Syntax Tree})~\cite{aho2006}.
 
-Celem pracy inżynierskiej jest stworzenie narzędzia \textit{ALPACA} (Another Lexer Parser And Compiler Alpaca) w języku Scala, które implementuje funkcjonalności powszechnie stosowane w budowie lekserów i parserów.
+\subsection{Podstawy teoretyczne}
+\label{subsec:podstawy-teoretyczne}
+
+Analiza leksykalna i~składniowa opiera się na teorii języków formalnych, zapoczątkowanej przez prace Noama Chomsky'ego~\cite{chomsky1956}.
+W~hierarchii Chomsky'ego języki dzieli się na cztery klasy według mocy wyrazu gramatyk je generujących.
+Analizatory leksykalne operują na językach regularnych (typ~3), które są rozpoznawane przez automaty skończone~\cite{hopcroft2006}, podczas gdy parsery składniowe obsługują języki bezkontekstowe (typ~2), rozpoznawane przez automaty ze stosem~\cite{aho2006}.
+
+Wyrażenia regularne są notacją deklaratywną dla języków regularnych i~można je mechanicznie przekształcić w~automaty skończone za pomocą konstrukcji Thompsona~\cite{thompson1968}.
+Automaty deterministyczne (DFA) gwarantują liniową złożoność czasową rozpoznawania~\(O(n)\), podczas gdy niedeterministyczne (NFA) mogą wymagać przeszukiwania z~nawrotami (ang.~\emph{backtracking}).
+
+Gramatyki bezkontekstowe (CFG) definiują strukturę syntaktyczną języków programowania.
+Parsery dla CFG dzielą się na dwie główne kategorie: parsery zstępujące rekurencyjnie (ang.~\emph{top-down}), takie jak LL(\(k\))~\cite{lewis1968}, oraz parsery wstępujące rekurencyjnie (ang.~\emph{bottom-up}), takie jak LR(\(k\))~\cite{knuth1965}.
+Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, złożonością implementacji oraz jakością komunikatów błędów.
+
+
+\section[Teza i pytania badawcze]{Teza i~pytania badawcze}
+\label{sec:teza-badawcza}
+
+W~niniejszej pracy przyjęto tezę, zgodnie z~którą wykorzystanie metaprogramowania w~języku Scala~3 (makra kompilacyjne, typy rafinowane) umożliwia konstrukcję systemu generującego analizatory leksykalne i~składniowe charakteryzujących się następującymi właściwościami:
+
+\begin{enumerate}
+    \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
+    \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@.
+    \item diagnostyka błędów --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
+\end{enumerate}
+
+W~ramach weryfikacji tezy sformułowano następujące pytania badawcze:
+\begin{enumerate}
+    \item Czy możliwe jest osiągnięcie wydajności zbliżonej do~generatorów kodu przy zachowaniu elastyczności bibliotek kombinatorów poprzez zastosowanie metaprogramowania?
+    \item W~jakim stopniu wykorzystanie typów rafinowanych w~Scali~3 wpływa na~bezpieczeństwo typów i~komfort pracy z~wygenerowanym parserem?
+    \item Jakie ograniczenia maszyny wirtualnej Java (JVM) wpływają na~proces generacji kodu w~czasie kompilacji i~jak można je efektywnie niwelować?
+\end{enumerate}
+
+Celem pracy jest zaprojektowanie i~zaimplementowanie narzędzia \textit{ALPACA} (\textit{Another Lexer Parser And Compiler Alpaca}) w~języku Scala, które implementuje funkcjonalności powszechnie stosowane w~budowie analizatorów leksykalnych i~składniowych, weryfikując postawioną tezę.
 
 
 \section{Motywacja projektu}
 \label{sec:motywacja-projektu}
 
-Projekt ma na celu stworzenie nowoczesnego narzędzia do generowania lekserów i parserów w języku Scala, łączącego zalety istniejących rozwiązań z nowoczesnym podejściem technologicznym.
-Jego główne cele to:
+Istniejące narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych wykazują szereg ograniczeń utrudniających ich zastosowanie w~kontekście nowoczesnych języków programowania oraz środowisk deweloperskich.
+Identyfikacja tych ograniczeń stanowiła punkt wyjścia dla projektu~\textit{ALPACA}.
+
+Projekt~\textit{ALPACA} stanowi narzędzie do~generowania lekserów i~parserów w~języku Scala, łączące zalety istniejących rozwiązań poprzez:
+
 \begin{enumerate}
-  \item Stworzenie intuicyjnego API\@.
-  \item Opracowanie obszernej dokumentacji.
-  \item Rozbudowana diagnostyka błędów.
-  \item Poprawa wydajności względem rozwiązań w języku Python.
-  \item Integracja z popularnymi środowiskami programistycznymi (IDE).
+    \item Połączenie wydajności generatorów kodu z~użytecznością bibliotek, czyli wykorzystanie makr kompilacyjnych Scali~3, co pozwala przenieść część obliczeń na~etap kompilacji, zachowując interfejs programistyczny zintegrowany z~systemem typów języka.
+    \item Generowanie komunikatów błędów w~oparciu o~kontekst parsera~LR(1).
+    \item Natywną integrację ze~środowiskami IDE, gdyż implementacja w~czystym języku Scala eliminuje konieczność stosowania dedykowanych pluginów, wykorzystując istniejące wsparcie dla języka (IntelliJ IDEA, Metals).
 \end{enumerate}
 
-Proponowane rozwiązanie łączy nowoczesne podejście technologiczne z praktycznym zastosowaniem w edukacji i programowaniu.
-Może on służyć jako narzędzie dydaktyczne, ułatwiając naukę teorii kompilacji, w pracach badawczych, a także jako kompleksowe narzędzie do tworzenia praktycznych rozwiązań.
+Proponowane rozwiązanie łączy nowoczesne podejście technologiczne z~praktycznym zastosowaniem w~edukacji i~programowaniu.
+Może ono służyć jako narzędzie dydaktyczne, ułatwiając naukę teorii kompilacji, w~pracach badawczych, a~także jako kompleksowe narzędzie do tworzenia praktycznych rozwiązań.
 
 
 \section{Przegląd istniejących rozwiązań}
 \label{sec:przeglad-istniejacych-rozwiazan}
 
-Dostępne na rynku rozwiązania umożliwiają tworzenie analizatorów, jednak charakteryzują się ograniczeniami związanymi z wydajnością, wysokim progiem wejścia i diagnostyką błędów.
+Narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych można sklasyfikować według strategii implementacyjnej na trzy główne kategorie: generatory kodu, biblioteki interpretowane oraz kombinatory parserów.
 
-\subsection{Lex, Yacc}
-\label{subsec:lex-yacc}
+\subsection{Generatory kodu}
+\label{subsec:generatory-kodu}
 
-\textit{Lex}\cite{lesk1975lex} i \textit{Yacc}\cite{johnson1975yacc} to klasyczne, dobrze ugruntowane narzędzia, które odegrały kluczową rolę w tworzeniu setek współczesnych języków programowania.
-Definicja leksera i parsera w tych systemach odbywa się poprzez specjalnie zaprojektowaną składnię konfiguracyjną.
-Mimo pewnych zalet, jego złożoność i wysoki próg wejścia mogą stanowić wyzwanie.
+Generatory kodu transformują deklaratywne specyfikacje gramatyk w~kod źródłowy parsera w~języku docelowym.
+Proces ten odbywa się przed kompilacją programu głównego i~wymaga dodatkowego narzędzia w~procesie budowania (ang.~\emph{build chain}).
 
-Ponieważ \textit{Lex} i \textit{Yacc} zostały zaprojektowane do współpracy z językiem C, ich integracja z nowoczesnymi językami programowania bywa utrudniona.
-Rozszerzanie tych narzędzi o dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
-Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w porównaniu z nowoczesnymi alternatywami.
-\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby w technologii Yacc},label={lst:ruby-parser}]{listings/chapter1/parse.y}
+\subsubsection[Lex i Yacc]{Lex i~Yacc}
+\label{subsubsec:lex-yacc}
 
-\subsection{PLY, SLY}
-\label{subsec:ply-sly}
+\textit{Lex}~\cite{lesk1975lex} i~\textit{Yacc}~\cite{johnson1975yacc} to klasyczne, dobrze ugruntowane narzędzia, które odegrały kluczową rolę w~tworzeniu setek współczesnych języków programowania.
+Definicja leksera i~parsera w~tych systemach odbywa się poprzez specjalnie zaprojektowaną składnię konfiguracyjną.
+Narzędzia te wymuszają znajomość dedykowanej składni specyfikacji gramatyk, co utrudnia rozpoczęcie pracy dla początkujących użytkowników.
 
-\textit{PLY}\cite{ply} i jego nowszy odpowiednik \textit{SLY}\cite{sly} to biblioteki inspirowane narzędziami Lex i Yacc.
-Oferują elastyczne podejście do budowy parserów, umożliwiając samodzielną implementację obsługi leksemów, budowę drzewa AST, czy dodatkowe funkcjonalności takie jak obliczanie numeru linii w lekserze.
+Ponieważ \textit{Lex} i~\textit{Yacc} zostały zaprojektowane do współpracy z~językiem~C, ich integracja z~nowoczesnymi językami programowania bywa utrudniona.
+Rozszerzanie tych narzędzi o~dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
+Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w~porównaniu z~nowoczesnymi alternatywami.
 
-Głównym ograniczeniem PLY i SLY jest implementacja w języku Python.
-Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te charakteryzują się niską wydajnością, a brak statycznego typowania utrudnia wykrywanie błędów na etapie kompilacji.
-Przy implementacji parserów z użyciem biblioteki SLY w środowisku PyCharm obserwuje się wiele ostrzeżeń dotyczących potencjalnych naruszeń reguł, co często wymaga zastosowania mechanizmów supresji, aby uniknąć fałszywie pozytywnych wyników analizy statycznej kodu.
-Ponadto należy zaznaczyć, iż autor projektu informuje o braku dalszego rozwoju tych narzędzi\cite{sly-github}.
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:ruby-parser}]{listings/introduction/intro-01-ruby-parser.y}
 
-Przykład \ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
+\subsubsection{ANTLR}
+\label{subsubsec:antlr}
+
+\textit{ANTLR}~\cite{parr2004s} to rozwiązanie inspirowane narzędziami \textit{Lex} i~\textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
+Jego twórcy opracowali dedykowany język DSL, znany jako Grammar~v4, który umożliwia definiowanie składni analizowanego języka.
+Na~podstawie tej definicji \textit{ANTLR} generuje parser w~wybranym przez użytkownika języku programowania, takim jak Python, Java, C++ lub JavaScript.
+
+Wspomaganie pracy z~\textit{ANTLR} w~znacznym stopniu ułatwiają dedykowane wtyczki do środowisk Visual Studio Code oraz IntelliJ IDEA\@.
+Oferują one funkcjonalności, takie jak kolorowanie składni, autouzupełnianie kodu, nawigację do definicji leksemów oraz walidację błędów, co znacząco przyspiesza proces tworzenia parserów.
+
+Jedną z~kluczowych różnic \textit{ANTLR} w~porównaniu do innych narzędzi jest wykorzystanie gramatyki LL(*), podczas gdy klasyczne rozwiązania, takie jak Yacc czy SLY, implementują LALR(1).
+LL(*) jest bardziej intuicyjna i~czytelna dla programistów, co ułatwia definiowanie reguł składniowych.
+Jednakże jej zastosowanie wiąże się z~większym zużyciem pamięci oraz niższą wydajnością w~porównaniu do LALR(1).
+
+Dodatkowym wyzwaniem podczas korzystania z~\textit{ANTLR} jest konieczność nauki składni DSL Grammar~v4 oraz ograniczenie wsparcia dla narzędzi deweloperskich.
+Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z~jednego z~dedykowanych środowisk, co może stanowić istotne ograniczenie dla użytkowników preferujących inne IDE\@.
+
+\subsection{Biblioteki interpretowane}
+\label{subsec:biblioteki-interpretowane}
+
+Biblioteki interpretowane definiują gramatyki jako struktury danych w~języku bazowym.
+Parser jest wykonywany w~czasie działania programu, co eliminuje krok generacji kodu, ale wprowadza narzut wydajnościowy.
+
+\subsubsection[PLY i SLY]{PLY i~SLY}
+\label{subsubsec:ply-sly}
+
+\textit{PLY}~\cite{ply} i~jego nowszy odpowiednik \textit{SLY}~\cite{sly} to biblioteki inspirowane narzędziami Lex i~Yacc.
+Oferują elastyczne podejście do budowy parserów, umożliwiając samodzielną implementację obsługi leksemów, budowę drzewa AST, czy dodatkowe funkcjonalności takie jak obliczanie numeru linii w~lekserze.
+
+Głównym ograniczeniem PLY i~SLY jest implementacja w~języku Python.
+Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te charakteryzują się niską wydajnością, a~brak statycznego typowania utrudnia wykrywanie błędów na etapie tworzenia analizatora leksykalnego lub składniowego.
+Mechanizm refleksji wykorzystywany przez bibliotekę~\textit{SLY} (inspekcja nazw metod i~typów) powoduje generowanie ostrzeżeń przez analizatory statyczne środowiska PyCharm.
+Ponadto należy zaznaczyć, iż autor projektu informuje o~braku dalszego rozwoju tych narzędzi~\cite{sly-github}.
+
+Przykład~\ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w~bibliotece \textit{SLY}:
+
+\paragraph{Dekorator \texttt{@\_()}}
+Dekorator ten definiuje wzorzec dopasowania dla produkcji.
+Argumenty w~cudzysłowie są traktowane jako literały, podczas gdy identyfikatory bez cudzysłowu odnoszą się do innych nieterminali.
+
+\paragraph{Konwencja nazewnictwa metod}
+Nazwa metody określa typ zwracany przez produkcję.
+Parser automatycznie identyfikuje wszystkie metody o~danej nazwie jako alternatywne produkcje dla tego nieterminala.
+Mechanizm ten eliminuje potrzebę jawnej deklaracji reguł, ale utrudnia śledzenie struktury gramatyki.
+
+\paragraph{Priorytet operatorów}
+W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakże dodanie \verb|\%~prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
+
+\paragraph[Dostęp do kontekstu]{Dostęp do~kontekstu}
+Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
+Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
+
+\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/intro-02-sly-parser.py}
+
+Komunikaty błędów w~bibliotece \textit{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:sly-result}.
+Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
+
+\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:not-working-sly}]{listings/introduction/intro-03-not-working-sly.py}
+
+\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \textit{SLY}},label={lst:sly-result}]{listings/introduction/intro-04-not-working-result}
+
+\subsection{Kombinatory parserów}
+\label{subsec:kombinatory-parserow}
+
+Kombinatory parserów to funkcje wyższego rzędu konstruujące złożone parsery z~prostszych komponentów.
+Podejście to łączy elastyczność bibliotek z~czytelną składnią zbliżoną do notacji BNF\@.
+
+\subsubsection{Scala parser combinators}
+\label{subsubsec:scala-parser-combinators}
+
+Biblioteka \textit{Scala parser combinators}~\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak stwierdzono w~samej dokumentacji: \enquote{Trudno jest jednak zrozumieć ich działanie i~jak zacząć.
+    Po skompilowaniu i~uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może stanowić istotną przeszkodę, a~standardowa dokumentacja nie jest zbyt pomocna}~\cite{parser-combinators-readme}.
+
+\subsubsection{ScalaBison}
+\label{subsubsec:scala-bison}
+
+Z~podsumowania artykułu na temat \textit{ScalaBison}~\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i~zstępowania, który akceptuje pliki wejściowe w~formacie \textit{bison}.
+Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o~błędach niż te generowane przez pierwowzór \textit{bison}, a~także szybkość parsowania i~wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM\@.
+
+Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i~stworzone w~celach akademickich.
+Korzysta z~przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i~liczba funkcjonalności jest bardzo ograniczona w~porównaniu do np.~technologii \textit{SLY}.
+
+\subsubsection{parboiled2}
+\label{subsubsec:parboiled-2}
+
+\textit{parboiled2}~\cite{myltsev2019parboiled2} to biblioteka w~Scali umożliwiająca lekkie i~szybkie parsowanie dowolnego tekstu wejściowego.
+Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń parsujących (PEG), który działa w~czasie kompilacji i~tłumaczy definicję reguły gramatycznej na odpowiadający jej bytecode JVM\@.
+Ze względu na skomplikowany i~nieintuicyjny DSL, bariera wejścia dla nowych użytkowników jest wysoka.
+Zgodnie z~przykładem~\ref{lst:parboiled2-error}, komunikaty błędów nie zawierają informacji o~kontekście syntaktycznym oraz nie sugerują możliwych poprawek (problem z~implementacją wynika jedynie z~różnic w~liczbie parametrów funkcji).
+
+\lstinputlisting[firstline=7,lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
+            Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
+        },label={lst:parboiled2-error}]{listings/introduction/intro-05-parboiled2-error}
+
+\subsubsection{FastParse}
+\label{subsubsec:fastparse}
+
+\textit{FastParse}~\cite{fastparse-docs} to opracowana przez Li~Haoyi wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w~celu uproszczenia tworzenia parserów tekstu strukturalnego.
+Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu nadaje się do parsowania języków programowania, formatów danych, takich jak JSON, czy DSL-i.
+Cechą charakterystyczną FastParse jest równowaga między użytecznością a~wydajnością.
+Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak~\verb&~& dla sekwencjonowania i~\verb&|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
+Według dokumentacji~\cite{fastparse-docs}, parsery \textit{Fastparse} zajmują 1/10 kodu w~porównaniu do ręcznie napisanego parsera rekurencyjnego.
+W~porównaniu do narzędzi generujących parsery, takich jak \textit{ANTLR} lub \textit{Lex} i~\textit{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu.
+To sprawia, że rozpoczęcie pracy z~\textit{Fastparse} jest znacznie łatwiejsze niż w~przypadku bardziej tradycyjnych narzędzi do generowania parserów.
+Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby obsługiwać zagnieżdżone nawiasy, pierwszeństwo operatorów i~raportowanie błędów w~mniej niż 20~liniach kodu~\cite{fastparse-slides}.
+Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o~błędach, które wskazują dokładną lokalizację i~przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
+
+\subsection{Analiza porównawcza}
+\label{subsec:analiza-porownawcza}
+
+Tabela~\ref{tab:porownanie-alternatyw} zestawia główne cechy analizowanych narzędzi.
+Widoczny jest kompromis między wydajnością a~użytecznością: generatory kodu (Lex/Yacc, ANTLR) osiągają wysoką wydajność, ale wymagają dodatkowego kroku kompilacji i~nauki DSL\@.
+Biblioteki kombinatorów (FastParse, parboiled2) oferują interfejs zintegrowany z~językiem bazowym, ale kosztem spadku wydajności związanej z~interpretacją reguł w~czasie wykonania.
+
+Żadne z~analizowanych rozwiązań nie łączy jednocześnie:
 \begin{itemize}
-  \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
-        Literały muszą być zawarte w cudzysłowie, a ,,zmienna'' odpowiada za matchowany ,,typ''.
-  \item Nazwa metody oznacza ,,typ'' zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
-  \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|% prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
-  \item  Argument \verb|p| pozwala na dostęp do kontekstu produkcji (np. numeru linii), ale także do zmiennych w patternu match w adnotacji.
-        Jeśli zdefiniowany jest więcej niż jeden, to dodajemy numer do accesora, np. \verb|expr1| jest odwołaniem się do drugiego wyrażenie \verb|expr|.
-        Jednocześnie, można to zrobić także poprzez odwołanie się do konkretnego indeksu obiektu \verb|p|.
+    \item wysokiej wydajności (generacja kodu w~czasie kompilacji),
+    \item interfejsu API zintegrowanego z~systemem typów języka,
+    \item komunikatów błędów zawierających kontekst syntaktyczny,
+    \item natywnej integracji ze środowiskami IDE bez dedykowanych pluginów.
 \end{itemize}
 
-\lstinputlisting[language=Python,caption={Fragment definicji parsera w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:python-parser}]{listings/chapter1/sly-parser.py}
-
-Komunikaty błędów w bibliotece \textit{SLY} są bardzo ograniczone, co obrazuje przykład \ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z fragmentu kodu \ref{lst:not-working-sly}.
-Okazuje się, że problemem był brak atrybutu \verb|ignore_comment| w definicji \verb|Lexer|.
-\lstinputlisting[language=Python,caption={Fragment niedziałajacego kodu w Pythonie, wykorzystujacy bibliotekę SLY},label={lst:not-working-sly}]{listings/chapter1/not-working-sly.py}
-
-\lstinputlisting[language=terminal, caption={Przykładowy komunikat błędu w bibliotece \textit{SLY}},label={lst:sly-result}]{listings/chapter1/not-working-result}
-
-\subsection{ANTLR}
-\label{subsec:antlr}
-
-\textit{ANTLR}\cite{parr2004s} to kolejne rozwiązanie inspirowane narzędziami \textit{Lex} i \textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
-Jego twórcy opracowali dedykowany język DSL, znany jako Grammar v4, który umożliwia definiowanie składni analizowanego języka.
-Na podstawie tej definicji \textit{ANTLR} generuje parser w wybranym przez użytkownika języku programowania, takim jak Python, Java, C++ lub JavaScript.
-
-Wspomaganie pracy z \textit{ANTLR} w znacznym stopniu ułatwiają dedykowane wtyczki do środowisk Visual Studio Code oraz IntelliJ IDEA. Oferują one funkcjonalności, takie jak kolorowanie składni, autouzupełnianie kodu, nawigację do definicji leksemów oraz walidację błędów, co znacząco przyspiesza proces tworzenia parserów.
-
-Jedną z kluczowych różnic \textit{ANTLR} w porównaniu do innych narzędzi jest wykorzystanie gramatyki LL(*), podczas gdy klasyczne rozwiązania, takie jak Yacc czy SLY, implementują LALR(1).
-LL(*) jest bardziej intuicyjna i czytelna dla programistów, co ułatwia definiowanie reguł składniowych.
-Jednakże, jej zastosowanie wiąże się z większym zużyciem pamięci oraz niższą wydajnością w porównaniu do LALR(1).
-
-Dodatkowym wyzwaniem podczas korzystania z \textit{ANTLR} jest konieczność nauki składni DSL Grammar v4 oraz ograniczenie wsparcia dla narzędzi deweloperskich.
-Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z jednego z dedykowanych środowisk, co może stanowić istotne ograniczenie dla użytkowników preferujących inne IDE\@.
-
-\subsection{Scala parser combinators}
-\label{subsec:scala-parser-combinators}
-
-Biblioteka \textit{Scala parser combinators}\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, ,,Trudno jest jednak zrozumieć ich działanie i jak zacząć.
-Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna''\cite{parser-combinators-readme}.
-
-\subsection{ScalaBison}
-\label{subsec:scala-bison}
-
-Z podsumowania artykułu na temat \textit{ScalaBison}\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i zstępowania, który akceptuje pliki wejściowe w formacie \textit{bison}.
-Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o błędach niż te generowane przez pierwowzór \textit{bison}, a także szybkość parsowania i wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM.
-
-Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i stworzone w celach akademickich.
-Korzysta z przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i liczba funkcjonalności jest bardzo ograniczona w porównaniu do np. technologii \textit{SLY}.
-
-\subsection{parboiled2}
-\label{subsec:parboiled-2}
-
-\textit{parboiled2}\cite{myltsev2019parboiled2} to biblioteka w Scali umożliwiająca lekkie i szybkie parsowanie dowolnego tekstu wejściowego.
-Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń parsujących (PEG), który działa w czasie kompilacji i tłumaczy definicję reguły gramatycznej na odpowiadający jej bytecode JVM. Niestety próg wejścia ze względu na skomplikowany i nieintuicyjny DSL jest wysoki.
-Zgodnie z przykładem \ref{lst:parboiled2-error}, raportowanie błędów jest bardzo ograniczone (problem z implementacją wynika jedynie z różnic w liczbie parametrów funkcji).
-
-\lstinputlisting[firstline=7, lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
-      Niewielki fragment (14 z 133 linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z prezentacji Li Haoyi na temat \textit{FastParse}\cite{fastparse-talk}.
-    },label={lst:parboiled2-error}]{listings/chapter1/parboiled2-error}
-
-\subsection{FastParse}
-\label{subsec:fastparse}
-
-FastParse\textit{FastParse}\cite{fastparse-docs} to opracowana przez Li Haoyi, wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w celu uproszczenia tworzenia parserów tekstu strukturalnego.
-Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu nadaje się do parsowania języków programowania, formatów danych, takich jak JSON, czy DSL-i.
-Cechą charakterystyczną FastParse jest równowaga między użytecznością a wydajnością.
-Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak \verb&~& dla sekwencjonowania i \verb&|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
-Według dokumentacji\cite{fastparse-docs}, parsery \textit{Fastparse} zajmują 1/10 kodu w porównaniu do ręcznie napisanego parsera rekurencyjnego.
-W porównaniu do narzędzi generujących parsery, takich jak \textit{ANTLR} lub \textit{Lex} i \textit{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu.
-To sprawia, że rozpoczęcie pracy z \textit{Fastparse} jest znacznie łatwiejsze niż w przypadku bardziej tradycyjnych narzędzi do generowania parserów.
-Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby obsługiwać zagnieżdżone nawiasy, pierwszeństwo operatorów i raportowanie błędów w mniej niż 20 liniach kodu\cite{fastparse-slides}.
-Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o błędach, które wskazują dokładną lokalizację i przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
-
-\subsection{Podsumowanie}
-\label{subsec:podsumowanie}
+Luka ta stanowi motywację dla projektu~\textit{ALPACA}, który wykorzystuje makra kompilacyjne Scali~3 do osiągnięcia tych celów jednocześnie.
 
 \begin{table}[ht]
-  \centering
-  \begin{tabular}{L|CCCC}
-    \toprule
-    \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
-    \midrule
-    Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
-    \arrayrulecolor{gray}
-    \hline
-    Język użycia            & regex, BNF, akcje w C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w Scali   \\
-    \hline
-    Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
-    \hline
-    Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
-    \hline
-    Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
-    \hline
-    Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
-    \hline
-    Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
-    \hline
-    Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
-    \hline
-    Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
-    \hline
-    Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
-    \hline
-    Generowania kodu        & nie                                       & nie                  & tak                & nie                  \\
-    \hline
-    \toprule
-    Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
-    \midrule
-    Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
-    \hline
-    Język użycia            & DSL w Scali                               & DSL w Scali          & DSL w Scali        & Scala                \\
-    \hline
-    Wydajność               & wysoka                                    & umiarkowana          & wysoka             & TODO                 \\
-    \hline
-    Łatwość użycia          & niska                                     & średnia              & średnia            & TODO                 \\
-    \hline
-    Aktywne wsparcie        & nie                                       & nie                  & tak                & TODO                 \\
-    \hline
-    Diagnostyka błędów      & dobra                                     & niska                & dobra              & TODO                 \\
-    \hline
-    Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & TODO                 \\
-    \hline
-    Popularność             & średnia                                   & niska                & rosnąca            & TODO                 \\
-    \hline
-    Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & TODO                 \\
-    \hline
-    Wsparcie do debugowania & dobre                                     & dobre                & dobre              & TODO                 \\
-    \hline
-    Generowania kodu        & nie                                       & nie                  & nie                & TODO                 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Porównanie wybranych narzędzi do generowania lekserów i parserów}
-  \label{tab:porownanie-alternatyw}
+    \centering
+    \begin{tabular}{L|CCCC}
+        \toprule
+        \large{Narzędzie}       & \textbf{Lex\&Yacc}                        & \textbf{PLY/SLY}     & \textbf{ANTLR}     & \textbf{scala-bison} \\
+        \midrule
+        Język implementacji     & C                                         & Python               & Java               & Scala (nad Bisonem)  \\
+        \arrayrulecolor{gray}
+        \hline
+        Język użycia            & regex, BNF, akcje w~C                     & DSL                  & DSL oparty na EBNF & BNF, akcje w~Scali   \\
+        \hline
+        Wydajność               & wysoka                                    & niska                & umiarkowana        & wysoka               \\
+        \hline
+        Łatwość użycia          & średnia                                   & umiarkowana          & wysoka             & średnia              \\
+        \hline
+        Aktywne wsparcie        & brak                                      & nie                  & tak                & nie                  \\
+        \hline
+        Diagnostyka błędów      & słaba                                     & średnia              & dobra              & słaba                \\
+        \hline
+        Dokumentacja            & dobra                                     & średnia, nieaktualna & dobra              & słaba                \\
+        \hline
+        Popularność             & wysoka                                    & średnia              & wysoka             & niska                \\
+        \hline
+        Integracja IDE          & nieoficjalny plugin                       & ograniczona          & oficjalny plugin   & brak                 \\
+        \hline
+        Wsparcie do debugowania & brak                                      & dobre                & częściowe          & dobre                \\
+        \hline
+        Generowanie kodu        & nie                                       & nie                  & tak                & nie                  \\
+        \hline
+        \toprule
+        Narzędzie               & \textbf{Scala parser\newline combinators} & \textbf{parboiled2}  & \textbf{FastParse} & \textbf{ALPACA}      \\
+        \midrule
+        Język implementacji     & Scala                                     & Scala                & Scala              & Scala                \\
+        \hline
+        Język użycia            & DSL w~Scali                               & DSL w~Scali          & DSL w~Scali        & Scala                \\
+        \hline
+        Wydajność               & wysoka                                    & umiarkowana          & wysoka             & wysoka               \\
+        \hline
+        Łatwość użycia          & niska                                     & średnia              & średnia            & wysoka               \\
+        \hline
+        Aktywne wsparcie        & nie                                       & nie                  & tak                & tak                  \\
+        \hline
+        Diagnostyka błędów      & dobra                                     & niska                & dobra              & dobra                \\
+        \hline
+        Dokumentacja            & słaba                                     & bardzo dobra         & bardzo dobra       & dobra                \\
+        \hline
+        Popularność             & średnia                                   & niska                & rosnąca            & niska                \\
+        \hline
+        Integracja IDE          & wsparcie dla Scali                        & wsparcie dla Scali   & wsparcie dla Scali & wsparcie dla Scali   \\
+        \hline
+        Wsparcie do debugowania & dobre                                     & dobre                & dobre              & dobre                \\
+        \hline
+        Generowanie kodu        & nie                                       & nie                  & nie                & tak                  \\
+        \bottomrule
+    \end{tabular}
+    \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych}
+    \label{tab:porownanie-alternatyw}
 \end{table}
+
+
+\section[Ograniczenia i zakres pracy]{Ograniczenia i~zakres pracy}
+\label{sec:ograniczenia-zakres}
+
+Niniejsza praca koncentruje się na implementacji parsera LR(1) oraz analizatora leksykalnego wykorzystującego wyrażenia regularne.
+Następujące aspekty wykraczają poza zakres pracy:
+
+\begin{itemize}
+    \item System generuje kanoniczne stany LR(1) bez minimalizacji do LALR(1), co może prowadzić do większych tablic akcji.
+          Implementacja minimalizacji stanowi potencjalny kierunek przyszłych badań.
+
+    \item Ewaluacja empiryczna w~kontekście dydaktycznym, czyli weryfikacja użyteczności systemu w~środowisku akademickim (badanie z~udziałem studentów) wykracza poza zakres pracy i~stanowi kierunek przyszłych badań.
+\end{itemize}

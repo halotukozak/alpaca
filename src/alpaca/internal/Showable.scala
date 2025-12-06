@@ -42,18 +42,18 @@ object Shown {
 
 private[internal] object Showable {
 
-  def fromToString[T]: Showable[T] = _.toString
-
   /** Showable instance for String (identity). */
   given Showable[String] = _.asInstanceOf[Shown]
 
   /** Showable instance for Int. */
   given Showable[Int] = fromToString
 
+  def fromToString[T]: Showable[T] = _.toString
+
   /** Showable instance for nullable types. */
-  given [T: Showable]: Showable[T | Null] =
+  given [T: Showable as showable]: Showable[T | Null] =
     case null => ""
-    case value => show"$value"
+    case value: T @unchecked => showable.show(value)
 
   // todo: add names
   given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show

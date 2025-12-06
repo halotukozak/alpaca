@@ -74,7 +74,7 @@
     morecomment=[n]{/*}{*/},
     morecomment=[n]{/**}{*/},
     morestring=[b]",
-    morestring=[b]"""
+    morestring=[b]``''"
 }[keywords,comments,strings]
 
 \usepackage{fontspec}
@@ -142,24 +142,24 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
-    \maketitle
+\maketitle
 
-    \tableofcontents
+\tableofcontents
 
-    \include{introduction}
+\include{introduction}
 
-    \include{metaprogramming}
+\include{metaprogramming}
 
-    \include{implementation}
+\include{implementation}
 
-    \include{lexer-algorithmic}
+\include{lexer-algorithmic}
 
-    \include{parser-algorithmic}
+\include{parser-algorithmic}
 
-    \printbibliography
-    \listoffigures
-    \listoftables
-    \listofalgorithmes
-    \lstlistoflistings
+\printbibliography
+% \listoffigures
+\listoftables
+% \listofalgorithmes
+\lstlistoflistings
 
 \end{document}

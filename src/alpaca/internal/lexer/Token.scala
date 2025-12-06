@@ -4,6 +4,8 @@ package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
+import scala.annotation.compileTimeOnly
+import scala.annotation.publicInBinary
 
 /**
  * Type alias for context manipulation functions.
@@ -45,13 +47,12 @@ object TokenInfo {
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] = {
+  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] =
     import quotes.reflect.*
     ValidName.check(name)
     ConstantType(StringConstant(name)).asType match
       case '[type nameTpe <: ValidName; nameTpe] =>
         '{ TokenInfo[nameTpe](${ Expr(name).asExprOf[nameTpe] }, ${ Expr(nextName()) }, ${ Expr(regex) }) }
-  }
 
   /**
    * Generates a unique name for a regex capture group.
@@ -88,14 +89,13 @@ object TokenInfo {
  * @tparam Ctx the global context type
  * @tparam Value the value type extracted from the matched text
  */
-sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value] {
+sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
 
   /** Token information including name and pattern. */
   val info: TokenInfo[Name]
 
   /** Function to update the context when this token is matched. */
   val ctxManipulation: CtxManipulation[Ctx @uv]
-}
 
 /**
  * A token that produces a value when matched.
@@ -111,13 +111,19 @@ sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value] {
  * @param remapping function to extract value from context
  */
 //todo: may be invariant?
-final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, Value](
+final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
-) extends Token[Name, Ctx, Value] {
-  type LexemTpe = Lexem[Name, Value]
-}
+) extends Token[Name, Ctx, Value]:
+  type LexemeTpe = Lexeme[Name, Value @uv]
+
+  @compileTimeOnly(RuleOnly)
+  inline def unapply(x: Any): Option[LexemeTpe] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def List: PartialFunction[Any, Option[List[LexemeTpe]]] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
 
 /**
  * A token that is matched but not included in the output.

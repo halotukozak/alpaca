@@ -3,6 +3,7 @@ package internal
 package parser
 
 import scala.util.Random
+import scala.reflect.NameTransformer
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
@@ -83,7 +84,10 @@ private[parser] object Symbol {
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given Showable[Symbol] = _.name
+  given Showable[Symbol] = symbol =>
+    NameTransformer.encode(symbol.name) match
+      case encoded if encoded == symbol.name => symbol.name
+      case encoded => s"${symbol.name} ($encoded)"
 
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =
