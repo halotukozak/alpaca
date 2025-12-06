@@ -1,0 +1,84 @@
+name: Check Thesis LaTeX Output
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - master
+
+jobs:
+  check-latex:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: alpaca.tex
+          working_directory: thesis/src
+          latexmk_use_xelatex: true
+          latexmk_shell_escape: true
+          extra_system_packages: "biber"
+          pre_compile: "export max_print_line=1000"
+          args: "-f"
+
+      - name: Install PDF comparison tools
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Compare PDF output
+        working-directory: thesis/src
+        run: |
+          # Store the newly compiled PDF
+          mv alpaca.pdf alpaca-new.pdf
+          
+          # Extract the original PDF from git (safe method that doesn't affect working directory)
+          if ! git show HEAD:thesis/src/alpaca.pdf > alpaca-original.pdf 2>/dev/null; then
+            echo "::error::Could not extract alpaca.pdf from git. Make sure the PDF is committed to the repository."
+            exit 1
+          fi
+          
+          # Extract text content from both PDFs for comparison
+          if pdftotext alpaca-original.pdf alpaca-original.txt; then
+            echo "Successfully extracted text from original PDF"
+          else
+            echo "Warning: Could not extract text from original PDF, will use size comparison"
+          fi
+          
+          if pdftotext alpaca-new.pdf alpaca-new.txt; then
+            echo "Successfully extracted text from new PDF"
+          else
+            echo "Warning: Could not extract text from new PDF, will use size comparison"
+          fi
+          
+          if [ -f alpaca-original.txt ] && [ -f alpaca-new.txt ]; then
+            if ! diff -q alpaca-original.txt alpaca-new.txt > /dev/null 2>&1; then
+              echo "::error::LaTeX output has changed! The thesis PDF content differs from the committed version."
+              echo "Please recompile the thesis and commit the updated PDF."
+              diff alpaca-original.txt alpaca-new.txt || true
+              exit 1
+            fi
+          else
+            # Fallback: compare file sizes as a rough check
+            ORIGINAL_SIZE=$(stat -c%s alpaca-original.pdf)
+            NEW_SIZE=$(stat -c%s alpaca-new.pdf)
+            
+            # Allow small size differences due to metadata/timestamps
+            # 1KB tolerance accounts for PDF metadata variations (creation date, producer info, etc.)
+            SIZE_DIFF=$((NEW_SIZE - ORIGINAL_SIZE))
+            SIZE_DIFF=$(( SIZE_DIFF < 0 ? -SIZE_DIFF : SIZE_DIFF ))
+            
+            if [ "$SIZE_DIFF" -gt 1024 ]; then
+              echo "::error::LaTeX output has changed! PDF size differs significantly (original: $ORIGINAL_SIZE bytes, new: $NEW_SIZE bytes)."
+              echo "Please recompile the thesis and commit the updated PDF."
+              exit 1
+            fi
+          fi
+          
+          echo "✓ LaTeX output is consistent with the committed PDF."
