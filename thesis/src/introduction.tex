@@ -61,8 +61,8 @@ Ponadto należy zaznaczyć, iż autor projektu informuje o braku dalszego rozwoj
 Przykład \ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w bibliotece \textit{SLY}.
 \begin{itemize}
   \item Operator \verb|@_()| jest zdefiniowany, aby automatycznie analizować tekst przy pomocy wyrażeń regularnych.
-        Literały muszą być zawarte w cudzysłowie, a „zmienna” odpowiada za matchowany „typ”.
-  \item Nazwa metody oznacza „typ” zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
+        Literały muszą być zawarte w cudzysłowie, a ,,zmienna'' odpowiada za matchowany ,,typ''.
+  \item Nazwa metody oznacza ,,typ'' zwracany przez daną produkcję, czyli dla definicji \verb|IF| należy najpierw odszukać wszystkie metody, które mają nazwę \verb|condition|, gdyż są to możliwe produkcje.
   \item W krotce (sic!) \verb|precedence| definiujemy pierwszeństwo operatorów, jednakże dodanie \verb|% prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
   \item  Argument \verb|p| pozwala na dostęp do kontekstu produkcji (np. numeru linii), ale także do zmiennych w patternu match w adnotacji.
         Jeśli zdefiniowany jest więcej niż jeden, to dodajemy numer do accesora, np. \verb|expr1| jest odwołaniem się do drugiego wyrażenie \verb|expr|.
@@ -96,8 +96,8 @@ Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z jednego z 
 \subsection{Scala parser combinators}
 \label{subsec:scala-parser-combinators}
 
-Biblioteka \textit{Scala parser combinators}\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, „Trudno jest jednak zrozumieć ich działanie i jak zacząć.
-Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna”\cite{parser-combinators-readme}.
+Biblioteka \textit{Scala parser combinators}\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak wynika z dokumentacji, ,,Trudno jest jednak zrozumieć ich działanie i jak zacząć.
+Po skompilowaniu i uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może to być zniechęcające, a standardowa dokumentacja nie jest zbyt pomocna''\cite{parser-combinators-readme}.
 
 \subsection{ScalaBison}
 \label{subsec:scala-bison}
