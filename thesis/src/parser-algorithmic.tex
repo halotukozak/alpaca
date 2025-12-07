@@ -73,7 +73,7 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
 
-    \item Obliczanie zbiorów domknięcia (ang.~\emph{closure}) i~przejść (ang.~\emph{goto}) dla~LR(1) wymaga więcej obliczeń niż~w~uproszczonych wariantach, wpływając na~czas kompilacji oraz rozmiar generatora.
+    \item Obliczanie zbiorów domknięcia (ang.~\emph{closure}) i~przejść (ang.~\emph{goto}) dla~LR(1) wymaga więcej obliczeń niż~w~uproszczonych wariantach, wpływając na~czas kompilacji oraz rozmiar generatora~\cite{szeruda2023parsers}.
 
     \item Parser jest deterministyczny na~poziomie składniowym, lecz~wciąż muszą zostać rozwiązane niejednoznaczności (np.~[translate:\texttt{dangling else}]) poprzez jawne reguły precedencji operatorów.
 

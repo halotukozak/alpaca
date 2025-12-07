@@ -74,7 +74,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
     """).loneElement.message should
       include("""
                 |Inconsistent conflict resolution detected:
-                |Reduction(A) before Shift(+) before Reduction(+ -> B) before Reduction(A)
+                |Reduction(A) before Shift(+) before Reduction(+ ($plus) -> B) before Reduction(A)
                 |There are elements being both before and after Reduction(A) at the same time.
                 |Consider revising the before/after rules to eliminate cycles
                 |""".stripMargin)
