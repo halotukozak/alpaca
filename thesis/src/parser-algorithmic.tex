@@ -7,7 +7,7 @@
 \label{sec:parser-theory}
 
 Analizator składniowy przekształca strumień tokenów w~strukturę danych (zazwyczaj drzewo składniowe), rozstrzygając zgodność wejścia z~zadeklarowaną gramatyką.
-Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pushdown automaton})~\cite{pushdown-automaton-wiki} oraz na~algorytmach predykcyjnych~\cite{predictive-parsing} lub~analizie przesuwająco-redukcyjnej~\cite{shift-reduce-parser}.
+Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pushdown automaton})~\cite{pushdown-automaton-wiki} oraz na~algorytmach predykcyjnych~\cite{predictive-parsing} lub~analizie przesuwająco-redukcyjnej~\cite{tomita1991glr}.
 
 \subsection{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:grammar-parser-classes}
 
@@ -89,7 +89,7 @@ Poniżej opisano, etap po~etapie, transformację deklaratywnej specyfikacji gram
 
 \subsection{Wyznaczanie zbiorów FIRST}\label{subsec:first-sets}
 
-Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{first-set-geeksforgeeks}.
+Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{aho1974lr}.
 \texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N.
 
 Algorytm iteruje po~wszystkich produkcjach, dodając:
