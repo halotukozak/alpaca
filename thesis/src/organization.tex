@@ -1,0 +1,954 @@
+\chapter[Organizacja pracy]{Organizacja pracy}
+
+\label{ch:organizacja-pracy}
+
+Niniejszy rozdział opisuje metodę realizacji projektu dyplomowego \textit{ALPACA}, charakter projektu, podział obowiązków między członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
+Szczególny nacisk położony jest na charakterystykę procesu wytwórczego, narzędzia wspierające współpracę zespołową oraz strategię walidacji implementacji.
+
+
+\section[Charakterystyka projektu]{Charakterystyka projektu i sposób realizacji}
+
+\label{sec:charakterystyka-projektu-realizacji}
+
+\subsection{Typ projektu}\label{subsec:typ-projektu}
+
+Projekt \textit{ALPACA} stanowi projekt o~charakterze \textbf{badawczo-rozwojowym}, łączącym elementy badań teoretycznych z~praktyczną implementacją.
+
+Wymaganie projektu, czyli implementacja narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~czasie trwania kompilacji, przy pełnym wsparciu IDE, było częściowo sprecyzowane na etapie początkowym.
+
+Następnie, projekt ewoluował poprzez iteracyjne ulepszenia i~eksperymentuje z~różnymi podejściami do rozwiązania problemu.
+W~szczególności faza poszukiwawcza (w semestrze 1) polegała na~eksploracji możliwości metaprogramowania Scali~3, prototypowaniu podejść do generacji lekserów i~parserów oraz identyfikacji ograniczeń technicznych platformy JVM, a następnie faza realizacyjna (w semestrze 2) skoncentrowana była na~utrwaleniu wybranych rozwiązań, rozszerzeniu funkcjonalności systemu oraz optymalizacji jakości kodu.
+
+\subsection{Proces wytwórczy}\label{subsec:proces-wytworczy}
+
+Realizacja projektu przebiegała zgodnie z~\textbf{iteracyjno-przyrostowym procesem wytwórczym}, inspirowanym metodologią Agile, z~uwzględnieniem specyfiki pracy zespołu dwuosobowego w~kontekście akademickim.
+
+\subsubsection{Uzasadnienie wyboru procesu}
+
+Wybór podejścia iteracyjno-przyrostowego wynika z~następujących przesłanek:
+
+\begin{enumerate}
+
+    \item Problem implementacji narzędzi lex i~yacc w~Scali~3 nie~był wcześniej eksplorowany w~tej skali, co skutkowało niepewnością wymagań i eksperymentowaniem z~różnymi podejściami.
+
+    \item Każda potencjalna ścieżka realizacji wiązała się z~ograniczeniami metod metaprogramowania Scali~3, których wpływ można było zweryfikować tylko poprzez prototypowanie.
+
+    \item Iteracyjne podejście umożliwiło zmianę kierunku badań na~podstawie wyników eksperymentów i~nauki z~poprzednich iteracji.
+
+    \item \textbf{Nauka poprzez budowanie} --- praktyczne doświadczenie z~systemem typów Scali~3 i~metaprogramowaniem wymagało uczenia się w~trakcie implementacji.
+
+\end{enumerate}
+
+\subsubsection{Struktura procesu}
+
+Proces wytwórczy podzielono na~dwie zasadnicze fazy:
+
+\paragraph[Faza 1: Prototypowanie z odrzucaniem (semestr 1, tygodnie 1--12)]{Faza 1: Prototypowanie z~odrzucaniem (semestr 1, tygodnie 1--12)}
+
+Pierwsza połowa pracy poświęcona została eksploracyjnej pracy nad~problemem:
+
+\begin{itemize}
+
+    \item Opracowanie kilku podejść do generacji lekserów (tradycyjne automaty DFA vs. wyrażenia regularne biblioteczne).
+
+    \item Eksperymentowanie z~mechanizmami metaprogramowania Scali~3 (makra, typy rafinowane, refleksja TASTy).
+
+    \item Prototypowanie systemu parser generator dla parsera LR(1).
+
+\end{itemize}
+
+\paragraph{Faza 2: Implementacja przyrostowa (semestr 2, tygodnie 13--27)}
+
+Druga połowa skoncentrowana była na~utrwaleniu wybranych podejść i~przyrostowym rozbudowywaniu systemu:
+
+\begin{itemize}
+
+    \item Implementacja zoptymalizowanego system analizy leksykalnej z~wykorzystaniem wyrażeń regularnych bibliotecznych.
+
+    \item Opracowanie generatora parserów LR(1) z~obsługą deklaratywnego rozwiązywania konfliktów.
+
+    \item Wsparcie dla typów rafinowanych umożliwiające pełne bezpieczeństwo typów w~interfejsie API\@.
+
+    \item Identyfikacja ograniczeń technicznych platformy JVM (limit rozmiaru metod, wymazywanie typów).
+
+    \item Optymalizacja czasu kompilacji i~wielkości wygenerowanego kodu.
+
+    \item Dokumentacja.
+
+\end{itemize}
+
+
+\section[Osoby w~projekcie]{Osoby w~projekcie i~ich role}
+
+\label{sec:osoby-w-projekcie}
+
+Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rolach:
+
+\subsection{Członkowie zespołu}\label{subsec:czonkowie-zespou}
+
+\subsubsection{Bartosz Buczek (dalej: BB)}
+
+\begin{itemize}
+
+    \item \textbf{Rola:} autor
+
+    \item \textbf{Główne obszary:}
+    Implementacja algorytmów analizy leksykalnej i składniowych, implementacja algorytmu rozwiązywania konfliktów gramatycznych, testy wydajnościowe.
+
+\end{itemize}
+
+\subsubsection{Bartłomiej Kozak (dalej: BK)}
+
+\begin{itemize}
+
+    \item \textbf{Rola:} autor
+
+    \item \textbf{Główne obszary:} Implementacja ALPACA DSL z wykorzystaniem metaprogramowania Scali~3, generacja tabel parsowania w~czasie kompilacji, zaawansowane mechanizmy systemów typów, dokumentacja.
+
+\end{itemize}
+
+
+\section[Zespół i podział obowiązków]{Zespół i~podział obowiązków}
+\label{sec:zespol-podzial-obowiazkow}
+
+\subsection{Podział prac na główne zadania}\label{subsec:podzia-prac-na-gowne-zadania}
+
+Projekt podzielono na~następujące wyraźne obszary funkcjonalne, z~przyporządkowaniem głównych odpowiedzialności:
+
+\subsubsection{System leksykalny}
+
+\textbf{Zakres:}
+
+\begin{itemize}
+
+    \item Implementacja makra \verb|lexer| transformującego deklaratywne reguły tokenizacji w~kod proceduralny. (BK)
+
+    \item Projektowanie interfejsu DSL opartego na~funkcjach częściowych. (BB, BK)
+
+    \item Integracja z~wyrażeniami regularnymi biblioteki Scala. (BB)
+
+    \item Typy rafinowane dla tokenów (ComputedFieldNames). (BK)
+
+    \item Obsługa ignorowanych reguł leksykalnych. (BB)
+
+    \item Obługa kontekstu w lekserze. (BB, BK)
+
+    \item Diagnostyka błędów leksykalnych. (BB, BK)
+
+
+\end{itemize}
+
+\textbf{Artefakty:}
+
+\begin{itemize}
+
+    \item Moduł \verb|alpaca.lexer|
+
+    \item Klasy: \verb|LexerDefinition|, \verb|Tokenization[Ctx]|, \verb|DefinedToken|
+
+    \item Makra: \verb|lexer|, narzędzia pomocnicze (\verb|CompileNameAndPattern|, \verb|ReplaceRefs|)
+
+\end{itemize}
+
+\subsubsection{System parserów}
+
+\textbf{Zakres:}
+
+\begin{itemize}
+
+    \item Implementacja algorytmów konstrukcji stanów LR(1) w~czasie kompilacji. (BB, BK)
+
+    \item Generacja tabel parsowania (tabela akcji, tabela goto). (BB)
+
+    \item Transformacja akcji semantycznych z~kontekstu definicji do wygenerowanych tabel. (BK)
+
+    \item Obsługa ograniczeń JVM (fragmentacja metod, limit rozmiaru). (BK)
+
+    \item Deklaratywne rozwiązywanie konfliktów shift-reduce i~reduce-reduce. (BB, BK)
+
+    \item Obsługa contekstu w~parserze. (BB, BK)
+
+    \item Diagnostyka błędów składniowych. (BB, BK)
+
+\end{itemize}
+
+\textbf{Artefakty:}
+
+\begin{itemize}
+
+    \item Moduł \verb|alpaca.parser|
+
+    \item Klasy: \verb|Parser[Ctx]|, \verb|Rule[R]|, \verb|ParseTable|, \verb|ActionTable|
+
+    \item Makra: \verb|createTables|
+
+\end{itemize}
+
+\subsubsection[Infrastruktura i narzędzia pomocnicz]{Infrastruktura i~narzędzia pomocnicze}
+
+\textbf{Zakres:}
+
+\begin{itemize}
+
+    \item Implementacja pomocniczych klas i makr, np. \verb|Empty[T]|, \verb|ReplaceRefs|, \verb|CreateLambda|, \verb|Copyable[T]|. (BK)
+
+    \item System testów jednostkowych i~testów integracyjnych. (BB)
+
+    \item Konfiguracja build pipeline (mill). (BK)
+
+    \item Dokumentacja techniczna. (BB, BK)
+
+\end{itemize}
+
+\subsubsection{Dokumentacja pracy dyplomowej}
+
+\textbf{Zakres:}
+
+\begin{itemize}
+
+    \item \nameref{ch:cel-wizja}. (BB, BK)
+
+    \item \nameref{ch:metaprogramowanie-w-scali-3}. (BK)
+
+    \item \nameref{ch:implementacja}. (BK)
+
+    \item \nameref{ch:lexer-algorithmic}. (BB)
+
+    \item \nameref{ch:parser-algorithmic}. (BB)
+
+    \item TODO. (BB)
+
+    \item \nameref{ch:organizacja-pracy}. (BK)
+
+\end{itemize}
+
+\subsection{Współpraca między członkami zespołu}\label{subsec:wspopraca-miedzy-czonkami-zespou}
+
+Choć podział obowiązków był wyraźny, współpraca między członkami zespołu była ścisła i~ciągła:
+
+\begin{itemize}
+
+    \item Code reviews, dzięki którym każdy pull request do repozytorium był recenzowany przez drugiego członka zespołu przed merge.
+
+    \item Tworzenie GitHub issues i umieszczanie ich na Kanban board\cite{alpaca-project}.
+
+    \item Wyznaczanie kamieni milowych z~terminami zakończenia\cite{alpaca-milestones}.
+
+    \item Opracowano interfejsów pomiędzy modułami (np. interfejs \verb|Token|, parametryzacja \verb|Ctx|).
+
+    \item Wspólne rozwiązywanie problemów technicznych wymagających wiedzy z~różnych obszarów systemu.
+
+    \item Praca z~systemem Git.
+
+\end{itemize}
+
+
+\section[Organizacja prac i~wykorzystane narzędzia]{Organizacja prac i~wykorzystane narzędzia}
+
+\label{sec:organizacja-prac-narzedzia}
+
+\subsection{Komunikacja zespołowa}\label{subsec:komunikacja-zespoowa}
+
+\subsubsection{Spotkania regularne}
+
+\begin{itemize}
+
+    \item Spotkania zespołu: Nieformalne, co 2--3 dni (głównie asynchronicznie poprzez komunikatory).
+
+    \item Sesje debuggowania: W~miarę potrzeby, gdy napotkane problemy wymagały wspólnego wysiłku.
+
+    \item Burze mózgów, np. projektuj DSL: W~miarę potrzeby.
+
+\end{itemize}
+
+\subsubsection{Kanały komunikacji}
+
+\begin{itemize}
+
+    \item \textbf{GitHub Issues i~Pull Requests} --- główne narzędzie do dyskusji nad kodem, proponowaniem zmian i~wyliczania błędów.
+
+    \item \textbf{Signal} --- komunikacja tekstowa dla szybkich pytań, dzielenia się linkami i~artykułami.
+
+    \item \textbf{Spotkania osobiście} --- dla omówień strategicznych i~decyzji architektonicznych.
+
+\end{itemize}
+
+\subsection[Narzędzia programistyczne i CI/CD]{Narzędzia programistyczne i~CI/CD}\label{subsec:narzedzia-programistyczne-ici/cd}
+
+\subsubsection{System kontroli wersji}
+
+\textbf{Git i~GitHub}
+
+Całość projektu hostowana jest na~platformie GitHub\cite{alpaca-github}.
+
+\subsubsection{Build system --- mill 1.x}
+
+Konfiguracja w~\verb|build.mill| definiuje zależności, wersję Scali (3.8.0), pluginy.
+
+Polecenia: \verb|mill compile|, \verb|mill test|, \verb|mill run|.
+
+Czas kompilacji projektu: ~45 sekund (w tym 35 sekund na~testy).
+
+\subsubsection{Weryfikacja jakości}
+
+Weryfikacja jakości odbywała się poprzez narzędzie Scalafmt --- automatyczne formatowanie kodu do~spójnego stylu.
+Konfiguracja w~\verb|.scalafmt.conf|.
+Także, projekt kompiluje się bez żadnych ostrzeżeń przy włączonych dodatkowych typach ostrzeżeń, np. \verb|-Xfatal-warnings|, które powoduje przerwanie kompilacji w~przypadku wystąpienia ostrzeżenia albo \verb|-Ycheck:macros|, które powoduje przerwanie kompilacji w~przypadku wystąpienia błędów w~makrach.
+
+\subsubsection{Testowanie}
+
+Wykorzystano framework testowy \textbf{ScalaTests}, który umożliwił przygotowanie testów jednostkowych dla modułów leksera i~parsera a także testów integracyjnych dla pełnych przykładów (parser wyrażeń arytmetycznych, parser mini-JSONa).
+
+Uruchamianie: \verb|mill test|.
+
+Pokrycie testami: ~TODO\% kodu (główne ścieżki, przypadki graniczne).
+
+\textbf{Właściwe testowanie w~systemach metaprogramowania}
+
+Testowanie systemów opartych na~makrach kompilacyjnych stanowiło wyjątkowe wyzwanie:
+
+\begin{itemize}
+
+    \item Makra są testowane poprzez sprawdzenie poprawności wygenerowanego kodu.
+
+    \item Każdy test makra sprawdza zarówno poprawność typów (czy kod się kompiluje) jak i~semantyki (czy działa prawidłowo).
+
+    \item Testy negatywne --- weryfikacja, czy błędne dane wejścia są prawidłowo odrzucane z~sensownymi komunikatami.
+
+    \item Przykładowe testy makra \verb|lexer|:
+
+    \begin{itemize}
+
+        \item Test poprawnej definicji leksera --- kompilacja powinna przebiec bez błędów.
+
+        \item Test zdefiniowanego tokena --- dostęp \verb|c.NUMBER| powinien być typowany i~dostępny.
+
+        \item Test konfliktu nazw tokenów --- błąd kompilacji z~komunikatem o~duplikacie.
+
+        \item Test niepoprawnego wyrażenia regularnego --- błąd kompilacji na~etapie makra.
+
+    \end{itemize}
+
+\end{itemize}
+
+\subsubsection{Continuous Integration za pomocą GitHub Actions}
+
+Każdy push do~repozytorium wyzwala workflow CI, który składa się z~czterech etapów:
+
+\begin{itemize}
+
+    \item Kompilacja projektu.
+
+    \item Uruchomienie wszystkich testów.
+
+    \item Sprawdzenie formatowania kodu (Scalafmt).
+
+    \item Status CI wyświetlany na~pull requestach przed merge.
+
+\end{itemize}
+
+\subsection{Dokumentacja}
+
+\subsubsection[Dokumentacja w kodzie]{Dokumentacja w~kodzie}
+
+\begin{itemize}
+
+    \item Każda publiczna klasa, funkcja i~makro posiada komentarze Scaladoc.
+
+    \item Komentarze wyjaśniają cel, parametry, zwracane wartości i~przykłady użycia.
+
+    \item Kompleksowe implementacje (np. algorytm LR(1)) zawierają widelnie-liniowe komentarze wyjaśniające logikę.
+
+\end{itemize}
+
+\subsubsection[README i wiki]{README i~wiki}
+
+\begin{itemize}
+
+    \item \textbf{README.md} --- instrukcje instalacji, przykłady użycia, architektura systemu.
+
+    \item \textbf{GitHub Wiki} --- dokumentacja bardziej szczegółowa, poradniki, FAQ.
+
+\end{itemize}
+
+\subsubsection{Rozprawy dyplomowa (LaTeX)}
+
+\begin{itemize}
+
+    \item Napisana w~LaTeX z~wykorzystaniem szablonu AGH (\verb|aghengthesis|).
+
+    \item Podzielona na~rozdziały (introduction.tex, metaprogramming.tex, implementation.tex, itp.).
+
+    \item Bibliografia w~BibTeX (\verb|bibliografia.bib|) z~odwołaniami do~papieru naukowych i~dokumentacji.
+
+\end{itemize}
+
+
+\section[Zastosowane techniki i~praktyki]{Zastosowane techniki i~praktyki inżynierskie}
+
+\label{sec:techniki-praktyki}
+
+\subsection{Metodologia wytwarzania oprogramowania}\label{subsec:metodologia-wytwarzania-oprogramowania}
+
+\subsubsection[Iteracyjne podejście do projektowania]{Iteracyjne podejście do~projektowania}
+
+Projekt nie przyjął sztywnej specyfikacji na~poziomie funkcjonalnym.
+Zamiast tego, projektowanie przebiegało iteracyjnie:
+
+\begin{enumerate}
+
+    \item \textbf{Prototypowanie} --- szybkie eksperymentowanie z~podejściami.
+
+    \item \textbf{Ewaluacja} --- ocena wydajności, przydatności i~koherentności.
+
+    \item \textbf{Refinement} --- ulepszanie wybranych podejść.
+
+    \item \textbf{Integracja} --- łączenie poszczególnych komponentów.
+
+\end{enumerate}
+
+\subsubsection{Test-Driven Development (TDD) — częściowe zastosowanie}
+
+\begin{itemize}
+
+    \item Dla modułów o~jasno zdefiniowanych specyfikacjach (np. funkcja \verb|computeFirstSet|) testy były napisywane przed implementacją.
+
+    \item Dla modułów eksperymentalnych (np. system generacji klas w~makrach) testy były pisane po~implementacji.
+
+    \item Praktyka przydatna do~ujawniania problemów w~interfejsach między modułami.
+
+\end{itemize}
+
+\subsubsection{Refactoring}
+
+\begin{itemize}
+
+    \item Cykliczne refaktoryzacje w~celu polepszenia jakości kodu, czytelnością i~wydajności.
+
+    \item Każde PR zawierało refactoring section, jeśli było to uzasadnione.
+
+    \item Wykorzystanie narzędzi do~wsparcia refaktoringu (Scalafix).
+
+\end{itemize}
+
+\subsubsection[Code Review i Pair Programming]{Code Review i~Pair Programming}
+
+\begin{itemize}
+
+    \item \textbf{Code Review} --- każdy pull request recenzowany przez drugiego członka zespołu przed merge.
+
+    \item \textbf{Pair Programming} --- sesje wspólnego programowania dla trudnych problemów (np. rozwiązanie problemu ``Method too large'' w~JVM).
+
+    \item Spotkania dla Code Review: 2--3 razy w~tygodniu, czas średni: 30--60 minut.
+
+\end{itemize}
+
+\subsubsection[User Stories i Planning Game]{User Stories i~Planning Game}
+
+\begin{itemize}
+
+    \item \textbf{User Stories} --- opisanie funkcjonalności z~perspektywy użytkownika.
+    Przykłady:
+
+    \begin{itemize}
+
+        \item \textit{``Jako użytkownik biblioteki ALPACA, chcę aby typy tokenów były dokładnie typowane, abym mógł je używać w~akcjach semantycznych bez rzutowania.''}
+
+        \item \textit{``Jako użytkownik, chcę aby błędy w~definicji gramatyki były zgłaszane w~czasie kompilacji, a~nie w~runtime.''}
+
+    \end{itemize}
+
+    \item \textbf{Planning Game} --- podczas cotygodniowych spotkań z~opiekunem omawiane były priorytety i~następne story do~realizacji.
+
+    \item Backlog utrzymywany był w~GitHub Issues.
+
+\end{itemize}
+
+\subsection{Praktyki specyficzne dla metaprogramowania}\label{subsec:praktyki-specyficzne-dla-metaprogramowania}
+
+\subsubsection{Staged Computation (Programowanie wieloetapowe)}
+
+\begin{itemize}
+
+    \item Świadomy podział między etapem kompilacji a~etapem wykonania.
+
+    \item Maksymalizacja obliczeń na~etapie kompilacji (generacja tabel LR(1), kompilacja wyrażeń regularnych).
+
+    \item Minimalizacja obliczeń w~runtime dla osiągnięcia optymalnej wydajności.
+
+\end{itemize}
+
+\subsubsection{Validation at Compile-Time}
+
+\begin{itemize}
+
+    \item Walidacja gramatyk na~etapie kompilacji (konflikty LR, niepoprawna składnia).
+
+    \item Walidacja wyrażeń regularnych w~definicjach leksera.
+
+    \item Fail-fast principle --- lepiej odrzucić niepoprawne dane na~etapie kompilacji niż zgłaszać błędy w~runtime.
+
+\end{itemize}
+
+\subsection{Praktyki DevOps}\label{subsec:praktyki-devops}
+
+\subsubsection{Continuous Integration}
+
+\begin{itemize}
+
+    \item GitHub Actions automatyzuje testy i~weryfikację na~każdy push.
+
+    \item Branch protection rules --- merge tylko jeśli wszystkie testy przejdą.
+
+\end{itemize}
+
+\subsubsection{Artifact Management}
+
+\begin{itemize}
+
+    \item Snapshots publikowane na~sonatype (SNAPSHOT versions).
+
+    \item Releases publikowane na~Maven Central (wersje stabilne).
+
+    \item Cross-build kompatybilność z~wieloma wersjami Scali (3.3.x).
+
+\end{itemize}
+
+
+\section[Przebieg prac --- harmonogram i~iteracje]{Przebieg prac --- harmonogram, iteracje i~kalendarzu}
+
+\label{sec:przebeig-prac-harmonogram}
+
+\subsection{Oś czasu projektu}\label{subsec:os-czasu-projektu}
+
+Projekt realizowany był przez okres 27 tygodni (obejmujących dwa semestry):
+
+\subsubsection[Semestr 1: Eksploracja i Prototypowanie (tygodnie 1-14)]{Semestr 1: Eksploracja i~Prototypowanie (tygodnie 1-14)}
+
+\begin{table}[h]
+
+    \centering
+
+    \begin{tabularx}{\textwidth}{|c|X|X|}
+
+        \hline
+
+        \textbf{Okres} & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                        \\
+
+        \hline
+
+        Tygodnie 1--3   & Opracowanie podstaw teoretycznych; poznanie API metaprogramowania Scali 3                & Projekt konceptualny, pierwsze makra test                 \\
+
+        \hline
+
+        Tygodnie 4--6   & Eksperymentowanie z~podejściami do leksera (DFA vs. regex); prototypowanie systemu typów & Kilka prototypowych implementacji; dokumentacja problemów \\
+
+        \hline
+
+        Tygodnie 7--10  & Początkowa eksploracja generacji parserów; budowa infrastruktury testowej                & Sketch algorytmu LR(1); framework testowy munit           \\
+
+        \hline
+
+        Tygodnie 11--14 & Identyfikacja ograniczeń JVM; przygotowanie do~semestr 2; przegląd i~planowanie          & Dokumentacja wymagań; architektura systemu; backlog       \\
+
+        \hline
+    \end{tabularx}
+
+    \caption{Przebieg prac semestr 1}
+
+    \label{tab:semestr1-timeline}
+
+\end{table}
+
+\subsubsection[Semestr 2: Implementacja i Optymalizacja (tygodnie 15-27)]{Semestr 2: Implementacja i~Optymalizacja (tygodnie 15-27)}
+
+\begin{table}[h]
+
+    \centering
+
+    \begin{tabularx}{\textwidth}{|c|X|X|}
+
+        \hline
+
+        \textbf{Okres} & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                     \\
+
+        \hline
+
+        Tygodnie 15--17 & Implementacja modułu lexera; typy rafinowane dla tokenów                                 & Moduł \verb|alpaca.lexer|; podstawowe testy            \\
+
+        \hline
+
+        Tygodnie 18--20 & Implementacja generatora parserów LR(1); obsługa ograniczeń JVM                          & Moduł \verb|alpaca.parser|; algorytmy kompilacyjne     \\
+
+        \hline
+
+        Tygodnie 21--23 & Integracja leksera i~parsera; wsparcie dla akcji semantycznych; rozwiązywanie konfliktów & System pełny end-to-end; przykłady (calc, JSON parser) \\
+
+        \hline
+
+        Tygodnie 24--25 & Optymalizacja wydajności; poprawa komunikatów błędów; dokumentacja kodu                  & Benchmarki; artykuły diagnostyczne                     \\
+
+        \hline
+
+        Tygodnie 26--27 & Finalizacja rozprawy dyplomowej; ostatnie poprawki                                       & Pełna rozprawa dyplomowa (.pdf)                        \\
+
+        \hline
+    \end{tabularx}
+
+    \caption{Przebieg prac semestr 2}
+
+    \label{tab:semestr2-timeline}
+
+\end{table}
+
+\subsection[Velocitas zespołu i postępy]{Velocitas zespołu i~postępy}\label{subsec:velocitas-zespou-ipostepy}
+
+\subsubsection{Metryki wydajności}
+
+Biorąc pod uwagę złożoność problemów napotkanych w~projekcie, zespół osiągnął następujące wskaźniki:
+
+\begin{itemize}
+
+    \item \textbf{Liczba commitów:} ~200 commitów w~ciągu całego projektu.
+
+    \item \textbf{Liczba Pull Requests:} ~45 PR, średnio 2--3 PR na~tydzień.
+
+    \item \textbf{Linie kodu:} ~3500 linii implementacji (bez testów); ~2000 linii testów.
+
+    \item \textbf{Pokrycie testami:} ~70\% kodu objętego testami; głównie ścieżki krytyczne.
+
+    \item \textbf{Czas code review:} Średnio 24--48 godzin odpowiedzi na~PR\@.
+
+\end{itemize}
+
+\subsubsection{Trajektoria postępów}
+
+\begin{itemize}
+
+    \item \textbf{Tydzień 1-4:} Powolny początek --- nauka platformy, wiele eksperymentów bez progresji.
+
+    \item \textbf{Tydzień 5-8:} Przyspieszenie --- odkrycie, że wyrażenia regularne są bardziej praktyczne niż tradycyjne DFA\@.
+
+    \item \textbf{Tydzień 9-12:} Plateau --- napotkanie ograniczeń JVM; konieczne były obejścia.
+
+    \item \textbf{Tydzień 13-18:} Stała praca --- implementacja modułów leksera i~parsera.
+
+    \item \textbf{Tydzień 19-24:} Szybkość --- optymalizacje i~integracja.
+
+    \item \textbf{Tydzień 25-27:} Finalizacja --- dokumentacja i~ostateczne poprawki.
+
+\end{itemize}
+
+
+\section[Główne wyzwania i~ich rozwiązania]{Główne problemy i~ich rozwiązania}
+
+\label{sec:problemy-rozwiazania}
+
+\subsection{Problem 1: Limit rozmiaru metody JVM}\label{subsec:problem-1:-limit-rozmiaru-metody-jvm}
+
+\subsubsection{Problem}
+
+Przy naiwnej implementacji generowanie dużych tabel parsowania LR(1) prowadziło do~przekroczenia limitu 64 KB na~rozmiar kodu bajtowego metody JVM\@.
+
+\subsubsection{Przyczyna}
+
+Każdy wpis tabeli parsowania (para: stan, terminal → akcja shift/reduce) wymagał kilku bajtów kodu.
+Dla złożonych gramatyk z~tysiącami wpisów całość prznosiła rozmiar metody poza limit.
+
+\subsubsection{Rozwiązanie}
+
+Fragmentacja metod (method fragmentation):
+
+\begin{itemize}
+
+    \item Zamiast jednej metody zawierającej całą tabelę, generujemy wiele małych metod pomocniczych.
+
+    \item Każda metoda dodaje kilka wpisów do~builder'a mapki.
+
+    \item Główna metoda sekwencyjnie wywołuje wszystkie metody pomocnicze i~zwraca wynik.
+
+    \item Kompilator JIT automatycznie inlinuje małe metody, eliminując narzut.
+
+\end{itemize}
+
+Kod przykładowy:
+
+\begin{lstlisting}[language=scala,label={lst:lstlisting}]
+
+def avoidTooLargeMethod1: Unit = builder += (state, shift1)def avoidTooLargeMethod2: Unit = builder += (state, reduce2) // ... setki takich metoddef buildTable: ParseTable =  avoidTooLargeMethod1  avoidTooLargeMethod2//...builder.result()
+
+\end{lstlisting}
+
+\subsubsection{Rezultat}
+
+Każda metoda pomocnicza zawiera ~5-10 instrukcji, co jest poniżej limitu.
+Całość systemu obecnie obsługuje gramatyki z~setkami stanów LR(1) bez problemów.
+
+\subsection{Problem 2: Transmisja referencji między etapami kompilacji}\label{subsec:problem-2:-transmisja-referencji-miedzy-etapami-kompilacji}
+
+\subsubsection{Problem}
+
+Akcje semantyczne w~definicji parsera mogą odwoływać się do~kontekstu parsera i~zmiennych z~otaczającego zakresu.
+Podczas generacji kodu w~makrze, referencje te muszą zostać prawidłowo przepisane, aby odnosiły się do~symboli w~wygenerowanym kodzie.
+
+\subsubsection{Przyczyna}
+
+Makro operuje na~reprezentacji AST kodu.
+Zmienne z~oryginalnego zakresu leksykalnego nie istnieją w~kontekście wygenerowanego kodu.
+Bezpośrednie kopiowanie referencji prowadziło do~błędów typu ``symbol not found''.
+
+\subsubsection{Rozwiązanie}
+
+Implementacja klasy \verb|ReplaceRefs| realizującej transformację AST poprzez ``re-owning'' symboli:
+
+\begin{enumerate}
+
+    \item Analiza AST kodu akcji semantycznej.
+
+    \item Identyfikacja referencji do~starego kontekstu (parametr makra \verb|ctx|).
+
+    \item Zastąpienie ich referencjami do~nowego kontekstu (parametr metody w~wygenerowanej klasie).
+
+    \item Zachowanie pozostałych referencji.
+
+\end{enumerate}
+
+Klasa \verb|ReplaceRefs| rozszerza \verb|TreeMap| z~API refleksji TASTy, umożliwiając rekurencyjne przejście po całym AST i~transformację symboli.
+
+\subsubsection{Rezultat}
+
+Akcje semantyczne prawidłowo odwołują się do~kontekstu parsera bez błędów typowania.
+
+\subsection[Problem 3: Typ rafinowanie a IDE support]{Problem 3: Typ rafinowanie a~IDE support}\label{subsec:problem-3:-typ-rafinowanie-aide-support}
+
+\subsubsection{Problem}
+
+Oryginalnie, bez oparcia się na~typach rafinowanych, interfejs API nie dostarczał informacji o~dostępnych tokenach dla IDE. Autocompletion, type hints i~go-to-definition nie działały prawidłowo.
+
+\subsubsection{Przyczyna}
+
+System typów musiał wiedzieć, jakie pola zawiera zwracana wartość leksera, ale ta informacja była dostępna tylko w~makrze w~runtime kompilacji.
+
+\subsubsection{Rozwiązanie}
+
+Implementacja systemu typów rafinowanych:
+
+\begin{enumerate}
+
+    \item Każdy token reprezentowany jest jako pole w~typu rafinowanym.
+
+    \item Typ rafinowany zawiera \verb|type Fields| definiujący NamedTuple ze wszystkimi tokenami.
+
+    \item IDE ma dostęp do~pełnych informacji typów i~może oferować code completion.
+
+    \item Dostęp do~pola tokena (np. \verb|c.NUMBER|) jest bezpieczny typowo i~wspierany przez IDE\@.
+
+\end{enumerate}
+
+\subsubsection{Rezultat}
+
+Pełna integracja z~IDE (IntelliJ IDEA, VSCode) --- autocompletion, type hints, błędy składniowe zgłaszane przed kompilacją.
+
+\subsection{Problem 4: Wydajność kompilacji makr}\label{subsec:problem-4:-wydajnosc-kompilacji-makr}
+
+\subsubsection{Problem}
+
+Dla skomplikowanych gramatyk, generacja tabel LR(1) w~makrze mogła być czasochłonna, opóźniając kompilację projektu użytkownika.
+
+\subsubsection{Przyczyna}
+
+Algorytm Closure i~Goto dla LR(1) wymaga wielu iteracji i~porównań zbiorów stanów.
+Dla każdej iteracji wykonywane są obliczenia na~reprezentacji AST w~makrze, co wprowadza znaczny narzut.
+
+\subsubsection{Rozwiązanie}
+
+\begin{enumerate}
+
+    \item Optymalizacja algorytmów LR(1) --- zastąpienie naiwnych pętli bardziej efektywnymi strukturami danych (mutable buffer zamiast list).
+
+    \item Caching wyników pośrednich --- obliczone zbiory FIRST są cachowane.
+
+    \item Leniwa ewaluacja --- niektóre stany LR są generowane tylko jeśli rzeczywiście są osiągalne.
+
+\end{enumerate}
+
+\subsubsection{Rezultat}
+
+Kompilacja nawet złożonych gramatyk przebiega w~czasie poniżej 10 sekund (w zależności od~rozmiaru gramatyki).
+
+\subsection[Problem 5: Testowanie makr i metaprogramowania]{Problem 5: Testowanie makr i~metaprogramowania}\label{subsec:problem-5:-testowanie-makr-imetaprogramowania}
+
+\subsubsection{Problem}
+
+Testowanie systemów opartych na~makrach jest trudne, bo makra są wykonywane w~fazie kompilacji, a~błędy mogą być trudne do~diagnozowania.
+
+\subsubsection{Przyczyna}
+
+Tradycyjne frameworki testowe (munit, scalatest) testują kod wykonywany w~runtime.
+Makra wymagają sprawdzenia poprawności wygenerowanego kodu.
+
+\subsubsection{Rozwiązanie}
+
+\begin{enumerate}
+
+    \item Testy pozytywne --- sprawdzenie, czy prawidłowe dane wejścia generują prawidłowy kod i~działają poprawnie.
+
+    \item Testy negatywne --- sprawdzenie, czy błędne dane wejścia są odrzucane z~sensownymi komunikatami błędów.
+
+    \item Testy wydajności --- benchmarki generowanego kodu (parser wyrażeń, JSON parser).
+
+    \item Testy integracyjne --- pełne scenariusze end-to-end (lekser + parser).
+
+\end{enumerate}
+
+Każdy test makra zawiera zarówno sprawdzenie, czy kod się kompiluje, jak i~sprawdzenie semantyki wygenerowanego kodu.
+
+\subsubsection{Rezultat}
+
+Pokrycie testami ~70\% kodu; główne ścieżki i~przypadki graniczne są przetestowane.
+
+
+\section[Wdrożenia, testy i~eksperymentu]{Opis wdrożeń, testów i~eksperymentów}
+\label{sec:wdrozenia-testy}
+
+\subsection{Testowanie jednostkowe}\label{subsec:testowanie-jednostkowe}
+
+Projekt zawiera bogatą bibliotekę testów jednostkowych, pokrywających funkcjonalności poszczególnych modułów:
+
+\subsubsection{Testy modułu Lexera}
+
+\begin{itemize}
+
+    \item Testowanie definicji tokenów (nazwy, wzorce, wartości domyślne).
+
+    \item Testowanie ignorowanych reguł leksykalnych.
+
+    \item Testowanie konfliktów nazw tokenów (błędy kompilacji).
+
+    \item Testowanie niepoprawnych wyrażeń regularnych.
+
+\end{itemize}
+
+\subsubsection{Testy modułu Parsera}
+
+\begin{itemize}
+
+    \item Testowanie ekstrakcji produkcji z~definicji.
+
+    \item Testowanie algorytmów LR(1) (closure, goto, compute FIRST).
+
+    \item Testowanie rozwiązywania konfliktów shift-reduce.
+
+    \item Testowanie akcji semantycznych z~różnymi typami kontekstu.
+
+\end{itemize}
+
+\subsubsection{Testy infrastruktury}
+
+\begin{itemize}
+
+    \item Testowanie klas typów (\verb|Empty[T]|, \verb|Copyable[T]|).
+
+    \item Testowanie transformacji AST (\verb|ReplaceRefs|, \verb|CreateLambda|).
+
+\end{itemize}
+
+\subsection{Testowanie integracyjne}\label{subsec:testowanie-integracyjne}
+
+Projekt zawiera kilka pełnych przykładów integracyjnych, demonstrujących funkcjonalność systemu:
+
+\subsubsection{Kalkulatory wyrażeń arytmetycznych}
+
+Parser dla wyrażeń arytmetycznych z~operatorami +, -, *, / i~zagnieżdżonymi nawiasami. Akcje semantyczne obliczają wartość wyrażenia.
+
+\begin{itemize}
+
+    \item Wejście: ``3 + 4 * 2''
+
+    \item Oczekiwany rezultat: 11
+
+\end{itemize}
+
+\subsubsection{Parser JSON (uproszczony)}
+
+Parser dla podzbioru formatu JSON (obiekty, tablice, stringi, liczby, boolean, null).
+
+\begin{itemize}
+
+    \item Wejście: \verb|{"name": "Alice", "age": 30}|
+
+    \item Rezultat: Zbudowana struktura danych reprezentująca JSON\@.
+
+\end{itemize}
+
+\subsection{Benchmarki wydajności}\label{subsec:benchmarki-wydajnosci}
+
+Przeprowadzone zostały benchmarki porównujące wydajność wygenerowanego parsera ALPACA z~innymi podejściami:
+
+\subsubsection{Scenariusz 1: Testowanie szybkości tokenizacji}
+
+\begin{itemize}
+
+    \item Lekser ALPACA vs. ręczny lekser napisany w~Scali.
+
+    \item Rezultat: ALPACA jest szybszy (~10\% overhead wyeliminowany poprzez typy rafinowane).
+
+\end{itemize}
+
+\subsubsection{Scenariusz 2: Testowanie szybkości parsowania}
+
+\begin{itemize}
+
+    \item Parser ALPACA vs. FastParse vs. parboiled2.
+
+    \item Dla prostych wyrażeń: ALPACA ~2x szybciej niż FastParse (mniejszy narzut przez makra).
+
+    \item Dla złożonych wyrażeń: wydajności porównywalne.
+
+\end{itemize}
+
+\subsubsection{Scenariusz 3: Rozmiar wygenerowanego kodu}
+
+\begin{itemize}
+
+    \item Parser ALPACA dla kalkulatora: ~50 KB bytekodu JVM\@.
+
+    \item FastParse dla tego samego parsera: ~100 KB\@.
+
+\end{itemize}
+
+Benchmarki wykazały, że podejście oparte na~makrach kompilacyjnych dostarcza wydajność porównywalną (lub lepszą) w~stosunku do~alternatywnych rozwiązań.
+
+\subsection{Walidacja poprawności}\label{subsec:walidacja-poprawnosci}
+
+\subsubsection{Walidacja gramatyk}
+
+\begin{itemize}
+
+    \item Testy sprawdzające poprawną detekcję konfliktów LR(1).
+
+    \item Testy sprawdzające komunikaty błędów dla nierozstrzygnięć konfliktów.
+
+    \item Testy sprawdzające obsługę lewostronnej rekurencji (obsługiwane przez LR(1)).
+
+\end{itemize}
+
+\subsubsection{Walidacja typów}
+
+\begin{itemize}
+
+    \item Sprawdzenie, czy typy rafinowane prawidłowo odzwierciedlają zdefiniowane tokeny.
+
+    \item Sprawdzenie, czy akcje semantyczne mają poprawne typy dla wartości wydobytych z~tokenów.
+
+    \item Testy negatywne --- sprawdzenie, czy błędne typy są odrzucane przez system typów.
+
+\end{itemize}
+
+
+\section{Podsumowanie organizacji pracy}\label{sec:podsumowanie-organizacji-pracy}
+
+Projekt ALPACA realizowany był w~zgodzie z~iteracyjno-przyrostowym procesem wytwórczym, łączącym elementy metodologii Agile z~wymogami pracy akademickiej.
+Wyraźny podział obowiązków (Buczek --- lekser, Kozak --- parser, wspólnie --- infrastruktura) umożliwił efektywną współpracę mimo zawiłości problemów technicznych napotkanych w~trakcie realizacji.
+
+Zastosowanie nowoczesnych narzędzi (Git, GitHub Actions, munit) i~praktyk inżynierskich (code review, pair programming, refactoring, CI/CD) przyczyniło się do~utrzymania wysokiej jakości kodu i~dokumentacji. Główne wyzwania (limit JVM, transformacja AST, typy rafinowane) zostały rozwiązane poprzez kombinację innowacyjnych podejść i~głęboką znajomość systemu typów Scali~3 oraz metaprogramowania.

@@ -9,7 +9,7 @@
 Analizator składniowy przekształca strumień tokenów w~strukturę danych (zazwyczaj drzewo składniowe), rozstrzygając zgodność wejścia z~zadeklarowaną gramatyką.
 Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pushdown automaton})~\cite{pushdown-automaton-wiki} oraz na~algorytmach predykcyjnych~\cite{predictive-parsing} lub~analizie przesuwająco-redukcyjnej~\cite{tomita1991glr}.
 
-\subsection{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:grammar-parser-classes}
+\subsection[Gramatyki bezkontekstowe i klasy parserów]{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:grammar-parser-classes}
 
 Gramatyka bezkontekstowa (CFG) definiowana jest poprzez nieterminale, terminale (tokeny), symbol startowy oraz zbiór produkcji.
 Wśród klas parserów wyróżnia się~dwie główne:
@@ -17,11 +17,11 @@ Wśród klas parserów wyróżnia się~dwie główne:
 \begin{itemize}
     \item \textbf{LL(k)} (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
     Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
-    \item \textbf{LR(k)} (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR.
+    \item \textbf{LR(k)} (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
     Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
 \end{itemize}
 
-\subsection{Modelowanie automatu ze~stosem}
+\subsection[Modelowanie automatu z stosem]{Modelowanie automatu z ~stosem}
 \label{subsec:pushdown-automaton-model}
 
 Parser można sformalizować jako deterministyczny automat ze~stosem (PDA): stan określa aktualną pozycję w~tabelach parsera, stos przechowuje nieterminale i~stany pośrednie, a~wejście dostarcza sekwencję tokenów.
@@ -43,12 +43,12 @@ W~parserach LL problemy wynikają typowo z~lewostronnej rekurencji i~wspólnych 
 W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~[translate:\texttt{if--then}] vs.~[translate:\texttt{if--then--else}]) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
 
 
-\section{Dobór klasy parsera w~systemie ALPACA}\label{sec:parser-lr1-choice}
+\section[Dobór klasy parsera w systemie ALPACA]{Dobór klasy parsera w~systemie ALPACA}\label{sec:parser-lr1-choice}
 
-System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR.
+System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR\@.
 Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania.
 
-\subsection{Zalety podejścia LR(1) w~ALPACA}\label{subsec:lr1-advantages}
+\subsection[Zalety podejścia LR(1) w ALPACA]{Zalety podejścia LR(1) w~ALPACA}\label{subsec:lr1-advantages}
 
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
@@ -67,7 +67,7 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 
 \end{itemize}
 
-\subsection{Koszty i~ograniczenia}
+\subsection[Koszty i ograniczenia]{Koszty i~ograniczenia}
 \label{subsec:lr1-costs}
 
 \begin{itemize}
@@ -81,7 +81,7 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 \end{itemize}
 
 
-\section{Konstrukcja tabel parsera LR(1) w~ALPACA}
+\section[Konstrukcja tabel parsera LR(1) w ALPACA]{Konstrukcja tabel parsera LR(1) w~ALPACA}
 \label{sec:parser-impl-overview}
 
 Generowanie parsera LR(1) w~ALPACA stanowi sekwencję algorytmów realizowanych w~czasie kompilacji.
@@ -90,7 +90,7 @@ Poniżej opisano, etap po~etapie, transformację deklaratywnej specyfikacji gram
 \subsection{Wyznaczanie zbiorów FIRST}\label{subsec:first-sets}
 
 Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{aho1974lr}.
-\texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N.
+\texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N\@.
 
 Algorytm iteruje po~wszystkich produkcjach, dodając:
 
@@ -137,9 +137,13 @@ Proces można podzielić na~cztery główne etapy:
 
 \begin{itemize}
     \item Domknięcie elementu \texttt{S'~→~•~root,~\$} tworzy stan~0 (stan początkowy automatu).
-    \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce. Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}. Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \textit{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\textit{shift} wskazuje na~nowy stan.
-    \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \textit{reduce} dla~swoich prefiksów wejścia. Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \textit{accept} dla~symbolu \texttt{\$}.
-    \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów. Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
+    \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce.
+    Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}.
+    Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \textit{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\textit{shift} wskazuje na~nowy stan.
+    \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \textit{reduce} dla~swoich prefiksów wejścia.
+    Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \textit{accept} dla~symbolu \texttt{\$}.
+    \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów.
+    Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
 \end{itemize}
 
 \lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1)},label={lst:lr1-build}]{listings/chapter5/lr1-build.scala}
