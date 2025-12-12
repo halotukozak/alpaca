@@ -16,7 +16,7 @@ Zbiór reguł tokenów stanowi sumę języków regularnych; ich unia~jest równi
 \subsection{Automaty skończone}
 \label{subsec:lexer-theory-dfa}
 Wyrażenia regularne są transformowane do~postaci niedeterministycznej (NFA) poprzez konstrukcję Thompsona~\cite{arces2018thompson}.
-Następnie deterministyczna postać automatu (DFA) konstruowana jest poprzez algorytm usuwania niedeterminizmu (ang.~\emph{powerset construction}), polegający na~iteracyjnym łączeniu zbiorów stanów NFA.
+Następnie deterministyczna postać automatu (DFA) konstruowana jest poprzez algorytm usuwania niedeterminizmu (ang.~\emph{powerset construction}), polegający na~iteracyjnym łączeniu zbiorów stanów NFA\@.
 Opcjonalnie przeprowadza się minimalizację automatu poprzez usuwanie stanów równoważnych~\cite{jezyki-formalne-automaty}.
 
 DFA przetwarza wejście znak po znaku, zachowując jednoznaczny stan aktywny oraz informując, czy aktualny prefiks odpowiada jednemu z~zdefiniowanych tokenów.
@@ -38,7 +38,7 @@ W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, ogłaszany
 Mechanizm diagnostyczny przywołuje informacje o~pozycji znaku, co~znacząco ułatwia śledzenie źródła problemu w~tekście źródłowym.
 
 
-\section{Automaty DFA a wyrażenia regularne w~systemie ALPACA}
+\section[Automaty DFA a wyrażenia regularne w systemie ALPACA]{Automaty DFA a wyrażenia regularne w~systemie ALPACA}
 \label{sec:dfa-vs-regex}
 
 \subsection{Tło: Tradycyjne podejście}
@@ -57,8 +57,9 @@ Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce opera
 \label{subsec:pattern-matching-pros}
 \begin{itemize}
     \item Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
-    \item Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA.
-    \item Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację. ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
+    \item Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
+    \item Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
+    ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
     \item Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
 \end{itemize}
 
@@ -67,22 +68,24 @@ Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce opera
 
 \begin{itemize}
     \item Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
-    \item Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika. W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów. Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
+    \item Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
+    W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
+    Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
 \end{itemize}
 
 \subsection{Syntetyzacja: Decyzja projektu ALPACA}
 \label{subsec:alpaca-design-choice}
 
-Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA.
-Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA.
+Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
+Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA\@.
 
 
-\section{Praktyczna implementacja leksera w~systemie ALPACA}
+\section[Praktyczna implementacja leksera w systemie ALPACA]{Praktyczna implementacja leksera w~systemie ALPACA}
 \label{sec:lexer-impl}
 
 Implementacja modułu \texttt{alpaca.lexer} łączy ergonomię języka specjalistycznego (DSL) z~kodem wykonywany w~czasie kompilacji, eliminując narzut parsowania wyrażeń regularnych w~czasie działania aplikacji.
 
-\subsection{Przebieg tokenizacji w~ALPACA}
+\subsection[Przebieg tokenizacji w ALPACA]{Przebieg tokenizacji w~ALPACA}
 \label{subsec:lexer-impl-flow}
 
 Podczas kompilacji projektu wszystkie wzorce są łączone operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne z~nazwanymi grupami.
@@ -96,7 +99,7 @@ System ALPACA umożliwia oznaczenie reguł jako ,,ignorowanych''.
 Takie reguły są wbudowywane we wspólny wzorzec, jednak ich dopasowania nie~generują tokenów wyjściowych.
 Ujednolicony przebieg pętli skanującej upraszcza kod: ignorowane tokeny różnią się od~normalnych wyłącznie akcją podejmowaną po~dopasowaniu (brak emisji leksemu, zamiast tego aktualizacja stanu wewnętrznego).
 
-\subsection{Stanowa analiza leksykalna i~rozszerzenia kontekstu}
+\subsection[Stanowa analiza leksykalna i rozszerzenia kontekstu]{Stanowa analiza leksykalna i~rozszerzenia kontekstu}
 \label{subsec:lexer-impl-context}
 Możliwa jest stanowa analiza leksykalna poprzez utrzymywanie stanu maszyny stanów w~obiekcie kontekstu.
 System ALPACA wewnętrznie definiuje mechanizm \texttt{BetweenStages}, który jest wywoływany po~każdym rozpoznaniu leksemu i~umożliwia modyfikację stanu kontekstu.
@@ -121,8 +124,11 @@ Metoda \texttt{ensure} zapewnia, że~żądana pozycja jest~dostępna w~buforze, 
 Przed wygenerowaniem automatu skanującego, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod~względem potencjalnych konfliktów.
 Mechanizm ten wykrywa dwa klasy problemów:
 \begin{itemize}
-    \item Subsumpcję --- sytuację, w~której każde słowo akceptowane przez późniejszy wzorzec jest~również akceptowane przez wcześniejszy wzorzec, czyniąc~późniejszy \enquote{martwym kodem}. Przykład: jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~wszystkie słowa kluczowe będą dopasowane przez~\texttt{ID}, co~uniemożliwi rozpoznanie \texttt{KEYWORD}.
-    \item Pokrycie prefiksów --- sytuację, w~której jeden wzorzec akceptuje prefiks słowa akceptowanego przez inny wzorzec. Przykład: jeśli zdefiniowano \texttt{LT~=~<} oraz \texttt{LE~=~<}\texttt{=}, lekser może dopasować \texttt{<}, a~następnie zgłosić błąd leksykalny dla~pozostałego znaku \texttt{=}, zamiast rozpoznać \texttt{<}\texttt{=}. Jest to konsekwencja użycia silnika wyrażeń regularnych, w którym zasada najdłuższego dopasowania (\textit{maximal munch}) nie ma zastosowania.
+    \item Subsumpcję --- sytuację, w~której każde słowo akceptowane przez późniejszy wzorzec jest~również akceptowane przez wcześniejszy wzorzec, czyniąc~późniejszy \enquote{martwym kodem}.
+    Przykład: jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~wszystkie słowa kluczowe będą dopasowane przez~\texttt{ID}, co~uniemożliwi rozpoznanie \texttt{KEYWORD}.
+    \item Pokrycie prefiksów --- sytuację, w~której jeden wzorzec akceptuje prefiks słowa akceptowanego przez inny wzorzec.
+    Przykład: jeśli zdefiniowano \texttt{LT~=~<} oraz \texttt{LE~=~<}\texttt{=}, lekser może dopasować \texttt{<}, a~następnie zgłosić błąd leksykalny dla~pozostałego znaku \texttt{=}, zamiast rozpoznać \texttt{<}\texttt{=}.
+    Jest to konsekwencja użycia silnika wyrażeń regularnych, w którym zasada najdłuższego dopasowania (\textit{maximal munch}) nie ma zastosowania.
 \end{itemize}
 
 Wykrycie któregokolwiek z~powyższych problemów powoduje przerwanie kompilacji z~czytelnym i~działającym komunikatem diagnostycznym, dzięki~czemu konfiguracyjne błędy są~eliminowane przed~czasem wykonania programu.
