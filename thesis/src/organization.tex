@@ -93,7 +93,7 @@ Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rola
     \item \textbf{Rola:} autor
 
     \item \textbf{Główne obszary:}
-    Implementacja algorytmów analizy leksykalnej i składniowych, implementacja algorytmu rozwiązywania konfliktów gramatycznych, testy wydajnościowe.
+          Implementacja algorytmów analizy leksykalnej i składniowych, implementacja algorytmu rozwiązywania konfliktów gramatycznych, testy wydajnościowe.
 
 \end{itemize}
 
@@ -317,17 +317,17 @@ Testowanie systemów opartych na~makrach kompilacyjnych stanowiło wyjątkowe wy
 
     \item Przykładowe testy makra \verb|lexer|:
 
-    \begin{itemize}
+          \begin{itemize}
 
-        \item Test poprawnej definicji leksera --- kompilacja powinna przebiec bez błędów.
+              \item Test poprawnej definicji leksera --- kompilacja powinna przebiec bez błędów.
 
-        \item Test zdefiniowanego tokena --- dostęp \verb|c.NUMBER| powinien być typowany i~dostępny.
+              \item Test zdefiniowanego tokena --- dostęp \verb|c.NUMBER| powinien być typowany i~dostępny.
 
-        \item Test konfliktu nazw tokenów --- błąd kompilacji z~komunikatem o~duplikacie.
+              \item Test konfliktu nazw tokenów --- błąd kompilacji z~komunikatem o~duplikacie.
 
-        \item Test niepoprawnego wyrażenia regularnego --- błąd kompilacji na~etapie makra.
+              \item Test niepoprawnego wyrażenia regularnego --- błąd kompilacji na~etapie makra.
 
-    \end{itemize}
+          \end{itemize}
 
 \end{itemize}
 
@@ -361,17 +361,17 @@ Każdy push do~repozytorium wyzwala workflow CI, który składa się z~czterech 
 
 \end{itemize}
 
-\subsubsection[README i wiki]{README i~wiki}
+\subsubsection[README i dokumentacja]{README i~wiki}
 
 \begin{itemize}
 
     \item \textbf{README.md} --- instrukcje instalacji, przykłady użycia, architektura systemu.
 
-    \item \textbf{GitHub Wiki} --- dokumentacja bardziej szczegółowa, poradniki, FAQ.
+    \item \textbf{GitHub Pages} --- dokumentacja bardziej szczegółowa, poradniki, FAQ\cite{alpaca-docs}.
 
 \end{itemize}
 
-\subsubsection{Rozprawy dyplomowa (LaTeX)}
+\subsubsection{Praca dyplomowa (LaTeX)}
 
 \begin{itemize}
 
@@ -379,7 +379,7 @@ Każdy push do~repozytorium wyzwala workflow CI, który składa się z~czterech 
 
     \item Podzielona na~rozdziały (introduction.tex, metaprogramming.tex, implementation.tex, itp.).
 
-    \item Bibliografia w~BibTeX (\verb|bibliografia.bib|) z~odwołaniami do~papieru naukowych i~dokumentacji.
+    \item Bibliografia w~BibTeX (\verb|bibliografia.bib|) z~odwołaniami do~źródeł naukowych i~dokumentacji.
 
 \end{itemize}
 
@@ -409,15 +409,9 @@ Zamiast tego, projektowanie przebiegało iteracyjnie:
 
 \subsubsection{Test-Driven Development (TDD) — częściowe zastosowanie}
 
-\begin{itemize}
-
-    \item Dla modułów o~jasno zdefiniowanych specyfikacjach (np. funkcja \verb|computeFirstSet|) testy były napisywane przed implementacją.
-
-    \item Dla modułów eksperymentalnych (np. system generacji klas w~makrach) testy były pisane po~implementacji.
-
-    \item Praktyka przydatna do~ujawniania problemów w~interfejsach między modułami.
-
-\end{itemize}
+Dla modułów o~jasno zdefiniowanych specyfikacjach (np. funkcja \verb|computeFirstSet|) testy były napisywane przed implementacją.
+Dla modułów eksperymentalnych (np. system generacji klas w~makrach) testy były pisane po~implementacji.
+Praktyka przydatna do~ujawniania problemów w~interfejsach między modułami.
 
 \subsubsection{Refactoring}
 
@@ -448,15 +442,15 @@ Zamiast tego, projektowanie przebiegało iteracyjnie:
 \begin{itemize}
 
     \item \textbf{User Stories} --- opisanie funkcjonalności z~perspektywy użytkownika.
-    Przykłady:
+          Przykłady:
 
-    \begin{itemize}
+          \begin{itemize}
 
-        \item \textit{``Jako użytkownik biblioteki ALPACA, chcę aby typy tokenów były dokładnie typowane, abym mógł je używać w~akcjach semantycznych bez rzutowania.''}
+              \item \textit{``Jako użytkownik biblioteki ALPACA, chcę aby typy tokenów były dokładnie typowane, abym mógł je używać w~akcjach semantycznych bez rzutowania.''}
 
-        \item \textit{``Jako użytkownik, chcę aby błędy w~definicji gramatyki były zgłaszane w~czasie kompilacji, a~nie w~runtime.''}
+              \item \textit{``Jako użytkownik, chcę aby błędy w~definicji gramatyki były zgłaszane w~czasie kompilacji, a~nie w~runtime.''}
 
-    \end{itemize}
+          \end{itemize}
 
     \item \textbf{Planning Game} --- podczas cotygodniowych spotkań z~opiekunem omawiane były priorytety i~następne story do~realizacji.
 
@@ -533,7 +527,7 @@ Projekt realizowany był przez okres 27 tygodni (obejmujących dwa semestry):
 
         \hline
 
-        \textbf{Okres} & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                        \\
+        \textbf{Okres}  & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                        \\
 
         \hline
 
@@ -570,7 +564,7 @@ Projekt realizowany był przez okres 27 tygodni (obejmujących dwa semestry):
 
         \hline
 
-        \textbf{Okres} & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                     \\
+        \textbf{Okres}  & \textbf{Aktywności}                                                                      & \textbf{Artefakty}                                     \\
 
         \hline
 
