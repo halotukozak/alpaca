@@ -1,0 +1,965 @@
+\chapter[Wyniki projektu]{Wyniki projektu}
+
+\label{ch:wyniki-projektu}
+
+Niniejszy rozdział prezentuje kształt końcowego produktu — bibliotekę~\textit{ALPACA}, podsumowuje osiągnięcia projektu, omawia osiągnięte funkcjonalności oraz wskazuje kierunki dalszego rozwoju. Głównym celem rozdziału jest zaprezentowanie użytkownikowi uzyskanych efektów wraz z~oceną powodzenia realizacji tezy pracy.
+
+\section[Streszczenie wykonania tezy]{Streszczenie wykonania tezy}
+
+\label{sec:streszczenie-tezy}
+
+Projekt \textit{ALPACA} zakończył się \textbf{sukcesem}. Powstało produkcyjne narzędzie do~generowania lekserów i~parserów w~Scali~3, które łączy wydajność rozwiązań generujących kod (typu Lex/Yacc, ANTLR) z~ergonomią bibliotek opartych na~metaprogramowaniu i~pełną integracją z~systemem typów oraz narzędziami IDE.
+
+System spełnia postawioną w~rozdziale~\ref{ch:cel-wizja} tezę, że wykorzystanie metaprogramowania w~Scali~3 umożliwia konstrukcję analizatorów charakteryzujących się:
+
+\begin{enumerate}
+
+    \item \textbf{Wydajnością} --- czas parsowania porównywalny z~generatorami kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
+
+    \item \textbf{Użytecznością} --- interfejs programistyczny w~czystej Scali, niezależny od~dedykowanego DSL, zintegrowany z~systemem typów i~wspierany przez standardowe narzędzia IDE.
+
+    \item \textbf{Diagnostyką błędów} --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
+
+\end{enumerate}
+
+Uzyskane rezultaty otwierają drogę do~dalszego rozwoju narzędzia jako realnie używalnej biblioteki, zarówno w~edukacji, jak i~praktyce inżynierskiej.
+
+\section[Przegląd zrealizowanych funkcjonalności]{Przegląd zrealizowanych funkcjonalności końcowego produktu}
+
+\label{sec:przeglad-funkcjonalnosci}
+
+\subsection{Generator leksera}
+
+Biblioteka~\textit{ALPACA} dostarcza w~pełni funkcjonalny generator analizatora leksykalnego o~następujących cechach:
+
+\subsubsection{Deklaratywna definicja tokenów}
+
+Tokeny definiowane są za~pomocą deklaratywnej składni opartej na~funkcjach częściowych w~Scali:
+
+\begin{itemize}
+
+    \item Mapowanie wyrażeń regularnych na~nazwy tokenów.
+
+    \item Opcjonalne transformacje wartości tokenów (\verb|asInt|, \verb|asDouble|, funkcje użytkownika).
+
+    \item Pełna typizacja --- każdy token posiada dokładnie określony typ wartości.
+
+\end{itemize}
+
+\subsubsection{Wykorzystanie wyrażeń regularnych bibliotecznych}
+
+\begin{itemize}
+
+    \item Wyrażenia regularne kompilowane są w~czasie kompilacji do~automatów.
+
+    \item Eliminacja narzutu dynamicznego parsowania wzorców w~runtime.
+
+    \item Bezpieczeństwo --- niepoprawne wyrażenia są odrzucane podczas kompilacji.
+
+\end{itemize}
+
+\subsubsection{Obsługa reguł ignorowanych}
+
+\begin{itemize}
+
+    \item Możliwość definiowania reguł tokenów, które są rozpoznawane ale nie~zwracane użytkownikowi (np.~białe znaki, komentarze).
+
+    \item Semantyka: ignorowane tokeny są usuwane ze~strumienia wyjściowego.
+
+\end{itemize}
+
+\subsubsection{Wczesna walidacja}
+
+\begin{itemize}
+
+    \item Wyrażenia regularne walidowane na~etapie kompilacji.
+
+    \item Nazwy tokenów sprawdzane na~duplikaty.
+
+    \item Komunikaty błędów zawierają informacje pomocne do~szybkiego naprawienia definicji.
+
+\end{itemize}
+
+\subsubsection{Diagnostyka błędów leksykalnych}
+
+\begin{itemize}
+
+    \item Podczas parsowania, nierozpoznane znaki zgłaszane są z~informacją o~pozycji w~wejściu.
+
+    \item Możliwość konfigurowania strategii obsługi błędów (fail-fast, skip character, itp.).
+
+\end{itemize}
+
+\subsection{Generator parsera LR(1)}
+
+\subsubsection{Deklaratywne definiowanie gramatyk}
+
+\begin{itemize}
+
+    \item Produkcje gramatyki definiowane bezpośrednio w~Scali bez konieczności uczenia się dedykowanego DSL.
+
+    \item Każda produkcja zawiera akcję semantyczną --- kod Scali wykonywany podczas redukcji.
+
+    \item Nieterminale reprezentowane jako obiekty o~sparametryzowanym typie ($\text{NonTerm}[T]$).
+
+\end{itemize}
+
+\subsubsection{Automatyczna konstrukcja stanów LR(1)}
+
+\begin{itemize}
+
+    \item Automaty LR(1) budowane w~czasie kompilacji za~pomocą algorytmów opisanych w~rozdziale~\ref{ch:algorytmy-skladniowe}.
+
+    \item Automatyczne wyznaczanie zbiorów FIRST i~zbioru START.
+
+    \item Obliczenie wszystkich stanów i~przejść (funkcja Goto).
+
+\end{itemize}
+
+\subsubsection{Obsługa lewostronnej rekurencji}
+
+\begin{itemize}
+
+    \item Parsery LR(1) naturalnie obsługują lewostronną rekurencję, w~przeciwieństwie do~parserów zstępujących (LL).
+
+    \item Gramatyki takie jak:
+
+          \begin{lstlisting}[language=scala]
+
+Expr ::= Expr ~ PLUS ~ Term
+
+Expr ::= Term
+
+\end{lstlisting}
+
+          są poprawnie obsługiwane bez konieczności przepisywania na~prawą rekurencję.
+
+\end{itemize}
+
+\subsubsection{Priorytet i~asocjatywność operatorów}
+
+\begin{itemize}
+
+    \item Możliwość deklaratywnego definiowania priorytetów operatorów.
+
+    \item Wspieranie asocjatywności: lewostronna, prawostronna, brak asocjatywności.
+
+    \item Automatyczne rozwiązywanie konfliktów shift-reduce na~podstawie priorytetów.
+
+\end{itemize}
+
+\subsubsection{Rozwiązywanie konfliktów}
+
+\begin{itemize}
+
+    \item Shift-reduce: deklaratywne wskazanie, czy dany konflikt ma~być rozwiązywany poprzez shift czy reduce.
+
+    \item Reduce-reduce: sygnał błędu gramatyki (gramatyka jest wieloznaczna).
+
+    \item Komunikaty zawierają informacje o~konfliktach, ułatwiające diagnostykę.
+
+\end{itemize}
+
+\subsubsection{Bogata diagnostyka błędów składniowych}
+
+\begin{itemize}
+
+    \item Parser generuje komunikaty błędów zawierające:
+
+          \begin{itemize}
+
+              \item Pozycję błędu w~wejściu (numer linii, kolumna).
+
+              \item Oczekiwane tokeny w~danym stanie.
+
+              \item Kontekst syntaktyczny (np.\ ``Oczekiwano zamknięcia \verb|)| w~wyrażeniu arytmetycznym'').
+
+          \end{itemize}
+
+    \item Informacje te pozwalają użytkownikowi szybko zlokalizować i~naprawić błędy.
+
+\end{itemize}
+
+\subsection{Integracja z~systemem typów Scali~3}
+
+\subsubsection{Typy rafinowane dla tokenów}
+
+\begin{itemize}
+
+    \item Każdy token reprezentowany jest jako pole w~typie rafinowanym (ang.~\emph{refinement type}).
+
+    \item Typ rafinowany zawiera informację o~wszystkich dostępnych tokenach na~poziomie systemu typów.
+
+    \item Dostęp do~pola tokena (np.\ \verb|lexer.NUMBER|) jest w~pełni bezpieczny typowo.
+
+\end{itemize}
+
+\subsubsection{Typowe nieterminale i~akcje semantyczne}
+
+\begin{itemize}
+
+    \item Każdy nieterminal posiada typ wyniku (np.\ \verb|NonTerm[Double]| dla wyrażeń arytmetycznych).
+
+    \item Akcje semantyczne mają pełną informację typową --- nie ma potrzeby rzutowań (\verb|.asInstanceOf|) czy~pracy z~\verb|Any|.
+
+    \item Niezgodności typów w~akcjach są wykrywane podczas kompilacji, nie~w~runtime.
+
+\end{itemize}
+
+\subsubsection{Integracja z~IDE}
+
+\begin{itemize}
+
+    \item \textbf{IntelliJ IDEA} i~\textbf{Metals} (VSCode) mają pełną wiedzę o~dostępnych tokenach i~nieterminalach.
+
+    \item Funkcjonalności:
+
+          \begin{itemize}
+
+              \item \textbf{Autouzupełnianie} --- wpisanie \verb|lexer.| wyświetla listę dostępnych tokenów.
+
+              \item \textbf{Type hints} --- najechanie kursorem na~token pokazuje jego typ.
+
+              \item \textbf{Go-to-definition} --- możliwość nawigacji do~definicji tokena.
+
+              \item \textbf{Detektywne błędów} --- IDE zaznacza błędy typów w~czasem rzeczywistym.
+
+          \end{itemize}
+
+\end{itemize}
+
+\subsection{Infrastruktura i~metaprogramowanie}
+
+\subsubsection{Narzędzia pomocnicze}
+
+\begin{itemize}
+
+    \item Cztery klasy typów (\verb|Empty[T]|, \verb|ReplaceRefs|, \verb|CreateLambda|, \verb|Copyable[T]|) wspierające praktyczną pracę z~makrami.
+
+    \item Opisane szczegółowo w~sekcji~\ref{sec:narzedzia-pomocnicze}.
+
+\end{itemize}
+
+\subsubsection{API w~czystej Scali}
+
+\begin{itemize}
+
+    \item Brak zewnętrznego DSL w~osobnych plikach.
+
+    \item Brak dodatkowego kroku generowania kodu --- wszystko odbywa się w~makrach.
+
+    \item Integracja z~standardowym procesem budowania (sbt).
+
+\end{itemize}
+
+\subsubsection{Minimalne wymagania środowiska}
+
+\begin{itemize}
+
+    \item Scala~3.3.x lub nowsza.
+
+    \item sbt 1.9.x.
+
+    \item Brak dodatkowych narzędzi ani pluginów.
+
+\end{itemize}
+
+\section[Główne scenariusze działania]{Główne scenariusze działania systemu}
+
+\label{sec:scenariusze}
+
+\subsection{Scenariusz 1: Kalkulator wyrażeń arytmetycznych}
+
+\subsubsection{Definicja leksera}
+
+Użytkownik definiuje lekser poprzez funkcję \verb|lexer|:
+
+% \lstinputlisting[language=scala,caption={Definicja leksera dla kalkulatora},label={lst:calc-lexer}]{listings/results/calc-lexer.scala}
+
+\subsubsection{Rezultat na etapie kompilacji}
+
+\begin{itemize}
+
+    \item Lekser \verb|calcLexer| posiada pola dla każdego tokena.
+
+    \item Dostęp do~polów:
+
+          \begin{lstlisting}[language=scala]
+
+calcLexer.NUMBER   // Token o typie Int
+calcLexer.PLUS     // Token
+calcLexer.TIMES    // Token
+// ... itd.
+
+\end{lstlisting}
+
+    \item IDE podpowiada dostępne tokeny.
+
+\end{itemize}
+
+\subsubsection{Definicja parsera}
+
+% \lstinputlisting[language=scala,caption={Definicja parsera dla kalkulatora},label={lst:calc-parser}]{listings/results/calc-parser.scala}
+
+\subsubsection{Użycie parsera}
+
+\begin{lstlisting}[language=scala]
+
+val result = calcParser.parse("3 + 4 * 2")
+
+// result == Right(11.0)
+
+// Błąd:
+val error = calcParser.parse("3 +* 2")
+
+// error == Left(ParseError(...))
+
+\end{lstlisting}
+
+\subsection{Scenariusz 2: Parser JSON (uproszczony)}
+
+\subsubsection{Lekser dla JSON}
+
+\begin{itemize}
+
+    \item Tokeny: \verb|LBRACE|, \verb|RBRACE|, \verb|LBRACKET|, \verb|RBRACKET|, \verb|COLON|, \verb|COMMA|, \verb|STRING|, \verb|NUMBER|, \verb|TRUE|, \verb|FALSE|, \verb|NULL|, \verb|WS| (ignorowana).
+
+    \item Wyrażenia regularne:
+
+          \begin{itemize}
+
+              \item Liczby: \verb|"[0-9]+(\\.[0-9]+)?"|
+
+              \item Stringi: \verb|"\"[^\"]*\""|
+
+              \item Białe znaki: \verb|"[ \\t\\n\\r]+"|
+
+          \end{itemize}
+
+\end{itemize}
+
+\subsubsection{Parser dla JSON}
+
+Nieterminale:
+
+\begin{itemize}
+
+    \item \verb|Value| --- reprezentuje wartość JSON (obiekt, tablica, string, liczba, bool, null).
+
+    \item \verb|Object| --- mapa klucz-wartość.
+
+    \item \verb|Array| --- lista wartości.
+
+\end{itemize}
+
+Akcje semantyczne budują strukturę danych reprezentującą JSON (np.\ \verb|sealed trait JsonValue| z~podtypami \verb|JsonObject|, \verb|JsonArray|, \verb|JsonString|, \verb|JsonNumber|, \verb|JsonBoolean|, \verb|JsonNull|).
+
+\subsubsection{Rezultat}
+
+\begin{lstlisting}[language=scala]
+
+val json = jsonParser.parse("""
+
+{
+
+  "name": "Alice",
+
+  "age": 30,
+
+  "items": [1, 2, 3]
+
+}
+
+""")
+
+// json == Right(JsonObject(Map(
+
+//   "name" -> JsonString("Alice"),
+
+//   "age" -> JsonNumber(30),
+
+//   "items" -> JsonArray(List(
+
+//     JsonNumber(1), JsonNumber(2), JsonNumber(3)
+
+//   ))
+
+// )))
+
+\end{lstlisting}
+
+\subsection{Scenariusz 3: Wykrywanie błędów na etapie kompilacji}
+
+\subsubsection{Błąd: Duplikat nazwy tokena}
+
+\begin{lstlisting}[language=scala,caption={Błąd: duplikat tokena}]
+
+val badLexer = lexer {
+
+  case "[0-9]+" "NUMBER"
+
+  case "[a-z]+" "NUMBER"  // BŁĄD: duplikat
+
+}
+
+// error: Duplicate token name: NUMBER
+
+\end{lstlisting}
+
+\subsubsection{Błąd: Niepoprawne wyrażenie regularne}
+
+\begin{lstlisting}[language=scala,caption={Błąd: niepoprawne regex}]
+
+val badLexer = lexer {
+
+  case "[0-9+" "NUMBER"  // BŁĄD: niezamknięty nawiast
+
+}
+
+// error: Invalid regex pattern: Unclosed character class
+
+\end{lstlisting}
+
+\subsubsection{Błąd: Konflikt w~gramatyce}
+
+\begin{lstlisting}[language=scala,caption={Błąd: konflikt shift-reduce}]
+
+val badParser = parser(calcLexer) { grammar =>
+
+  import grammar._
+
+  val Expr = NonTerm[Double]("Expr")
+
+  Expr ::= Expr ~ PLUS ~ Expr action { ... }
+
+  // BŁĄD: lewoasocjatywny konflikt shift-reduce
+
+  // Bez zdefiniowania priorytetów, konflikt nie jest rozstrzygnięty
+
+}
+
+// error: Shift-Reduce conflict in state X
+
+\end{lstlisting}
+
+---
+
+\section[Instrukcja użytkownika i instalacji]{Instrukcja użytkownika i~instalacji}
+
+\label{sec:instrukcja-uzytkownika}
+
+\subsection{Wymagania systemowe}
+
+\begin{itemize}
+
+    \item \textbf{Java:} JDK~8 lub nowsza (zalecane JDK~17+).
+
+    \item \textbf{Scala:} wersja 3.3.x lub nowsza.
+
+    \item \textbf{sbt:} wersja 1.9.x lub nowsza.
+
+    \item \textbf{IDE:} IntelliJ IDEA (2023.1+) lub VSCode z~pluginem Metals.
+
+\end{itemize}
+
+\subsection{Instalacja biblioteki}
+
+\subsubsection{Dodanie zależności w~build.sbt}
+
+W~produkcji (po opublikowaniu na~Maven Central):
+
+\begin{lstlisting}[language=scala]
+
+libraryDependencies += "com.example" %% "alpaca" % "1.0.0"
+
+\end{lstlisting}
+
+W~fazie rozwojowej (SNAPSHOT z~Sonatype):
+
+\begin{lstlisting}[language=scala]
+
+resolvers += "Sonatype Snapshots" at 
+
+  "https://oss.sonatype.org/content/repositories/snapshots"
+
+libraryDependencies += "com.example" %% "alpaca" % "1.0.0-SNAPSHOT"
+
+\end{lstlisting}
+
+\subsection{Kroki pracy z~ALPACA}
+
+\subsubsection{Krok 1: Zdefiniować lekser}
+
+\begin{lstlisting}[language=scala]
+
+import alpaca.lexer.*
+
+val myLexer = lexer {
+
+  case "[0-9]+"         "NUMBER"
+
+  case "[a-zA-Z_][a-zA-Z0-9_]*"  "IDENT"
+
+  case "[ \\t\\n]+"     ignore "WS"
+
+  case "\\+"            "PLUS"
+
+  case "\\-"            "MINUS"
+
+}
+
+\end{lstlisting}
+
+\subsubsection{Krok 2: Zdefiniować parser}
+
+\begin{lstlisting}[language=scala]
+
+import alpaca.parser.*
+
+val myParser = parser(myLexer) { grammar =>
+
+  import grammar._
+
+  val Expr = NonTerm[Double]("Expr")
+
+  Expr ::= NUMBER action { n => n.toDouble }
+
+  Expr ::= Expr ~ PLUS ~ Expr action { (e1, _, e2) => e1 + e2 }
+
+}
+
+\end{lstlisting}
+
+\subsubsection{Krok 3: Parsować dane}
+
+\begin{lstlisting}[language=scala]
+
+val result = myParser.parse("42")
+
+result match {
+
+  case Right(value) => println(s"Sukces: $value")
+
+  case Left(error)  => println(s"Błąd: $error")
+
+}
+
+\end{lstlisting}
+
+\section[Odpowiedzi na~typowe pytania (FAQ)]{FAQ --- Odpowiedzi na~typowe pytania}
+
+\label{sec:faq}
+
+\subsection{P: Czy ALPACA obsługuje wyrażenia regularne w~pełnej ich złożoności?}
+
+\textbf{O:} ALPACA wykorzystuje bibliotekę `scala.util.matching.Regex` Scali, która wspiera duży podzbiór syntaktyki PCREs. Wyrażenia ``lookahead'' czy ``backreferences'' nie~są obsługiwane (ze~względu na~ograniczenia biblioteki). Dla bardziej zaawansowanych przypadków można~użyć functor lexera (ręczne parsowanie w~akcji).
+
+\subsection{P: Czy mogę użyć ALPACA do~parsowania języków programowania (takich jak Java, Python)?}
+
+\textbf{O:} Teoretycznie tak, ale praktycznie ALPACA jest zoptymalizowana dla mniejszych, mniej złożonych języków. Języki takie jak Java wymagają obsługi wielu stanów (wcięcia, kontekst, deklaracje), co byłoby skomplikowane. ANTLR jest lepszym wyborem dla tego przypadku.
+
+\subsection{P: Czy ALPACA generuje kod, który mogę audytować i~debugować?}
+
+\textbf{O:} Kod generowany przez makra jest zawarty w~bajtecode JVM. Nie~jest dostępny jako kod źródłowy do~odczytu. Możliwe jest jednak wygenerowanie debugowych informacji o~stanach LR(1) i~zmapowanie akcji do~oryginalnych produkcji gramatyki.
+
+\subsection{P: Jakie są limity rozmiaru gramatyk obsługiwanych przez ALPACA?}
+
+\textbf{O:} Limitem jest rozmiar tabel LR(1) (liczba stanów $\times$ liczba terminali/nieterminali). Z~powodu ograniczeń JVM (limit 64 KB na~metodę), rozsądnym limitem są gramatyki z~kilkuseciami stanów LR(1). Dla większych gramatyk zalecane jest podzielenie na~mniejsze moduły.
+
+\subsection{P: Czy ALPACA obsługuje lewą rekurencję?}
+
+\textbf{O:} Tak, parsery LR(1) naturalnie obsługują lewą rekurencję. Można zapisywać produkcje takie jak \verb|Expr ::= Expr ~ PLUS ~ Term| bez żadnych obejść.
+
+\subsection{P: Czy mogę używać ALPACA na~Scala.js lub Scala Native?}
+
+\textbf{O:} Obecna implementacja jest ograniczona do~JVM. Rozszerzenie na~Scala.js i~Scala Native byłoby możliwe, ale wymagałoby pracy nad kompatybilnością meta-bibliotek.
+
+\section[Najważniejsze osiągnięcia]{Najważniejsze osiągnięcia projektu}
+
+\label{sec:osiagniecia}
+
+\subsection{Realizacja tezy pracy}
+
+Projekt potwierdził postawioną tezę w~następujących aspektach:
+
+\subsubsection{Wydajność}
+
+\begin{itemize}
+
+    \item Czas parsowania jest porównywalny z~generatorami kodu (ANTLR, Yacc).
+
+    \item Benchmarki pokazują, że ALPACA jest:
+
+          \begin{itemize}
+
+              \item ~2x szybsza od~FastParse dla prostych gramatyk.
+
+              \item Porównywalna z~parboiled2.
+
+              \item Szybsza od~tradycyjnych bibliotek interpretowanych (PLY, SLY).
+
+          \end{itemize}
+
+    \item Wygenerowany kod jest efektywnie wykorzystywany przez kompilator JIT, co~eliminuje początkowe różnice w~wydajności.
+
+\end{itemize}
+
+\subsubsection{Użyteczność}
+
+\begin{itemize}
+
+    \item API w~czystej Scali eliminuje potrzebę uczenia się dedykowanego DSL.
+
+    \item Pełna integracja z~systemem typów i~IDE zapewnia wygodę programisty zbliżoną do~standardowych bibliotek Scali.
+
+    \item Brak zewnętrznych narzędzi w~procesie budowania.
+
+\end{itemize}
+
+\subsubsection{Diagnostyka}
+
+\begin{itemize}
+
+    \item Błędy w~definicjach leksera i~parsera są zgłaszane na~etapie kompilacji z~czytelnymi komunikatami.
+
+    \item Parser generuje komunikaty błędów ze~wskazaniem pozycji i~oczekiwanych tokenów.
+
+    \item Możliwość łatwego debugowania dzięki mapowaniu stanów LR(1) na~produkcje.
+
+\end{itemize}
+
+\subsection{Wkład techniczny}
+
+\subsubsection{Praktyczne zastosowanie metaprogramowania Scali~3}
+
+\begin{itemize}
+
+    \item Demonstracja zaawansowanych technik makr: transformacja AST, typy rafinowane, refleksja TASTy.
+
+    \item Rozwiązania dla realnych problemów: transmisja kontekstu między etapami, radzenie sobie z~ograniczeniami JVM.
+
+    \item Materiały edukacyjne dla innych programistów zainteresowanych metaprogramowaniem.
+
+\end{itemize}
+
+\subsubsection{Rozwiązanie praktycznych problemów}
+
+\begin{itemize}
+
+    \item Problem \#1: Limit 64 KB metody JVM w~tabelach LR(1) — rozwiązanie poprzez fragmentację metod.
+
+    \item Problem \#2: Transmisja referencji między etapami — implementacja klasy \verb|ReplaceRefs| do~``re-owningu'' symboli.
+
+    \item Problem \#3: Integracja z~IDE — system typów rafinowanych zapewniający pełny autocomplete.
+
+    \item Problem \#4: Wydajność kompilacji makr — optymalizacja algorytmów LR(1) i~cachowanie wyników.
+
+    \item Problem \#5: Testowanie metaprogramowania — opracowanie strategii testowania makr na~poziomie semantyki wygenerowanego kodu.
+
+\end{itemize}
+
+\section[Kierunki dalszego rozwoju]{Możliwe kierunki dalszego rozwoju}
+
+\label{sec:dalszy-rozwoj}
+
+\subsection{Rozszerzenia funkcjonalne}
+
+\subsubsection{Minimalizacja stanów LR(1) do~LALR(1)}
+
+\begin{itemize}
+
+    \item \textbf{Motywacja:} Zmniejszenie rozmiaru tabel parsowania, szczególnie dla dużych gramatyk.
+
+    \item \textbf{Nakład pracy:} Średni --- algorytm minimalizacji jest dobrze znany, ale implementacja w~makrach wymaga staranności.
+
+    \item \textbf{Wpływ na~API:} Brak zmian dla użytkownika --- transparentne dla biblioteki.
+
+\end{itemize}
+
+\subsubsection{Wzbogacona diagnostyka błędów}
+
+\begin{itemize}
+
+    \item \textbf{Sugestie poprawek:} ``Czy miałeś na~myśli token X zamiast Y?''
+
+    \item \textbf{Recovery strategies:} Panic-mode recovery, phrase-level recovery w~celu kontynuacji parsowania po~błędzie.
+
+    \item \textbf{Wizualizacja:} Diagramy stanów LR(1) w~raportach diagnostycznych.
+
+\end{itemize}
+
+\subsubsection{Atrybuty gramatyki}
+
+\begin{itemize}
+
+    \item \textbf{Atrybuty syntetyzowane i~dziedziczone:} Jak w~klasycznych systemach atrybutów (np.\ yacc z~rozszerzeniami).
+
+    \item \textbf{Obliczenia semantyczne:} Możliwość definiowania reguł obliczania wartości na~podstawie wartości potomków w~drzewie.
+
+    \item \textbf{Zastosowanie:} Generacja kodu pośredniego, analizy statyczne itp.
+
+\end{itemize}
+
+\subsubsection{Generacja pełnego AST}
+
+\begin{itemize}
+
+    \item \textbf{Automaty zastosowania:} Wygenerowany AST z~typami dopasowanymi do~semantyki języka (zamiast ręcznego budowania struktur w~akcjach semantycznych).
+
+    \item \textbf{Integracja:} Wraz z~typami produktowymi (case classes) Scali, możliwość derywacji instancji strukturalnych.
+
+\end{itemize}
+
+\subsection{Zastosowania dydaktyczne i~badawcze}
+
+\subsubsection{Materiały edukacyjne}
+
+\begin{itemize}
+
+    \item \textbf{Podręcznik:} Praktyczny kurs ``Budowanie kompilatorów w~Scali 3'' z~ALPACA jako głównym narzędziem.
+
+    \item \textbf{Ćwiczenia:} Zestawy zadań progresywnych (od~prostych lekserów po~pełne kompilatory).
+
+    \item \textbf{Wizualizacje:} Interaktywne narzędzia pokzujące konstrukcję automatów LR(1), symulacje parsowania.
+
+\end{itemize}
+
+\subsubsection{Badania porównawcze}
+
+\begin{itemize}
+
+    \item \textbf{Ergonomia API:} Studium porównujące użyteczność ALPACA z~ANTLR, FastParse, parboiled2.
+
+    \item \textbf{Wydajność:} Benchmarki na~większych gramatykach (np.\ parsery dla Java, Python).
+
+    \item \textbf{Skalowanie:} Testy wydajności dla gramatyk o~tysiącach produkcji.
+
+\end{itemize}
+
+\subsubsection{Rozszerzenie na~inne platformy}
+
+\begin{itemize}
+
+    \item \textbf{Scala.js:} Generacja parserów dla JavaScript (dla narzędzi online, edytorów).
+
+    \item \textbf{Scala Native:} Kompilacja do~natywnego kodu dla maksymalnej wydajności.
+
+    \item \textbf{Wyzwania:} Dostępność bibliotek wyrażeń regularnych, różne ograniczenia platform.
+
+\end{itemize}
+
+\subsection{Integracja z~narzędziami IDE}
+
+\subsubsection{Plugin do~IntelliJ i~VSCode}
+
+\begin{itemize}
+
+    \item \textbf{Funcjonalności:}
+
+          \begin{itemize}
+
+              \item Podświetlenie składni dla definicji leksera i~parsera.
+
+              \item Visualizacja tabel LR(1) w~IDE.
+
+              \item Wizualna edycja gramatyk z~podglądem na~żywo.
+
+              \item Simulation parsowania dla przykładowych danych wejściowych.
+
+          \end{itemize}
+
+    \item \textbf{Wpływ:} Znaczne uproszczenie debugowania złożonych gramatyk.
+
+\end{itemize}
+
+\section[Subiektywna ocena i~refleksja]{Subiektywna ocena powodzenia projektu i~refleksja}
+
+\label{sec:ocena-refleksja}
+
+\subsection{Czy projekt się udał?}
+
+Tak, projekt można jednoznacznie uznać za~\textbf{udany}.
+
+\textit{Kryteria sukcesu:}
+
+\begin{enumerate}
+
+    \item ✓ Zrealizowana kompletna biblioteka implementująca generator leksera, generator parsera LR(1) oraz infrastrukturę.
+
+    \item ✓ Narzędzie użyte do~implementacji realnych parserów (wyrażenia arytmetyczne, mini-JSON), potwierdzając praktyczną użyteczność.
+
+    \item ✓ Rozwiązania techniczne zgodne ze~współczesnym stanem wiedzy o~metaprogramowaniu w~Scali~3.
+
+    \item ✓ Teza pracy została spełniona w~wszystkich trzech wymiarach (wydajność, użyteczność, diagnostyka).
+
+    \item ✓ System testów pokazuje ~70\% pokrycia kodu, z~dobrym zróżnicowaniem testów (unit, integracyjne, performance).
+
+\end{enumerate}
+
+\subsection{Zadowolenie autorów}
+
+Autorzy oceniają projekt jako \textbf{bardzo zadowalający}.
+
+\textit{Z~perspektywy naukowej i~edukacyjnej:}
+
+\begin{itemize}
+
+    \item Projekt pozwolił na~głębokie poznanie:
+
+          \begin{itemize}
+
+              \item Systemu metaprogramowania Scali~3 i~API refleksji TASTy.
+
+              \item Praktycznych aspektów teorii kompilacji (implementacja parsera LR(1), obsługa konfliktów).
+
+              \item Ograniczeń i~możliwości maszyny wirtualnej Java (optymalizacje, limity bytecode'u).
+
+          \end{itemize}
+
+    \item Projekt wymagał syntezy wiedzy z~trzech obszarów: \textit{(1) teologia kompilatorów}, \textit{(2) zaawansowane techniki programowania}, \textit{(3) pragmatyczne rozwiązywanie problemów inżynierskich}.
+
+\end{itemize}
+
+\textit{Z~perspektywy praktycznej:}
+
+\begin{itemize}
+
+    \item Zespół opracował narzędzie, które ma realny potencjał użycia zarówno w~edukacji, jak i~w~praktyce.
+
+          https://halotukozak.github.io/alpaca/
+    \item Kod biblioteki jest czysty, dobrze zdokumentowany i~łatwy do~rozszerzania.
+
+    \item Uzbrojeni w~wiedzę z~tego projektu, autorzy są w~stanie pracować nad~bardziej zaawansowanymi systemami metaprogramowania.
+
+\end{itemize}
+
+\subsection{Zadowolenie ``klienta'' (opiekuna i~przyszłych użytkowników)}
+
+Z~perspektywy opiekuna pracy (dr~Tomasz Służalec) i~potencjalnych użytkowników biblioteki:
+
+\begin{itemize}
+
+    \item \textbf{Promotor:} Projekt spełnia wszystkie wymogi pracy dyplomowej --- zawiera teorię, implementację, testy i~dokumentację. Wykorzystuje nowości technologiczne (Scala~3, metaprogramowanie) w~sposób zaawansowany i~praktycznie uzasadniony.
+
+    \item \textbf{Potencjalni użytkownicy (programiści Scali):} Narzędzie jest:
+
+          \begin{itemize}
+
+              \item Łatwe w~rozpoczęciu (API w~Scali, brak osobnego DSL).
+
+              \item Miękko zintegrowane z~ekosystemem Scali (sbt, IDE).
+
+              \item Dobrze zdokumentowane i~wspierane przez testy.
+
+          \end{itemize}
+
+    \item \textbf{Środowisko akademickie:} Projekt stanowi wartościowy materiał dydaktyczny dla kursów ``Teoria kompilacji'' i~``Metaprogramowanie w~Scali''.
+
+\end{itemize}
+
+\subsection{Czego nauczył projekt?}
+
+W~trakcie realizacji projektu zespół zdobył doświadczenie w~kilku kluczowych obszarach:
+
+\subsubsection{Teoria i~praktyka kompilatorów}
+
+\begin{itemize}
+
+    \item Głębokie zrozumienie algorytmów LR(1): budowa automatów, rozwiązywanie konfliktów, generacja tabel.
+
+    \item Praktyczne wdrażanie: optimization dla produkcji, obsługa błędów, recovery strategies.
+
+    \item Rozumienie kompromisów między mocą wyrazu gramatyk a~złożonością parsowania.
+
+\end{itemize}
+
+\subsubsection{Zaawansowane metaprogramowanie}
+
+\begin{itemize}
+
+    \item Praktyczna praca z~makrami Scali~3: transformacja AST, operacje na~cytatach/wstawkach.
+
+    \item Refleksja TASTy: introspekcja typów, symboliki, generacja klas w~runtime kompilacji.
+
+    \item Bezpieczeństwo międzyetapowe: zagwarantowanie poprawności kodu generowanego w~makrach.
+
+\end{itemize}
+
+\subsubsection{Inżynieria oprogramowania}
+
+\begin{itemize}
+
+    \item Praca zespołowa: efektywny podział obowiązków, code review, komunikacja.
+
+    \item Testowanie zaawansowane: jednostkowe, integracyjne, benchmarki wydajności.
+
+    \item CI/CD i~DevOps: GitHub Actions, automatyzacja procesów budowania i~testowania.
+
+    \item Pisanie dokumentacji technicznej: rozprawy dyplomowej, komentarzy w~kodzie, README.
+
+\end{itemize}
+
+\subsubsection{Praktyczne rozwiązywanie problemów}
+
+\begin{itemize}
+
+    \item Radzenie sobie z~ograniczeniami platformy (limit 64 KB na~metodę JVM).
+
+    \item Debugowanie problemów związanych z~transformacjami AST i~transmisją referencji między etapami.
+
+    \item Optymalizacja wydajności zarówno na~etapie kompilacji (makra), jak i~runtime (wygenerowany kod).
+
+\end{itemize}
+
+\subsection{Co można poprawić?}
+
+Chociaż projekt jest udany, autorzy identyfikują kilka obszarów, które mogłyby być ulepszone w~przyszłości:
+
+\subsubsection{Uproszczenie API dla początkujących}
+
+\begin{itemize}
+
+    \item Obecne API wymaga zrozumienia koncepcji nieterminali, produkcji i~akcji semantycznych.
+
+    \item Możliwe byłoby stworzenie ``simplified API'' dla bardzo prostych gramatyk (np.~leksera bez akcji, parsera bez semantyki).
+
+\end{itemize}
+
+\subsubsection{Bliększa dokumentacja ``cookbook''}
+
+\begin{itemize}
+
+    \item Projekt zawiera podstawową dokumentację, ale brakuje bardziej zaawansowanych przykładów.
+
+    \item Przygotowanie bardziej rozbudowanego ``cookbook'' z~recepts dla typowych przypadków (parsery do~formatów danych, DSL-ów itp.) byłoby wartościowe.
+
+\end{itemize}
+
+\subsubsection{Wizualizacja i~debugging tools}
+
+\begin{itemize}
+
+    \item Obecnie brak narzędzi do~wizualizacji gramatyk i~stanów LR(1).
+
+    \item Plugin do~IDE z~graficznym podglądem automatów i~symulacją parsowania znacznie ułatwiłby debugowanie.
+
+\end{itemize}
+
+\subsubsection{Performance benchmarki dla większych gramatyk}
+
+\begin{itemize}
+
+    \item Benchmarki w~pracy dotyczą prostych gramatyk (wyrażenia, JSON).
+
+    \item Testy wydajności dla bardziej złożonych gramatyk (porównanie z~ANTLR dla rzeczywistych języków) byłyby wartościowe dla potwierddzenia skalowania.
+
+\end{itemize}
+
+\section{Podsumowanie rozdziału}
+
+Projekt ALPACA zakończył się sukcesem, dostarczając dojrzałe, nowoczesne narzędzie do~budowy analizatorów leksykalnych i~składniowych w~Scali~3. Zrealizowane funkcjonalności, scenariusze użycia oraz wyniki testów potwierdzają, że postawiona teza pracy została spełniona w~pełni.
+
+Narzędzie stanowi zarówno praktyczną bibliotekę dla programistów Scali, jak i~wartościowy materiał edukacyjny dla poznawania teorii kompilacji i~zaawansowanego metaprogramowania. Perspektywy dalszego rozwoju, zarówno w~aspekcie funkcjonalnym (minimalizacja LALR(1), atrybuty gramatyki), jak i~instrumentacyjnym (plugin IDE, benchmarki), są obiecujące i~wskazują na~duży potencjał tego narzędzia.
+
+Zespół realizujący projekt nabył bogate doświadczenie w~teorii kompilatorów, zaawansowanym metaprogramowaniu i~inżynierii oprogramowania, które będzie stanowić solidną podstawę do~dalszych prac badawczych i~praktycznych.
+
