@@ -1,8 +1,9 @@
-\chapter[Organizacja pracy]{Organizacja pracy}
+\chapter[Organizacja pracy]
 \label{ch:organizacja-pracy}
 
-Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, charakter projektu, podział obowiązków pomiędzy członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
+Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, jego charakter, podział obowiązków pomiędzy~członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
 Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędzia wspierające współpracę zespołową oraz strategię walidacji implementacji.
+
 
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
 \label{sec:charakterystyka-projektu-realizacji}
@@ -14,23 +15,21 @@ Projekt \textit{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy eleme
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
 W~dalszych etapach realizacji specyfikacja była doprecyzowywana w~sposób iteracyjny, na~podstawie wyników eksperymentów oraz analizy ograniczeń technicznych.
 
-W~pierwszym semestrze zrealizowano fazę eksploracyjno-prototypową, obejmującą analizę możliwości metaprogramowania w~Scali~3, prototypowanie mechanizmów generacji leksera i~parsera oraz identyfikację ograniczeń technicznych platformy JVM.
+W~pierwszym semestrze zrealizowano fazę eksploracyjno-prototypową, obejmującą analizę możliwości metaprogramowania w~Scali~3, prototypowanie mechanizmów generacji leksera i~parsera oraz identyfikację ograniczeń technicznych platformy JVM\@.
 W~drugim semestrze zrealizowano fazę wdrożeniowo-optymalizacyjną, skoncentrowaną na~utrwaleniu wybranych rozwiązań, rozszerzeniu funkcjonalności systemu oraz poprawie jakości i~wydajności kodu.
+
 
 \section[Zespół i podział obowiązków]{Zespół i~podział obowiązków}
 \label{sec:zespol-podzial-obowiazkow}
 
 \subsection[Osoby w~projekcie]{Osoby w~projekcie i~ich role}
-\label{sec:osoby-w-projekcie}
+\label{subsec:osoby-w-projekcie}
 
 Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rolach.
 
-\paragraph{Bartosz~Buczek (dalej: BB)} pełnił rolę współautora projektu.
-Odpowiadał przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
+\paragraph[Bartosz Buczek (dalej: BB)]{Bartosz~Buczek (dalej: BB)} był odpowiedzialny przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
 
-\paragraph{Bartłomiej~Kozak (dalej: BK)} pełnił rolę współautora projektu.
-Był odpowiedzialny za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
-
+\paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
 
 \subsection{Podział prac na główne zadania}
 \label{subsec:podzial-prac-na-glowne-zadania}
@@ -45,7 +44,7 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
     \item Implementacja makra \verb|lexer| transformującego deklaratywne reguły tokenizacji w~kod proceduralny.\ (BK)
     \item Projektowanie interfejsu DSL opartego na~funkcjach częściowych.\ (BB, BK)
     \item Integracja z~wyrażeniami regularnymi biblioteki standardowej Scali.\ (BB)
-    \item Definiowanie typów rafinowanych dla tokenów. (BK)
+    \item Definiowanie typów rafinowanych dla tokenów.\ (BK)
     \item Obsługa ignorowanych reguł leksykalnych.\ (BB)
     \item Obsługa kontekstu w~lekserze.\ (BB, BK)
     \item Diagnostyka błędów leksykalnych.\ (BB, BK)
@@ -76,9 +75,9 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
 \textbf{Artefakty:}
 
 \begin{itemize}
-    \item Moduł \verb|alpaca.parser|
-    \item Klasy: \verb|Parser[Ctx]|, \verb|Rule[R]|, \verb|ParseTable|, \verb|ActionTable|
-    \item Makra: \verb|createTables|
+    \item Moduł \texttt{alpaca.parser}
+    \item Klasy: \texttt{Parser[Ctx]}, \texttt{Rule[R]}, \texttt{ParseTable}, \texttt{ActionTable}
+    \item Makra: \texttt{createTables}
 \end{itemize}
 
 \subsubsection[Infrastruktura i narzędzia pomocnicze]{Infrastruktura i~narzędzia pomocnicze}
@@ -148,7 +147,7 @@ Kamienie milowe pozwoliły zespołowi na~śledzenie postępów, priorytetyzowani
 Każdy kamień milowy zawierał listę zgłoszeń (ang. \textit{issues}) reprezentujących konkretne zadania (implementacja funkcji, dokumentacja, testy).
 Postęp mierzono poprzez stosunek zamkniętych zgłoszeń do~całkowitej liczby planowanych zadań, co umożliwiało szybką ocenę stanu rzeczywistego realizacji w~stosunku do~pierwotnego planu.
 
-Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel \ref{tab:milestones-progress}.
+Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{tab:milestones-progress}.
 
 \begin{table}[h]
     \centering
@@ -219,6 +218,7 @@ Złożone implementacje (np.\ algorytm LR(1)) uzupełniono o~komentarze liniowe 
 \subsubsection[README i dokumentacja]{README i~dokumentacja}
 
 \paragraph{README.md} zawiera instrukcje instalacji, przykłady użycia oraz zarys architektury systemu.
+
 \paragraph{GitHub Pages} hostuje bardziej szczegółową dokumentację, poradniki oraz sekcję FAQ\cite{alpaca-docs}.
 
 \subsubsection{Praca dyplomowa (LaTeX)}
@@ -226,6 +226,7 @@ Złożone implementacje (np.\ algorytm LR(1)) uzupełniono o~komentarze liniowe 
 Praca została przygotowana w~systemie składu \LaTeX{} z~wykorzystaniem szablonu AGH (\verb|aghengthesis|).
 Treść została podzielona na~rozdziały w~oddzielnych plikach (m.in.\ \verb|introduction.tex|, \verb|metaprogramming.tex|, \verb|implementation.tex|).
 Bibliografię przygotowano w~formacie Bib\LaTeX{} (\verb|bibliografia.bib|) z~odwołaniami do~literatury naukowej oraz dokumentacji technicznej.
+
 
 \section[Zastosowane techniki i~praktyki]{Zastosowane techniki i~praktyki inżynierskie}
 \label{sec:techniki-praktyki}
@@ -249,28 +250,29 @@ Projektowanie przebiegało iteracyjnie, zgodnie z~następującym schematem:
 
 Dla modułów o~jasno zdefiniowanych specyfikacjach (np.\ funkcji \verb|computeFirstSet|) testy przygotowywano przed implementacją, zgodnie z~podejściem Test-Driven Development.
 Dla komponentów o~charakterze eksploracyjnym (np.\ mechanizmów generacji klas w~makrach) testy opracowywano po~ustabilizowaniu implementacji.
-Praktyka ta była szczególnie przydatna do~ujawniania problemów w~interfejsach pomiędzy modułami.
+Praktyka ta była szczególnie przydatna do~ujawniania problemów w~interfejsach pomiędzy~modułami.
 
 \subsubsection{Refaktoryzacja}
 
 Regularnie przeprowadzano refaktoryzacje w~celu poprawy czytelności, jakości oraz efektywności kodu.
-W~ramach wybranych zmian każdy pull request zawierał sekcję poświęconą refaktoryzacji, jeżeli była ona uzasadniona.
+Uzasadnione zmiany refaktoryzacyjne dokumentowano w dedykowanej sekcji Pull Requesta.
 Wykorzystywano narzędzia wspomagające refaktoryzację (m.in.\ Scalafix).
 
 \subsubsection[Code Review i Pair Programming]{Code Review i~Pair Programming}
 
-Każdy pull request był recenzowany przez drugiego członka zespołu przed połączeniem z~główną gałęzią.
-Stosowano Pair Programming, czyli sesje wspólnego programowania, w~przypadku szczególnie złożonych problemów.
+Każdy Pull Request był recenzowany przez drugiego członka zespołu przed połączeniem z~głównym branchem.
+W~przypadku zagadnień o~szczególnie złożonym charakterze zastosowano sesje wspólnego programowania (ang. \textit{Pair Programming}).
 Spotkania poświęcone przeglądom kodu odbywały się 2--3 razy w~tygodniu, zwykle przez 30--60~minut.
 
-\subsubsection[Issues i Planning Game]{User Stories i~Planning Game}
-Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne \textit{issues} do~realizacji.
-Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}
+\subsubsection[Zgłoszenia i planowanie]{Zgłoszenia i~planowanie}
+Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne zgłoszenia (ang. \textit{issues}) do~realizacji.
+W procesie planowania wykorzystywano elementy techniki Planning Game (Gra Planistyczna), ustalając zakres prac w oparciu o szacowaną złożoność i wartość poszczególnych zadań.
+Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}.
 
 \subsection{Praktyki specyficzne dla metaprogramowania}
 \label{subsec:praktyki-specyficzne-dla-metaprogramowania}
 
-\subsubsection{Staged Computation (programowanie wieloetapowe)}
+\subsubsection{Obliczenia wieloetapowe (ang. \textit{Staged Computation})}
 
 Świadomie rozróżniano obliczenia wykonywane na~etapie kompilacji i~na~etapie wykonania.
 Maksymalizowano zakres obliczeń przeniesionych do~etapu kompilacji (m.in.\ generacja tabel LR(1), kompilacja wyrażeń regularnych).
@@ -288,11 +290,12 @@ Stosowano zasadę szybkiego zwrotu błędu (ang. \textit{fail-fast}) --- prefero
 \subsubsection{Continuous Integration}
 
 GitHub Actions automatyzowało kompilację, uruchamianie testów oraz weryfikację formatowania kodu przy każdym wypchnięciu zmian.
-Zastosowano reguły ochrony gałęzi (branch protection rules), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~główną gałęzią.
+Zastosowano reguły ochrony gałęzi (ang. \textit{branch protection rules}), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~głównym branchem.
 
 \subsubsection{Zarządzanie artefaktami (Artifact Management)}
 
-Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowano w~repozytorium Maven Central.
+Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowane w~repozytorium Maven Central.
+
 
 \section[Przebieg prac --- harmonogram i~iteracje]{Przebieg prac --- harmonogram i~iteracje}
 \label{sec:przebeig-prac-harmonogram}
@@ -300,9 +303,11 @@ Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowano w~repozytorium Ma
 \subsection[Szczegółowa oś czasu i przebieg prac]{Szczegółowa oś czasu i~przebieg prac}
 \label{subsec:szczegolowa-os-czasu}
 
-Projekt ALPACA realizowany był przez okres 27~tygodni, obejmujących dwa semestry akademickie. Szczegółowy przebieg prac oraz liczba zmian wprowadzonych w~poszczególnych etapach zostały udokumentowane poprzez system kontroli wersji Git, umożliwiający śledzenie postępów projektu na~poziomie pojedynczych zmian.
+Praca ALPACA realizowana była przez 27~tygodni, obejmujących dwa semestry akademickie.
+Szczegółowy przebieg oraz liczba zmian w~poszczególnych etapach dokumentowane były poprzez system kontroli wersji, umożliwiający śledzenie postępów na~poziomie pojedynczych zmian.
 
-W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których średnio przypadało 19,6~zmian na~tydzień. Poniższa tabela prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
+W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których średnio przypadało 19,6~zmian na~tydzień.
+Tabela~\ref{tab:detailed-timeline} prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
 
 \begin{table}[h]
     \centering
@@ -312,7 +317,7 @@ W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których ś
         \hline
         Inicjalizacja  & 19 kwietnia 2025              & Konfiguracja repozytorium, system budowania Mill                  \\
         \hline
-        \multicolumn{3}{c}{\textbf{\textit{Semestr 1 --- Eksploracja i~prototypowanie (tygodnie 1--14)}}}                  \\
+        \multicolumn{3}{c}{\textbf{Semestr 1 --- Eksploracja i~prototypowanie (tygodnie 1--14)}}                           \\
         \hline
         Tydzień 1--3   & 22--27 lipca                  & Podstawy teoretyczne, pierwsze makra, API metaprogramowania       \\
         \hline
@@ -322,7 +327,7 @@ W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których ś
         \hline
         Tydzień 11--14 & 25 września--6 października   & Identyfikacja ograniczeń JVM, planowanie semestr 2                \\
         \hline
-        \multicolumn{3}{c}{\textbf{\textit{Semestr 2 --- Implementacja i~optymalizacja (tygodnie 15--27)}}}                \\
+        \multicolumn{3}{c}{\textbf{Semestr 2 --- Implementacja i~optymalizacja (tygodnie 15--27)}}                         \\
         \hline
         Tydzień 15--17 & 13 października--30 listopada & Moduł leksera, typy rafinowane, interfejs DSL                     \\
         \hline
@@ -353,21 +358,21 @@ Druga część projektu cechowała się szybszym tempem zmian (130~commitów), c
 
 Ostatnie dwa tygodnie projektu zawierały 15~commitów poświęconych przede wszystkim dokumentacji, ostatecznym poprawkom rozprawy dyplomowej oraz czyszczeniu kodu.
 
-
 \subsection[Szybkość pracy zespołu i postępy]{Szybkość pracy i~postępy}
 \label{subsec:velocitas-zespou-ipostepy}
 
 \subsubsection{Metryki wydajności}
 
-Realizacja projektu ALPACA wymagała znaczącego zaangażowania zespołu przez okres kilku miesięcy. Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwierciedlenie w poniższych wskaźnikach:
+Realizacja projektu ALPACA wymagała znaczącego zaangażowania zespołu przez okres kilku miesięcy.
+Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwierciedlenie w poniższych wskaźnikach:
 
 \begin{itemize}
     \item \textbf{Historię rozwoju reprezentuje} łącznie \textbf{450 commitów} zintegrowanych w głównej gałęzi projektu, dokumentujących iteracyjny proces implementacji oraz poprawiania systemu.
-    \item \textbf{Struktura zmian kodowych} obejmuje około \textbf{80 pull requestów}, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
-    \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}, co świadczy o wysokim pokryciu testami wynoszącym 33%.
+    \item \textbf{Struktura zmian kodowych} obejmuje około \textbf{80 Pull Requestów}, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
+    \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}.
 \end{itemize}
 
-Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamikę zespołu, wskazując na konsystentny postęp oraz okresy intensywnej pracy nad resolucją kluczowych wyzwań technicznych.
+Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamikę zespołu, wskazując na stały postęp oraz okresy intensywnej pracy nad rozwiązywaniem kluczowych wyzwań technicznych.
 
 \begin{figure}[!htbp]
     \centering
@@ -375,6 +380,7 @@ Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamik�
     \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA}
     \label{fig:commits}
 \end{figure}
+
 
 \section[Główne wyzwania i~ich rozwiązania]{Główne problemy i~ich rozwiązania}
 \label{sec:problemy-rozwiazania}
@@ -393,7 +399,7 @@ Dla złożonych gramatyk z~tysiącami wpisów rozmiar wygenerowanej metody przek
 
 \subsubsection{Rozwiązanie}
 
-Zastosowano podejście polegające na~fragmentacji metod (\textit{method fragmentation}) \cite{method-too-large}.
+Zastosowano podejście polegające na~fragmentacji metod (\textit{method fragmentation})~\cite{method-too-large}.
 Zamiast generować pojedynczą metodę zawierającą całą tabelę parsowania, generowanych jest wiele metod pomocniczych, z~których każda odpowiada za dodanie ograniczonej liczby wpisów do~struktury budującej tabelę.
 Metoda główna sekwencyjnie wywołuje metody pomocnicze, a~następnie zwraca wynikową tabelę.
 Ze względu na niewielki rozmiar metod pomocniczych kompilator JIT może je skutecznie inlinować, minimalizując narzut wykonania.
@@ -514,7 +520,7 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 
 \subsubsection{Rezultat}
 
-Osiągnięto pokrycie testami na~poziomie około 70\% kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
+Osiągnięto pokrycie testami na~poziomie około TODO kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
 
 \subsection{Problem 6: Błędy w~kolejności definicji tokenów}
 \label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
@@ -687,7 +693,6 @@ Zaimplementowano parser dla podzbioru formatu JSON (obsługujący obiekty, tabli
 Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \textit{ALPACA} z~innymi podejściami.
 
 TODO: to zmyślone
-
 
 \subsection{Walidacja poprawności}
 \label{subsec:walidacja-poprawnosci}
