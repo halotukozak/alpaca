@@ -7,6 +7,10 @@ import alpaca.internal.lexer.{DefinedToken, Lexeme, Token}
 import alpaca.internal.parser.*
 
 import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
+import NamedTuple.NamedTuple
+
+trait ProductionSelector extends Selectable:
+  def selectDynamic(name: String): Any
 
 /**
  * Base class for parsers.
@@ -94,4 +98,34 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   @compileTimeOnly(RuleOnly)
   inline protected final def ctx: Ctx = dummy
+
+  transparent inline def production: ProductionSelector = ${ productionImpl }
+}
+
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = {
+  import quotes.reflect.*
+
+  val parserSymbol = Symbol.spliceOwner.owner.owner
+  val parserTpe = parserSymbol.typeRef
+
+  val rules = parserTpe.typeSymbol.declarations.collect:
+    case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+
+  val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
+    case '{ rule(${ Varargs(cases) }*) } =>
+      cases.flatMap:
+        case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } => name.value
+        case _ => None
+
+  rules
+    .unsafeFlatMap:
+      case ValDef(_, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]])
+      case DefDef(_, _, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+      case _ =>
+        report.error(s"Define resolutions as the last field of the parser.")
+        Nil
+    .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
+      case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])
+    .asType match
+    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ ??? : refinedTpe }
 }

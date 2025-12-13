@@ -61,14 +61,14 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
   test("conflict resolution cycle detection") {
     typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
-      val A = rule({ case CalcLexer.Num(lexem) => lexem.value }: @name("A"))
+      val A = rule("A" { case CalcLexer.Num(lexem) => lexem.value })
       val B = rule { case CalcLexer.`+`(_) => "+" }
       val root = rule { case A(a) => a }
 
       override val resolutions = Set(
-        P.ofName("A").before(CalcLexer.`+`),
-        CalcLexer.`+`.before(P(CalcLexer.`+`)),
-        P(CalcLexer.`+`).before(P.ofName("A")),
+        production.A.before(CalcLexer.`+`),
+        CalcLexer.`+`.before(production.B),
+        production.B.before(production.A),
       )
     }
     """).loneElement.message should

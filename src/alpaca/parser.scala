@@ -9,6 +9,8 @@ import scala.deriving.Mirror
 
 type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
 
+type ProductionDefinition[R] = PartialFunction[Tuple | Lexeme[?, ?], R]
+
 /**
  * Creates a grammar rule from one or more productions.
  *
@@ -31,7 +33,11 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](productions: PartialFunction[Tuple | Lexeme[?, ?], R]*): Rule[R] = dummy
+inline def rule[R](productions: ProductionDefinition[R]*): Rule[R] = dummy
+
+extension (name: String)
+  @compileTimeOnly(ParserOnly)
+  inline def apply[R](production: ProductionDefinition[R]): production.type = dummy
 
 /**
  * Represents a grammar rule in the parser.
@@ -88,8 +94,6 @@ trait Rule[R] {
  */
 trait ParserCtx
 
-final class name(name: ValidName) extends StaticAnnotation
-
 /**
  * Type representing conflict resolution rules for the parser.
  *
@@ -144,18 +148,6 @@ object Production {
    */
   @compileTimeOnly(ConflictResolutionOnly)
   inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
-
-  /**
-   * Creates a production reference from a name.
-   *
-   * This is compile-time only and used in conflict resolution definitions
-   * to refer to named productions.
-   *
-   * @param name the name of the production
-   * @return a production reference
-   */
-  @compileTimeOnly(ConflictResolutionOnly)
-  inline def ofName(name: ValidName): Production = dummy
 }
 
 object ParserCtx:

@@ -83,16 +83,13 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
-        case Typed(term, tpt) =>
-          // todo: maybe it is possible to pattern match on TypeTree
-          val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
-          val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value.orNull
-        case other => other -> null
+      val extractProductionName: Function[Expr[ProductionDefinition[?]], (Tree, ValidName | Null)] =
+        case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } =>
+          production.asTerm -> name.value.orNull
+        case other =>
+          other.asTerm -> null
 
       cases
-        .map(_.asTerm)
         .map(extractProductionName)
         .unsafeMap:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
@@ -120,7 +117,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val rules = parserTpe.typeSymbol.declarations.collect:
     case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
-  report.info("Rules extracted, building parse table...")
+  debug("Rules extracted, building parse table...")
 
   val table = rules
     .unsafeFlatMap:
@@ -130,14 +127,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       // csv may be not the best format for this due to the commas
       debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
 
-  report.info("Productions extracted, building conflict resolution table...")
+  debug("Productions extracted, building conflict resolution table...")
 
   val productions = table
     .map(_.production)
     .tap: table =>
       debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
-  report.info("Productions extracted, building parse and action tables...")
+  debug("Productions extracted, building parse and action tables...")
 
   val findProduction: Expr[Production] => Production =
     val productionsByName = productions
@@ -151,7 +148,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       .toMap
 
     {
-      case '{ alpaca.Production.ofName(${ Expr(name) }) } =>
+      case '{ ($selector: ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
@@ -164,9 +161,11 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           NEL.unsafe(args),
           report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
         )
+
+      case definition => raiseShouldNeverBeCalled(definition)
     }
 
-  report.info("Conflict resolution rules extracted, building conflict resolution table...")
+  debug("Conflict resolution rules extracted, building conflict resolution table...")
 
   val resolutionExprs = scala.util
     .Try:
@@ -182,7 +181,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
     case '{ $token: Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
 
-  report.info("Building conflict resolution table...")
+  debug("Building conflict resolution table...")
 
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs.view
@@ -198,14 +197,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     table.verifyNoConflicts()
     debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
 
-  report.info("Conflict resolution table built, identifying root production...")
+  debug("Conflict resolution table built, identifying root production...")
 
   val root = table
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
     .get
 
-  report.info("Root production identified, generating parse and action tables...")
+  debug("Root production identified, generating parse and action tables...")
 
   val parseTable = Expr(
     ParseTable(
@@ -215,7 +214,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       debugToFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv),
   )
 
-  report.info("Parse and action tables generated.")
+  debug("Parse and action tables generated.")
 
   val actionTable = Expr.ofList(
     table.map:

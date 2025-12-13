@@ -241,7 +241,8 @@ extension (using quotes: Quotes)(msg: String)
    *
    * @param pos the source position of the debug call
    */
-  private[internal] def soft(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+  private[internal] def soft(using pos: DebugPosition): Unit =
+    quotes.reflect.report.info(show"$msg at line $pos")
 
 extension (using quotes: Quotes)(e: Any)
   /**
