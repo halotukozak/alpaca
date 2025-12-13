@@ -121,14 +121,62 @@ Metoda \texttt{ensure} zapewnia, że~żądana pozycja jest~dostępna w~buforze, 
 
 \subsection{Wczesna walidacja wzorców}
 \label{subsec:lexer-impl-regexchecker}
-Przed wygenerowaniem automatu skanującego, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod~względem potencjalnych konfliktów.
-Mechanizm ten wykrywa dwa klasy problemów:
-\begin{itemize}
-    \item Subsumpcję --- sytuację, w~której każde słowo akceptowane przez późniejszy wzorzec jest~również akceptowane przez wcześniejszy wzorzec, czyniąc~późniejszy \enquote{martwym kodem}.
-    Przykład: jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~wszystkie słowa kluczowe będą dopasowane przez~\texttt{ID}, co~uniemożliwi rozpoznanie \texttt{KEYWORD}.
-    \item Pokrycie prefiksów --- sytuację, w~której jeden wzorzec akceptuje prefiks słowa akceptowanego przez inny wzorzec.
-    Przykład: jeśli zdefiniowano \texttt{LT~=~<} oraz \texttt{LE~=~<}\texttt{=}, lekser może dopasować \texttt{<}, a~następnie zgłosić błąd leksykalny dla~pozostałego znaku \texttt{=}, zamiast rozpoznać \texttt{<}\texttt{=}.
-    Jest to konsekwencja użycia silnika wyrażeń regularnych, w którym zasada najdłuższego dopasowania (\textit{maximal munch}) nie ma zastosowania.
-\end{itemize}
 
-Wykrycie któregokolwiek z~powyższych problemów powoduje przerwanie kompilacji z~czytelnym i~działającym komunikatem diagnostycznym, dzięki~czemu konfiguracyjne błędy są~eliminowane przed~czasem wykonania programu.
+Przed wygenerowaniem automatu skanującego, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod~względem potencjalnych konfliktów.
+Mechanizm ten wykrywa dwa klasy problemów wynikających z~decyzji implementacyjnej o~wykorzystaniu kolejności definicji zamiast reguły najdłuższego dopasowania.
+
+\subsubsection{Formalne definicje problemów}
+
+Niech $P = \{p_1, p_2, \ldots, p_n\}$ będzie uporządkowaną sekwencją wzorców tokenów, gdzie~$p_i$ poprzedza~$p_j$ dla~$i < j$.
+Niech~$L(p)$ oznacza język regularny akceptowany przez wzorzec~$p$.
+
+\paragraph{Subsumpcja}
+Wzorzec~$p_j$ jest subsumowany przez~$p_i$ (gdzie~$i < j$), gdy:
+$$L(p_j) \subseteq L(p_i)$$
+
+W~tej sytuacji żaden ciąg zaakceptowany przez~$p_j$ nie~zostanie nigdy dopasowany, ponieważ wcześniejszy wzorzec~$p_i$ zawsze dopasuje się pierwszy.
+Jest to analogiczne do~\enquote{martwego kodu} w~programowaniu.
+
+\textbf{Przykład:} jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~$L(\text{KEYWORD}) \subseteq L(\text{ID})$, ponieważ słowa \texttt{if} i~\texttt{then} są również akceptowane przez~\texttt{[a-z]+}.
+W~rezultacie token \texttt{KEYWORD} nigdy nie~zostanie rozpoznany.
+
+\paragraph{Pokrycie prefiksów}
+Wzorzec~$p_i$ pokrywa prefiksy wzorca~$p_j$ (gdzie~$i < j$), gdy istnieje słowo~$w \in L(p_j)$ takie, że:
+$$\exists u, v \in \Sigma^* : w = uv \land u \in L(p_i)$$
+
+Innymi słowy, wcześniejszy wzorzec akceptuje prefiks słowa akceptowanego przez późniejszy wzorzec.
+
+\textbf{Przykład:} jeśli zdefiniowano \texttt{LT~=~<} oraz \texttt{LE~=~<\hspace{0pt}=}, to~wzorzec \texttt{<} akceptuje prefiks~\texttt{<} słowa~\texttt{<\hspace{0pt}=}.
+Lekser dopasuje znak~\texttt{<} jako token \texttt{LT}, pozostawiając znak~\texttt{=} jako nierozpoznany, co~skutkuje błędem leksykalnym zamiast poprawnego rozpoznania tokenu~\texttt{LE}.
+
+\subsubsection{Implementacja algorytmu walidacji}
+
+Algorytm walidacji wykorzystuje bibliotekę \texttt{dregex}~\cite{dregex}, która implementuje działania na językach regularnych i~umożliwia sprawdzanie relacji zawierania między wyrażeniami regularnymi.
+
+Algorytm przebiega w~następujących krokach:
+
+\begin{enumerate}
+    \item \textbf{Rozszerzenie wzorców o~sufiksowe dopełnienie}:
+    Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
+    Wzorzec~$p'$ pokrywa prefiksy~$p$ wtedy i~tylko wtedy, gdy~$L(p) \subseteq L(p' \cdot \Sigma^*)$.
+
+    \item \textbf{Kompilacja wzorców}:
+    Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
+
+    \item \textbf{Weryfikacja par wzorców}:
+    Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
+    $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
+    co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
+
+    \item \textbf{Generacja komunikatów diagnostycznych}:
+    Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
+    \begin{verbatim}
+Pattern <p_j> is shadowed by <p_i>
+    \end{verbatim}
+\end{enumerate}
+
+\subsubsection{Integracja z~procesem kompilacji}
+
+Moduł \texttt{RegexChecker} jest wywoływany w~fazie ekspansji makra \texttt{lexer}, przed~generacją kodu leksera.
+Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~czytelnym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
+Podejście to jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.

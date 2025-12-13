@@ -455,7 +455,12 @@ Zaimplementowano system typów rafinowanych, w~którym:
     \item Dostęp do~pola tokena (np.~\verb|c.NUMBER|) jest statycznie typowany i~bezpieczny.
 \end{enumerate}
 
-TODO: screenshot hovera w metalsach
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/IDESupport.png}
+    \caption{Wsparcie IDE dzięki typom rafinowanym w~projekcie ALPACA}
+    \label{fig:ide_support}
+\end{figure}
 
 \subsubsection{Rezultat}
 
@@ -510,6 +515,113 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 \subsubsection{Rezultat}
 
 Osiągnięto pokrycie testami na~poziomie około 70\% kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
+
+\subsection{Problem 6: Błędy w~kolejności definicji tokenów}
+\label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
+
+\subsubsection{Problem}
+
+Użytkownicy systemu ALPACA mogą intuicyjnie zdefiniować tokeny w~kolejności, która prowadzi do~nieoczekiwanych błędów.
+Problem występuje, gdy~krótszy wzorzec jest~zdefiniowany przed dłuższym wariantem, który zawiera go~jako prefiks.
+
+Przykładowo, użytkownik definiuje operatory porównania w~naturalnej kolejności:
+\begin{verbatim}
+LT = <
+LE = <=
+GT = >
+GE = >=
+\end{verbatim}
+
+Taka definicja wydaje się poprawna, jednak podczas parsowania wyrażenia \verb|x <= 5| system rozpozna tylko \verb|<|, a~znak \verb|=| zostanie odrzucony jako nieznany token, co~prowadzi do~błędu składniowego.
+
+\subsubsection{Przyczyna}
+
+Ze~względu na~wykorzystanie bibliotecznych wyrażeń regularnych (szczegóły w~rozdziale~\ref{sec:dfa-vs-regex}), system dopasowuje tokeny według kolejności definicji, a~nie według reguły najdłuższego dopasowania.
+Problem jest szczególnie trudny do znalezienia, ponieważ:
+\begin{itemize}
+    \item Błąd nie~objawia się podczas definiowania leksera (kompilacja przebiega poprawnie)
+    \item Objawy pojawiają się dopiero podczas parsowania konkretnego wejścia
+    \item Komunikat błędu odnosi się do~parsera (\enquote{nieoczekiwany symbol}), nie~do~leksera
+\end{itemize}
+
+\subsubsection{Rozwiązanie}
+
+System automatycznie wykrywa takie konflikty podczas kompilacji dzięki modułowi \verb|RegexChecker| (algorytm opisany w~rozdziale~\ref{subsec:lexer-impl-regexchecker}).
+Przed wygenerowaniem kodu leksera, wszystkie wzorce są~analizowane pod~kątem konfliktów, a~użytkownik otrzymuje czytelny komunikat błędu wskazujący źródło problemu.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/PatternShadowing.png}
+    \caption{Przykład wykrycia konfliktu w~kolejności definicji tokenów}
+    \label{fig:regex_checker_error}
+\end{figure}
+
+\subsubsection{Rezultat}
+
+Błędy są wykrywane w~fazie kompilacji, zanim użytkownik uruchomi kod.
+Komunikat diagnostyczny jasno wskazuje, które wzorce kolidują, umożliwiając natychmiastową korektę.
+Użytkownik musi jedynie zmienić kolejność definicji (najpierw \verb|<=|, potem \verb|<|) lub~zmodyfikować wyrażenia regularne, aby~wyeliminować konflikt.
+
+Mechanizm ten znacząco skrócił czas debugowania błędów leksykalnych podczas rozwoju projektów demonstracyjnych (parser wyrażeń arytmetycznych, parser JSON).
+
+\subsection{Problem 7: Konflikty precedencji operatorów}
+\label{subsec:problem-7:-konflikty-w-tabeli-shift-reduce}
+
+\subsubsection{Problem}
+
+Użytkownicy definiujący gramatyki dla~wyrażeń arytmetycznych napotykają problem: jak~powiedzieć parserowi, że~mnożenie ma~wyższy priorytet niż~dodawanie?
+
+Bez~jawnych reguł precedencji, parser nie~wie, czy~wyrażenie \verb|2 + 3 * 4| powinno być parsowane jako~\verb|(2 + 3) * 4 = 20| czy~\verb|2 + (3 * 4) = 14|.
+System zgłasza błąd kompilacji wskazujący na~konflikt, wymagając od~użytkownika rozstrzygnięcia.
+
+Dodatkowo, użytkownicy mogą przypadkowo zdefiniować sprzeczne reguły precedencji.
+Na~przykład, próbując zdefiniować unary minus, użytkownik może przez pomyłkę użyć zwykłego operatora odejmowania, tworząc cykliczną zależność: operator~$-$ ma~pierwszeństwo przed~$*$, $*$ przed~$-$, co~jest niemożliwe do~rozstrzygnięcia.
+
+\subsubsection{Przyczyna}
+
+Wiele naturalnych gramatyk języków programowania zawiera niejednoznaczności, takie jak wyrażenia arytmetyczne z~różnymi poziomami precedencji operatorów, czy konstrukcje warunkowe z~\enquote{dangling else}:
+
+Bez mechanizmu wykrywania i~rozwiązywania tych konfliktów, użytkownik byłby zmuszony do przepisania gramatyki do~formy jednoznacznej (np.~różne nieterminale dla~każdego poziomu precedencji), co~jest uciążliwe i~zmniejsza czytelność specyfikacji.
+
+\subsubsection{Rozwiązanie}
+
+System ALPACA oferuje mechanizm deklaratywnego rozwiązywania konfliktów bez~konieczności przepisywania gramatyki (algorytmy opisane w~rozdziale~\ref{subsec:parser-conflict-resolution}).
+
+\paragraph{Prosty przykład użycia}
+Dla~gramatyki wyrażeń arytmetycznych użytkownik definiuje jedynie łańcuch relacji:
+\begin{verbatim}
+pow before mul
+mul before add
+\end{verbatim}
+
+System automatycznie:
+\begin{enumerate}
+    \item \textbf{Wyprowadza przechodniość}: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
+    \item \textbf{Rozwiązuje wszystkie konflikty}: Używając grafu relacji pierwszeństwa
+    \item \textbf{Weryfikuje spójność}: Sprawdza czy~nie~ma~cykli w~relacjach
+\end{enumerate}
+
+
+Jeśli~użytkownik przez pomyłkę zdefiniuje sprzeczne reguły (np.~$A$ przed~$B$, $B$ przed~$C$, $C$ przed~$A$), system wykrywa cykl podczas kompilacji i~zgłasza czytelny błąd:
+
+\begin{verbatim}
+Inconsistent conflict resolution detected:
+Reduction(sub) before Shift(*) before Reduction(sub)
+There are elements being both before and after Reduction(sub)
+at the same time.
+Consider revising the before/after rules to eliminate cycles
+\end{verbatim}
+
+\subsubsection{Rezultat}
+
+\begin{itemize}
+    \item Definicja gramatyki w~naturalnej formie, bez~sztucznych przekształceń
+    \item Redukcja liczby wymaganych deklaracji z~$O(n^2)$ do~$O(n)$ w~typowych przypadkach
+    \item Wczesna walidacja konfliktów i~niespójności wykrywana w~fazie kompilacji
+    \item Pomocne komunikaty wskazujące źródło problemu i~sugestie rozwiązania
+\end{itemize}
+
+Mechanizm ten umożliwił implementację przykładowego parsera wyrażeń arytmetycznych z~pełną obsługą operatorów \verb|+|, \verb|-|, \verb|*|, \verb|/|, \verb|^| oraz~nawiasów w~mniej niż~40~liniach kodu.
 
 
 \section[Wdrożenia, testy i~eksperymenty]{Opis wdrożeń, testów i~eksperymentów}
