@@ -146,7 +146,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       .collect: p =>
         p.rhs -> p
       .toMap
-
+    import scala.reflect.Selectable.reflectiveSelectable
     {
       case '{ ($selector: ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))

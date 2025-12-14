@@ -3,14 +3,23 @@ package internal
 package parser
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{DefinedToken, Lexeme, Token}
+import alpaca.internal.lexer.Lexeme
 import alpaca.internal.parser.*
 
-import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
-import NamedTuple.NamedTuple
+import scala.annotation.{compileTimeOnly, tailrec}
+import scala.NamedTuple.NamedTuple
 import scala.collection.mutable
 
-trait ProductionSelector extends Selectable:
+/**
+ * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
+ *
+ * This trait is used to provide compile-time access to named productions for use in conflict resolution definitions.
+ * It is typically used when specifying conflict resolutions, enabling you to refer to productions
+ * in a type-safe and compile-time-checked manner.
+ *
+ * @note This is a compile-time only feature and should be used within parser definitions.
+ */
+transparent trait ProductionSelector extends Selectable:
   def selectDynamic(name: String): Any
 
 /**
@@ -36,6 +45,33 @@ abstract class Parser[Ctx <: ParserCtx](
   val root: Rule[?]
 
   val resolutions: Set[ConflictResolution] = Set.empty
+
+  /**
+   * Provides compile-time access to named productions for use in conflict resolution definitions.
+   *
+   * This method allows you to reference productions by their names as defined in your parser.
+   * It is typically used when specifying conflict resolutions, enabling you to refer to productions
+   * in a type-safe and compile-time-checked manner.
+   *
+   * Example usage:
+   * {{{
+   *   override val resolutions = Set(
+   *     production.plus.after(production.times)
+   *   )
+   * }}}
+   *
+   * @note This is a compile-time only feature and should be used within parser definitions.
+   */
+  @compileTimeOnly(ConflictResolutionOnly)
+  transparent inline protected def production: ProductionSelector = ${ productionImpl }
+
+  /**
+   * Provides access to the parser context within rule definitions.
+   *
+   * This is compile-time only and can only be used inside parser rule definitions.
+   */
+  @compileTimeOnly(RuleOnly)
+  inline protected final def ctx: Ctx = dummy
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -91,17 +127,6 @@ abstract class Parser[Ctx <: ParserCtx](
 
     ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
   }
-
-  /**
-   * Provides access to the parser context within rule definitions.
-   *
-   * This is compile-time only and can only be used inside parser rule definitions.
-   */
-  @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = dummy
-
-  @compileTimeOnly(ConflictResolutionOnly)
-  transparent inline def production: ProductionSelector = ${ productionImpl }
 }
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty

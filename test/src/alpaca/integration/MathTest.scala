@@ -1,8 +1,6 @@
 package alpaca
 package integration
 
-import Production as P
-
 import alpaca.{Production as P, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
