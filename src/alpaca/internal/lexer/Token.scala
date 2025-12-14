@@ -3,9 +3,8 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.{compileTimeOnly, publicInBinary}
 import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.annotation.compileTimeOnly
-import scala.annotation.publicInBinary
 
 /**
  * Type alias for context manipulation functions.
@@ -33,7 +32,7 @@ private[lexer] final case class TokenInfo[+Name <: ValidName](
 )
 
 //todo: private[lexer]
-object TokenInfo {
+object TokenInfo:
   private val counter = AtomicInteger(0)
 
   /**
@@ -77,7 +76,6 @@ object TokenInfo {
   given [name <: ValidName: {Type}]: ToExpr[TokenInfo[name]] with
     def apply(x: TokenInfo[name])(using Quotes): Expr[TokenInfo[name]] =
       '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
-}
 
 /**
  * Base trait for all token types.

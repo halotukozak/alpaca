@@ -3,6 +3,7 @@ package internal
 
 import scala.NamedTuple.NamedTuple
 import scala.concurrent.duration.FiniteDuration
+import scala.language.experimental.relaxedLambdaSyntax
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
@@ -35,8 +36,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
 
     override def transformTerm(tree: Term)(owner: Symbol): Term =
       filtered
-        .collectFirst:
-          case (find, replace) if find == tree.symbol => replace
+        .collectFirst(case (find, replace) if find == tree.symbol => replace)
         .getOrElse(super.transformTerm(tree)(owner))
   }
 }
@@ -84,7 +84,7 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
 // todo: it's temporary, remove when we have a proper timeout implementation
 inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
   import scala.concurrent.{Await, Future}
-  import scala.concurrent.duration._
+  import scala.concurrent.duration.*
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val future = Future(block)

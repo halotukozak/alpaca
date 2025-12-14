@@ -13,7 +13,7 @@ package internal
 //todo: better name
 infix private[alpaca] class withDefault[T, Q]
 
-private[alpaca] trait withDefaultLowImplicitPriority {
+private[alpaca] trait withDefaultLowImplicitPriority:
 
   /**
    * Ignore default - use the provided type when explicitly specified.
@@ -22,9 +22,8 @@ private[alpaca] trait withDefaultLowImplicitPriority {
    * @tparam Default the default type (ignored)
    */
   given useProvided[Provided, Default]: (Provided withDefault Default) = new (Provided withDefault Default)
-}
 
-private[alpaca] object withDefault extends withDefaultLowImplicitPriority {
+private[alpaca] object withDefault extends withDefaultLowImplicitPriority:
 
   /**
    * Infer type argument to default when no type is explicitly provided.
@@ -32,4 +31,3 @@ private[alpaca] object withDefault extends withDefaultLowImplicitPriority {
    * @tparam Default the default type to use
    */
   given useDefault[Default]: (Default withDefault Default) = new (Default withDefault Default)
-}

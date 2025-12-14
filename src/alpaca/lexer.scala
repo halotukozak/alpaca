@@ -3,9 +3,9 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.compileTimeOnly
-import NamedTuple.AnyNamedTuple
 import java.util.jar.Attributes.Name
+import scala.annotation.compileTimeOnly
+import scala.NamedTuple.AnyNamedTuple
 import scala.collection.mutable
 
 /**
@@ -42,7 +42,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
   ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages })(using '{ debugSettings }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
-object Token {
+object Token:
 
   /**
    * Creates an ignored token that will be matched but not included in the output.
@@ -79,7 +79,6 @@ object Token {
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
-}
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
 
@@ -90,7 +89,7 @@ transparent inline given ctx(using c: LexerCtx): c.type = c
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx {
+trait LexerCtx:
 
   /** The last lexeme that was created. */
   var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
@@ -100,7 +99,6 @@ trait LexerCtx {
 
   /** The remaining text to be tokenized. */
   var text: CharSequence
-}
 
 object LexerCtx:
 
@@ -109,8 +107,7 @@ object LexerCtx:
    *
    * @tparam Ctx the context type
    */
-  given [Ctx <: LexerCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
-    Copyable.derived
+  given [Ctx <: LexerCtx & Product: Mirror.ProductOf]: Copyable[Ctx] = Copyable.derived
 
   /**
    * Default BetweenStages implementation that updates the context after each match.

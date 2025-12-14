@@ -4,11 +4,11 @@ package parser
 
 import NonEmptyList as NEL
 
+import alpaca.internal.parser.Production.NonEmpty as NEP
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import Production.NonEmpty as NEP
 
-final class FirstSetTest extends AnyFunSuite {
+final class FirstSetTest extends AnyFunSuite:
   test("FirstSet should correctly identify first sets for simple grammar") {
     val productions: List[Production] = List(
       NEP(NonTerminal("S"), NEL(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
@@ -49,4 +49,3 @@ final class FirstSetTest extends AnyFunSuite {
 
     assert(FirstSet(productions) == expected)
   }
-}

@@ -10,7 +10,7 @@ package alpaca.internal
  */
 private[alpaca] trait Empty[T] extends (() => T)
 
-private[alpaca] object Empty {
+private[alpaca] object Empty:
 
   /**
    * Automatically derives an Empty instance for any Product type with default parameters.
@@ -24,7 +24,7 @@ private[alpaca] object Empty {
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] =
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
@@ -55,9 +55,6 @@ private[alpaca] object Empty {
         .asExprOf[T]
 
     '{
-      new Empty[T] {
+      new Empty[T]:
         def apply(): T = $value
-      }
     }
-  }
-}

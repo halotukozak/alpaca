@@ -21,7 +21,7 @@ private[internal] final case class Csv(
   rows: List[List[Shown]],
 )
 
-private[internal] object Csv {
+private[internal] object Csv:
 
   /**
    * Showable instance for Csv that formats it as a comma-separated value string.
@@ -60,4 +60,3 @@ private[internal] object Csv {
       List("not implemented yet"),
       List(List("not implemented yet")),
     )
-}

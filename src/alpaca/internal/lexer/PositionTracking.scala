@@ -9,11 +9,10 @@ package lexer
  * position tracks the column number within the current line and is
  * reset to 1 when a newline is encountered.
  */
-trait PositionTracking extends LexerCtx {
+trait PositionTracking extends LexerCtx:
 
   /** The current character position within the line (1-based). */
   var position: Int
-}
 
 object PositionTracking:
 

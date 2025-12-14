@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.reflect.ClassTag
 
-final class withDefaultTest extends AnyFunSuite {
+final class withDefaultTest extends AnyFunSuite:
 
   def f[T](using ev: T withDefault Int, ct: ClassTag[T]): String = ct.runtimeClass.getName
 
@@ -16,4 +16,3 @@ final class withDefaultTest extends AnyFunSuite {
   test("withDefault.provide") {
     assert(f[String] == "java.lang.String")
   }
-}

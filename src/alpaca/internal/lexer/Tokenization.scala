@@ -2,11 +2,10 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.tailrec
+import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
-import NamedTuple.NamedTuple
-import NamedTuple.AnyNamedTuple
-import scala.annotation.publicInBinary
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.annotation.{publicInBinary, tailrec}
 
 /**
  * The result of compiling a lexer definition.
@@ -62,8 +61,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)
-          val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[LexemeType]
+          val lexem = List(token).collect: case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[LexemeType]
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

@@ -37,7 +37,7 @@ final class MathTest extends AnyFunSuite:
       case x @ "\\d+" => Token["int"](x.toInt)
     }
 
-    object CalcParser extends Parser {
+    object CalcParser extends Parser:
       val Expr: Rule[Double] = rule(
         // binary arithmetic
         { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b }: @name("plus"),
@@ -104,7 +104,6 @@ final class MathTest extends AnyFunSuite:
         P.ofName("minus").after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
         P.ofName("minus").before(CalcLexer.`\\+`, CalcLexer.`-`),
       )
-    }
 
     val input = "1 + 2"
     val (_, lexemes) = CalcLexer.tokenize(input)

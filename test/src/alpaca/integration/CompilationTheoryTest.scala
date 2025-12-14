@@ -1,8 +1,11 @@
 package alpaca
 package integration
 
-import org.scalatest.funsuite.AnyFunSuite
 import Production as P
+
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])
@@ -38,22 +41,21 @@ final class CompilationTheoryTest extends AnyFunSuite:
   }
 
   object ASTPrinterParser extends Parser {
-    val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
-      ASTNode("program", instructions)
-    }
+    val root: Rule[ASTNode] = rule: case Instruction.List(instructions) => ASTNode("program", instructions)
 
     val Block: Rule[ASTNode] = rule(
-      { case Instruction(instruction) => ASTNode("block", scala.List(instruction)) },
-      { case (CTLexer.`\\{`(_), Instruction.List(instructions), CTLexer.`\\}`(_)) => ASTNode("block", instructions) },
+      case Instruction(instruction) => ASTNode("block", scala.List(instruction)),
+      case (CTLexer.`\\{`(_), Instruction.List(instructions), CTLexer.`\\}`(_)) => ASTNode("block", instructions),
     )
 
     val Instruction: Rule[ASTNode] = rule(
-      { case (Statement(statement), CTLexer.`;`(_)) => statement },
+      case (Statement(statement), CTLexer.`;`(_)) => statement,
+
       { case (CTLexer.`if`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
         ASTNode("IF", scala.List(cond, block))
       }: @name("bareIf"),
-      {
-        case (
+
+      case (
               CTLexer.`if`(_),
               CTLexer.`\\(`(_),
               Condition(cond),
@@ -62,94 +64,78 @@ final class CompilationTheoryTest extends AnyFunSuite:
               CTLexer.`else`(_),
               Block(elseBlock),
             ) =>
-          ASTNode("IF", scala.List(cond, ifBlock, elseBlock))
-      },
-      { case (CTLexer.`while`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
-        ASTNode("WHILE", scala.List(cond, block))
-      },
-      { case (CTLexer.`for`(_), CTLexer.id(id), CTLexer.`=`(_), Range(range), Block(block)) =>
-        ASTNode("FOR", scala.List(ASTNode(id.value, Nil), range, block))
-      },
+          ASTNode("IF", scala.List(cond, ifBlock, elseBlock)),
+
+      case (CTLexer.`while`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
+        ASTNode("WHILE", scala.List(cond, block)),
+      
+      case (CTLexer.`for`(_), CTLexer.id(id), CTLexer.`=`(_), Range(range), Block(block)) =>
+        ASTNode("FOR", scala.List(ASTNode(id.value, Nil), range, block)),
     )
 
     val Statement: Rule[ASTNode] = rule(
-      { case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)) },
-      { case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)) },
-      { case (CTLexer.break(_)) => ASTNode("BREAK", Nil) },
-      { case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil) },
-      { case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)) },
-      { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
-        ASTNode(fname.value, args)
-      },
+      case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)),
+      case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)),
+      case CTLexer.break(_) => ASTNode("BREAK", Nil),
+      {case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil)},
+      case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)),
+      case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) => ASTNode(fname.value, args),
     )
 
-    val Condition: Rule[ASTNode] = rule { case (Expression(lhs), Comparator(op), Expression(rhs)) =>
+    val Condition: Rule[ASTNode] = rule: case (Expression(lhs), Comparator(op), Expression(rhs)) =>
       ASTNode(op, scala.List(lhs, rhs))
-    }
 
-    val Range: Rule[ASTNode] = rule { case (Expression(start), CTLexer.`:`(_), Expression(end)) =>
+    val Range: Rule[ASTNode] = rule: case (Expression(start), CTLexer.`:`(_), Expression(end)) =>
       ASTNode(":", scala.List(start, end))
-    }
 
     val Arguments: Rule[List[ASTNode]] = rule(
-      { case (Expression(expr)) => scala.List(expr) },
-      { case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr },
+      case (Expression(expr)) => scala.List(expr),
+      case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr,
     )
 
-    val Element: Rule[ASTNode] = rule { case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
+    val Element: Rule[ASTNode] = rule: case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
       ASTNode("element", ASTNode(id.value, Nil) :: args)
-    }
 
     val Expression: Rule[ASTNode] = rule(
-      { case CTLexer.id(id) => ASTNode(id.value, Nil) },
-      { case Matrix(matrix) => matrix },
-      { case Element(elem) => elem },
-      { case (CTLexer.`\\(`(_), Expression(expr), CTLexer.`\\)`(_)) => ASTNode("expr", scala.List(expr)) },
-      { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
-        ASTNode(fname.value, args)
-      },
-      { case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs)) }: @name("add"),
-      { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) }: @name("sub"),
-      { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) }: @name("mul"),
-      { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) }: @name("div"),
-      { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) => ASTNode(".+", scala.List(lhs, rhs)) }: @name(
-        "matrixAdd",
-      ),
-      { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) => ASTNode(".-", scala.List(lhs, rhs)) }: @name(
-        "matrixSub",
-      ),
-      { case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) => ASTNode(".*", scala.List(lhs, rhs)) }: @name(
-        "matrixMul",
-      ),
-      { case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs)) }: @name(
-        "matrixDiv",
-      ),
-      { case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs)) }: @name("uMinus"),
-      { case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs)) }: @name("transpose"),
-      { case CTLexer.int(i) => ASTNode(i.value.toString, Nil) },
-      { case CTLexer.float(f) => ASTNode(f.value.toString, Nil) },
-      { case CTLexer.string(s) => ASTNode(s.value, Nil) },
+      case CTLexer.id(id) => ASTNode(id.value, Nil),
+      case Matrix(matrix) => matrix,
+      case Element(elem) => elem,
+      case (CTLexer.`\\(`(_), Expression(expr), CTLexer.`\\)`(_)) => ASTNode("expr", scala.List(expr)),
+      case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
+        ASTNode(fname.value, args),
+      (case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs))): @name("add"),
+      (case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs))): @name("sub"),
+      (case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs))): @name("mul"),
+      (case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs))): @name("div"),
+      (case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) => ASTNode(".+", scala.List(lhs, rhs))): @name("matrixAdd"),
+      (case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) => ASTNode(".-", scala.List(lhs, rhs))): @name("matrixSub"),
+      (case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) => ASTNode(".*", scala.List(lhs, rhs))): @name("matrixMul"),
+      (case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs))): @name("matrixDiv"),
+      (case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs))): @name("uMinus"),
+      (case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs))): @name("transpose"),
+      case CTLexer.int(i) => ASTNode(i.value.toString, Nil),
+      case CTLexer.float(f) => ASTNode(f.value.toString, Nil),
+      case CTLexer.string(s) => ASTNode(s.value, Nil),
     )
 
-    val Matrix: Rule[ASTNode] = rule { case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
+    val Matrix: Rule[ASTNode] = rule: case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
       ASTNode("matrix", args)
-    }
 
     val Comparator: Rule[String] = rule(
-      { case CTLexer.`<`(_) => "<" },
-      { case CTLexer.`>`(_) => ">" },
-      { case CTLexer.`<=`(_) => "<=" },
-      { case CTLexer.`>=`(_) => ">=" },
-      { case CTLexer.`==`(_) => "==" },
-      { case CTLexer.`!=`(_) => "!=" },
+      case CTLexer.`<`(_) => "<",
+      case CTLexer.`>`(_) => ">",
+      case CTLexer.`<=`(_) => "<=",
+      case CTLexer.`>=`(_) => ">=",
+      case CTLexer.`==`(_) => "==",
+      case CTLexer.`!=`(_) => "!=",
     )
 
     val AssignOp: Rule[String] = rule(
-      { case CTLexer.`\\+=`(_) => "+=" },
-      { case CTLexer.`-=`(_) => "-=" },
-      { case CTLexer.`\\*=`(_) => "*=" },
-      { case CTLexer.`/=`(_) => "/=" },
-      { case CTLexer.`=`(_) => "=" },
+      case CTLexer.`\\+=`(_) => "+=",
+      case CTLexer.`-=`(_) => "-=",
+      case CTLexer.`\\*=`(_) => "*=",
+      case CTLexer.`/=`(_) => "/=",
+      case CTLexer.`=`(_) => "=",
     )
 
     override val resolutions = Set(

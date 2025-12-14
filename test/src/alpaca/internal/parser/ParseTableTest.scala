@@ -2,18 +2,16 @@ package alpaca
 package internal.parser
 
 import alpaca.Production as P
-
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.LoneElement
 
 import scala.compiletime.testing.typeCheckErrors
 
-final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
-  val CalcLexer = lexer {
+final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
+  val CalcLexer = lexer:
     case "\\+" => Token["+"]
     case value @ "[1-9][0-9]*" => Token["Num"](value.toInt)
-  }
 
   case class CalcContext() extends ParserCtx
 
@@ -79,4 +77,3 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
                 |Consider revising the before/after rules to eliminate cycles
                 |""".stripMargin)
   }
-}

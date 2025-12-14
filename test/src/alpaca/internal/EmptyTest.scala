@@ -3,7 +3,7 @@ package alpaca.internal
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class EmptyTest extends AnyFunSuite with Matchers {
+final class EmptyTest extends AnyFunSuite with Matchers:
 
   inline def empty[T]: Empty[T] = compiletime.summonInline[Empty[T]]
 
@@ -49,4 +49,3 @@ final class EmptyTest extends AnyFunSuite with Matchers {
       |class Regular(val x: Int) derives Empty
       |""".stripMargin shouldNot compile
   }
-}

@@ -12,7 +12,7 @@ package internal
  */
 opaque type NonEmptyList[+A] <: List[A] = List[A]
 
-object NonEmptyList {
+object NonEmptyList:
 
   /**
    * Creates a non-empty list from a head element and optional tail elements.
@@ -52,4 +52,3 @@ object NonEmptyList {
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NonEmptyList[A]] with
     def apply(x: NonEmptyList[A])(using Quotes): Expr[NonEmptyList[A]] =
       '{ NonEmptyList(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
-}
