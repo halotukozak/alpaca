@@ -20,3 +20,6 @@ private[internal] def debugToFile(path: String)(content: Shown)(using debugSetti
     val file = new File(s"${debugSettings.directory}$path")
     file.getParentFile.mkdirs()
     Using.resource(new FileWriter(file))(_.write(content))
+
+private[internal] def debug(msg: Shown)(using debugSettings: DebugSettings, quotes: Quotes) =
+  if debugSettings.enabled then quotes.reflect.report.info(msg)

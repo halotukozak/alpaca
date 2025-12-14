@@ -1,1 +1,1 @@
-override val resolutions = Set(P.ofName("times").before(Lexer.PLUS), P.ofName("plus").after(Lexer.TIMES))
+override val resolutions = Set(production.times.before(Lexer.PLUS), production.plus.after(Lexer.TIMES))
