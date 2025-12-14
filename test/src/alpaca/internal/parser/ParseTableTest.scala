@@ -1,6 +1,7 @@
 package alpaca
 package internal.parser
 
+import alpaca.Production as P
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.LoneElement
@@ -25,10 +26,10 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
       val root = rule { case Expr(expr) => expr }
     }""").loneElement.message should
       include("""
-                |Shift "+" vs Reduce Expr -> Expr + Expr
+                |Shift "+ ($plus)" vs Reduce Expr -> Expr + ($plus) Expr
                 |In situation like:
-                |Expr + Expr + ...
-                |Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
+                |Expr + ($plus) Expr + ($plus) ...
+                |Consider marking production Expr -> Expr + ($plus) Expr to be alwaysBefore or alwaysAfter "+ ($plus)"
                 |""".stripMargin)
   }
 
@@ -52,5 +53,27 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
                 |In situation like:
                 |Num ...
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+                |""".stripMargin)
+  }
+
+  test("conflict resolution cycle detection") {
+    typeCheckErrors("""
+    object CalcParser extends Parser[CalcContext] {
+      val A = rule({ case CalcLexer.Num(lexem) => lexem.value }: @name("A"))
+      val B = rule { case CalcLexer.`+`(_) => "+" }
+      val root = rule { case A(a) => a }
+
+      override val resolutions = Set(
+        P.ofName("A").before(CalcLexer.`+`),
+        CalcLexer.`+`.before(P(CalcLexer.`+`)),
+        P(CalcLexer.`+`).before(P.ofName("A")),
+      )
+    }
+    """).loneElement.message should
+      include("""
+                |Inconsistent conflict resolution detected:
+                |Reduction(A) before Shift(+) before Reduction(+ ($plus) -> B) before Reduction(A)
+                |There are elements being both before and after Reduction(A) at the same time.
+                |Consider revising the before/after rules to eliminate cycles
                 |""".stripMargin)
   }

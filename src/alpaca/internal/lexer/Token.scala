@@ -4,6 +4,8 @@ package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
+import scala.annotation.compileTimeOnly
+import scala.annotation.publicInBinary
 
 /**
  * Type alias for context manipulation functions.
@@ -86,7 +88,7 @@ object TokenInfo:
  * @tparam Ctx the global context type
  * @tparam Value the value type extracted from the matched text
  */
-sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value]:
+sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
 
   /** Token information including name and pattern. */
   val info: TokenInfo[Name]
@@ -108,12 +110,19 @@ sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value]:
  * @param remapping function to extract value from context
  */
 //todo: may be invariant?
-final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, Value](
+final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
-  type LexemTpe = Lexem[Name, Value]
+  type LexemeTpe = Lexeme[Name, Value @uv]
+
+  @compileTimeOnly(RuleOnly)
+  inline def unapply(x: Any): Option[LexemeTpe] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def List: PartialFunction[Any, Option[List[LexemeTpe]]] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
 
 /**
  * A token that is matched but not included in the output.

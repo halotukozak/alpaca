@@ -5,6 +5,9 @@ package lexer
 import scala.annotation.tailrec
 import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
+import NamedTuple.NamedTuple
+import NamedTuple.AnyNamedTuple
+import scala.annotation.publicInBinary
 
 /**
  * The result of compiling a lexer definition.
@@ -16,6 +19,7 @@ import scala.util.matching.Regex
  * @tparam Ctx the global context type
  */
 abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as betweenStages}] extends Selectable {
+  type LexemeType = Lexeme[?, ?]
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
   def tokens: List[Token[?, Ctx, ?]]
@@ -45,11 +49,11 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): List[Lexem[?, ?]] = {
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexem[?, ?]]): List[Lexem[?, ?]] =
+  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): (ctx: Ctx, lexemes: List[LexemeType]) = {
+    @tailrec def loop(globalCtx: Ctx)(acc: List[LexemeType]): List[LexemeType] =
       globalCtx.text.length match
         case 0 =>
-          acc.reverse
+          acc.reverse // todo: make it not reversed
         case _ =>
           val m = compiled.findPrefixMatchOf(globalCtx.text) getOrElse {
             // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
@@ -59,12 +63,12 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
             throw new AlgorithmError(s"$m matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)
-          val lexem = List(token).collect: case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexem
+          val lexem = List(token).collect: case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[LexemeType]
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()
     initialContext.text = input
-    loop(initialContext)(Nil)
+    (initialContext, loop(initialContext)(Nil))
   }
 
   /** The compiled regex that matches all defined tokens. */

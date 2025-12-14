@@ -43,7 +43,7 @@ private[alpaca] object BetweenStages {
       .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
       .map(_.asType)
 
-    val betweenStages = Expr.ofList {
+    val derivedBetweenStages = Expr.ofList {
       parents
         .map: case '[type ctx >: Ctx <: LexerCtx; ctx] =>
             Expr
@@ -51,6 +51,8 @@ private[alpaca] object BetweenStages {
               .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))
     }
 
-    '{ (name, m, ctx) => $betweenStages.foreach(_.apply(name, m, ctx)) }
+    '{ (token, m, ctx) =>
+      $derivedBetweenStages.foreach(_.apply(token, m, ctx)) // todo: do not init List
+    }
   }
 }

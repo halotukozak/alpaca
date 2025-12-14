@@ -5,6 +5,7 @@ package lexer
 import scala.NamedTuple.NamedTuple
 import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
+import NamedTuple.AnyNamedTuple
 
 /**
  * Type alias for lexer rule definitions.
@@ -21,17 +22,13 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
-  debugSettings: Expr[DebugSettings[?, ?]],
+)(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx]] = {
   import quotes.reflect.*
-
-  given DebugSettings[?, ?] = debugSettings.value.getOrElse(report.errorAndAbort("DebugSettings must be defined inline"))
-
   type ThisToken = Token[?, Ctx, ?]
 
   val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
-
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -70,7 +67,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
 
                 '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
 
-      val tokens = extractSimple('{ identity })
+      val tokens = extractSimple('{ _ => () })
         .lift(body.asExprOf[ThisToken])
         .orElse:
           body match
@@ -218,7 +215,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   definedTokens
-    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]): 
+    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]):
       case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) => Refinement(tpe, ValidName.from[name], token.asTerm.tpe)
     .asType match
     case '[refinedTpe] =>
