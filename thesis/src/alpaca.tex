@@ -77,6 +77,11 @@
     morestring=[b]``''"
 }[keywords,comments,strings]
 
+\lstdefinelanguage{json}{
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
 \usepackage{fontspec}
 \setmonofont{JetBrains Mono}[Contextuals=Alternate]
 
@@ -155,6 +160,8 @@
 \include{lexer-algorithmic}
 
 \include{parser-algorithmic}
+
+\include{comparison}
 
 \include{organization}
 
