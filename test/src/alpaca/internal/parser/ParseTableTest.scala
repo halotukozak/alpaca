@@ -7,7 +7,7 @@ import org.scalatest.LoneElement
 
 import scala.compiletime.testing.typeCheckErrors
 
-final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
+final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
   val CalcLexer = lexer:
     case "\\+" => Token["+"]
     case value @ "[1-9][0-9]*" => Token["Num"](value.toInt)
@@ -54,4 +54,3 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
                 |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
                 |""".stripMargin)
   }
-}

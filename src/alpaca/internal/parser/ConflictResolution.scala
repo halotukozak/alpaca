@@ -21,7 +21,7 @@ private[parser] type ConflictKey = Production | String
  */
 opaque private[parser] type ConflictResolutionTable = Map[ConflictKey, Set[ConflictKey]]
 
-private[parser] object ConflictResolutionTable {
+private[parser] object ConflictResolutionTable:
 
   /**
    * Creates a ConflictResolutionTable from a map of resolutions.
@@ -43,12 +43,12 @@ private[parser] object ConflictResolutionTable {
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
      */
-    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
+    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] =
       def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
         case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
 
-      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] = {
+      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
         val to = extractProdOrName(second)
 
         @tailrec
@@ -61,10 +61,8 @@ private[parser] object ConflictResolutionTable {
             loop(tail ++ neighbors, visited + head)
 
         loop(List(extractProdOrName(first)), Set())
-      }
 
       winsOver(first, second) orElse winsOver(second, first)
-    }
 
   /**
    * Showable instance for displaying conflict resolution tables.
@@ -77,4 +75,3 @@ private[parser] object ConflictResolutionTable {
 
       show"${show(k)} before ${v.map(show).mkShow(", ")}"
     .mkShow("\n")
-}

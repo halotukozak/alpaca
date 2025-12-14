@@ -1,8 +1,9 @@
 package alpaca
 package integration
 
-import scala.language.experimental.relaxedLambdaSyntax
 import org.scalatest.funsuite.AnyFunSuite
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 final class JsonTest extends AnyFunSuite:
   test("e2e json test") {

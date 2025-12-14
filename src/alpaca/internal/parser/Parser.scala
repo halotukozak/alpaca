@@ -21,15 +21,14 @@ abstract class Parser[Ctx <: ParserCtx](
 )(using
   empty: Empty[Ctx],
   tables: Tables[Ctx],
-) {
-  extension (token: DefinedToken[?, ?, ?]) {
+):
+  extension (token: DefinedToken[?, ?, ?])
     @compileTimeOnly(RuleOnly)
     inline def unapply(x: Any): Option[token.LexemTpe] = dummy
     @compileTimeOnly(RuleOnly)
     inline def List: PartialFunction[Any, Option[List[token.LexemTpe]]] = dummy
     @compileTimeOnly(RuleOnly)
     inline def Option: PartialFunction[Any, Option[token.LexemTpe]] = dummy
-  }
 
   /**
    * The root rule of the grammar.
@@ -51,11 +50,11 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings[?, ?]): (ctx: Ctx, result: R | Null) = {
+  def parse[R](lexems: List[Lexem[?, ?]])(using debugSettings: DebugSettings[?, ?]): (ctx: Ctx, result: R | Null) =
     type State = (index: Int, node: R | Lexem[?, ?] | Null)
     val ctx = empty()
 
-    @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null = {
+    @tailrec def loop(lexems: List[Lexem[?, ?]], stack: List[State]): R | Null =
       val nextSymbol = Terminal(lexems.head.name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
@@ -86,10 +85,8 @@ abstract class Parser[Ctx <: ParserCtx](
             lexems,
             (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[R | Lexem[?, ?] | Null]) :: stack,
           )
-    }
 
     ctx -> loop(lexems :+ Lexem.EOF, (0, null) :: Nil)
-  }
 
   /**
    * Provides access to the parser context within rule definitions.
@@ -98,4 +95,3 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   @compileTimeOnly(RuleOnly)
   inline protected final def ctx: Ctx = dummy
-}

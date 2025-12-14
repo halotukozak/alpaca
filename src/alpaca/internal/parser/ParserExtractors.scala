@@ -18,7 +18,7 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q) {
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q):
   import quotes.reflect.*
 
   private type EBNFExtractor = PartialFunction[
@@ -170,10 +170,9 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
         ),
       )
-}
 
 //noinspection ScalaWeakerAccess
-private object ParserExtractors {
+private object ParserExtractors:
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
     case x => raiseShouldNeverBeCalled(x)
@@ -185,4 +184,3 @@ private object ParserExtractors {
     case x => raiseShouldNeverBeCalled(x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
-}

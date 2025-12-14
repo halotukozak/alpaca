@@ -1,10 +1,11 @@
 package alpaca
 package integration
 
-import scala.language.experimental.relaxedLambdaSyntax
+import Production as P
 
 import org.scalatest.funsuite.AnyFunSuite
-import Production as P
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])

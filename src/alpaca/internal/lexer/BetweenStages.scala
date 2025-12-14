@@ -2,8 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex.Match
-import language.experimental.relaxedLambdaSyntax
 
 /**
  * A hook for updating context between lexing stages.

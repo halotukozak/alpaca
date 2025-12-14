@@ -3,7 +3,7 @@ package internal
 package lexer
 
 import scala.annotation.tailrec
-import language.experimental.relaxedLambdaSyntax
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * Compiler for lexer token patterns during macro expansion.

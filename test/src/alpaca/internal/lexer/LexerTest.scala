@@ -3,6 +3,7 @@ package internal.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+
 import scala.language.experimental.relaxedLambdaSyntax
 
 final class LexerTest extends AnyFunSuite with Matchers {

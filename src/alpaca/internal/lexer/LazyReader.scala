@@ -16,7 +16,7 @@ import scala.collection.mutable
  * @param reader the underlying Reader to read from
  * @param size the total size of the input (if known)
  */
-final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable {
+final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable:
   private val buffer = mutable.ArrayDeque.empty[Char]
   private val chunk = new Array[Char](8192)
 
@@ -77,7 +77,6 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
       else
         buffer.appendAll(chunk.iterator.take(charsRead))
         ensure(pos)
-}
 
 /**
  * Factory methods for creating LazyReader instances.

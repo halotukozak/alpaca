@@ -5,9 +5,9 @@ import Production as P
 import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import language.experimental.relaxedLambdaSyntax
 
 import scala.collection.mutable
+import scala.language.experimental.relaxedLambdaSyntax
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])

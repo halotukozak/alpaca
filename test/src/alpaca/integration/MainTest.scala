@@ -2,7 +2,8 @@ package alpaca
 package integration
 
 import org.scalatest.funsuite.AnyFunSuite
-import language.experimental.relaxedLambdaSyntax
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 @main def main(): Unit = {
   val CalcLexer = lexer {

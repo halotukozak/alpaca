@@ -70,7 +70,7 @@ object Terminal:
   inline def apply(inline name: String): Terminal & Symbol.NonEmpty =
     new Terminal(name).asInstanceOf[Terminal & Symbol.NonEmpty]
 
-private[parser] object Symbol {
+private[parser] object Symbol:
   type NonEmpty = Symbol { type IsEmpty = false }
 
   /** The augmented start symbol used internally by the parser. */
@@ -96,4 +96,3 @@ private[parser] object Symbol {
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
-}

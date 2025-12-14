@@ -3,8 +3,8 @@ package internal
 package lexer
 
 import scala.annotation.tailrec
+import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
-import language.experimental.relaxedLambdaSyntax
 
 /**
  * The result of compiling a lexer definition.

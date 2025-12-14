@@ -31,7 +31,7 @@ private[lexer] final case class TokenInfo[+Name <: ValidName](
 )
 
 //todo: private[lexer]
-object TokenInfo {
+object TokenInfo:
   private val counter = AtomicInteger(0)
 
   /**
@@ -75,7 +75,6 @@ object TokenInfo {
   given [name <: ValidName: {Type}]: ToExpr[TokenInfo[name]] with
     def apply(x: TokenInfo[name])(using Quotes): Expr[TokenInfo[name]] =
       '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
-}
 
 /**
  * Base trait for all token types.
@@ -87,14 +86,13 @@ object TokenInfo {
  * @tparam Ctx the global context type
  * @tparam Value the value type extracted from the matched text
  */
-sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value] {
+sealed trait Token[Name <: ValidName, +Ctx <: LexerCtx, Value]:
 
   /** Token information including name and pattern. */
   val info: TokenInfo[Name]
 
   /** Function to update the context when this token is matched. */
   val ctxManipulation: CtxManipulation[Ctx @uv]
-}
 
 /**
  * A token that produces a value when matched.
@@ -114,9 +112,8 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, Value](
   info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
-) extends Token[Name, Ctx, Value] {
+) extends Token[Name, Ctx, Value]:
   type LexemTpe = Lexem[Name, Value]
-}
 
 /**
  * A token that is matched but not included in the output.

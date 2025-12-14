@@ -3,9 +3,11 @@ package internal
 package parser
 
 import NonEmptyList as NEL
+
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
-import language.experimental.relaxedLambdaSyntax
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * An opaque type containing the parse and action tables for the parser.
