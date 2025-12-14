@@ -2,8 +2,8 @@ package alpaca
 package internal
 package parser
 
-import scala.util.Random
 import scala.reflect.NameTransformer
+import scala.util.Random
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).

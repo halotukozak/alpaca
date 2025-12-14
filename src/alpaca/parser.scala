@@ -175,7 +175,7 @@ object ParserCtx:
   final case class Empty(
   ) extends ParserCtx
 
-extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
+extension [Ctx <: ParserCtx](parser: Parser[Ctx])
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -192,4 +192,3 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
       case Rule[t] => t
     ) | Null,
   ) = parser.unsafeParse(lexems)
-}

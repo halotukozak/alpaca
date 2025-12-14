@@ -2,12 +2,10 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.tailrec
 import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
-import NamedTuple.NamedTuple
-import NamedTuple.AnyNamedTuple
-import scala.annotation.publicInBinary
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.annotation.{publicInBinary, tailrec}
 
 /**
  * The result of compiling a lexer definition.

@@ -169,7 +169,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     .map:
       case ValDef(_, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
       case DefDef(_, _, _, Some(rhs)) => rhs.asExprOf[Set[ConflictResolution]]
-    .map: case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
+    .map:
+      case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
   def extractKey(expr: Expr[Production | Token[?, ?, ?]]): ConflictKey = expr match

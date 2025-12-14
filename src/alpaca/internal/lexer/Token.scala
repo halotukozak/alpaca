@@ -3,9 +3,8 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.{compileTimeOnly, publicInBinary}
 import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.annotation.compileTimeOnly
-import scala.annotation.publicInBinary
 
 /**
  * Type alias for context manipulation functions.

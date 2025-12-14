@@ -21,7 +21,7 @@ abstract class Parser[Ctx <: ParserCtx](
 )(using
   empty: Empty[Ctx],
   tables: Tables[Ctx],
-) {
+):
 
   /**
    * The root rule of the grammar.
@@ -31,6 +31,14 @@ abstract class Parser[Ctx <: ParserCtx](
   val root: Rule[?]
 
   val resolutions: Set[ConflictResolution] = Set.empty
+
+  /**
+   * Provides access to the parser context within rule definitions.
+   *
+   * This is compile-time only and can only be used inside parser rule definitions.
+   */
+  @compileTimeOnly(RuleOnly)
+  inline protected final def ctx: Ctx = dummy
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -46,11 +54,11 @@ abstract class Parser[Ctx <: ParserCtx](
   private[alpaca] def unsafeParse[R](
     lexems: List[Lexeme[?, ?]],
   )(using debugSettings: DebugSettings,
-  ): (ctx: Ctx, result: R | Null) = {
+  ): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
-    @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null = {
+    @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null =
       val nextSymbol = Terminal(lexems.head.name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
@@ -83,12 +91,3 @@ abstract class Parser[Ctx <: ParserCtx](
           )
 
     ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
-  }
-
-  /**
-   * Provides access to the parser context within rule definitions.
-   *
-   * This is compile-time only and can only be used inside parser rule definitions.
-   */
-  @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = dummy

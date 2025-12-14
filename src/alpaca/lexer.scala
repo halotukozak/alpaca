@@ -3,9 +3,9 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.compileTimeOnly
-import NamedTuple.AnyNamedTuple
 import java.util.jar.Attributes.Name
+import scala.annotation.compileTimeOnly
+import scala.NamedTuple.AnyNamedTuple
 import scala.collection.mutable
 
 /**

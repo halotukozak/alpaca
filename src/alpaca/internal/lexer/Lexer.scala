@@ -2,10 +2,9 @@ package alpaca
 package internal
 package lexer
 
-import scala.NamedTuple.NamedTuple
 import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
-import NamedTuple.AnyNamedTuple
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 
 /**
  * Type alias for lexer rule definitions.

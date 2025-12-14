@@ -74,7 +74,7 @@ private[parser] object ConflictResolutionTable:
 
       winsOver(first, second) orElse winsOver(second, first)
 
-    def verifyNoConflicts(): Unit = {
+    def verifyNoConflicts(): Unit =
       enum VisitState:
         case Unvisited, Visited, Processed
 
@@ -102,7 +102,6 @@ private[parser] object ConflictResolutionTable:
               loop(neighbors ::: List(Action.Leave(node)) ::: rest)
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
-    }
 
   /**
    * Showable instance for displaying conflict resolution tables.

@@ -84,7 +84,7 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
 // todo: it's temporary, remove when we have a proper timeout implementation
 inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
   import scala.concurrent.{Await, Future}
-  import scala.concurrent.duration._
+  import scala.concurrent.duration.*
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val future = Future(block)
