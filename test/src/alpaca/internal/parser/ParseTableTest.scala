@@ -67,8 +67,8 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
 
       override val resolutions = Set(
         production.A.before(CalcLexer.`+`),
-        CalcLexer.`+`.before(production.B),
-        production.B.before(production.A),
+        CalcLexer.`+`.before(P(CalcLexer.`+`)),
+        P(CalcLexer.`+`).before(production.A),
       )
     }
     """).loneElement.message should

@@ -100,6 +100,7 @@ abstract class Parser[Ctx <: ParserCtx](
   @compileTimeOnly(RuleOnly)
   inline protected final def ctx: Ctx = dummy
 
+  @compileTimeOnly(ConflictResolutionOnly)
   transparent inline def production: ProductionSelector = ${ productionImpl }
 }
 
@@ -134,5 +135,8 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = {
         .asType
     },
   ) match
-    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ ??? : refinedTpe }
+    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ DummyProductionSelector.asInstanceOf[refinedTpe] }
 }
+
+private object DummyProductionSelector extends ProductionSelector:
+  def selectDynamic(name: String): Any = dummy
