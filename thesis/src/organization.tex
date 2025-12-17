@@ -461,7 +461,12 @@ Zaimplementowano system typów rafinowanych, w~którym:
     \item Dostęp do~pola tokena (np.~\verb|c.NUMBER|) jest statycznie typowany i~bezpieczny.
 \end{enumerate}
 
-TODO: screenshot hovera w metalsach
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/IDESupport.png}
+    \caption{Wsparcie IDE dzięki typom rafinowanym w~projekcie ALPACA}
+    \label{fig:ide_support}
+\end{figure}
 
 \subsubsection{Rezultat}
 
@@ -517,9 +522,121 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 
 Osiągnięto pokrycie testami na~poziomie około TODO kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
 
+\subsection[Problem 6: Błędy w kolejności definicji tokenów]{Problem 6: Błędy w~kolejności definicji tokenów}
+\label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
 
-\section[Wdrożenia, testy i~eksperymenty]{Opis wdrożeń, testów i~eksperymentów}
-\label{sec:wdrozenia-testy}
+\subsubsection{Problem}
+
+Topologia definiowania tokenów może prowadzić do~błędów leksykalnych, jeśli krótsze wzorce zostały umieszczone przed dłuższymi wariantami zawierającymi je~jako prefiks.
+
+Przykładowo, użytkownik może zdefiniować operatory porównania w~naturalnej kolejności:
+\begin{verbatim}
+LT = <
+LE = <=
+GT = >
+GE = >=
+\end{verbatim}
+
+Notacja jest składniowo poprawna, lecz prowadzi do~błędów w~fazie parsowania wyrażenia \verb|x <= 5|, gdyż system rozpozna jedynie \verb|<|, podczas gdy \verb|=| zostanie odrzucony jako symbol nieznany, co~spowoduje błąd składniowy w~kolejnych fazach analizy.
+
+\subsubsection{Przyczyna}
+
+Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:dfa-vs-regex}).
+
+Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
+
+\begin{itemize}
+    \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera;
+    \item Błędy ujawniają się~dopiero w~fazie parsowania konkretnego wejścia;
+    \item Komunikat diagnostyczny wskazuje na parser (\enquote{nieoczekiwany symbol}), a~nie~lekser, utrudniając identyfikację pierwotnej przyczyny.
+\end{itemize}
+
+\subsubsection{Rozwiązanie}
+
+Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker| (por. rozdział~\ref{subsec:lexer-impl-regexchecker}).
+Przed~generacją kodu leksera moduł \verb|RegexChecker| analizuje wzorce w~poszukiwaniu potencjalnych konfliktów.
+W~przypadku wykrycia nieprawidłowości użytkownik otrzymuje komunikat błędu wskazujący źródło problemu.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/PatternShadowing.png}
+    \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów}
+    \label{fig:regex_checker_error}
+\end{figure}
+
+\subsubsection{Rezultat}
+
+Konflikty w~kolejności wzorców są~wykrywane w~fazie kompilacji poprzez komunikaty, które jasno wskazują, które wzorce~się~nakładają i~wymagają zdefiniowania precedencji.
+
+Korekta wymaga zmiany kolejności definicji tokenów (np.~umieszczenie \verb|<=| przed~\verb|<|) lub~modyfikacji wyrażeń regularnych, aby~wyeliminować nakładania się~wzorców.
+
+Wczesna detekcja konfliktów wzorców okazała się~istotna przy~implementacji przykładowych parserów (parser wyrażeń arytmetycznych, parser~JSON).
+
+\subsection{Problem 7: Konflikty precedencji operatorów}
+\label{subsec:problem-7:-konflikty-w-tabeli-shift-reduce}
+
+\subsubsection{Problem}
+
+Definiowanie gramatyk dla~wyrażeń arytmetycznych wymaga określenia reguł precedencji operatorów, aby~wymusić poprawny porządek wykonywania operacji (np.~mnożenie przed~dodawaniem).
+
+Brak jawnych reguł precedencji powoduje wieloznaczność strukturalną wyrażenia \verb|2 + 3 * 4|, które może być interpretowane jako $(2 + 3) \times 4 = 20$ lub $2 + (3 \times 4) = 14$.
+System sygnalizuje błąd kompilacji wskazujący na~konflikt typu shift--reduce, który wymaga jawnego rozstrzygnięcia przez~użytkownika.
+
+Błędy mogą wynikać również z~niespójności w~definicjach reguł precedencji.
+Na~przykład, próba definiowania operatora unarnego minus przy~użyciu zwykłego operatora odejmowania może prowadzić do~cyklicznych zależności precedencji, gdzie $-$ ma~pierwszeństwo przed~$*$, a~$*$ przed~$-$, co jest niemożliwe do rozstrzygnięcia.
+
+\subsubsection{Przyczyna}
+
+Wiele naturalnych gramatyk języków programowania zawiera niejednoznaczności, takie jak wyrażenia arytmetyczne z~różnymi poziomami precedencji operatorów, czy konstrukcje warunkowe z~\enquote{dangling else}:
+
+Bez~takiego mechanizmu użytkownik byłby zmuszony do przepisania gramatyki do~formy jednoznacznej (np.~przez~wprowadzenie odrębnych nieterminali dla~każdego poziomu precedencji), co~znacznie komplikuje specyfikację i~zmniejsza jej przejrzystość.
+
+\subsubsection{Rozwiązanie}
+
+System ALPACA oferuje mechanizm deklaratywnego rozwiązywania konfliktów bez~konieczności przepisywania gramatyki (algorytmy opisane w~rozdziale~\ref{subsec:parser-conflict-resolution}).
+
+\paragraph{Przykład użycia}
+Dla~gramatyki wyrażeń arytmetycznych użytkownik definiuje jedynie łańcuch relacji:
+
+\begin{verbatim}
+pow before mul
+mul before add
+\end{verbatim}
+
+Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
+
+System automatycznie:
+
+\begin{enumerate}
+    \item \textbf{Wyprowadza przechodniość}: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
+    \item \textbf{Rozwiązuje wszystkie konflikty}: Używając grafu relacji pierwszeństwa
+    \item \textbf{Weryfikuje spójność}: Sprawdza czy~nie~ma~cykli w~relacjach
+\end{enumerate}
+
+Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:
+
+\begin{verbatim}
+Inconsistent conflict resolution detected:
+Reduction(sub) before Shift(*) before Reduction(sub)
+There are elements being both before and after Reduction(sub)
+at the same time.
+Consider revising the before/after rules to eliminate cycles
+\end{verbatim}
+
+Komunikat wskazuje dokładne położenie sprzeczności, umożliwiając szybką korektę.
+
+\subsubsection{Rezultat}
+Zastosowanie mechanizmu rozwiązywania konfliktów przynosi kilka istotnych korzyści.
+Po pierwsze, pozwala na~definiowanie gramatyki w~formie deklaratywnej, bez~konieczności ręcznego przekształcania struktury.
+Po drugie, znacznie redukuje liczbę wymaganych deklaracji --- w~praktyce z~$O(n^2)$ do~$O(n)$ dla~typowych gramatyk.
+Ponadto, system wykrywa niespójności już w~fazie kompilacji, a~komunikaty diagnostyczne jasno wskazują źródło konfliktu,
+ułatwiając szybką~korektę.
+
+Zastosowanie tego mechanizmu pozwoliło na~zrealizowanie kompletnego parsera wyrażeń arytmetycznych obejmującego operatory \verb|+|, \verb|-|, \verb|*|, \verb|/|, \verb|^| oraz~zagnieżdżone nawiasy w~mniej niż~40~liniach kodu.
+
+
+\section[Wdrożenia, testy i eksperymenty]{Wdrożenia, testy i~eksperymenty}
+\label{sec:wdrozenia-testy-eksperymenty}
 
 \subsection{Testowanie jednostkowe}
 \label{subsec:testowanie-jednostkowe}
