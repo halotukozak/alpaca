@@ -675,22 +675,78 @@ Projekt zawiera kilka pełnych przykładów integracyjnych, demonstrujących dzi
 
 \subsubsection{Kalkulator wyrażeń arytmetycznych}
 
-Zaimplementowano parser wyrażeń arytmetycznych z~operatorami \verb|+|, \verb|-|, \verb|*|, \verb|/| oraz zagnieżdżonymi nawiasami.
-Akcje semantyczne obliczają wartość analizowanego wyrażenia.
+Zaimplementowano kompleksowy parser wyrażeń arytmetycznych demonstrujący pełne możliwości systemu ALPACA.
+Parser obsługuje szeroką~gamę operatorów (dodawanie, odejmowanie, mnożenie, dzielenie, modulo, potęgowanie,
+dzielenie całkowite) oraz~funkcje matematyczne (trygonometryczne, hiperboliczne i~odwrotne),
+a~także stałe matematyczne (pi, e, tau, nieskończoność, NaN). Akcje semantyczne obliczają wartość wyrażenia
+poprzez wyodrębnianie wartości liczbowych z~tokenów i~wykonywanie odpowiednich operacji arytmetycznych.
 
-\begin{itemize}
-    \item Przykładowe wejście: \verb|3 + 4 * 2|
-    \item Oczekiwany rezultat: \verb|11|
-\end{itemize}
+Lekser systemu obsługuje ignorowanie białych znaków i~komentarzy, definiuje operatory wieloznakowe (\\verb|**|, \\verb|//|)
+przed~operatorami jednoznakowymi, by~uniknąć konfliktów w~kolejności dopasowania. Ponadto rozpoznaje liczby zmiennoprzecinkowe
+i~całkowite (w~tym notację wykładniczą) oraz~funkcje matematyczne jako~słowa kluczowe.
+
+Parser definiuje kompleksowy zbiór reguł precedencji, gdzie potęgowanie ma~najwyższy priorytet,
+następnie operatory unarny plus i~minus, potem mnożenie i~operatory pochodne (modulo, dzielenie całkowite),
+a~wreszcie dodawanie i~odejmowanie jako~operatory o~najniższym priorytecie. Ta~hierarchia jest jawnie zdeklarowana
+w~zbiorze rozwiązań konfliktów (ang. \textit{resolutions}), zapewniając poprawną interpretację wyrażeń.
+
+System weryfikowany był na~trzech poziomach złożoności:
+
+\begin{enumerate}
+    \item \textbf{Test podstawowy} --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
+
+    \item \textbf{Test złożoności średniej} --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
+          takie jak~wyrażenie \verb|((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)...|,
+          potwierdzające poprawną ewaluację zagnieżdżonych wyrażeń;
+
+    \item \textbf{Test zaawansowany} --- wyrażenie zawierające funkcje trygonometryczne,
+          operatory potęgowania i~dzielenia całkowitego, takie jak~\verb|sin(pi/6) + cos(pi/3) + (2 ** 3 ** 2) / (3 + 1) + ...|,
+          demonstrujące prawidłową obsługę złożonych operacji i~funkcji matematycznych.
+\end{enumerate}
+
+Wszystkie testy przechodzą pomyślnie, co~świadczy o~poprawności implementacji leksera, parsera,
+zarządzania priorytetami operatorów oraz~akcji semantycznych w~kontekście wyrażeń o~dużej złożoności strukturalnej.
 
 \subsubsection{Parser JSON (uproszczony)}
 
-Zaimplementowano parser dla podzbioru formatu JSON (obsługujący obiekty, tablice, napisy, liczby, wartości logiczne i~\verb|null|).
+Zaimplementowano parser dla~podzbioru formatu JSON, demonstrujący obsługę złożonych struktur danych zbudowanych z~elementów primitywnych.
+Parser obsługuje wszystkie podstawowe typy danych JSON: wartości logiczne, wartości puste (\verb|null|), liczby zmiennoprzecinkowe,
+napisy, obiekty (mapy klucz-wartość) oraz~tablice (listy elementów). Akcje semantyczne transformują tokeny w~struktury danych reprezentujące
+obiekty i~tablice jako~typy Scali (\verb|Map[String, Any]| oraz~\verb|List[Any]|).
 
-\begin{itemize}
-    \item Przykładowe wejście: \verb|{"name": "Alice", "age": 30}|
-    \item Rezultat: struktura danych reprezentująca obiekt JSON\@.
-\end{itemize}
+Lekser ignoruje białe znaki i~rozpoznaje znaki interpunkcji (\verb|{|, \verb|}|, \verb|[|, \verb|]|, \verb|:|, \verb|,|) jako~oddzielne tokeny.
+Słowa kluczowe \verb|true|, \verb|false| i~\verb|null| są~tokenizowane odpowiednio jako~wartości logiczne i~puste.
+Liczby są~rozpoznawane za~pośrednictwem wyrażenia regularnego obsługującego notację dziesiętną ze~znakami i~częściami ułamkowymi,
+natomiast napisy są~wyodrębnianie poprzez dopasowanie tekstu w~cudzysłowach (z~obsługą znaków specjalnych poprzez backslash).
+
+Parser definiuje hierarchię reguł produkcji: `Value` stanowi punkt wejścia i~rozpoznaje wszystkie typy wartości JSON,
+zaś `Object` i~Array` są~regułami zagnieżdżonymi obsługującymi struktury złożone.
+Reguła `ObjectMembers` obsługuje sekwencyjne oddzielone przecinkami pary klucz-wartość,
+natomiast `ArrayElements` obsługuje listy elementów oddzielane przecinkami.
+Rekurencja lewostronna w~regułach `ObjectMembers` i~ArrayElements` pozwala na~parsowanie dowolnie długich struktur,
+zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
+
+System weryfikowany był na~czterech poziomach złożoności:
+
+\begin{enumerate}
+    \item \textbf{Test primitywnych wartości} --- proste wyrażenie \verb|true| zwracające wartość logiczną;
+
+    \item \textbf{Test struktur zagnieżdżonych} --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
+          takie jak~struktury zawierające dane osobowe (imię, wiek, kursy, adres z~ulicą i~kodem pocztowym),
+          demonstrujące prawidłową rekonstrukcję głębokich struktur danych;
+
+    \item \textbf{Test tablic obiektów} --- tablica zawierająca wiele obiektów o~jednolitej strukturze,
+          taka jak~lista rekordów z~polami identyfikacyjnymi i~nazwami, potwierdzająca obsługę iteracyjnych struktur;
+
+    \item \textbf{Test rzeczywistej złożoności} --- struktura naśladująca rzeczywisty format konfiguracyjny
+          (menu z~zagnieżdżonymi polami popup i~listami elementów menu z~akcjami),
+          zawierająca trzy poziomy zagnieżdżenia i~mieszaniny obiektów oraz~tablic.
+\end{enumerate}
+
+Wszystkie testy przechodzą pomyślnie, potwierdzając poprawność implementacji leksera w~obsłudze białych znaków i~znaków specjalnych,
+prawidłowość parsowania struktur rekurencyjnych, prawidłową transformację danych przez~akcje semantyczne
+oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności strukturalnej.
+
 
 \subsection{Benchmarki wydajności}
 \label{subsec:benchmarki-wydajnosci}
