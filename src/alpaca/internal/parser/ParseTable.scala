@@ -125,7 +125,7 @@ private[parser] object ParseTable {
     table.toMap
   }
 
-  given Showable[ParseTable] = { table =>
+  given ParseTable is Showable = { table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
     val states = table.keysIterator.map(_.state).distinct.toList.sorted
 

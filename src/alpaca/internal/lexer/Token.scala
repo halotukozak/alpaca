@@ -7,6 +7,9 @@ import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.annotation.compileTimeOnly
 import scala.annotation.publicInBinary
 
+import scala.language.experimental.modularity
+import javax.naming.Name
+
 /**
  * Type alias for context manipulation functions.
  *
@@ -21,13 +24,12 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  *
  * Contains the token's name, pattern, and a unique group name for regex matching.
  *
- * @tparam Name the token name type
  * @param name the token name
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-private[lexer] final case class TokenInfo[+Name <: ValidName](
-  name: Name,
+private[lexer] final case class TokenInfo(
+  tracked val name: String,
   regexGroupName: String,
   pattern: String,
 )
@@ -47,12 +49,12 @@ object TokenInfo {
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] =
+  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo] =
     import quotes.reflect.*
     ValidName.check(name)
     ConstantType(StringConstant(name)).asType match
       case '[type nameTpe <: ValidName; nameTpe] =>
-        '{ TokenInfo[nameTpe](${ Expr(name).asExprOf[nameTpe] }, ${ Expr(nextName()) }, ${ Expr(regex) }) }
+        '{ TokenInfo(${ Expr(name).asExprOf[nameTpe] }, ${ Expr(nextName()) }, ${ Expr(regex) }) }
 
   /**
    * Generates a unique name for a regex capture group.
@@ -64,8 +66,8 @@ object TokenInfo {
   /**
    * Given instance to extract TokenInfo from compile-time expressions.
    */
-  given [name <: ValidName]: FromExpr[TokenInfo[name]] with
-    def unapply(x: Expr[TokenInfo[name]])(using Quotes): Option[TokenInfo[name]] = x match
+  given [name <: ValidName]: FromExpr[TokenInfo{ val name :name}] with
+    def unapply(x: Expr[TokenInfo{ val name :name}])(using Quotes): Option[TokenInfo{ val name :name}] = x match
       case '{ TokenInfo($name, $regexGroupName: String, $pattern: String) } =>
         for
           name <- name.value
@@ -74,9 +76,9 @@ object TokenInfo {
         yield TokenInfo(name.asInstanceOf[name], regexGroupName, pattern)
       case _ => None
 
-  given [name <: ValidName: {Type}]: ToExpr[TokenInfo[name]] with
-    def apply(x: TokenInfo[name])(using Quotes): Expr[TokenInfo[name]] =
-      '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
+  given [name <: ValidName: {Type}]: ToExpr[TokenInfo{ val name :name}] with
+    def apply(x:TokenInfo{ val name :name})(using Quotes): Expr[TokenInfo{ val name :name}] =
+      '{ TokenInfo(${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
 }
 
 /**
@@ -85,14 +87,12 @@ object TokenInfo {
  * A token represents a lexical unit matched by the lexer. It contains information
  * about the token's name, pattern, and how to manipulate the lexer context when matched.
  *
- * @tparam Name the token name type
  * @tparam Ctx the global context type
- * @tparam Value the value type extracted from the matched text
  */
-sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
+sealed trait Token[+Ctx <: LexerCtx]:
 
   /** Token information including name and pattern. */
-  val info: TokenInfo[Name]
+  tracked val info: TokenInfo
 
   /** Function to update the context when this token is matched. */
   val ctxManipulation: CtxManipulation[Ctx @uv]
@@ -103,20 +103,22 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  * This is the main token type used in the lexer. It can extract a value
  * from the matched text using a remapping function.
  *
- * @tparam Name the token name type
  * @tparam Ctx the global context type
- * @tparam Value the value type to extract
  * @param info token information
  * @param ctxManipulation function to update context
  * @param remapping function to extract value from context
  */
 //todo: may be invariant?
-final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
-  info: TokenInfo[Name],
+final case class DefinedToken[+Ctx <: LexerCtx](
+  tracked val info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: (Ctx @uv) => Value,
-) extends Token[Name, Ctx, Value]:
-  type LexemeTpe = Lexeme[Name, Value @uv]
+tracked val  remapping: (Ctx @uv) => Any,
+) extends Token[Ctx]: 
+
+  type LexemeTpe = Lexeme { val name :info.name.type ;val value :(
+remapping.type match
+  case Function1[_,value] => value
+  )}
 
   @compileTimeOnly(RuleOnly)
   inline def unapply(x: Any): Option[LexemeTpe] = dummy
@@ -131,12 +133,11 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
  * Ignored tokens are useful for whitespace, comments, and other lexical
  * elements that should be recognized but not passed to the parser.
  *
- * @tparam Name the token name type
  * @tparam Ctx the global context type
  * @param info token information
  * @param ctxManipulation function to update context
  */
-final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
-  info: TokenInfo[Name],
+final case class IgnoredToken[+Ctx <: LexerCtx](
+  tracked val info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
-) extends Token[Name, Ctx, Nothing]
+) extends Token[Ctx, Nothing]

@@ -9,16 +9,19 @@ import scala.NamedTuple.NamedTuple
  * This trait provides a `show` method that can be used to display values
  * in a human-readable format. It's similar to `toString` but more controlled
  * and composable.
- *
- * @tparam T the type to show
  */
-private[internal] trait Showable[-T]:
+private[internal] trait Showable:
+  /**
+   * The type to show.
+   */
+  type Self
+
   /**
    * Extension method to convert a value to its string representation.
    *
    * @return the string representation of the value
    */
-  extension (t: T) def show: Shown
+  extension (t: Self) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
@@ -43,28 +46,36 @@ object Shown {
 private[internal] object Showable {
 
   /** Showable instance for String (identity). */
-  given Showable[String] = _.asInstanceOf[Shown]
+  given String is Showable:
+    extension (s: String) def show: Shown = s.asInstanceOf[Shown]
+
+  /** Showable instance for Shown (identity). */
+  given Shown is Showable:
+    extension (s: Shown) def show: Shown = s
 
   /** Showable instance for Int. */
-  given Showable[Int] = fromToString
+  given Int is Showable:
+    extension (i: Int) def show: Shown = i.toString
 
-  def fromToString[T]: Showable[T] = _.toString
+  def fromToString[T]: T is Showable = new:
+    type Self = T
+    extension (t: T) def show: Shown = t.toString
 
   /** Showable instance for nullable types. */
-  given [T: Showable as showable]: Showable[T | Null] =
-    case null => ""
-    case value: T @unchecked => showable.show(value)
+//   given [T: Showable as tShowable] => ((T | Null) is Showable) =
+//     case null => ""
+//     case value: T @unchecked => tShowable.show(value)
 
   // todo: add names
-  given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
+  given [N <: Tuple, V <: Tuple: Showable] => (NamedTuple[N, V] is Showable) = _.toTuple.show
 
-  given [T](using quotes: Quotes): Showable[Expr[T]] =
+  given [T](using quotes: Quotes): (Expr[T] is Showable) =
     import quotes.reflect.*
     expr => expr.asTerm.show
 
-  given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
+  given ((quotes: Quotes) ?=> quotes.reflect.Tree is Showable) = quotes.reflect.Printer.TreeShortCode.show(_)
 
-  given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
+  given [A: Showable, B: Showable] => ((A, B) is Showable) = (a, b) => show"$a : $b"
 
   /**
    * Automatically derives a Showable instance for Product types (case classes).
@@ -75,14 +86,20 @@ private[internal] object Showable {
    * @param m the Mirror.ProductOf for type T
    * @return a Showable instance
    */
-  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
-    val name = compiletime.constValue[m.MirroredLabel]
-    val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
-    val showables =
-      compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
-    val values = Tuple.fromProductTyped(t).toList
-    val shown = showables.zip(values).map(_.show(_))
-    s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
+  @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
+  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): T is Showable = new:
+    extension (t: T)
+      def show =
+        val name = compiletime.constValue[m.MirroredLabel]
+        val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
+        val showables =
+          compiletime
+            .summonAll[Tuple.Map[m.MirroredElemTypes, [X] =>> X is Showable]]
+            .toList
+            .asInstanceOf[List[Any is Showable]]
+        val values = Tuple.fromProductTyped(t).toList
+        val shown = showables.zip(values).map(_.show(_))
+        s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
 }
 
 extension [C[X] <: Iterable[X], T: Showable](c: C[T])

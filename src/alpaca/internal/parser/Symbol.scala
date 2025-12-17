@@ -84,7 +84,7 @@ private[parser] object Symbol {
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given Showable[Symbol] = symbol =>
+  given [S <: Symbol] => S is Showable = symbol =>
     NameTransformer.encode(symbol.name) match
       case encoded if encoded == symbol.name => symbol.name
       case encoded => s"${symbol.name} ($encoded)"

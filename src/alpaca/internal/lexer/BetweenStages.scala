@@ -14,7 +14,10 @@ import scala.util.matching.Regex.Match
  * @tparam Ctx the global context type
  */
 // todo: i do not like this name
-private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)
+private[alpaca] trait BetweenStages:
+  type Self <: LexerCtx
+
+  def apply(token: Token[Self, ?], m: Match, c: Self): Unit
 
 private[alpaca] object BetweenStages {
 
@@ -27,9 +30,9 @@ private[alpaca] object BetweenStages {
    * @tparam Ctx the context type
    * @return a BetweenStages instance
    */
-  inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
+  inline given [Ctx <: LexerCtx] => (Ctx has BetweenStages) = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[Ctx has BetweenStages] = {
     import quotes.reflect.*
 
     val parents = TypeRepr
@@ -47,7 +50,7 @@ private[alpaca] object BetweenStages {
         .map:
           case '[type ctx >: Ctx <: LexerCtx; ctx] =>
             Expr
-              .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
+              .summonIgnoring[ctx has BetweenStages]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))
     }
 

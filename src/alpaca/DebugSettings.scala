@@ -2,6 +2,8 @@ package alpaca
 
 import scala.quoted.FromExpr
 
+import scala.language.experimental.modularity
+
 /**
  * Configuration settings for debug output generation.
  *
@@ -12,11 +14,12 @@ import scala.quoted.FromExpr
  *
  * @param enabled runtime value of the enabled flag
  * @param directory runtime value of the directory path
+ * @param timeout runtime value of the timeout
  */
 final case class DebugSettings(
-  enabled: Boolean & Singleton,
-  directory: String & Singleton,
-  timeout: Int & Singleton,
+  tracked val enabled: Boolean ,
+  tracked val directory: String ,
+  tracked val timeout: Int ,
 )
 
 object DebugSettings {
@@ -26,5 +29,9 @@ object DebugSettings {
    *
    * Debug output is disabled by default and would be written to "debug/" if enabled.
    */
-  inline given default: DebugSettings = DebugSettings(false, "debug/", 90)
+   given derived: DebugSettings &{
+    val enabled : false
+    val directory : "debug/"
+    val timeout : 90
+   } = DebugSettings(false, "debug/", 90)
 }

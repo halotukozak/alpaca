@@ -12,6 +12,8 @@ package internal
 type ValidName = String & Singleton
 
 object ValidName {
+  given ValidName is Showable:
+    def show(x: ValidName): String = x
 
   def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*

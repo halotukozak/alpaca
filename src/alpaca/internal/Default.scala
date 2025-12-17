@@ -1,30 +1,34 @@
 package alpaca
 package internal
 
-private[internal] trait Default[+T] extends (() => T)
+private[internal] trait Default:
+  type Self
+  def apply(): Self
 
 private[internal] object Default:
-  given Default[Unit] = () => ()
-  given Default[Boolean] = () => false
-  given Default[Int] = () => 0
-  given Default[String] = () => ""
-  given Default[Nothing] = () => throw new NoSuchElementException("Default[Nothing] is not defined")
+  type Aux[A] = A has Default
 
-  given [T](using quotes: Quotes): Default[Expr[T]] = () => '{ ??? }
-  given [T](using quotes: Quotes): Default[List[T]] = () => Nil
+  given Unit has Default = () => ()
+  given Boolean has Default = () => false
+  given Int has Default = () => 0
+  given String has Default = () => ""
+  given Nothing has Default = () => throw new NoSuchElementException("Default is not defined for Nothing")
 
-  given (using quotes: Quotes): Default[quotes.reflect.Tree] =
+  given [T] => ((Quotes) ?=> Expr[T] has Default) = () => '{ ??? }
+  given [T] => ((Quotes) ?=> List[T] has Default) = () => Nil
+
+  given ((quotes: Quotes) ?=> quotes.reflect.Tree has Default) =
     import quotes.reflect.*
     () => '{ ??? }.asTerm
 
-  given (using quotes: Quotes): Default[quotes.reflect.TypeRepr] =
+  given ((quotes: Quotes) ?=> quotes.reflect.TypeRepr has Default) =
     import quotes.reflect.*
     () => TypeRepr.of[Nothing]
 
-  given [T <: Tuple](using defaults: Tuple.Map[T, Default]): Default[T] =
+  given [T <: Tuple] => ((defaults: Tuple.Map[T, Default.Aux]) ?=> T has Default) =
     () =>
       defaults.toList
-        .asInstanceOf[List[Default[?]]]
+        .asInstanceOf[List[Default]]
         .map(_.apply())
         .toArray
         .|>(Tuple.fromArray)

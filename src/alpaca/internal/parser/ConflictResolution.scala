@@ -17,7 +17,7 @@ opaque private[parser] type ConflictKey = Production | String
 object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
-  given Showable[ConflictKey] =
+  given ConflictKey is Showable =
     case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
     case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
     case p: Production => show"Reduction(${p.name})"
@@ -109,7 +109,7 @@ private[parser] object ConflictResolutionTable {
   /**
    * Showable instance for displaying conflict resolution tables.
    */
-  given Showable[ConflictResolutionTable] =
+  given ConflictResolutionTable is Showable =
     _.map: (k, v) =>
       def show(x: ConflictKey): String = x match
         case p: Production => show"$p"

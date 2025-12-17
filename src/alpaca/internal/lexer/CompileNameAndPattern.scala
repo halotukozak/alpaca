@@ -4,6 +4,8 @@ package lexer
 
 import scala.annotation.tailrec
 
+import scala.language.experimental.modularity
+
 /**
  * Compiler for lexer token patterns during macro expansion.
  *
@@ -11,10 +13,9 @@ import scala.annotation.tailrec
  * in lexer definitions. It handles various pattern forms including simple
  * patterns, alternatives, and bindings.
  *
- * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
+private[lexer] final class CompileNameAndPattern(using tracked val quotes: Quotes) {
   import quotes.reflect.*
 
   /**

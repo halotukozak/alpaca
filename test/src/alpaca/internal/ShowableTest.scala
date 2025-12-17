@@ -22,7 +22,7 @@ final class ShowableTest extends AnyFunSuite with Matchers {
 
   test("Showable should convert custom case class to Shown") {
     case class Person(name: String, age: Int)
-    given Showable[Person] = person => s"${person.name} is ${person.age} years old."
+    given Person is Showable = person => s"${person.name} is ${person.age} years old."
 
     val person = Person("Alice", 30)
     val shown: String = show"$person"
@@ -31,7 +31,8 @@ final class ShowableTest extends AnyFunSuite with Matchers {
   }
 
   test("Showable should convert derived types") {
-    case class Address(city: String, zip: Int) derives Showable
+    case class Address(city: String, zip: Int)
+    given Address is Showable = Showable.derived
 
     val address = Address("Wonderland", 12345)
     val shown: String = show"$address"

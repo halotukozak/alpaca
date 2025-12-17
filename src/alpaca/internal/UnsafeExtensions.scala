@@ -6,7 +6,7 @@ import scala.quoted.*
 
 inline private[alpaca] def raiseShouldNeverBeCalled[E](elem: E)[T]: T =
   val showable = compiletime.summonFrom:
-    case s: Showable[E] => s
+    case s: (E is Showable) => s
     case _ => Showable.fromToString
 
   val message = "This code should never be called: " + showable.show(elem)
@@ -15,7 +15,7 @@ inline private[alpaca] def raiseShouldNeverBeCalled[E](elem: E)[T]: T =
     case quotes: Quotes => quotes.reflect.report.error(message)
     case _ => throw new AlgorithmError(message)
 
-  compiletime.summonInline[Default[T]]()
+  compiletime.summonInline[T has Default]()
 
 extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)
   inline private[alpaca] def unsafeMap[B](inline f: PartialFunction[A, B]): CC[B] =

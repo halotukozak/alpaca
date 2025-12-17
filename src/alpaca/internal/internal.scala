@@ -4,7 +4,10 @@ package internal
 import scala.NamedTuple.NamedTuple
 import scala.concurrent.duration.FiniteDuration
 
+import scala.language.experimental.modularity
+
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
+private[alpaca] infix type has[A <: AnyKind, B <: Any { type Self <: AnyKind }] = B { type Self = A }
 
 /**
  * A TreeMap that replaces symbol references in a tree.
@@ -13,10 +16,9 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * replacing references to specific symbols with replacement terms.
  * This is useful for adapting code from one context to another.
  *
- * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
+private[internal] final class ReplaceRefs(using tracked val quotes: Quotes) {
   import quotes.reflect.*
 
   /**
@@ -47,10 +49,9 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
  * This class provides a way to construct function expressions programmatically
  * by specifying how to build the function body given the parameter symbols.
  *
- * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
+private[internal] final class CreateLambda(using tracked val quotes: Quotes) {
   import quotes.reflect.*
 
   /**

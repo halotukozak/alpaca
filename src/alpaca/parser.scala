@@ -31,7 +31,7 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](productions: PartialFunction[Tuple | Lexeme[?, ?], R]*): Rule[R] = dummy
+inline def rule[R](productions: PartialFunction[Tuple | Lexeme, R]*): Rule[R] = dummy
 
 /**
  * Represents a grammar rule in the parser.
@@ -98,7 +98,7 @@ final class name(name: ValidName) extends StaticAnnotation
  * and tokens.
  */
 type ConflictResolution
-extension (first: Production | Token[?, ?, ?])
+extension (first: Production | Token[?, ?])
   /**
    * Specifies that this production/token should have higher precedence than others.
    *
@@ -113,7 +113,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(second: (Production | Token[?, ?])*): ConflictResolution = dummy
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -129,7 +129,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(second: (Production | Token[?, ?])*): ConflictResolution = dummy
 
 object Production {
 
@@ -143,7 +143,7 @@ object Production {
    * @return a production reference
    */
   @compileTimeOnly(ConflictResolutionOnly)
-  inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
+  inline def apply(inline symbols: (Rule[?] | Token[?, ?])*): Production = dummy
 
   /**
    * Creates a production reference from a name.
@@ -165,8 +165,7 @@ object ParserCtx:
    *
    * @tparam Ctx the context type
    */
-  given [Ctx <: ParserCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
-    Copyable.derived
+  given [Ctx <: ParserCtx & Product: Mirror.ProductOf] => (Ctx is Copyable) = Copyable.derived
 
   /**
    * An empty parser context with no state.
@@ -188,7 +187,7 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse(lexems: List[Lexeme[?, ?]])(using inline debugSettings: DebugSettings): (
+  inline def parse(lexems: List[Lexeme])(using inline debugSettings: DebugSettings): (
     ctx: Ctx,
     result: (parser.root.type match
       case Rule[t] => t

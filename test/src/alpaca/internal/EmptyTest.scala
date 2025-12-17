@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 final class EmptyTest extends AnyFunSuite with Matchers {
 
-  inline def empty[T]: Empty[T] = compiletime.summonInline[Empty[T]]
+  inline def empty[T]: T is Empty = compiletime.summonInline[(T is Empty)]
 
   // Helpers and domain models
   case class Zero() derives Empty

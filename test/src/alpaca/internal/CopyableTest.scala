@@ -5,20 +5,19 @@ import org.scalatest.matchers.should.Matchers
 
 final class CopyableTest extends AnyFunSuite with Matchers {
 
-  inline def copy[T]: Copyable[T] = compiletime.summonInline[Copyable[T]]
+  inline def copy[T]: T is Copyable = compiletime.summonInline[T is Copyable]
 
-  case class Person(name: String, age: Int) derives Copyable
+  case class Person(name: String, age: Int)
 
-  case class Address(city: String, zip: Int) derives Copyable
+  case class Address(city: String, zip: Int)
 
   case class User(person: Person, address: Address, tags: List[String], opt: Option[Int], tuple: (Int, String))
-    derives Copyable
 
-  case class Box[T](value: T) derives Copyable
+  case class Box[T](value: T)
 
-  case class Defaults(a: Int = 1, b: String = "x") derives Copyable
+  case class Defaults(a: Int = 1, b: String = "x")
 
-  case class Empty() derives Copyable
+  case class Empty()
 
   test("derived produces an identity-like function for a simple case class") {
     val p = Person("Ann", 30)

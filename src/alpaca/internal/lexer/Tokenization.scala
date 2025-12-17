@@ -17,14 +17,14 @@ import scala.annotation.publicInBinary
  *
  * @tparam Ctx the global context type
  */
-abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as betweenStages}] extends Selectable {
-  type LexemeType = Lexeme[?, ?]
+abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as betweenStages, Empty as empty}]
+  extends Selectable {
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
-  def tokens: List[Token[?, Ctx, ?]]
+  def tokens: List[Token[Ctx, ?]]
 
   /** Map of token names to their definitions for dynamic access. */
-  def byName: Map[String, DefinedToken[?, Ctx, ?]] // todo: reconsider if selectDynamic should be implemented with PM
+  def byName: Map[String, DefinedToken[Ctx, ?]] // todo: reconsider if selectDynamic should be implemented with PM
 
   /**
    * Provides dynamic access to tokens by name.
@@ -34,7 +34,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] =
+  def selectDynamic(fieldName: String): DefinedToken[Ctx, ?] =
     byName(scala.reflect.NameTransformer.decode(fieldName))
 
   /**
@@ -45,11 +45,10 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
    * is encountered.
    *
    * @param input the input to tokenize
-   * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(input: CharSequence)(using empty: Empty[Ctx]): (ctx: Ctx, lexemes: List[LexemeType]) = {
-    @tailrec def loop(globalCtx: Ctx)(acc: List[LexemeType]): List[LexemeType] =
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) = {
+    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme]): List[Lexeme] =
       globalCtx.text.length match
         case 0 =>
           acc.reverse // todo: make it not reversed
@@ -63,7 +62,7 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
           }
           betweenStages(token, m, globalCtx)
           val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[LexemeType]
+            case _: DefinedToken[Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

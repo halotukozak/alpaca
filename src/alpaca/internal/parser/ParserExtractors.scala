@@ -7,6 +7,7 @@ import NonEmptyList as NEL
 import alpaca.internal.parser.ParserExtractors.*
 
 import scala.reflect.NameTransformer
+import scala.language.experimental.modularity
 
 /**
  * Internal utility class for extracting and transforming parser patterns.
@@ -14,11 +15,10 @@ import scala.reflect.NameTransformer
  * This class is used during macro expansion to analyze parser rule definitions
  * and extract information about terminals, non-terminals, and EBNF operators
  * (optional, repeated) from pattern matching expressions.
- *
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q) {
+private[parser] final class ParserExtractors[Ctx <: ParserCtx: Type](using tracked val quotes: Quotes) {
   import quotes.reflect.*
 
   private type EBNFExtractor = PartialFunction[
