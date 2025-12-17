@@ -191,7 +191,7 @@ Gdy~parser próbuje rozstrzygnąć konflikt między~akcjami $a_1$ i~$a_2$, syste
 Jeśli~w~trakcie przeszukiwania odnajdzie ścieżkę między akcjami, oznacza to, że istnieje~(bezpośrednia lub~przechodnia) precedencja między nimi.
 Algorytm śledzi odwiedzone węzły, aby~uniknąć zapętlenia podczas przeszukiwania.
 
-Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~\textit{mnożenie}~$>$~\textit{dodawanie}), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
+Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~$\textit{mnożenie} \prec \textit{dodawanie}$, gdzie~$\prec$ oznacza wyższy priorytet), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
 Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.
 
 \paragraph{Przykład}
@@ -225,13 +225,13 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
 
 \paragraph{Kluczowe właściwości}
 \begin{itemize}
-    \item Jeśli~algorytm zakończy się~bez~wyjątku, graf jest~acykliczny (DAG)
+    \item Jeśli~algorytm zakończy się bez komunikatu o błędzie, graf jest~acykliczny (DAG)
     \item Każdy cykl zostanie wykryty
     \item Każdy węzeł i~krawędź odwiedzane dokładnie raz --- Złożoność czasowa $O(|V| + |E|)$
 \end{itemize}
 
 Jeśli~algorytm napotka węzeł w~stanie \texttt{Visited} podczas eksploracji, oznacza to~wykrycie cyklu.
-Kompilator rzuca wyjątek \texttt{InconsistentConflictResolution} zawierający:
+Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawierającm:
 \begin{itemize}
     \item Węzeł gdzie~wykryto cykl
     \item Ścieżkę prowadzącą do~cyklu

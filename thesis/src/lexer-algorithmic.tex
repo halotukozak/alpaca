@@ -178,5 +178,5 @@ Pattern <p_j> is shadowed by <p_i>
 \subsubsection{Integracja z~procesem kompilacji}
 
 Moduł \texttt{RegexChecker} jest wywoływany w~fazie ekspansji makra \texttt{lexer}, przed~generacją kodu leksera.
-Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~czytelnym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
+Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~obszernym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
 Podejście to jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.

@@ -548,19 +548,19 @@ Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynnik�
 \begin{itemize}
     \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera;
     \item Błędy ujawniają się~dopiero w~fazie parsowania konkretnego wejścia;
-    \item Komunikat diagnostyczny wskazuje na parser (\enquote{nieoczekiwany symbol}), a~nie~lekser utrudniając identyfikację pierwotnej przyczyny.
+    \item Komunikat diagnostyczny wskazuje na parser (\enquote{nieoczekiwany symbol}), a~nie~lekser, utrudniając identyfikację pierwotnej przyczyny.
 \end{itemize}
 
 \subsubsection{Rozwiązanie}
 
-Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker|(por. rozdział~\ref{subsec:lexer-impl-regexchecker}).
+Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker| (por. rozdział~\ref{subsec:lexer-impl-regexchecker}).
 Przed~generacją kodu leksera moduł \verb|RegexChecker| analizuje wzorce w~poszukiwaniu potencjalnych konfliktów.
 W~przypadku wykrycia nieprawidłowości użytkownik otrzymuje komunikat błędu wskazujący źródło problemu.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/PatternShadowing.png}
-    \caption{Przykład wykrycia konfliktu w~kolejności definicji tokenów}
+    \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów}
     \label{fig:regex_checker_error}
 \end{figure}
 
