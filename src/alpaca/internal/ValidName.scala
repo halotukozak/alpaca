@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import lexer.Token
+
 /**
  * Type alias for valid token names.
  *
@@ -12,14 +14,11 @@ package internal
 type ValidName = String & Singleton
 
 object ValidName {
-  given ValidName is Showable:
-    def show(x: ValidName): String = x
-
   def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
-      case x => raiseShouldNeverBeCalled(x.show)
+      case x => raiseShouldNeverBeCalled(x.show)(using () => "")
 
   /**
    * Validates a token name during macro expansion.

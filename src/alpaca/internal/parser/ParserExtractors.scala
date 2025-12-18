@@ -195,13 +195,13 @@ private[parser] final class ParserExtractors[Ctx <: ParserCtx: Type](using track
 private object ParserExtractors {
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled(x)[List[Any]]
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled(x)[Option[Any]]
 
   val noneAction: Action[ParserCtx] = (_, _) => None
 }

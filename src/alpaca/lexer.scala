@@ -3,9 +3,9 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.compileTimeOnly
-import NamedTuple.AnyNamedTuple
 import java.util.jar.Attributes.Name
+import scala.annotation.compileTimeOnly
+import scala.NamedTuple.AnyNamedTuple
 import scala.collection.mutable
 
 /**
@@ -35,11 +35,12 @@ transparent inline def lexer[Ctx <: LexerCtx](
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
   copy: Ctx is Copyable,
+  empty: Ctx has Empty,
   betweenStages: Ctx has BetweenStages,
 )(using inline
   debugSettings: DebugSettings,
 ): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages })(using '{ debugSettings }) }
+  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ empty }, '{ betweenStages })(using '{ debugSettings }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token {
@@ -53,7 +54,7 @@ object Token {
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: LexerCtx): Token[ctx.type, Nothing] = dummy
+  def Ignored(using ctx: LexerCtx): Token[ctx.type, Nothing] { type Value = Nothing } = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -65,7 +66,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type, String] = dummy
+  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type, Name] { type Value = String } = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -78,7 +79,8 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[ctx.type, value.type] = dummy
+  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[ctx.type, Name] { type Value = value.type } =
+    dummy
 }
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
@@ -109,7 +111,7 @@ object LexerCtx:
    *
    * @tparam Ctx the context type
    */
-  given [Ctx <: LexerCtx & Product: Mirror.ProductOf] => (Ctx is Copyable) =
+  given [Ctx <: LexerCtx & Product: Mirror.ProductOf] => Ctx is Copyable =
     Copyable.derived
 
   /**
@@ -121,13 +123,13 @@ object LexerCtx:
    * - Advances the text position
    * - Applies any context modifications
    */
-  given (LexerCtx has BetweenStages) =
+  given LexerCtx has BetweenStages =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched.nn
       val ctxAsProduct = ctx.asInstanceOf[Product]
-      //   val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
-      //     ("text" -> ctx.lastRawMatched)
-      ctx.lastLexeme = Lexeme(info.name, remapping(ctx))
+      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
+        ("text" -> ctx.lastRawMatched)
+      ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 

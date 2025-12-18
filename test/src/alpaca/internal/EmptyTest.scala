@@ -8,15 +8,15 @@ final class EmptyTest extends AnyFunSuite with Matchers {
   inline def empty[T]: T is Empty = compiletime.summonInline[(T is Empty)]
 
   // Helpers and domain models
-  case class Zero() derives Empty
+  case class Zero()
 
-  case class WithDefaults(a: Int = 1, b: String = "x") derives Empty
+  case class WithDefaults(a: Int = 1, b: String = "x")
 
-  case class Inner(x: Int = 42) derives Empty
+  case class Inner(x: Int = 42)
 
-  case class Outer(inner: Inner = Inner(), tags: List[String] = Nil, opt: Option[Int] = None) derives Empty
+  case class Outer(inner: Inner = Inner(), tags: List[String] = Nil, opt: Option[Int] = None)
 
-  case class Box[T](value: Option[T] = None) derives Empty
+  case class Box[T](value: Option[T] = None)
 
   case class Mixed(a: Int, b: String = "b") // has a param without default -> should fail
 
@@ -39,14 +39,14 @@ final class EmptyTest extends AnyFunSuite with Matchers {
   test("cannot derive Empty when any parameter lacks a default (compile-time)") {
     """
       |import alpaca.core.Empty
-      |case class Mixed(a: Int, b: String = "b") derives Empty
+      |case class Mixed(a: Int, b: String = "b")
       |""".stripMargin shouldNot compile
   }
 
   test("cannot derive Empty for non-case classes (compile-time)") {
     """
       |import alpaca.core.Empty
-      |class Regular(val x: Int) derives Empty
+      |class Regular(val x: Int)
       |""".stripMargin shouldNot compile
   }
 }

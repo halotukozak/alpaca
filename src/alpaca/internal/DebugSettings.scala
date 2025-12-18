@@ -3,6 +3,7 @@ package internal
 
 import java.io.{File, FileWriter}
 import scala.util.Using
+import Conversion.into
 
 /**
  * Writes debug content to a file if debug settings are enabled.
@@ -15,7 +16,7 @@ import scala.util.Using
  * @param content the content to write
  * @param debugSettings the debug settings determining if/where to write
  */
-private[internal] def debugToFile(path: String)(content: Shown)(using debugSettings: DebugSettings): Unit =
+private[internal] def debugToFile(path: String)(content: into[Shown])(using debugSettings: DebugSettings): Unit =
   if debugSettings.enabled then
     val file = new File(s"${debugSettings.directory}$path")
     file.getParentFile.mkdirs()

@@ -3,6 +3,8 @@ package internal
 
 import scala.NamedTuple.NamedTuple
 
+import Conversion.into
+
 /**
  * A type class for converting values to their string representation.
  *
@@ -17,14 +19,16 @@ private[internal] trait Showable:
   type Self
 
   /**
-   * Extension method to convert a value to its string representation.
+   * Method to convert a value to its string representation.
    *
    * @return the string representation of the value
    */
-  extension (t: Self) def show: Shown
+  def show(t: Self): into[Shown]
 
 /** String interpolator for values that have Showable instances. */
-extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
+extension (sc: StringContext) private[internal] def show(args: into[Shown]*): Shown = sc.s(args*)
+
+extension [T](t: T)(using tShowable: T is Showable) private[internal] def show: Shown = tShowable.show(t).underlying
 
 /**
  * An opaque type representing a string that has been shown.
@@ -34,6 +38,7 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
 opaque private[internal] type Shown <: String = String
 
 object Shown {
+  given Shown is Showable = x => x
 
   /**
    * Implicit conversion from any Showable type to Shown.
@@ -46,34 +51,27 @@ object Shown {
 private[internal] object Showable {
 
   /** Showable instance for String (identity). */
-  given String is Showable:
-    extension (s: String) def show: Shown = s.asInstanceOf[Shown]
-
-  /** Showable instance for Shown (identity). */
-  given Shown is Showable:
-    extension (s: Shown) def show: Shown = s
+  given String is Showable = _.asInstanceOf[Shown]
 
   /** Showable instance for Int. */
-  given Int is Showable:
-    extension (i: Int) def show: Shown = i.toString
+  given Int is Showable = _.toString
 
-  def fromToString[T]: T is Showable = new:
-    type Self = T
-    extension (t: T) def show: Shown = t.toString
+  def fromToString[T]: T is Showable = _.toString
 
   /** Showable instance for nullable types. */
-//   given [T: Showable as tShowable] => ((T | Null) is Showable) =
-//     case null => ""
-//     case value: T @unchecked => tShowable.show(value)
+  given [T: Showable as tShowable]: ((T | Null) is Showable) =
+    case null => ""
+    case value: T @unchecked => tShowable.show(value)
 
   // todo: add names
-  given [N <: Tuple, V <: Tuple: Showable] => (NamedTuple[N, V] is Showable) = _.toTuple.show
+  given [N <: Tuple, V <: Tuple: Showable]: (NamedTuple[N, V] is Showable) = _.toTuple.show
 
   given [T](using quotes: Quotes): (Expr[T] is Showable) =
     import quotes.reflect.*
     expr => expr.asTerm.show
 
-  given ((quotes: Quotes) ?=> quotes.reflect.Tree is Showable) = quotes.reflect.Printer.TreeShortCode.show(_)
+  given (using quotes: Quotes): (quotes.reflect.Tree is Showable) =
+    quotes.reflect.Printer.TreeShortCode.show(_)
 
   given [A: Showable, B: Showable] => ((A, B) is Showable) = (a, b) => show"$a : $b"
 
@@ -86,20 +84,17 @@ private[internal] object Showable {
    * @param m the Mirror.ProductOf for type T
    * @return a Showable instance
    */
-  @annotation.nowarn("msg=New anonymous class definition will be duplicated at each inline site")
-  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): T is Showable = new:
-    extension (t: T)
-      def show =
-        val name = compiletime.constValue[m.MirroredLabel]
-        val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
-        val showables =
-          compiletime
-            .summonAll[Tuple.Map[m.MirroredElemTypes, [X] =>> X is Showable]]
-            .toList
-            .asInstanceOf[List[Any is Showable]]
-        val values = Tuple.fromProductTyped(t).toList
-        val shown = showables.zip(values).map(_.show(_))
-        s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
+  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): T is Showable = (t: T) =>
+    val name = compiletime.constValue[m.MirroredLabel]
+    val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
+    val showables =
+      compiletime
+        .summonAll[Tuple.Map[m.MirroredElemTypes, [X] =>> X is Showable]]
+        .toList
+        .asInstanceOf[List[Any is Showable]]
+    val values = Tuple.fromProductTyped(t).toList
+    val shown = showables.zip(values).map(_.show(_))
+    s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
 }
 
 extension [C[X] <: Iterable[X], T: Showable](c: C[T])

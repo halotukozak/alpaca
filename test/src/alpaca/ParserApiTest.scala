@@ -32,7 +32,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
   case class CalcContext(
     names: mutable.Map[String, Int] = mutable.Map.empty,
     errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
-  ) extends ParserCtx derives Copyable
+  ) extends ParserCtx
 
   object CalcParser extends Parser[CalcContext] {
     override val resolutions = Set(

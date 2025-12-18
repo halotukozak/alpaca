@@ -20,8 +20,8 @@ import scala.language.experimental.modularity
  */
 private[alpaca] final case class Lexeme(
   tracked val name: String,
-  tracked val value: String,
-  // private[alpaca] val fields: Map[String, Any],
+  tracked val value: Any,
+  private[alpaca] val fields: Map[String, Any],
 ) extends Selectable {
   type Fields <: AnyNamedTuple
 }

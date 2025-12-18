@@ -84,7 +84,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
+      val extractProductionName: Tree => (Tree, ValidName | Null) =
         case Typed(term, tpt) =>
           // todo: maybe it is possible to pattern match on TypeTree
           val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
@@ -95,7 +95,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       cases
         .map(_.asTerm)
         .map(extractProductionName)
-        .unsafeMap:
+        .unsafeMap[(Tree, ValidName | Null)]:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
@@ -158,7 +158,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         val args = rhs
           .map[parser.Symbol.NonEmpty]:
             case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
-            case '{ type name <: ValidName; $token: Token[?, ?] { def name: name } } => Terminal(ValidName.from[name])
+            case '{ $token: Token[?, name] } => Terminal(ValidName.from[name])
           .toList
 
         productionsByRhs.getOrElse(
@@ -181,7 +181,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   def extractKey(expr: Expr[Production | Token[?, ?]]): ConflictKey = expr match
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
-    case '{ $token: Token[?, ?] { def name: name } } => ConflictKey(ValidName.from[name])
+    case '{ $token: Token[?, nameTpe] } => ConflictKey(ValidName.from[nameTpe])
 
   report.info("Building conflict resolution table...")
 
@@ -197,7 +197,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
             case None => Some(Set(extractKey(after))),
   ).tap: table =>
     table.verifyNoConflicts()
-    debugToFile(s"$parserName/conflictResolutions.dbg")(s"$table")
+    debugToFile(s"$parserName/conflictResolutions.dbg")(show"$table")
 
   report.info("Conflict resolution table built, identifying root production...")
 

@@ -42,7 +42,7 @@ private[parser] object ParseTable {
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold(show"")(_.show)))
 
       Csv(headers, rows)
 

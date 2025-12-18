@@ -3,6 +3,7 @@ package internal
 package parser
 
 import scala.annotation.StaticAnnotation
+import ValidName.given
 
 /**
  * Represents a grammar production rule.

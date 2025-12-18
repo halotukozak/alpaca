@@ -20,7 +20,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   override def scalacOptions = Seq(
     "-deprecation",
     "-feature",
-    // "-explain",
+    "-explain",
     "-new-syntax",
     "-unchecked",
     "-language:noAutoTupling",
@@ -40,9 +40,9 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
-    "-language:implicitConversions",
-    "-experimental",
+    // "-language:implicitConversions",
     "-language:experimental.modularity",
+    "-preview",
   )
 
   override def scalaDocOptions = Task {

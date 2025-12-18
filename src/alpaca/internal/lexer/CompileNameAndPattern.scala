@@ -28,8 +28,8 @@ private[lexer] final class CompileNameAndPattern(using tracked val quotes: Quote
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
+  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo]] =
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo]] =
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
@@ -60,7 +60,7 @@ private[lexer] final class CompileNameAndPattern(using tracked val quotes: Quote
                 case Literal(StringConstant(str)) => str
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled(x)
+        case x => raiseShouldNeverBeCalled(x)[List[Nothing]]
 
     loop(TypeRepr.of[T], pattern)
 }

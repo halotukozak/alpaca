@@ -3,6 +3,7 @@ package internal
 package parser
 
 import alpaca.internal.parser.ParseAction.Reduction
+import Conversion.into
 
 /**
  * Base class for parser conflict exceptions.
@@ -12,7 +13,7 @@ import alpaca.internal.parser.ParseAction.Reduction
  *
  * @param message the error message
  */
-sealed class ConflictException(message: Shown) extends Exception(message)
+sealed class ConflictException(message: into[Shown]) extends Exception(message)
 
 /**
  * Exception thrown when there is a shift/reduce conflict.
