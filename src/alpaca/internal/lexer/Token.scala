@@ -94,13 +94,12 @@ object TokenInfo {
  * about the token's name, pattern, and how to manipulate the lexer context when matched.
  *
  * @tparam Ctx the global context type
- * @tparam Name the token name
  */
-sealed trait Token[+Ctx <: LexerCtx, +Name <: ValidName]:
+sealed trait Token[+Ctx <: LexerCtx]:
   type Value
 
   /** Token information including name and pattern. */
-  val info: TokenInfo.AUX[Name]
+  tracked val info: TokenInfo
 
   /** Function to update the context when this token is matched. */
   val ctxManipulation: CtxManipulation[Ctx @uv]
@@ -118,12 +117,15 @@ sealed trait Token[+Ctx <: LexerCtx, +Name <: ValidName]:
  * @param ctxManipulation function to update context
  * @param remapping function to extract value from context
  */
+
+type NamedToken[Name <: ValidName] = Token[?] { val info: TokenInfo.AUX[Name] }
+
 //todo: may be invariant?
-final case class DefinedToken[+Ctx <: LexerCtx, +Name <: ValidName, Value](
-  info: TokenInfo.AUX[Name],
-  ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: (Ctx@uv) => Value,
-) extends Token[Ctx, Name]:
+final class DefinedToken[+Ctx <: LexerCtx]private (
+  tracked val info: TokenInfo,
+  val ctxManipulation: CtxManipulation[Ctx @uv],
+  private val remapping: (Ctx@uv) => Any,
+) extends Token[Ctx]:
   type LexemeTpe = Lexeme { val name: info.name.type; val value: Value }
 
   @compileTimeOnly(RuleOnly)
@@ -132,6 +134,15 @@ final case class DefinedToken[+Ctx <: LexerCtx, +Name <: ValidName, Value](
   inline def List: PartialFunction[Any, List[LexemeTpe]] = dummy
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
+
+object DefinedToken:
+   def apply[Ctx <: LexerCtx, ValueTpe, Name <: ValidName](
+    info: TokenInfo.AUX[Name], ctxManipulation: CtxManipulation[Ctx @uv], remapping: (Ctx@uv) => ValueTpe,
+    ): DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name] =
+     new DefinedToken[Ctx](info, ctxManipulation, remapping).asInstanceOf[DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name]]
+
+   def unapply[Ctx <: LexerCtx](x: DefinedToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv], (Ctx@uv) => x.Value) = 
+    (x.info, x.ctxManipulation, x.remapping.asInstanceOf[(Ctx@uv) => x.Value])
 
 /**
  * A token that is matched but not included in the output.
@@ -143,8 +154,8 @@ final case class DefinedToken[+Ctx <: LexerCtx, +Name <: ValidName, Value](
  * @param info token information
  * @param ctxManipulation function to update context
  */
-final case class IgnoredToken[+Ctx <: LexerCtx, +Name <: ValidName](
-  info: TokenInfo.AUX[Name],
+final case class IgnoredToken[+Ctx <: LexerCtx](
+  tracked val info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
-) extends Token[Ctx, Name]:
+) extends Token[Ctx]:
   type Value = Nothing

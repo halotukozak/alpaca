@@ -54,7 +54,7 @@ object Token {
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: LexerCtx): Token[ctx.type, Nothing] { type Value = Nothing } = dummy
+  def Ignored(using ctx: LexerCtx): Token[ctx.type] { type Value = Nothing } = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -66,7 +66,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type, Name] { type Value = String } = dummy
+  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type] { type Value = String } & NamedToken[Name] = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -79,7 +79,8 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[ctx.type, Name] { type Value = value.type } =
+  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx)
+    : Token[ctx.type] { type Value = value.type } & NamedToken[Name] =
     dummy
 }
 

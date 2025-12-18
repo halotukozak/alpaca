@@ -10,14 +10,11 @@ import scala.util.matching.Regex.Match
  * This trait defines a function that is called after each token match
  * to update the global context. It can be used to track line numbers,
  * column positions, or other custom state.
- *
- * @tparam Ctx the global context type
  */
-// todo: i do not like this name
 private[alpaca] trait BetweenStages:
   type Self <: LexerCtx
 
-  def apply(token: Token[Self, ?], m: Match, c: Self): Unit
+  def apply(token: Token[Self], m: Match, c: Self): Unit
 
 private[alpaca] object BetweenStages {
 

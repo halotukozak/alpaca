@@ -98,7 +98,7 @@ final class name(name: ValidName) extends StaticAnnotation
  * and tokens.
  */
 type ConflictResolution
-extension (first: Production | Token[?, ?])
+extension (first: Production | Token[?])
   /**
    * Specifies that this production/token should have higher precedence than others.
    *
@@ -113,7 +113,7 @@ extension (first: Production | Token[?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(second: (Production | Token[?, ?])*): ConflictResolution = dummy
+  inline infix def after(second: (Production | Token[?])*): ConflictResolution = dummy
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -129,7 +129,7 @@ extension (first: Production | Token[?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(second: (Production | Token[?, ?])*): ConflictResolution = dummy
+  inline infix def before(second: (Production | Token[?])*): ConflictResolution = dummy
 
 object Production {
 
@@ -143,7 +143,7 @@ object Production {
    * @return a production reference
    */
   @compileTimeOnly(ConflictResolutionOnly)
-  inline def apply(inline symbols: (Rule[?] | Token[?, ?])*): Production = dummy
+  inline def apply(inline symbols: (Rule[?] | Token[?])*): Production = dummy
 
   /**
    * Creates a production reference from a name.

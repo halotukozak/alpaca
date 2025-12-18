@@ -5,7 +5,7 @@ package parser
 import NonEmptyList as NEL
 
 import alpaca.internal.Csv.toCsv
-import alpaca.internal.lexer.Token
+import alpaca.internal.lexer.{NamedToken, Token}
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -158,7 +158,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         val args = rhs
           .map[parser.Symbol.NonEmpty]:
             case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
-            case '{ $token: Token[?, name] } => Terminal(ValidName.from[name])
+            case '{ $token: NamedToken[name] } => Terminal(ValidName.from[name])
           .toList
 
         productionsByRhs.getOrElse(
@@ -179,17 +179,17 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case '{ Set.apply(${ Varargs(resolutionExprs) }*) } => resolutionExprs
     .getOrElse(Nil)
 
-  def extractKey(expr: Expr[Production | Token[?, ?]]): ConflictKey = expr match
+  def extractKey(expr: Expr[Production | Token[?]]): ConflictKey = expr match
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
-    case '{ $token: Token[?, nameTpe] } => ConflictKey(ValidName.from[nameTpe])
+    case '{ $token: NamedToken[nameTpe] } => ConflictKey(ValidName.from[nameTpe])
 
   report.info("Building conflict resolution table...")
 
   val conflictResolutionTable = ConflictResolutionTable(
     resolutionExprs.view
       .unsafeFlatMap:
-        case '{ ($after: Production | Token[?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
-        case '{ ($before: Production | Token[?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
+        case '{ ($after: Production | Token[?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
+        case '{ ($before: Production | Token[?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
       .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
         case (acc, (before, after)) =>
           acc.updatedWith(extractKey(before)):
