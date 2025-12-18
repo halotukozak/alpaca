@@ -40,7 +40,6 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
-    // "-language:implicitConversions",
     "-language:experimental.modularity",
     "-preview",
   )
