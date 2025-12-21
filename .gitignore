@@ -50,3 +50,11 @@ debug/
 src/alpaca/local.scala
 example/src/example/local.scala
 thesis/src/.texpadtmp/
+thesis/src/*.aux
+thesis/src/*.log
+thesis/src/*.out
+thesis/src/alpaca.*
+
+!thesis/src/alpaca.pdf
+!thesis/src/out/alpaca.pdf
+!thesis/src/alpaca.tex

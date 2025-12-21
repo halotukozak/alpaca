@@ -53,7 +53,6 @@
     defernumbers=false,
     backend=biber]{biblatex}
 \addbibresource{bibliografia.bib}
-\bibliographystyle{plain}
 
 \lstdefinelanguage{terminal}{
     breaklines=true,
@@ -75,7 +74,7 @@
     morecomment=[n]{/*}{*/},
     morecomment=[n]{/**}{*/},
     morestring=[b]",
-    morestring=[b]"""
+    morestring=[b]``''"
 }[keywords,comments,strings]
 
 \usepackage{fontspec}
@@ -143,16 +142,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
-    \maketitle
+\maketitle
 
-    \tableofcontents
+\tableofcontents
 
-    \include{chapter-1}
+\include{introduction}
 
-    \printbibliography
-    \listoffigures
-    \listoftables
-    \listofalgorithmes
-    \lstlistoflistings
+\include{metaprogramming}
+
+\include{implementation}
+
+\include{lexer-algorithmic}
+
+\include{parser-algorithmic}
+
+\include{organization}
+
+\printbibliography
+\listoffigures
+\listoftables
+% \listofalgorithmes
+\lstlistoflistings
 
 \end{document}
