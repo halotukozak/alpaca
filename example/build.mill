@@ -6,18 +6,17 @@ package build
 import mill.scalalib._
 
 object `package` extends ScalaModule {
-  def scalaVersion = "3.8.0-RC1"
+  def scalaVersion = "3.8.0-RC3"
 
   override def scalacOptions = Seq(
     "-deprecation",
     "-feature",
-    "-explain",
+    // "-explain",
     "-new-syntax",
     "-unchecked",
     "-language:noAutoTupling",
     "-Vprofile",
     "-Xprint-inline",
-    // "-Ycheck:all", // cannot be enabled when scoverage used :/
     "-Ycheck:macros",
     // "-Ydebug-error",
     "-Ydebug-flags",
@@ -31,8 +30,8 @@ object `package` extends ScalaModule {
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
-    "-language:implicitConversions",
     "-experimental",
+    "-language:implicitConversions",
   )
 
   def mvnDeps = Seq(

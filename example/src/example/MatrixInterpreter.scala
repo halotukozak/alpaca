@@ -1,7 +1,5 @@
 package example
 
-import example.MatrixInterpreter.ScalaResult
-
 import scala.collection.mutable
 import scala.languageFeature.experimental.macros
 import scala.util.control.Breaks.{break, breakable}
@@ -49,85 +47,35 @@ case class Env(
       .getOrElse:
         throw MatrixRuntimeException(s"Function $name not found", line)
 
-trait MatrixInterpreter[T <: AST.Tree]:
-  def visit(tree: T, env: Env): ScalaResult[T]
+type ScalaResult[+T <: AST.Tree | Null] = Any
 
-object MatrixInterpreter:
+object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
+  extension [T <: AST.Expr: Mapper, R](expr: T) private def eval[X](env: Env): X = expr.visit(env).asInstanceOf[X]
 
-  type ScalaResult[T <: AST.Tree] = Any
-//
-//    T match
-//    case AST.Literal => Any
-//    case AST.SymbolRef => Any
-//    case AST.VectorRef => Numerical
-//    case AST.MatrixRef => Numerical
-//    case AST.Apply => Unit
-//    case AST.Range => Range
-//    case AST.Assign => Unit
-//    case AST.If => Unit
-//    case AST.While => Unit
-//    case AST.For => Unit
-//    case AST.Return => Nothing
-//    case AST.Continue => Nothing
-//    case AST.Break => Nothing
-//    case AST.Block => Unit
-//    case _ => Unit
+  val handleNull = _ => ()
 
-  extension [T <: AST.Tree: MatrixInterpreter as interpreter](tree: T)
-    inline def visit(env: Env): ScalaResult[T] = interpreter.visit(tree, env)
+  override given Mapper[AST.Block] = env => block => block.statements.foreach(_.visit(env))
 
-  extension [T <: AST.Expr: MatrixInterpreter, R](expr: T)
-    private def eval[X](env: Env): X = expr.visit(env).asInstanceOf[X]
-
-  given MatrixInterpreter[AST.Tree] = (tree, env) =>
-    tree match
-      case b: AST.Block => b.visit(env)
-      case s: AST.Statement => s.visit(env)
-
-  given MatrixInterpreter[AST.Statement] = (statement, env) =>
-    statement match
-      case e: AST.Expr => e.visit(env)
-      case a: AST.Assign => a.visit(env)
-      case i: AST.If => i.visit(env)
-      case w: AST.While => w.visit(env)
-      case f: AST.For => f.visit(env)
-      case r: AST.Return => r.visit(env)
-      case c: AST.Continue => c.visit(env)
-      case b: AST.Break => b.visit(env)
-
-  given MatrixInterpreter[AST.Expr] = (expr, env) =>
-    expr match
-      case l: AST.Literal => l.visit(env)
-      case r: AST.SymbolRef => r.visit(env)
-      case v: AST.VectorRef => v.visit(env)
-      case m: AST.MatrixRef => m.visit(env)
-      case a: AST.Apply => a.visit(env)
-      case r: AST.Range => r.visit(env)
-
-  given MatrixInterpreter[AST.Block] =
-    case (AST.Block(statements, _), env) =>
-      statements.foreach(_.visit(env))
-
-  given MatrixInterpreter[AST.Assign] =
-    case (AST.Assign(varRef: AST.SymbolRef, expr, line), env) =>
+  override given Mapper[AST.Assign] = env =>
+    case AST.Assign(varRef: AST.SymbolRef, expr, line) =>
       env(varRef.name) = expr.visit(env)
 
-    case (AST.Assign(varRef: AST.VectorRef, expr, line), env) =>
+    case AST.Assign(varRef: AST.VectorRef, expr, line) =>
       val vector = env.getValue[Vector](varRef.vector.name, line)
       vector(varRef.element.eval[Int](env)) = expr.eval[Int](env)
 
-    case (AST.Assign(AST.MatrixRef(matrix, row: AST.Expr, col: AST.Expr, _), expr, line), env) =>
+    case AST.Assign(AST.MatrixRef(matrix, row: AST.Expr, col: AST.Expr, _), expr, line) =>
       env.getValue[Matrix](matrix.name, line)(row.eval[Int](env))(col.eval[Int](env)) = expr.eval[Int](env)
 
     case _ => ???
 
-  given MatrixInterpreter[AST.If] =
-    case (AST.If(condition, thenBranch, elseBranch, _), env) =>
+  override given Mapper[AST.If] = env =>
+    case AST.If(condition, thenBranch, elseBranch, _) =>
       if condition.eval[Boolean](env) then thenBranch.visit(Env(env))
       else if elseBranch != null then elseBranch.visit(Env(env))
 
-  given MatrixInterpreter[AST.While] =
-    case (AST.While(condition, body, _), env) =>
+  override given Mapper[AST.While] = env =>
+    case AST.While(condition, body, _) =>
       breakable:
         while condition.eval[Boolean](env) do
           try body.visit(Env(env))
@@ -135,8 +83,8 @@ object MatrixInterpreter:
             case Exit.BreakException => break()
             case Exit.ContinueException => ()
 
-  given MatrixInterpreter[AST.For] =
-    case (AST.For(varRef, range, body, _), env) =>
+  override given Mapper[AST.For] = env =>
+    case AST.For(varRef, range, body, _) =>
       breakable:
         for i <- range.start.eval[Int](env) until range.end.eval[Int](env) do
           try
@@ -147,37 +95,36 @@ object MatrixInterpreter:
             case Exit.BreakException => break()
             case Exit.ContinueException => ()
 
-  given MatrixInterpreter[AST.Return] =
-    case (AST.Return(expr, _), env) =>
+  override given Mapper[AST.Return] = env =>
+    case AST.Return(expr, _) =>
       throw Exit.ReturnException(expr)
 
-  given MatrixInterpreter[AST.Continue] =
-    throw Exit.ContinueException
+  override given Mapper[AST.Continue] = env => throw Exit.ContinueException
 
-  given MatrixInterpreter[AST.Break] =
-    throw Exit.BreakException
+  override given Mapper[AST.Break] = env => throw Exit.BreakException
 
-  given MatrixInterpreter[AST.Literal] =
-    case (AST.Literal(tpe, value, _), env) =>
+  override given Mapper[AST.Literal] = env =>
+    case AST.Literal(tpe, value, _) =>
       value
 
-  given MatrixInterpreter[AST.SymbolRef] =
-    case (AST.SymbolRef(tpe, name, line), env) =>
+  override given Mapper[AST.SymbolRef] = env =>
+    case AST.SymbolRef(tpe, name, line) =>
       env.getValue[Any](name, line)
 
-  given MatrixInterpreter[AST.VectorRef] =
-    case (AST.VectorRef(vector, element, _), env) =>
+  override given Mapper[AST.VectorRef] = env =>
+    case AST.VectorRef(vector, element, _) =>
       vector.eval[Vector](env)(element.eval[Int](env))
 
-  given MatrixInterpreter[AST.MatrixRef] =
-    case (AST.MatrixRef(matrix, row: AST.Expr, column: AST.Expr, line), env) =>
+  override given Mapper[AST.MatrixRef] = env =>
+    case AST.MatrixRef(matrix, row: AST.Expr, column: AST.Expr, line) =>
       env.getValue[Matrix](matrix.name, line)(row.eval[Int](env))(column.eval[Int](env))
     case _ => ???
 
-  given MatrixInterpreter[AST.Apply] =
-    case (AST.Apply(ref, args, _, line), env) =>
-      env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
+  override given Mapper[AST.Apply] = env =>
+    case AST.Apply(ref, args, _, line) =>
+      ???
+      // env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
 
-  given MatrixInterpreter[AST.Range] =
-    case (AST.Range(start, end, _), env) =>
+  override given Mapper[AST.Range] = env =>
+    case AST.Range(start, end, _) =>
       start.eval[Int](env) until end.eval[Int](env)

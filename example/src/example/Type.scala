@@ -92,19 +92,21 @@ object Type:
 
       case _ => false
 
-  object OverloadedFunction:
-    def apply[T <: Type](arg: T, resultHint: Type, resultTypeFactory: AST.Expr.Of[T] => Result[Type])
-      : OverloadedFunction =
-      new OverloadedFunction(
-        Tuple(arg),
-        resultHint,
-        { case expr *: EmptyTuple => resultTypeFactory(expr) },
-      )
-
   type Args[X <: Tuple | Type.VarArg[?]] = X match
-    case Type.VarArg[tpe] => List[AST.Expr.Of[tpe]]
-    case h *: t => TupleFactory[Tuple.Size[h *: t], AST.Expr.Of[h]]
+    case Type.VarArg[tpe] => List[AST.Expr { type Tpe = tpe }]
+    case h *: t => TupleFactory[Tuple.Size[h *: t], AST.Expr { type Tpe = h }]
     case EmptyTuple => Unit
+
+  object OverloadedFunction:
+    def apply[T <: Type](
+      arg: T,
+      resultHint: Type,
+      resultTypeFactory: AST.Expr { type Tpe = T } => Result[Type],
+    ): OverloadedFunction = new OverloadedFunction(
+      Tuple(arg),
+      resultHint,
+      { case expr *: EmptyTuple => resultTypeFactory(expr) },
+    )
 
   case class OverloadedFunction(
     args: Tuple | Type.VarArg[?],
@@ -112,6 +114,7 @@ object Type:
     resultTypeFactory: Args[args.type] => Result[Type],
   )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type(false):
+
     override def toString = s"OverloadedFunction: $args => $resultHint" // todo: sth more informative
 
     private def unsafeResult(arguments: scala.Any) =

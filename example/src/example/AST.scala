@@ -21,7 +21,7 @@ import scala.annotation.unchecked.uncheckedVariance
 //                        +- Continue
 //                        +- Break
 
-object AST {
+object AST:
   sealed trait Tree:
     def line: Int | Null
     def children: List[Tree] = Nil
@@ -36,8 +36,6 @@ object AST {
     def line: Int
 
   object Expr:
-    type Of[T <: Type] = Expr { type Tpe = T }
-
     def unapply(expr: AST.Expr): Some[Type] = Some(expr.tpe)
 
   case class Literal(tpe: Type, value: Type.ToScala[tpe.type], line: Int) extends Expr
@@ -70,4 +68,3 @@ object AST {
   case class Continue(line: Int) extends Statement
 
   case class Break(line: Int) extends Statement
-}
