@@ -19,7 +19,7 @@ object MatrixParser extends Parser {
         .asInstanceOf[Int]
 
   val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
-    AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull)
+    AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull.asInstanceOf[Int])
   }
 
   def Instructions: Rule[List[AST.Statement]] = rule(
@@ -44,7 +44,9 @@ object MatrixParser extends Parser {
   )
 
   def Block: Rule[AST.Block] = rule(
-    { case (ML.`\\{`(_), Instructions(is), ML.`\\}`(_)) => AST.Block(is, is.headOption.map(_.line).orNull) },
+    { case (ML.`\\{`(_), Instructions(is), ML.`\\}`(_)) =>
+      AST.Block(is, is.headOption.map(_.line).orNull.asInstanceOf[Int])
+    },
     { case Instruction(i) => AST.Block(i :: Nil, i.line) },
   )
 

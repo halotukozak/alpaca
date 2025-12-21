@@ -23,26 +23,26 @@ import scala.annotation.unchecked.uncheckedVariance
 
 object AST:
   sealed trait Tree:
-    def line: Int | Null
+    def line: Int
     def children: List[Tree] = Nil
 
   sealed trait Statement extends Tree
 
-  case class Block(statements: List[Statement], line: Int | Null = null) extends Tree:
+  case class Block(statements: List[Statement], line: Int) extends Tree:
     override def children: List[Tree] = statements
 
   sealed trait Expr extends Statement:
-    def tpe: Type
-    def line: Int
+    val tpe: Type
+    val line: Int
 
   object Expr:
-    def unapply(expr: AST.Expr): Some[Type] = Some(expr.tpe)
+    def unapply(expr: AST.Expr): Some[expr.tpe.type] = Some(expr.tpe)
 
   case class Literal(tpe: Type, value: Type.ToScala[tpe.type], line: Int) extends Expr
 
   sealed trait Ref extends Expr
 
-  case class SymbolRef(var tpe: Type, name: String, line: Int) extends Ref
+  case class SymbolRef(tpe: Type, name: String, line: Int) extends Ref
 
   case class VectorRef(vector: SymbolRef, element: Expr, line: Int) extends Ref:
     val tpe: Type.Numerical = Type.Numerical

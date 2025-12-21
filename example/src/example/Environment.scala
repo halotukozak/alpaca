@@ -7,45 +7,45 @@ import example.Vector.*
 import scala.math.Ordered.orderingToOrdered
 import scala.reflect.TypeTest
 
-type Numerical = Int | Float
+type Numerical = Int | Double
 
 object Numerical:
   extension (x: Numerical)
     def +(y: Numerical): Numerical =
       (x, y) match
         case (a: Int, b: Int) => a + b
-        case (a: Float, b: Float) => a + b
-        case (a: Int, b: Float) => a + b
-        case (a: Float, b: Int) => a + b
+        case (a: Double, b: Double) => a + b
+        case (a: Int, b: Double) => a + b
+        case (a: Double, b: Int) => a + b
 
     def -(y: Numerical): Numerical =
       (x, y) match
         case (a: Int, b: Int) => a - b
-        case (a: Float, b: Float) => a - b
-        case (a: Int, b: Float) => a - b
-        case (a: Float, b: Int) => a - b
+        case (a: Double, b: Double) => a - b
+        case (a: Int, b: Double) => a - b
+        case (a: Double, b: Int) => a - b
 
     def *(y: Numerical): Numerical =
       (x, y) match
         case (a: Int, b: Int) => a * b
-        case (a: Float, b: Float) => a * b
-        case (a: Int, b: Float) => a * b
-        case (a: Float, b: Int) => a * b
+        case (a: Double, b: Double) => a * b
+        case (a: Int, b: Double) => a * b
+        case (a: Double, b: Int) => a * b
 
     def /(y: Numerical): Numerical =
       (x, y) match
         case (a: Int, b: Int) => a / b
-        case (a: Float, b: Float) => a / b
-        case (a: Int, b: Float) => a / b
-        case (a: Float, b: Int) => a / b
+        case (a: Double, b: Double) => a / b
+        case (a: Int, b: Double) => a / b
+        case (a: Double, b: Int) => a / b
 
   given Ordering[Numerical] with
     def compare(x: Numerical, y: Numerical): Int =
       (x, y) match
         case (a: Int, b: Int) => a.compareTo(b)
-        case (a: Float, b: Float) => a.compareTo(b)
-        case (a: Int, b: Float) => a.toFloat.compareTo(b)
-        case (a: Float, b: Int) => a.compareTo(b.toFloat)
+        case (a: Double, b: Double) => a.compareTo(b)
+        case (a: Int, b: Double) => a.toDouble.compareTo(b)
+        case (a: Double, b: Int) => a.compareTo(b.toDouble)
 
 opaque type Vector = Array[Numerical]
 
@@ -109,16 +109,28 @@ type DynamicFunction = PartialFunction[Tuple, ?]
 val globalFunctions = Map[String, DynamicFunction](
   "+" -> { case (a: Numerical, b: Numerical) => a + b },
   "-" -> { case (a: Numerical, b: Numerical) => a - b },
-  "*" -> { case (a: Numerical, b: Numerical) => a * b },
+  "*" -> {
+    case (a: Numerical, b: Numerical) => a * b
+    case (a: Matrix, b: Numerical) => a.map(_.map(_ * b))
+    case (a: Vector, b: Numerical) => a.map(_ * b)
+  },
   "/" -> { case (a: Numerical, b: Numerical) => a / b },
-  "PRINT" -> { args => println(args.toList.mkString(" ")) },
+  "PRINT" -> { args =>
+    println(
+      args.toList
+        .map:
+          case m: Matrix => m.map(_.mkString("[", ", ", "]")).mkString("[", ", ", "]")
+          case v: Vector => v.mkString("[", ", ", "]")
+          case x => x
+        .mkString(" "),
+    )
+  },
   "ZEROS" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(0)))) },
   "ONES" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
   "EYE" -> { case (n: Int) *: EmptyTuple => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
-  "INIT" -> { args =>
-    args.head match
-      case n: Numerical => Vector(args.asInstanceOf[Iterable[Numerical]])
-      case _ => Matrix(args.asInstanceOf[Iterable[Vector]])
+  "INIT" -> {
+    case args @ ((_: Numerical) *: (_)) => Vector(args.toList.asInstanceOf[List[Numerical]])
+    case args @ ((_: Vector) *: (_)) => Matrix(args.toList.asInstanceOf[List[Vector]])
   },
   "==" -> { case (a: Numerical, b: Numerical) => a == b },
   "!=" -> { case (a: Numerical, b: Numerical) => a != b },

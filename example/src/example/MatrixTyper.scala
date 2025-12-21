@@ -15,7 +15,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
 
   extension (func: Type.Function)
     private def checkArgs(args: List[AST.Expr])(line: Int): Result[Type] =
-      if func.takes(args.map(_.tpe)) then Result(func)
+      if func.takes(args.map(_.tpe)) then Result(func.result)
       else Result.error(line)(Type.Undef, s"Expected ${func.args}, got ${args.map(_.tpe).mkString("(", ",", ")")}")
 
   override val handleNull: TypeEnv => Result[(Null, TypeEnv)] = env => Result((null, env))

@@ -122,8 +122,7 @@ object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
 
   override given Mapper[AST.Apply] = env =>
     case AST.Apply(ref, args, _, line) =>
-      ???
-      // env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
+      env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
 
   override given Mapper[AST.Range] = env =>
     case AST.Range(start, end, _) =>

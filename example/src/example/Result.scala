@@ -5,19 +5,17 @@ import scala.collection.immutable.SortedSet
 
 enum Message:
   val msg: String
-  val line: Int | Null
+  val line: Int
 
-  case Error(msg: String, line: Int | Null = null)
-  case Warning(msg: String, line: Int | Null = null)
+  case Error(msg: String, line: Int)
+  case Warning(msg: String, line: Int)
 
   override def toString: String = this match
     case Message.Error(msg, line) => s"Error: $msg at line $line"
     case Message.Warning(msg, line) => s"Warn: $msg at line $line"
 
 object Message:
-  given Ordering[Message] = Ordering.fromLessThan: (m1, m2) =>
-    if m1.line == null || m2.line == null then false
-    else m1.line < m2.line
+  given Ordering[Message] = Ordering.by(_.line)
 
 enum Result[+T]:
   case Success(value: T)
@@ -25,8 +23,7 @@ enum Result[+T]:
 
   def get: T = this match
     case Success(value) => value
-    case Failure(_, messages) =>
-      throw RuntimeException(messages.toList.map(_.toString).mkString("\n")) // todo: can we not use .toList?
+    case Failure(_, messages) => throw RuntimeException(messages.toList.map(_.toString).mkString("\n"))
 
   def map[U](f: T => U): Result[U] = this match
     case Success(value) => Success(f(value))
@@ -57,17 +54,11 @@ object Result:
 
   given [T]: Conversion[T, Result[T]] = Result.Success(_)
 
-  def warn[T](line: Int | Null = null)(value: T, warns: String*): Result[T] =
+  def warn[T](line: Int)(value: T, warns: String*): Result[T] =
     Result.Failure(value, warns.map(Message.Warning(_, line)).to(SortedSet))
 
-  def error[T](line: Int | Null = null)(value: T, errors: String*): Result[T] =
+  def error[T](line: Int)(value: T, errors: String*): Result[T] =
     Result.Failure(value, errors.map(Message.Error(_, line)).to(SortedSet))
-
-  def warn[T](value: T, warns: String*) =
-    Result.Failure(value, warns.map(Message.Warning(_)).to(SortedSet))
-
-  def error[T](value: T, errors: String*) =
-    Result.Failure(value, errors.map(Message.Error(_)).to(SortedSet.evidenceIterableFactory))
 
   inline def sequence[T, CC[X] <: IterableOnce[X]](col: CC[Result[T]]): Result[CC[T]] =
     traverse(col)(x => x)

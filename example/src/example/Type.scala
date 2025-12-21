@@ -132,7 +132,8 @@ object Type:
           } =>
         unsafeResult(exprs.toTuple)
 
-      case _ => Result.error(Type.Function(args, resultHint), s"Invalid arguments: $exprs, expected: $args")
+      case _ =>
+        Result.error(exprs.head.line)(Type.Function(args, resultHint), s"Invalid arguments: $exprs, expected: $args")
 
     override protected def isSubtype(other: Type): Boolean = other match
       case Type.Function(args, result) => this.resultHint <= resultHint
@@ -158,7 +159,8 @@ object Type:
     def arity = (rows, cols)
 
     override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Matrix(rows, cols) => this.rows == rows && this.cols == cols
+      case Type.Matrix(rows, cols) if this.isFinal && other.isFinal => this.rows == rows && this.cols == cols
+      case _: Type.Matrix => true
       case _ => false
   }
 
@@ -233,7 +235,7 @@ val binary_matrix_type = Type.OverloadedFunction(
   args = (Type.Matrix(), Type.Matrix()),
   resultHint = Type.Matrix(),
   resultTypeFactory =
-    case (AST.Expr(a: Type.Matrix), AST.Expr(b: Type.Matrix)) =>
+    case (e @ AST.Expr(a: Type.Matrix), AST.Expr(b: Type.Matrix)) =>
       val errors = mutable.Set.empty[String]
       val warns = mutable.Set.empty[String]
 
@@ -248,8 +250,8 @@ val binary_matrix_type = Type.OverloadedFunction(
       else if a.cols != b.cols then errors += s"Matrix columns mismatch: ${a.cols} != ${b.cols}"
       else cols = a.cols
 
-      if errors.nonEmpty then Result.error(Type.Matrix(rows, cols), errors.toSeq*)
-      else if warns.nonEmpty then Result.warn(Type.Matrix(rows, cols), warns.toSeq*)
+      if errors.nonEmpty then Result.error(e.line)(Type.Matrix(rows, cols), errors.toSeq*)
+      else if warns.nonEmpty then Result.warn(e.line)(Type.Matrix(rows, cols), warns.toSeq*)
       else Result.Success(Type.Matrix(rows, cols)),
 )
 
@@ -257,9 +259,11 @@ val binary_vector_type = Type.OverloadedFunction(
   args = (Type.Vector(), Type.Vector()),
   resultHint = Type.Vector(),
   resultTypeFactory =
-    case (AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
-      if (a.arity == null) || (b.arity == null) then Result.warn(Type.Matrix(), "Vector arity could not be inferred")
-      else if a.arity != b.arity then Result.error(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
+    case (e @ AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
+      if (a.arity == null) || (b.arity == null) then
+        Result.warn(e.line)(Type.Matrix(), "Vector arity could not be inferred")
+      else if a.arity != b.arity then
+        Result.error(e.line)(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
       else Result.Success(Type.Vector(a.arity)),
 )
 
@@ -279,8 +283,9 @@ val matrix_type = Type.OverloadedFunction(
   arg = Type.Int,
   resultHint = Type.Matrix(),
   resultTypeFactory =
-    case AST.Literal(_, n: Int, _) => Result.Success(Type.Matrix(n, n))
-    case _ => Result.warn(Type.Matrix(), "Matrix size could not be inferred"),
+    case AST.Literal(Type.Int, n: Int, _) => Result.Success(Type.Matrix(n, n))
+    case e @ AST.Literal(tpe, _, _) => Result.error(e.line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
+    case e => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
 )
 
 val symbols: Map[String, AST.SymbolRef] = Map(
@@ -327,10 +332,11 @@ val symbols: Map[String, AST.SymbolRef] = Map(
           case Seq(arity) =>
             Result.Success(Type.Matrix(args.size, arity))
           case arities =>
+            val e = args.head
             if !arities.contains(null) then
-              Result.warn(Type.Matrix(args.size), s"Vector arities $arities are not the same")
-            else Result.warn(Type.Matrix(), "Cannot infer matrix size"),
+              Result.warn(e.line)(Type.Matrix(args.size), s"Vector arities $arities are not the same")
+            else Result.warn(e.line)(Type.Matrix(), "Cannot infer matrix size"),
     )),
-  "PRINT" -> Type.Function(Tuple(Type.VarArg(Type.Any)), Type.Unit),
+  "PRINT" -> Type.Function(Type.VarArg(Type.Any), Type.Unit),
 ).map:
   case (name, tpe) => name -> AST.SymbolRef(tpe, name, -1)

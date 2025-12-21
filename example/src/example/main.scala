@@ -11,27 +11,22 @@ import scala.util.control.NonFatal
 
 @main
 def main() =
-//  Files
-//    .list(Path.of("src/example/in"))
-//    .toList
-//    .asScala
-  Option(Path.of("src/example/in/init.m"))
+  Files
+    .list(Path.of("src/example/in"))
+    .toList
+    .asScala
     .foreach: file =>
       try
         println(s"Processing file: $file")
         val (_, lexems) = Using.resource(LazyReader.from(file))(MatrixLexer.tokenize)
         val (_, ast) = MatrixParser.parse(lexems)
-        TreePrinter.visitNullable(ast)(0)
-
+        // _ = TreePrinter.visitNullable(ast)(0)
         val globalScope = Scope(ast.nn, null, false, symbols)
         val scoped = MatrixScoper.visitNullable(ast)(globalScope).get
-
-        val initialTypeEnv: TypeEnv = symbols.map((name, sym) => name -> sym.tpe)
+        val initialTypeEnv = symbols.map((name, sym) => name -> sym.tpe)
         val (typed, _) = MatrixTyper.visitNullable(ast)(initialTypeEnv).get
-
         val globalEnv = Env(null, mutable.Map.empty, globalFunctions.to(mutable.Map))
         val result = MatrixInterpreter.visitNullable(typed)(globalEnv)
-
         println(s"Result: $result")
       catch
         case NonFatal(e) =>
