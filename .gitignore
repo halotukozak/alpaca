@@ -50,6 +50,7 @@ debug/
 src/alpaca/local.scala
 example/src/example/local.scala
 thesis/src/.texpadtmp/
+.scala-build/
 thesis/src/*.aux
 thesis/src/*.log
 thesis/src/*.out

@@ -21,7 +21,7 @@ private[internal] trait Showable[-T]:
   extension (t: T) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
-extension (sc: StringContext) private[internal] def show(args: Any*): Shown = sc.s(args*)
+extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
 
 /**
  * An opaque type representing a string that has been shown.
