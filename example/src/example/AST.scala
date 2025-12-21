@@ -1,6 +1,5 @@
 package example
 
-import alpaca.DebugSettings.default
 import scala.annotation.unchecked.uncheckedVariance
 
 // +- Tree -+- Statement -+

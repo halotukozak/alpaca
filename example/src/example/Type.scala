@@ -40,10 +40,10 @@ object Type:
     case Type.Bool => scala.Boolean
     case Type.String => scala.Predef.String
 
-  val Numerical = Int | Float
+  val Numerical: Type = Int | Float
   type Numerical = Numerical.type
 
-  def Or(left: Type, right: Type) = (left, right) match
+  def Or(left: Type, right: Type): Type = (left, right) match
     case (left: Any, _) => Any
     case (_, right: Any) => Any
     case (left: AnyOf, right: AnyOf) => AnyOf(left.all ++ right.all)
@@ -53,7 +53,7 @@ object Type:
     case _ => AnyOf(Set(left, right))
 
   case class AnyOf(all: Set[Type]) extends Type(false):
-    override def toString = all.mkString(" | ")
+    override def toString: Predef.String = all.mkString(" | ")
 
     override def <=(other: Type): Boolean = all.forall(_ <= other)
 
@@ -73,7 +73,7 @@ object Type:
     result: Type,
   )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type:
-    def takes(provided: List[Type]) = args match
+    def takes(provided: List[Type]): Boolean = args match
       case _: EmptyTuple => provided.isEmpty
       case Type.VarArg(tpe) => provided.forall(_ <= tpe)
       case args: Tuple =>
@@ -140,7 +140,7 @@ object Type:
       case _ => false
 
   case class Vector(arity: scala.Int | Null = null) extends Type(arity != null):
-    override def toString = arity match
+    override def toString: Predef.String = arity match
       case null => "Vector[?]"
       case a => s"Vector[$a]"
 
@@ -150,13 +150,13 @@ object Type:
 
   case class Matrix(rows: scala.Int | Null = null, cols: scala.Int | Null = null)
     extends Type(rows != null && cols != null) {
-    override def toString = (rows, cols) match
+    override def toString: Predef.String = (rows, cols) match
       case (null, null) => "Matrix[?, ?]"
       case (null, b) => s"Matrix[?, $b]"
       case (a, null) => s"Matrix[$a, ?]"
       case (a, b) => s"Matrix[$a, $b]"
 
-    def arity = (rows, cols)
+    def arity: (scala.Int | Null, scala.Int | Null) = (rows, cols)
 
     override protected def isSubtype(other: Type): Boolean = other match
       case Type.Matrix(rows, cols) if this.isFinal && other.isFinal => this.rows == rows && this.cols == cols

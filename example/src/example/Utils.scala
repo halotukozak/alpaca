@@ -1,7 +1,5 @@
 package example
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.control.NoStackTrace
 
 sealed abstract class MatrixException(message: String, line: Int)

@@ -1,10 +1,5 @@
 package example
 
-import example.AST.*
-
-import scala.collection.Factory
-import scala.util.chaining.scalaUtilChainingOps
-
 type TypeEnv = Map[String, Type]
 
 object MatrixTyper extends TreeMapper[TypeEnv]:
@@ -20,66 +15,63 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
 
   override val handleNull: TypeEnv => Result[(Null, TypeEnv)] = env => Result((null, env))
 
-  override given Mapper[AST.Block] = env =>
-    case (AST.Block(statements, line)) =>
+  override given Process[AST.Block] = env =>
+    case AST.Block(statements, line) =>
       for (typedStmts, newEnv) <- statements.visitAll(env)
       yield (AST.Block(typedStmts, line), newEnv)
 
-  override given Mapper[AST.Assign] = env =>
-    case (AST.Assign(ref: AST.SymbolRef, expr, line)) =>
+  override given Process[AST.Assign] = env =>
+    case AST.Assign(ref: AST.SymbolRef, expr, line) =>
       for
         (typedExpr, env) <- expr.visit(env)
         typedRef = ref.copy(tpe = typedExpr.tpe)
       yield (AST.Assign(typedRef, typedExpr, line), env + (typedRef.name -> typedExpr.tpe))
-    case (AST.Assign(ref, expr, line)) =>
+    case AST.Assign(ref, expr, line) =>
       for
         (typedExpr, env) <- expr.visit(env)
         (typedRef, env) <- ref.visit(env)
       yield (AST.Assign(typedRef, typedExpr, line), env)
 
-  override given Mapper[AST.If] = env =>
-    case (AST.If(condition, thenBlock, elseBlock: AST.Block, line)) =>
+  override given Process[AST.If] = env =>
+    case AST.If(condition, thenBlock, elseBlock: AST.Block, line) =>
       for
         (typedCondition, env) <- condition.visit(env)
         _ <- typedCondition.expectToBe(Type.Bool)
         (typedThenBlock, env) <- thenBlock.visit(env)
         (typedElseBlock, env) <- elseBlock.visit(env)
       yield (AST.If(typedCondition, typedThenBlock, typedElseBlock, line), env)
-    case (AST.If(condition, thenBlock, null, line)) =>
+    case AST.If(condition, thenBlock, null, line) =>
       for
         (typedCondition, env) <- condition.visit(env)
         _ <- typedCondition.expectToBe(Type.Bool)
         (typedThenBlock, env) <- thenBlock.visit(env)
       yield (AST.If(typedCondition, typedThenBlock, null, line), env)
 
-  override given Mapper[AST.While] = env =>
-    case (AST.While(condition, body, line)) =>
+  override given Process[AST.While] = env =>
+    case AST.While(condition, body, line) =>
       for
         (typedCondition, env) <- condition.visit(env)
         _ <- typedCondition.expectToBe(Type.Bool)
         (typedBody, env) <- body.visit(env)
       yield (AST.While(typedCondition, typedBody, line), env)
 
-  override given Mapper[AST.Return] = env =>
-    case (AST.Return(expr, line)) =>
+  override given Process[AST.Return] = env =>
+    case AST.Return(expr, line) =>
       for (typedExpr, env) <- expr.visit(env)
       yield (AST.Return(typedExpr, line), env)
 
-  override given Mapper[AST.Continue] = env =>
-    case c => Result((c, env))
+  override given Process[AST.Continue] = env => c => Result((c, env))
 
-  override given Mapper[AST.Break] = env =>
-    case b => Result((b, env))
+  override given Process[AST.Break] = env => b => Result((b, env))
 
-  override given Mapper[AST.Literal] = env =>
-    case l => Result((l, env))
+  override given Process[AST.Literal] = env => l => Result((l, env))
 
-  override given Mapper[AST.SymbolRef] = env =>
-    case ref =>
+  override given Process[AST.SymbolRef] = env =>
+    ref =>
       val tpe = env.getOrElse(ref.name, Type.Undef)
       Result((ref.copy(tpe = tpe), env))
 
-  override given Mapper[AST.VectorRef] = env =>
+  override given Process[AST.VectorRef] = env =>
     case AST.VectorRef(vector, element, line) =>
       for
         (typedVector, env) <- vector.visit(env)
@@ -88,7 +80,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
         _ <- typedElement.expectToBe(Type.Numerical)
       yield (AST.VectorRef(typedVector, typedElement, line), env)
 
-  override given Mapper[AST.MatrixRef] = env =>
+  override given Process[AST.MatrixRef] = env =>
     case AST.MatrixRef(matrix, row, col, line) =>
       for
         (typedMatrix, env) <- matrix.visit(env)
@@ -99,7 +91,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
         _ <- if typedCol ne null then typedCol.expectToBe(Type.Int) else Result(null)
       yield (AST.MatrixRef(typedMatrix, typedRow, typedCol, line), env)
 
-  override given Mapper[AST.Apply] = env =>
+  override given Process[AST.Apply] = env =>
     case AST.Apply(ref, args, _, line) =>
       for
         (typedRef, env) <- ref.visit(env)
@@ -137,7 +129,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
           case x => throw new NotImplementedError(x.toString)
       yield (AST.Apply(typedRef, typedArgs, typedResult, line), env)
 
-  override given Mapper[AST.Range] = env =>
+  override given Process[AST.Range] = env =>
     case AST.Range(start, end, line) =>
       for
         (typedStart, env) <- start.visit(env)
@@ -146,8 +138,8 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
         _ <- typedEnd.expectToBe(Type.Int)
       yield (AST.Range(typedStart, typedEnd, line), env)
 
-  override given Mapper[AST.For] = env =>
-    case (AST.For(varRef, range, body, line)) =>
+  override given Process[AST.For] = env =>
+    case AST.For(varRef, range, body, line) =>
       for
         (typedRange, env) <- range.visit(env)
         (typedVarRef, env) <- varRef.visit(env)

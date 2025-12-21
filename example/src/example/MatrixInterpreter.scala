@@ -1,7 +1,6 @@
 package example
 
 import scala.collection.mutable
-import scala.languageFeature.experimental.macros
 import scala.util.control.Breaks.{break, breakable}
 import scala.util.control.NoStackTrace
 
@@ -50,13 +49,13 @@ case class Env(
 type ScalaResult[+T <: AST.Tree | Null] = Any
 
 object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
-  extension [T <: AST.Expr: Mapper, R](expr: T) private def eval[X](env: Env): X = expr.visit(env).asInstanceOf[X]
+  extension [T <: AST.Expr: Process, R](expr: T) private def eval[X](env: Env): X = expr.visit(env).asInstanceOf[X]
 
-  val handleNull = _ => ()
+  val handleNull: Env => Unit = _ => ()
 
-  override given Mapper[AST.Block] = env => block => block.statements.foreach(_.visit(env))
+  override given Process[AST.Block] = env => block => block.statements.foreach(_.visit(env))
 
-  override given Mapper[AST.Assign] = env =>
+  override given Process[AST.Assign] = env =>
     case AST.Assign(varRef: AST.SymbolRef, expr, line) =>
       env(varRef.name) = expr.visit(env)
 
@@ -69,12 +68,12 @@ object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
 
     case _ => ???
 
-  override given Mapper[AST.If] = env =>
+  override given Process[AST.If] = env =>
     case AST.If(condition, thenBranch, elseBranch, _) =>
       if condition.eval[Boolean](env) then thenBranch.visit(Env(env))
       else if elseBranch != null then elseBranch.visit(Env(env))
 
-  override given Mapper[AST.While] = env =>
+  override given Process[AST.While] = env =>
     case AST.While(condition, body, _) =>
       breakable:
         while condition.eval[Boolean](env) do
@@ -83,7 +82,7 @@ object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
             case Exit.BreakException => break()
             case Exit.ContinueException => ()
 
-  override given Mapper[AST.For] = env =>
+  override given Process[AST.For] = env =>
     case AST.For(varRef, range, body, _) =>
       breakable:
         for i <- range.start.eval[Int](env) until range.end.eval[Int](env) do
@@ -95,35 +94,35 @@ object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
             case Exit.BreakException => break()
             case Exit.ContinueException => ()
 
-  override given Mapper[AST.Return] = env =>
+  override given Process[AST.Return] = env =>
     case AST.Return(expr, _) =>
       throw Exit.ReturnException(expr)
 
-  override given Mapper[AST.Continue] = env => throw Exit.ContinueException
+  override given Process[AST.Continue] = env => throw Exit.ContinueException
 
-  override given Mapper[AST.Break] = env => throw Exit.BreakException
+  override given Process[AST.Break] = env => throw Exit.BreakException
 
-  override given Mapper[AST.Literal] = env =>
+  override given Process[AST.Literal] = env =>
     case AST.Literal(tpe, value, _) =>
       value
 
-  override given Mapper[AST.SymbolRef] = env =>
+  override given Process[AST.SymbolRef] = env =>
     case AST.SymbolRef(tpe, name, line) =>
       env.getValue[Any](name, line)
 
-  override given Mapper[AST.VectorRef] = env =>
+  override given Process[AST.VectorRef] = env =>
     case AST.VectorRef(vector, element, _) =>
       vector.eval[Vector](env)(element.eval[Int](env))
 
-  override given Mapper[AST.MatrixRef] = env =>
+  override given Process[AST.MatrixRef] = env =>
     case AST.MatrixRef(matrix, row: AST.Expr, column: AST.Expr, line) =>
       env.getValue[Matrix](matrix.name, line)(row.eval[Int](env))(column.eval[Int](env))
     case _ => ???
 
-  override given Mapper[AST.Apply] = env =>
+  override given Process[AST.Apply] = env =>
     case AST.Apply(ref, args, _, line) =>
       env.getFunction(ref.name, line).apply(args.map(_.visit(env)).toTuple)
 
-  override given Mapper[AST.Range] = env =>
+  override given Process[AST.Range] = env =>
     case AST.Range(start, end, _) =>
       start.eval[Int](env) until end.eval[Int](env)

@@ -3,6 +3,7 @@ package example
 import MatrixLexer as ML
 
 import alpaca.{Production as P, *}
+
 import java.util.jar.Attributes.Name
 import scala.reflect.ClassTag
 import scala.util.chaining.scalaUtilChainingOps
@@ -104,17 +105,17 @@ object MatrixParser extends Parser {
     { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
   )
 
-  def FunctionName = rule(
+  def FunctionName: Rule[String] = rule(
     { case ML.eye(l) => "EYE" },
     { case ML.zeros(l) => "ZEROS" },
     { case ML.ones(l) => "ONES" },
   )
 
-  def Matrix = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
+  def Matrix: Rule[AST.Apply] = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
     AST.Apply(symbols("INIT"), varArgs, Type.Undef, varArgs.headOption.map(_.line).getOrElse(-1))
   }
 
-  def Element = rule { case (Var(v), ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
+  def Element: Rule[AST.Ref] = rule { case (Var(v), ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
     varArgs.length match
       case 1 =>
         AST.VectorRef(v, varArgs.head.asInstanceOf[AST.Expr], v.line)
@@ -125,7 +126,7 @@ object MatrixParser extends Parser {
         AST.MatrixRef(v, null, null, v.line)
   }
 
-  def Var = rule { case ML.ID(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
+  def Var: Rule[AST.SymbolRef] = rule { case ML.ID(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
 
   def Expr: Rule[AST.Expr] = rule(
     { case ML.INTNUM(l) => AST.Literal(Type.Int, l.value, l.line) },

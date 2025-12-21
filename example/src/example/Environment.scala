@@ -1,11 +1,9 @@
 package example
 
-import example.Numerical.{*, given}
 import example.Matrix.*
-import example.Vector.*
+import example.Numerical.{*, given}
 
 import scala.math.Ordered.orderingToOrdered
-import scala.reflect.TypeTest
 
 type Numerical = Int | Double
 
@@ -129,8 +127,8 @@ val globalFunctions = Map[String, DynamicFunction](
   "ONES" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
   "EYE" -> { case (n: Int) *: EmptyTuple => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
   "INIT" -> {
-    case args @ ((_: Numerical) *: (_)) => Vector(args.toList.asInstanceOf[List[Numerical]])
-    case args @ ((_: Vector) *: (_)) => Matrix(args.toList.asInstanceOf[List[Vector]])
+    case args @ (_: Numerical) *: _ => Vector(args.toList.asInstanceOf[List[Numerical]])
+    case args @ (_: Vector) *: _ => Matrix(args.toList.asInstanceOf[List[Vector]])
   },
   "==" -> { case (a: Numerical, b: Numerical) => a == b },
   "!=" -> { case (a: Numerical, b: Numerical) => a != b },
