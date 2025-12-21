@@ -3,7 +3,7 @@ package internal
 
 import scala.NamedTuple.NamedTuple
 
-import Conversion.into
+import Conversion.{into, underlying}
 
 /**
  * A type class for converting values to their string representation.
@@ -23,10 +23,10 @@ private[internal] trait Showable:
    *
    * @return the string representation of the value
    */
-  def show(t: Self): into[Shown]
+  def show(t: Self): Shown
 
 /** String interpolator for values that have Showable instances. */
-extension (sc: StringContext) private[internal] def show(args: into[Shown]*): Shown = sc.s(args*)
+extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
 
 extension [T](t: T)(using tShowable: T is Showable) private[internal] def show: Shown = tShowable.show(t).underlying
 
@@ -35,7 +35,7 @@ extension [T](t: T)(using tShowable: T is Showable) private[internal] def show: 
  *
  * Used to ensure type safety in string interpolation.
  */
-opaque private[internal] type Shown <: String = String
+opaque private[internal] into type Shown <: String = String
 
 object Shown {
   given Shown is Showable = x => x
@@ -47,7 +47,6 @@ object Shown {
    */
   given [T: Showable]: Conversion[T, Shown] = _.show
 }
-
 private[internal] object Showable {
 
   /** Showable instance for String (identity). */

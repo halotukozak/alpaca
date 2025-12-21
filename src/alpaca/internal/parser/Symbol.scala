@@ -89,16 +89,16 @@ private[parser] object Symbol {
       case encoded if encoded == symbol.name => symbol.name
       case encoded => s"${symbol.name} ($encoded)"
 
-  given [S <: Symbol]: ToExpr[S] with
+  given [S <: Symbol] => ToExpr[S]:
     def apply(x: S)(using Quotes): Expr[S] =
       x.match
         case x: NonTerminal => Expr[NonTerminal](x)
         case x: Terminal => Expr[Terminal](x)
       .asInstanceOf[Expr[S]]
 
-  given ToExpr[NonTerminal] with
+  given ToExpr[NonTerminal]:
     def apply(x: NonTerminal)(using Quotes): Expr[NonTerminal] = '{ NonTerminal(${ Expr(x.name) }) }
 
-  given ToExpr[Terminal] with
+  given ToExpr[Terminal]:
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
 }

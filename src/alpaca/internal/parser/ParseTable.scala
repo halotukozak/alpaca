@@ -159,7 +159,7 @@ private[parser] object ParseTable {
     result.result()
   }
 
-  given ToExpr[ParseTable] with
+  given ToExpr[ParseTable]:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
       import quotes.reflect.*
 

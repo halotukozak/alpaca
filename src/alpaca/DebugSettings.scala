@@ -17,21 +17,16 @@ import scala.language.experimental.modularity
  * @param timeout runtime value of the timeout
  */
 final case class DebugSettings(
-  tracked val enabled: Boolean ,
-  tracked val directory: String ,
-  tracked val timeout: Int ,
+  tracked val enabled: Boolean,
+  tracked val directory: String,
+  tracked val timeout: Int,
 )
 
 object DebugSettings {
-
   /**
    * Default debug settings with debugging disabled.
    *
    * Debug output is disabled by default and would be written to "debug/" if enabled.
    */
-   given derived: DebugSettings &{
-    val enabled : false
-    val directory : "debug/"
-    val timeout : 90
-   } = DebugSettings(false, "debug/", 90)
+  inline given default: DebugSettings = DebugSettings(false, "debug/", 90)
 }

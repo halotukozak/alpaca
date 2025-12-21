@@ -168,11 +168,11 @@ private[internal] object DebugPosition {
     Expr((pos.startLine + 1, pos.sourceFile.name))
   }
 
-  given ToExpr[DebugPosition] with
+  given ToExpr[DebugPosition]:
     def apply(x: DebugPosition)(using quotes: Quotes): Expr[DebugPosition] =
       ToExpr.Tuple2ToExpr[Int, String].apply(x)
 
-  given FromExpr[DebugPosition] with
+  given FromExpr[DebugPosition]:
     def unapply(x: Expr[DebugPosition])(using Quotes): Option[DebugPosition] =
       FromExpr.Tuple2FromExpr[Int, String].unapply(x)
 }

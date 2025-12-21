@@ -27,9 +27,9 @@ private[alpaca] object BetweenStages {
    * @tparam Ctx the context type
    * @return a BetweenStages instance
    */
-  inline given [Ctx <: LexerCtx] => (Ctx has BetweenStages) = ${ autoImpl[Ctx] }
+  inline given [Ctx <: LexerCtx] => (Ctx has BetweenStages) = ${ derivedImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[Ctx has BetweenStages] = {
+  private def derivedImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[Ctx has BetweenStages] = {
     import quotes.reflect.*
 
     val parents = TypeRepr

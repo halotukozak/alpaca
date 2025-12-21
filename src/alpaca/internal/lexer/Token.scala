@@ -19,7 +19,7 @@ import annotation.unchecked.uncheckedVariance as uv
  *
  * @tparam Ctx the global context type
  */
-private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
+private[lexer] type CtxManipulation[-Ctx <: LexerCtx] = Ctx => Unit
 
 /**
  * Information about a token definition.
@@ -70,7 +70,7 @@ object TokenInfo {
   /**
    * Given instance to extract TokenInfo from compile-time expressions.
    */
-  given [Name <: ValidName]: FromExpr[TokenInfo.AUX[Name]] with
+  given [Name <: ValidName] => FromExpr[TokenInfo.AUX[Name]]:
     def unapply(x: Expr[TokenInfo.AUX[Name]])(using Quotes): Option[TokenInfo.AUX[Name]] = x match
       case '{ TokenInfo($name, $regexGroupName: String, $pattern: String) } =>
         for
@@ -80,7 +80,7 @@ object TokenInfo {
         yield TokenInfo(name.asInstanceOf[Name], regexGroupName, pattern)
       case _ => None
 
-  given [Name <: ValidName: Type]: ToExpr[TokenInfo.AUX[Name]] with
+  given [Name <: ValidName: Type] => ToExpr[TokenInfo.AUX[Name]]:
     def apply(x: TokenInfo.AUX[Name])(using Quotes): Expr[TokenInfo.AUX[Name]] =
       '{ TokenInfo(${ Expr[Name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }.asExprOf[TokenInfo.AUX[Name]]
 

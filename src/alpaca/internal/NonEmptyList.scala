@@ -49,7 +49,7 @@ object NonEmptyList {
     case head :: tail => list
     case Nil => throw IllegalArgumentException("Empty list cannot be converted to NonEmptyList")
 
-  private[internal] given [A: {Type, ToExpr}]: ToExpr[NonEmptyList[A]] with
+  private[internal] given [A: {Type, ToExpr}] => ToExpr[NonEmptyList[A]]:
     def apply(x: NonEmptyList[A])(using Quotes): Expr[NonEmptyList[A]] =
       '{ NonEmptyList(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
 }
