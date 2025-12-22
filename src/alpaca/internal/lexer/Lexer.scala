@@ -69,20 +69,19 @@ def lexerImpl[Ctx <: LexerCtx: Type](
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   '{ DefinedToken[Ctx, result, name]($tokenInfo, $ctxManipulation, $remapping) }
 
-      val tokens: List[Expr[Token[Ctx]]] =
-        extractSimple('{ _ => () })
-          .lift(body.asExprOf[Token[Ctx]])
-          .orElse:
-            body match
-              case Block(statements, expr) =>
-                val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
-                  case (methSym, (newCtx: Term) :: Nil) =>
-                    replaceWithNewCtx(newCtx).transformTerm(
-                      Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
-                    )(methSym)
+      val tokens = extractSimple('{ _ => () })
+        .lift(body.asExprOf[Token[Ctx]])
+        .orElse:
+          body match
+            case Block(statements, expr) =>
+              val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
+                case (methSym, (newCtx: Term) :: Nil) =>
+                  replaceWithNewCtx(newCtx).transformTerm(
+                    Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
+                  )(methSym)
 
-                extractSimple(ctxManipulation).lift(expr.asExprOf[Token[Ctx]])
-          .getOrElse(raiseShouldNeverBeCalled(body))
+              extractSimple(ctxManipulation).lift(expr.asExprOf[Token[Ctx]])
+        .getOrElse(raiseShouldNeverBeCalled[List[Expr[Token[Ctx]]]](body))
 
       val infos = tokens.unsafeMap:
         case '{

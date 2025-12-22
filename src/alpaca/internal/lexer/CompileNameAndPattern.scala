@@ -60,7 +60,7 @@ private[lexer] final class CompileNameAndPattern(using tracked val quotes: Quote
                 case Literal(StringConstant(str)) => str
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled(x)[List[Nothing]]
+        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo]]](x)
 
     loop(TypeRepr.of[T], pattern)
 }

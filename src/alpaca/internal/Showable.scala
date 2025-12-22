@@ -28,7 +28,7 @@ private[internal] trait Showable:
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
 
-extension [T](t: T)(using tShowable: T is Showable) private[internal] def show: Shown = tShowable.show(t).underlying
+extension [T: Showable as showable](t: T) private[internal] def show: Shown = showable.show(t).underlying
 
 /**
  * An opaque type representing a string that has been shown.
@@ -58,9 +58,9 @@ private[internal] object Showable {
   def fromToString[T]: T is Showable = _.toString
 
   /** Showable instance for nullable types. */
-  given [T: Showable as tShowable]: ((T | Null) is Showable) =
+  given [T: Showable as showable]: ((T | Null) is Showable) =
     case null => ""
-    case value: T @unchecked => tShowable.show(value)
+    case value: T @unchecked => showable.show(value)
 
   // todo: add names
   given [N <: Tuple, V <: Tuple: Showable]: (NamedTuple[N, V] is Showable) = _.toTuple.show
@@ -68,9 +68,6 @@ private[internal] object Showable {
   given [T](using quotes: Quotes): (Expr[T] is Showable) =
     import quotes.reflect.*
     expr => expr.asTerm.show
-
-  given (using quotes: Quotes): (quotes.reflect.Tree is Showable) =
-    quotes.reflect.Printer.TreeShortCode.show(_)
 
   given [A: Showable, B: Showable] => ((A, B) is Showable) = (a, b) => show"$a : $b"
 

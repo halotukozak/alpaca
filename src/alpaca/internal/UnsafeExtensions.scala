@@ -4,16 +4,16 @@ package internal
 import scala.collection.IterableOnceOps
 import scala.quoted.*
 
-inline private[alpaca] def raiseShouldNeverBeCalled[E](inline elem: E)[T](using default: T has Default) =
+inline private[alpaca] def raiseShouldNeverBeCalled[T: Default as default](elem: Any) =
   val elemShown = compiletime
     .summonFrom:
-      case s: (E is Showable) => s
+      case s: (elem.type is Showable) => s
       case _ => Showable.fromToString
     .show(elem)
 
-  val line = compiletime.summonInline[DebugPosition]
+  val pos = compiletime.summonInline[DebugPosition]
 
-  val message = show"This code should never be called: $elemShown at line $line"
+  val message = show"This code should never be called: $elemShown $pos"
 
   compiletime.summonFrom:
     case quotes: Quotes => quotes.reflect.report.error(message)
@@ -22,10 +22,7 @@ inline private[alpaca] def raiseShouldNeverBeCalled[E](inline elem: E)[T](using 
   default()
 
 extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)
-  inline private[alpaca] def unsafeMap[B](
-    inline f: PartialFunction[A, B],
-  )(using B has Default,
-  ): CC[B] =
+  inline private[alpaca] def unsafeMap[B: Default](inline f: PartialFunction[A, B]): CC[B] =
     col.map(f.applyOrElse(_, raiseShouldNeverBeCalled))
 
   inline private[alpaca] def unsafeFlatMap[B](
@@ -34,13 +31,11 @@ extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)
   ): CC[B] =
     col.flatMap(f.applyOrElse(_, raiseShouldNeverBeCalled))
 
-  inline private[alpaca] def unsafeFoldLeft[B](z: B)(inline op: PartialFunction[(B, A), B])(using B has Default): B =
+  inline private[alpaca] def unsafeFoldLeft[B: Default](z: B)(inline op: PartialFunction[(B, A), B]): B =
     col.foldLeft(z)((b, a) => op.applyOrElse((b, a), raiseShouldNeverBeCalled))
 
-extension [A](opt: Option[A])
-  inline private[alpaca] def unsafeGet(using A has Default): A =
-    opt.getOrElse(raiseShouldNeverBeCalled("None"))
+extension [A: Default](opt: Option[A])
+  inline private[alpaca] def unsafeGet: A = opt.getOrElse(raiseShouldNeverBeCalled("None"))
 
-extension [A, B](pf: PartialFunction[A, B])
-  inline private[alpaca] def unsafeApply(a: A)(using B has Default): B =
-    pf.applyOrElse(a, raiseShouldNeverBeCalled)
+extension [A, B: Default](pf: PartialFunction[A, B])
+  inline private[alpaca] def unsafeApply(a: A): B = pf.applyOrElse(a, raiseShouldNeverBeCalled)

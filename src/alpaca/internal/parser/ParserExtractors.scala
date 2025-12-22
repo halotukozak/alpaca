@@ -55,7 +55,7 @@ private[parser] final class ParserExtractors[Ctx <: ParserCtx: Type](using track
   private val extractMethodName: PartialFunction[Tree, String] =
     case Select(_, name) => name
     case Ident(name) => name
-    case x => raiseShouldNeverBeCalled(x.toString)
+    case x => raiseShouldNeverBeCalled[String](x.toString)
 
   private val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
@@ -195,13 +195,13 @@ private[parser] final class ParserExtractors[Ctx <: ParserCtx: Type](using track
 private object ParserExtractors {
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)[List[Any]]
+    case x => raiseShouldNeverBeCalled[List[Any]](x)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)[Option[Any]]
+    case x => raiseShouldNeverBeCalled[Option[Any]](x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
 }
