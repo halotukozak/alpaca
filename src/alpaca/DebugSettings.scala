@@ -1,7 +1,5 @@
 package alpaca
 
-import scala.quoted.FromExpr
-
 /**
  * Configuration settings for debug output generation.
  *

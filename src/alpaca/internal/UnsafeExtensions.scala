@@ -9,7 +9,9 @@ inline private[alpaca] def raiseShouldNeverBeCalled[E](elem: E)[T]: T =
     case s: Showable[E] => s
     case _ => Showable.fromToString
 
-  val message = "This code should never be called: " + showable.show(elem)
+  val pos = compiletime.summonInline[DebugPosition]
+
+  val message = "This code should never be called: " + showable.show(elem) + " at " + pos
 
   compiletime.summonFrom:
     case quotes: Quotes => quotes.reflect.report.error(message)

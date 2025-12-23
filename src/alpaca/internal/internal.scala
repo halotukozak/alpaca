@@ -68,7 +68,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args)),
+      (sym, args) => rhsFn.unsafeApply((sym, args)).changeOwner(sym),
     ).asExprOf[F]
   }
 }
@@ -76,15 +76,10 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
 private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
 
-private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
-  def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
-    case null => '{ null }
-    case value => toExpr(value.asInstanceOf[T])
-
 // todo: it's temporary, remove when we have a proper timeout implementation
 inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
   import scala.concurrent.{Await, Future}
-  import scala.concurrent.duration._
+  import scala.concurrent.duration.*
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val future = Future(block)
@@ -102,3 +97,13 @@ given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] wit
         )
       case _ =>
         report.errorAndAbort("DebugSettings must be defined inline")
+
+given [T: ToExpr as toExpr]: ToExpr[T | Null] with
+  def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
+    case null => '{ null }
+    case value => toExpr(value)
+
+given [T: {Type, FromExpr as fromExpr}]: FromExpr[T | Null] with
+  def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
+    case '{ null } => Some(null)
+    case '{ $value: T } => fromExpr.unapply(value)

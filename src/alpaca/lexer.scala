@@ -53,7 +53,7 @@ object Token {
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: LexerCtx): Token[?, ctx.type, Nothing] = dummy
+  def Ignored(using ctx: LexerCtx): IgnoredTokenDefinition[ctx.type] = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -65,7 +65,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): Token[Name, ctx.type, String] = dummy
+  def apply[Name <: ValidNameLike](using ctx: LexerCtx): TokenDefinition[Name, ctx.type, String] = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -78,7 +78,7 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
+  def apply[Name <: ValidNameLike](value: Any)(using ctx: LexerCtx): TokenDefinition[Name, ctx.type, value.type] = dummy
 }
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
@@ -170,3 +170,18 @@ object LexerCtx:
   ) extends LexerCtx
       with PositionTracking
       with LineTracking
+
+/**
+ * Type alias for lexer rule definitions.
+ *
+ * A lexer definition is a partial function that maps string patterns
+ * (as regex literals) to token definitions.
+ *
+ * @tparam Ctx the global context type
+ */
+
+type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String | Char, TokenDefinition[ValidNameLike, Ctx, Any]]
+
+opaque type TokenDefinition[+Name <: ValidNameLike, +Ctx <: LexerCtx, +Value] = Any
+
+opaque type IgnoredTokenDefinition[+Ctx <: LexerCtx] <: TokenDefinition[ValidNameLike, Ctx, Nothing] = Any

@@ -226,23 +226,6 @@ extension (using quotes: Quotes)(expr: Expr[?])
     expr.asTerm.info
     expr
 
-extension (using quotes: Quotes)(msg: String)
-  /**
-   * Prints a debug message and aborts compilation.
-   *
-   * @param pos the source position of the debug call
-   * @throws Nothing always aborts compilation
-   */
-  private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
-
-  /**
-   * Prints a debug message as an info during compilation.
-   *
-   * @param pos the source position of the debug call
-   */
-  private[internal] def soft(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
-
 extension (using quotes: Quotes)(e: Any)
   /**
    * Prints any value's string representation and aborts compilation.

@@ -24,7 +24,12 @@ abstract class Tokenization[Ctx <: LexerCtx: {Copyable as copy, BetweenStages as
   def tokens: List[Token[?, Ctx, ?]]
 
   /** Map of token names to their definitions for dynamic access. */
-  def byName: Map[String, DefinedToken[?, Ctx, ?]] // todo: reconsider if selectDynamic should be implemented with PM
+  // todo: reconsider if should be implemented with PM (to use @switch)
+  protected def byName: Map[String, DefinedToken[?, Ctx, ?]]
+
+  /** Map of token literals to their definitions for dynamic access. */
+  // todo: reconsider if should be implemented with PM (to use @switch
+  protected def byLiteral: Map[Char, Token[?, Ctx, ?]]
 
   /**
    * Provides dynamic access to tokens by name.
