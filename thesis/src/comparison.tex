@@ -9,15 +9,15 @@ Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\te
 W~tym celu przeprowadzono serię testów wydajnościowych (ang.~\emph{benchmarks}), których metodologia, wyniki oraz interpretacja zostaną przedstawione w~niniejszym rozdziale.
 
 Wybór narzędzi porównawczych wynikał z~analizy przeprowadzonej w~sekcji~\ref{sec:przeglad-istniejacych-rozwiazan}.
-Jako reprezentantów głównych kategorii rozwiązań wybrano:
+Jako rozwiązania reprezentatywne dla głównych kategorii wybrano:
 
 \begin{itemize}
-    \item \textbf{SLY}~\cite{sly} --- bibliotekę interpretowaną dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek interpretowanych),
+    \item \textbf{SLY}~\cite{sly} --- bibliotekę dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek w językach interpretowanych),
     \item \textbf{FastParse}~\cite{fastparse-docs} --- bibliotekę kombinatorów parserów dla Scali, reprezentującą nowoczesne podejście do~budowy parserów w~językach statycznie typowanych (kategoria kombinatorów parserów).
 \end{itemize}
 
 Wybór tych narzędzi uzasadniony jest ich reprezentatywnością dla różnych paradygmatów konstrukcji parserów oraz dostępnością dokumentacji i~aktywnym wsparciem społeczności.
-Pominięto generatory kodu takie jak ANTLR ze~względu na~fundamentalne różnice w~architekturze (zewnętrzny krok generacji vs.~metaprogramowanie w~czasie kompilacji), które utrudniają bezpośrednie porównanie wydajności.
+Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architekturze (zewnętrzny krok generacji vs.~metaprogramowanie w~czasie kompilacji), które utrudniają bezpośrednie porównanie wydajności.
 
 
 \section{Metodologia badań}
@@ -131,10 +131,10 @@ Tabela~\ref{tab:iterative-math-results} przedstawia wyniki testów wydajnościow
         \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse} \\
         & Lex & Parse & Razem & Lex & Parse & Razem & Razem \\
         \midrule
-        100     & 16,85 ms & 8,49 ms  & 16,48 ms  & 1,52 ms  & 6,69 ms   & 8,24 ms   & 6,13 ms \\
-        500     & 41,94 ms & 17,63 ms & 30,07 ms  & 7,98 ms  & 31,18 ms  & 38,57 ms  & 14,13 ms \\
-        1000    & 40,58 ms & 10,95 ms & 77,24 ms  & 14,84 ms & 59,65 ms  & 76,50 ms  & 21,24 ms \\
-        2000    & 166,89 ms & 21,22 ms & 188,56 ms & 30,61 ms & 124,52 ms & 156,70 ms & 7,73 ms \\
+        100     & 16,85~ms & 8,49~ms  & 16,48~ms  & 1,52~ms  & 6,69~ms   & 8,24~ms   & 6,13~ms \\
+        500     & 41,94~ms & 17,63~ms & 30,07~ms  & 7,98~ms  & 31,18~ms  & 38,57~ms  & 14,13~ms \\
+        1000    & 40,58~ms & 10,95~ms & 77,24~ms  & 14,84~ms & 59,65~ms  & 76,50~ms  & 21,24~ms \\
+        2000    & 166,89~ms & 21,22~ms & 188,56~ms & 30,61~ms & 124,52~ms & 156,70~ms & 7,73~ms \\
         \bottomrule
     \end{tabular}
     \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne)}
@@ -153,10 +153,10 @@ Tabela~\ref{tab:recursive-math-results} przedstawia wyniki dla wyrażeń arytmet
         \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse} \\
         & Lex & Parse & Razem & Lex & Parse & Razem & Razem \\
         \midrule
-        100     & 3,55 ms   & 1,70 ms  & 4,96 ms   & 1,79 ms  & 7,27 ms   & 9,25 ms   & 3,10 ms \\
-        500     & 27,70 ms  & 7,81 ms  & 29,92 ms  & 10,45 ms & 35,30 ms  & 46,85 ms  & 4,56 ms \\
-        1000    & 63,79 ms  & 12,94 ms & 80,08 ms  & 20,22 ms & 72,95 ms  & 96,95 ms  & 7,29 ms \\
-        2000    & 220,96 ms & 25,82 ms & 274,95 ms & 43,06 ms & 150,68 ms & 194,77 ms & \textit{Stack\-Over\-flow} \\
+        100     & 3,55~ms   & 1,70~ms  & 4,96~ms   & 1,79~ms  & 7,27~ms   & 9,25~ms   & 3,10~ms \\
+        500     & 27,70~ms  & 7,81~ms  & 29,92~ms  & 10,45~ms & 35,30~ms  & 46,85~ms  & 4,56~ms \\
+        1000    & 63,79~ms  & 12,94~ms & 80,08~ms  & 20,22~ms & 72,95~ms  & 96,95~ms  & 7,29~ms \\
+        2000    & 220,96~ms & 25,82~ms & 274,95~ms & 43,06~ms & 150,68~ms & 194,77~ms & \textit{Stack\-Over\-flow} \\
         \bottomrule
     \end{tabular}
     \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne)}
@@ -178,10 +178,10 @@ Tabela~\ref{tab:iterative-json-results} przedstawia wyniki dla formatu JSON o~st
         \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse} \\
         & Lex & Parse & Razem & Lex & Parse & Razem & Razem \\
         \midrule
-        100     & 30,63 ms  & 4,09 ms  & 26,27 ms  & 7,22 ms   & 17,07 ms  & 24,88 ms  & 15,82 ms \\
-        500     & 144,00 ms & 20,55 ms & 164,02 ms & 35,60 ms  & 87,15 ms  & 131,62 ms & 11,67 ms \\
-        1000    & 478,19 ms & 46,43 ms & 555,45 ms & 75,34 ms  & 182,93 ms & 263,86 ms & 12,64 ms \\
-        2000    & 1,72 s    & 117,50 ms & 1,58 s   & 151,88 ms & 374,71 ms & 550,08 ms & 16,58 ms \\
+        100     & 30,63~ms  & 4,09~ms  & 26,27~ms  & 7,22~ms   & 17,07~ms  & 24,88~ms  & 15,82~ms \\
+        500     & 144,00~ms & 20,55~ms & 164,02~ms & 35,60~ms  & 87,15~ms  & 131,62~ms & 11,67~ms \\
+        1000    & 478,19~ms & 46,43~ms & 555,45~ms & 75,34~ms  & 182,93~ms & 263,86~ms & 12,64~ms \\
+        2000    & 1,72~s    & 117,50~ms & 1,58~s   & 151,88~ms & 374,71~ms & 550,08~ms & 16,58~ms \\
         \bottomrule
     \end{tabular}
     \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne)}
@@ -200,18 +200,20 @@ Tabela~\ref{tab:recursive-json-results} przedstawia wyniki dla formatu JSON o~st
         \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse} \\
         & Lex & Parse & Razem & Lex & Parse & Razem & Razem \\
         \midrule
-        100     & 44,96 ms & 4,33 ms  & 49,44 ms  & 20,33 ms  & 17,77 ms  & 39,81 ms  & 3,47 ms \\
-        500     & 2,99 s   & 18,09 ms & 3,02 s    & 358,04 ms & 95,21 ms  & 459,70 ms & 15,19 ms \\
-        1000    & 23,55 s  & 37,51 ms & 23,52 s   & 1,36 s    & 189,58 ms & 1,58 s    & 86,38 ms \\
-        2000    & ---      & ---      & ---       & 5,26 s    & 385,47 ms & 5,79 s    & 346,44 ms \\
+        100     & 44,96~ms & 4,33~ms  & 49,44~ms  & 20,33~ms  & 17,77~ms  & 39,81~ms  & 3,47~ms \\
+        500     & 2,99~s   & 18,09~ms & 3,02~s    & 358,04~ms & 95,21~ms  & 459,70~ms & 15,19~ms \\
+        1000    & 23,55~s  & 37,51~ms & 23,52~s   & 1,36~s    & 189,58~ms & 1,58~s    & 86,38~ms \\
+        2000    & ---      & ---      & ---       & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
         \bottomrule
     \end{tabular}
     \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne)}
     \label{tab:recursive-json-results}
 \end{table}
 
+Dla przypadku 2000~elementów system~\textit{ALPACA} nie zakończył pomiaru w~akceptowalnym czasie (oznaczono jako~---).
+
 Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\textit{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
-Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dalszej analizy i~optymalizacji (sekcja~\ref{subsec:wnioski-alpaca}).
+Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dalszej analizy i~optymalizacji (sekcja~\ref{subsec:wnioski}).
 
 
 \section{Analiza wyników}
@@ -242,7 +244,7 @@ Optymalizacja mechanizmu ignorowania znaków stanowi kierunek przyszłych prac o
 \subsubsection{Faza parsowania}
 
 Faza parsowania systemu~\textit{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę SLY dla wszystkich testowanych scenariuszy.
-Różnica ta wynika z~fundamentalnych różnic architektonicznych:
+Różnica ta wynika z~różnic architektonicznych:
 
 \begin{itemize}
     \item \textbf{ALPACA} wykorzystuje tabele parsowania LR(1) generowane w~czasie kompilacji, co~eliminuje narzut interpretacji w~czasie wykonania,
@@ -267,7 +269,7 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 
 Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \textit{ALPACA}.
 
-\textbf{Mocne strony systemu:}
+\textbf{Zalety systemu:}
 \begin{enumerate}
     \item Faza parsowania systemu \textit{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \textit{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
@@ -346,7 +348,7 @@ Rysunek~\ref{fig:sly-ide-warnings} przedstawia widok kodu SLY w~środowisku VS C
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/SlyMathParserInIDE.png}
-    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku PyCharm}
+    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku VS Code}
     \label{fig:sly-ide-warnings}
 \end{figure}
 
@@ -367,7 +369,7 @@ W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:teza-badawc
 \end{enumerate}
 
 \subsection{Kierunki dalszych prac}
-\label{sec:kierunki-dalszych-prac}
+\label{subsec:kierunki-dalszych-prac}
 
 Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\textit{ALPACA}:
 
