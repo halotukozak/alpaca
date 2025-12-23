@@ -11,7 +11,7 @@ private[internal] object Default:
   given Default[Nothing] = () => throw new NoSuchElementException("Default[Nothing] is not defined")
 
   given [T](using quotes: Quotes): Default[Expr[T]] = () => '{ ??? }
-  given [T](using quotes: Quotes): Default[List[T]] = () => Nil
+  given [T] => Default[List[T]] = () => Nil
 
   given (using quotes: Quotes): Default[quotes.reflect.Tree] =
     import quotes.reflect.*
