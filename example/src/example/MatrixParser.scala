@@ -9,28 +9,13 @@ import scala.reflect.ClassTag
 import scala.util.chaining.scalaUtilChainingOps
 
 object MatrixParser extends Parser {
-  extension [T](sth: T)(using ct: ClassTag[T])
-    def line: Int =
-      ct.runtimeClass
-        .getDeclaredField("fields")
-        .nn
-        .tap(_.setAccessible(true))
-        .get(sth)
-        .asInstanceOf[Map[String, ?]]("line")
-        .asInstanceOf[Int]
-
-  val root: Rule[AST.Tree] = rule { case Instructions.Option(is) =>
-    AST.Block(is.toList.flatten, is.flatMap(_.headOption.map(_.line)).orNull.asInstanceOf[Int])
+  val root: Rule[AST.Tree] = rule { case Instruction.List(is) =>
+    AST.Block(is, is.head.line)
   }
-
-  def Instructions: Rule[List[AST.Statement]] = rule(
-    { case Instruction(i) => i :: Nil },
-    { case (Instruction(i), Instructions(is)) => i :: is },
-  )
 
   def Instruction: Rule[AST.Statement] = rule(
     { case (Statement(s), ML.`;`(_)) => s },
-    // { case (Statement(s), ML.`\\n+`(_)) => throw new Exception("Missing semicolon") },
+    // { case (Statement(s), ML.`\\n+`(_)) => throw new Exception("Missing semicolon") }, //todo: ignored tokens
     { case If(i) => i },
     { case While(w) => w },
     { case For(f) => f },
@@ -45,7 +30,7 @@ object MatrixParser extends Parser {
   )
 
   def Block: Rule[AST.Block] = rule(
-    { case (ML.`\\{`(_), Instructions(is), ML.`\\}`(_)) =>
+    { case (ML.`\\{`(_), Instruction.List(is), ML.`\\}`(_)) =>
       AST.Block(is, is.headOption.map(_.line).orNull.asInstanceOf[Int])
     },
     { case Instruction(i) => AST.Block(i :: Nil, i.line) },
@@ -65,7 +50,7 @@ object MatrixParser extends Parser {
   }
 
   def For: Rule[AST.For] = rule { case (ML.`for`(l), ML.ID(id), ML.`=`(_), Range(r), Block(body)) =>
-    // val varRef = AST.SymbolRef(id.value, Type.Int, id.line)
+    // val varRef = AST.SymbolRef(id.value, Type.Int, id.line) //todo: why fails?
     // AST.For(varRef, r, body, l.line)
     AST.For(AST.SymbolRef(Type.Int, id.value, id.line), r, body, l.line)
   }
@@ -92,7 +77,7 @@ object MatrixParser extends Parser {
     )
   }
 
-  def AsssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
+  def AssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
     { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line) },
     { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line) },
     { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line) },
@@ -101,14 +86,14 @@ object MatrixParser extends Parser {
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (Var(v), AsssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
-    { case (Element(el), AsssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
+    { case (Var(v), AssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
+    { case (Element(el), AssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
   )
 
   def FunctionName: Rule[String] = rule(
-    { case ML.eye(l) => "EYE" },
-    { case ML.zeros(l) => "ZEROS" },
-    { case ML.ones(l) => "ONES" },
+    { case ML.eye(name) => name.value },
+    { case ML.zeros(name) => name.value },
+    { case ML.ones(name) => name.value },
   )
 
   def Matrix: Rule[AST.Apply] = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
@@ -195,6 +180,7 @@ object MatrixParser extends Parser {
     ML.`else`.before(P.ofName("if")),
   )
 
+  // todo: error reporting
 // // #     def error(self, p: YaccProduction):
 // // #         if p:
 // // #             report_error(self, f"Syntax error: {p.type}('{p.value}')", p.lineno)

@@ -35,6 +35,6 @@ object `package` extends ScalaModule {
   )
 
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.1-4-c4554f",
+    mvn"io.github.halotukozak::alpaca:0.0.2",
   )
 }

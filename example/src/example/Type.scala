@@ -115,7 +115,13 @@ object Type:
   )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type(false):
 
-    override def toString = s"OverloadedFunction: $args => $resultHint" // todo: sth more informative
+    override def toString =
+      val argsRepr = args match
+        case EmptyTuple => "()"
+        case Type.VarArg(tpe) => s"...$tpe"
+        case t: Tuple => t.toList.mkString("(", ", ", ")")
+        case other => other.toString
+      s"OverloadedFunction$argsRepr => $resultHint"
 
     private def unsafeResult(arguments: scala.Any) =
       resultTypeFactory(arguments.asInstanceOf[Args[args.type]]).map(Function(args, _))
@@ -298,9 +304,9 @@ val symbols: Map[String, AST.SymbolRef] = Map(
       val tpe = expr.tpe.asInstanceOf[Type.Matrix]
       Result.Success(Type.Matrix(tpe.cols, tpe.rows)),
   ),
-  "EYE" -> matrix_type,
-  "ZEROS" -> matrix_type,
-  "ONES" -> matrix_type,
+  "eye" -> matrix_type,
+  "zeros" -> matrix_type,
+  "ones" -> matrix_type,
 
   // binary
   "+" -> binary_numerical_type,

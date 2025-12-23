@@ -126,7 +126,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
                 case null => Type.Function(Tuple(anyOf), Type.Undef).checkArgs(typedArgs)(line)
                 case result => result
 
-          case x => throw new NotImplementedError(x.toString)
+          case otherType => Result.error(line)(Type.Undef, s"Cannot apply expression of type $otherType as a function")
       yield (AST.Apply(typedRef, typedArgs, typedResult, line), env)
 
   override given Process[AST.Range] = env =>
