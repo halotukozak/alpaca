@@ -1,8 +1,9 @@
-\chapter[Organizacja pracy]{Organizacja pracy}
+\chapter{Organizacja pracy}
 \label{ch:organizacja-pracy}
 
-Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, charakter projektu, podział obowiązków pomiędzy członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
+Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, jego charakter, podział obowiązków pomiędzy~członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
 Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędzia wspierające współpracę zespołową oraz strategię walidacji implementacji.
+
 
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
 \label{sec:charakterystyka-projektu-realizacji}
@@ -14,23 +15,21 @@ Projekt \textit{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy eleme
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
 W~dalszych etapach realizacji specyfikacja była doprecyzowywana w~sposób iteracyjny, na~podstawie wyników eksperymentów oraz analizy ograniczeń technicznych.
 
-W~pierwszym semestrze zrealizowano fazę eksploracyjno-prototypową, obejmującą analizę możliwości metaprogramowania w~Scali~3, prototypowanie mechanizmów generacji leksera i~parsera oraz identyfikację ograniczeń technicznych platformy JVM.
+W~pierwszym semestrze zrealizowano fazę eksploracyjno-prototypową, obejmującą analizę możliwości metaprogramowania w~Scali~3, prototypowanie mechanizmów generacji leksera i~parsera oraz identyfikację ograniczeń technicznych platformy JVM\@.
 W~drugim semestrze zrealizowano fazę wdrożeniowo-optymalizacyjną, skoncentrowaną na~utrwaleniu wybranych rozwiązań, rozszerzeniu funkcjonalności systemu oraz poprawie jakości i~wydajności kodu.
+
 
 \section[Zespół i podział obowiązków]{Zespół i~podział obowiązków}
 \label{sec:zespol-podzial-obowiazkow}
 
 \subsection[Osoby w~projekcie]{Osoby w~projekcie i~ich role}
-\label{sec:osoby-w-projekcie}
+\label{subsec:osoby-w-projekcie}
 
 Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rolach.
 
-\paragraph{Bartosz~Buczek (dalej: BB)} pełnił rolę współautora projektu.
-Odpowiadał przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
+\paragraph[Bartosz Buczek (dalej: BB)]{Bartosz~Buczek (dalej: BB)} był odpowiedzialny przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
 
-\paragraph{Bartłomiej~Kozak (dalej: BK)} pełnił rolę współautora projektu.
-Był odpowiedzialny za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
-
+\paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
 
 \subsection{Podział prac na główne zadania}
 \label{subsec:podzial-prac-na-glowne-zadania}
@@ -45,7 +44,7 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
     \item Implementacja makra \verb|lexer| transformującego deklaratywne reguły tokenizacji w~kod proceduralny.\ (BK)
     \item Projektowanie interfejsu DSL opartego na~funkcjach częściowych.\ (BB, BK)
     \item Integracja z~wyrażeniami regularnymi biblioteki standardowej Scali.\ (BB)
-    \item Definiowanie typów rafinowanych dla tokenów. (BK)
+    \item Definiowanie typów rafinowanych dla tokenów.\ (BK)
     \item Obsługa ignorowanych reguł leksykalnych.\ (BB)
     \item Obsługa kontekstu w~lekserze.\ (BB, BK)
     \item Diagnostyka błędów leksykalnych.\ (BB, BK)
@@ -76,9 +75,9 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
 \textbf{Artefakty:}
 
 \begin{itemize}
-    \item Moduł \verb|alpaca.parser|
-    \item Klasy: \verb|Parser[Ctx]|, \verb|Rule[R]|, \verb|ParseTable|, \verb|ActionTable|
-    \item Makra: \verb|createTables|
+    \item Moduł \texttt{alpaca.parser}
+    \item Klasy: \texttt{Parser[Ctx]}, \texttt{Rule[R]}, \texttt{ParseTable}, \texttt{ActionTable}
+    \item Makra: \texttt{createTables}
 \end{itemize}
 
 \subsubsection[Infrastruktura i narzędzia pomocnicze]{Infrastruktura i~narzędzia pomocnicze}
@@ -148,7 +147,7 @@ Kamienie milowe pozwoliły zespołowi na~śledzenie postępów, priorytetyzowani
 Każdy kamień milowy zawierał listę zgłoszeń (ang. \textit{issues}) reprezentujących konkretne zadania (implementacja funkcji, dokumentacja, testy).
 Postęp mierzono poprzez stosunek zamkniętych zgłoszeń do~całkowitej liczby planowanych zadań, co umożliwiało szybką ocenę stanu rzeczywistego realizacji w~stosunku do~pierwotnego planu.
 
-Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel \ref{tab:milestones-progress}.
+Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{tab:milestones-progress}.
 
 \begin{table}[h]
     \centering
@@ -219,6 +218,7 @@ Złożone implementacje (np.\ algorytm LR(1)) uzupełniono o~komentarze liniowe 
 \subsubsection[README i dokumentacja]{README i~dokumentacja}
 
 \paragraph{README.md} zawiera instrukcje instalacji, przykłady użycia oraz zarys architektury systemu.
+
 \paragraph{GitHub Pages} hostuje bardziej szczegółową dokumentację, poradniki oraz sekcję FAQ\cite{alpaca-docs}.
 
 \subsubsection{Praca dyplomowa (LaTeX)}
@@ -226,6 +226,7 @@ Złożone implementacje (np.\ algorytm LR(1)) uzupełniono o~komentarze liniowe 
 Praca została przygotowana w~systemie składu \LaTeX{} z~wykorzystaniem szablonu AGH (\verb|aghengthesis|).
 Treść została podzielona na~rozdziały w~oddzielnych plikach (m.in.\ \verb|introduction.tex|, \verb|metaprogramming.tex|, \verb|implementation.tex|).
 Bibliografię przygotowano w~formacie Bib\LaTeX{} (\verb|bibliografia.bib|) z~odwołaniami do~literatury naukowej oraz dokumentacji technicznej.
+
 
 \section[Zastosowane techniki i~praktyki]{Zastosowane techniki i~praktyki inżynierskie}
 \label{sec:techniki-praktyki}
@@ -249,28 +250,28 @@ Projektowanie przebiegało iteracyjnie, zgodnie z~następującym schematem:
 
 Dla modułów o~jasno zdefiniowanych specyfikacjach (np.\ funkcji \verb|computeFirstSet|) testy przygotowywano przed implementacją, zgodnie z~podejściem Test-Driven Development.
 Dla komponentów o~charakterze eksploracyjnym (np.\ mechanizmów generacji klas w~makrach) testy opracowywano po~ustabilizowaniu implementacji.
-Praktyka ta była szczególnie przydatna do~ujawniania problemów w~interfejsach pomiędzy modułami.
+Praktyka ta była szczególnie przydatna do~ujawniania problemów w~interfejsach pomiędzy~modułami.
 
 \subsubsection{Refaktoryzacja}
 
 Regularnie przeprowadzano refaktoryzacje w~celu poprawy czytelności, jakości oraz efektywności kodu.
-W~ramach wybranych zmian każdy pull request zawierał sekcję poświęconą refaktoryzacji, jeżeli była ona uzasadniona.
+Uzasadnione zmiany refaktoryzacyjne dokumentowano w dedykowanej sekcji Pull Requesta.
 Wykorzystywano narzędzia wspomagające refaktoryzację (m.in.\ Scalafix).
 
 \subsubsection[Code Review i Pair Programming]{Code Review i~Pair Programming}
 
-Każdy pull request był recenzowany przez drugiego członka zespołu przed połączeniem z~główną gałęzią.
-Stosowano Pair Programming, czyli sesje wspólnego programowania, w~przypadku szczególnie złożonych problemów.
+Każdy Pull Request był recenzowany przez drugiego członka zespołu przed połączeniem z~głównym branchem.
+W~przypadku zagadnień o~szczególnie złożonym charakterze zastosowano sesje wspólnego programowania (ang. \textit{Pair Programming}).
 Spotkania poświęcone przeglądom kodu odbywały się 2--3 razy w~tygodniu, zwykle przez 30--60~minut.
 
-\subsubsection[Issues i Planning Game]{User Stories i~Planning Game}
-Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne \textit{issues} do~realizacji.
-Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}
+\subsubsection[Zgłoszenia i planowanie]{Zgłoszenia i~planowanie}
+Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne zgłoszenia (ang. \textit{issues}) do~realizacji.
+Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}.
 
 \subsection{Praktyki specyficzne dla metaprogramowania}
 \label{subsec:praktyki-specyficzne-dla-metaprogramowania}
 
-\subsubsection{Staged Computation (programowanie wieloetapowe)}
+\subsubsection{Obliczenia wieloetapowe (ang. \textit{Staged Computation})}
 
 Świadomie rozróżniano obliczenia wykonywane na~etapie kompilacji i~na~etapie wykonania.
 Maksymalizowano zakres obliczeń przeniesionych do~etapu kompilacji (m.in.\ generacja tabel LR(1), kompilacja wyrażeń regularnych).
@@ -288,11 +289,12 @@ Stosowano zasadę szybkiego zwrotu błędu (ang. \textit{fail-fast}) --- prefero
 \subsubsection{Continuous Integration}
 
 GitHub Actions automatyzowało kompilację, uruchamianie testów oraz weryfikację formatowania kodu przy każdym wypchnięciu zmian.
-Zastosowano reguły ochrony gałęzi (branch protection rules), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~główną gałęzią.
+Zastosowano reguły ochrony gałęzi (ang. \textit{branch protection rules}), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~głównym branchem.
 
 \subsubsection{Zarządzanie artefaktami (Artifact Management)}
 
-Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowano w~repozytorium Maven Central.
+Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowane w~repozytorium Maven Central.
+
 
 \section[Przebieg prac --- harmonogram i~iteracje]{Przebieg prac --- harmonogram i~iteracje}
 \label{sec:przebeig-prac-harmonogram}
@@ -300,9 +302,11 @@ Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowano w~repozytorium Ma
 \subsection[Szczegółowa oś czasu i przebieg prac]{Szczegółowa oś czasu i~przebieg prac}
 \label{subsec:szczegolowa-os-czasu}
 
-Projekt ALPACA realizowany był przez okres 27~tygodni, obejmujących dwa semestry akademickie. Szczegółowy przebieg prac oraz liczba zmian wprowadzonych w~poszczególnych etapach zostały udokumentowane poprzez system kontroli wersji Git, umożliwiający śledzenie postępów projektu na~poziomie pojedynczych zmian.
+Praca ALPACA realizowana była przez 27~tygodni, obejmujących dwa semestry akademickie.
+Szczegółowy przebieg oraz liczba zmian w~poszczególnych etapach dokumentowane były poprzez system kontroli wersji, umożliwiający śledzenie postępów na~poziomie pojedynczych zmian.
 
-W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których średnio przypadało 19,6~zmian na~tydzień. Poniższa tabela prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
+W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których średnio przypadało 19,6~zmian na~tydzień.
+Tabela~\ref{tab:detailed-timeline} prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
 
 \begin{table}[h]
     \centering
@@ -312,7 +316,7 @@ W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których ś
         \hline
         Inicjalizacja  & 19 kwietnia 2025              & Konfiguracja repozytorium, system budowania Mill                  \\
         \hline
-        \multicolumn{3}{c}{\textbf{\textit{Semestr 1 --- Eksploracja i~prototypowanie (tygodnie 1--14)}}}                  \\
+        \multicolumn{3}{c}{\textbf{Semestr 1 --- Eksploracja i~prototypowanie (tygodnie 1--14)}}                           \\
         \hline
         Tydzień 1--3   & 22--27 lipca                  & Podstawy teoretyczne, pierwsze makra, API metaprogramowania       \\
         \hline
@@ -322,7 +326,7 @@ W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których ś
         \hline
         Tydzień 11--14 & 25 września--6 października   & Identyfikacja ograniczeń JVM, planowanie semestr 2                \\
         \hline
-        \multicolumn{3}{c}{\textbf{\textit{Semestr 2 --- Implementacja i~optymalizacja (tygodnie 15--27)}}}                \\
+        \multicolumn{3}{c}{\textbf{Semestr 2 --- Implementacja i~optymalizacja (tygodnie 15--27)}}                         \\
         \hline
         Tydzień 15--17 & 13 października--30 listopada & Moduł leksera, typy rafinowane, interfejs DSL                     \\
         \hline
@@ -353,21 +357,21 @@ Druga część projektu cechowała się szybszym tempem zmian (130~commitów), c
 
 Ostatnie dwa tygodnie projektu zawierały 15~commitów poświęconych przede wszystkim dokumentacji, ostatecznym poprawkom rozprawy dyplomowej oraz czyszczeniu kodu.
 
-
 \subsection[Szybkość pracy zespołu i postępy]{Szybkość pracy i~postępy}
 \label{subsec:velocitas-zespou-ipostepy}
 
 \subsubsection{Metryki wydajności}
 
-Realizacja projektu ALPACA wymagała znaczącego zaangażowania zespołu przez okres kilku miesięcy. Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwierciedlenie w poniższych wskaźnikach:
+Realizacja projektu ALPACA wymagała znaczącego zaangażowania zespołu przez okres kilku miesięcy.
+Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwierciedlenie w poniższych wskaźnikach:
 
 \begin{itemize}
     \item \textbf{Historię rozwoju reprezentuje} łącznie \textbf{450 commitów} zintegrowanych w głównej gałęzi projektu, dokumentujących iteracyjny proces implementacji oraz poprawiania systemu.
-    \item \textbf{Struktura zmian kodowych} obejmuje około \textbf{80 pull requestów}, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
-    \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}, co świadczy o wysokim pokryciu testami wynoszącym 33%.
+    \item \textbf{Struktura zmian kodowych} obejmuje około \textbf{80 Pull Requestów}, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
+    \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}.
 \end{itemize}
 
-Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamikę zespołu, wskazując na konsystentny postęp oraz okresy intensywnej pracy nad resolucją kluczowych wyzwań technicznych.
+Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamikę zespołu, wskazując na stały postęp oraz okresy intensywnej pracy nad rozwiązywaniem kluczowych wyzwań technicznych.
 
 \begin{figure}[!htbp]
     \centering
@@ -375,6 +379,7 @@ Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamik�
     \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA}
     \label{fig:commits}
 \end{figure}
+
 
 \section[Główne wyzwania i~ich rozwiązania]{Główne problemy i~ich rozwiązania}
 \label{sec:problemy-rozwiazania}
@@ -393,7 +398,7 @@ Dla złożonych gramatyk z~tysiącami wpisów rozmiar wygenerowanej metody przek
 
 \subsubsection{Rozwiązanie}
 
-Zastosowano podejście polegające na~fragmentacji metod (\textit{method fragmentation}) \cite{method-too-large}.
+Zastosowano podejście polegające na~fragmentacji metod (\textit{method fragmentation})~\cite{method-too-large}.
 Zamiast generować pojedynczą metodę zawierającą całą tabelę parsowania, generowanych jest wiele metod pomocniczych, z~których każda odpowiada za dodanie ograniczonej liczby wpisów do~struktury budującej tabelę.
 Metoda główna sekwencyjnie wywołuje metody pomocnicze, a~następnie zwraca wynikową tabelę.
 Ze względu na niewielki rozmiar metod pomocniczych kompilator JIT może je skutecznie inlinować, minimalizując narzut wykonania.
@@ -514,17 +519,16 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 
 \subsubsection{Rezultat}
 
-Osiągnięto pokrycie testami na~poziomie około 70\% kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
+Osiągnięto pokrycie testami na~poziomie około TODO kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
 
-\subsection{Problem 6: Błędy w~kolejności definicji tokenów}
+\subsection[Problem 6: Błędy w kolejności definicji tokenów]{Problem 6: Błędy w~kolejności definicji tokenów}
 \label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
 
 \subsubsection{Problem}
 
-Użytkownicy systemu ALPACA mogą intuicyjnie zdefiniować tokeny w~kolejności, która prowadzi do~nieoczekiwanych błędów.
-Problem występuje, gdy~krótszy wzorzec jest~zdefiniowany przed dłuższym wariantem, który zawiera go~jako prefiks.
+Topologia definiowania tokenów może prowadzić do~błędów leksykalnych, jeśli krótsze wzorce zostały umieszczone przed dłuższymi wariantami zawierającymi je~jako prefiks.
 
-Przykładowo, użytkownik definiuje operatory porównania w~naturalnej kolejności:
+Przykładowo, użytkownik może zdefiniować operatory porównania w~naturalnej kolejności:
 \begin{verbatim}
 LT = <
 LE = <=
@@ -532,77 +536,83 @@ GT = >
 GE = >=
 \end{verbatim}
 
-Taka definicja wydaje się poprawna, jednak podczas parsowania wyrażenia \verb|x <= 5| system rozpozna tylko \verb|<|, a~znak \verb|=| zostanie odrzucony jako nieznany token, co~prowadzi do~błędu składniowego.
+Notacja jest składniowo poprawna, lecz prowadzi do~błędów w~fazie parsowania wyrażenia \verb|x <= 5|, gdyż system rozpozna jedynie \verb|<|, podczas gdy \verb|=| zostanie odrzucony jako symbol nieznany, co~spowoduje błąd składniowy w~kolejnych fazach analizy.
 
 \subsubsection{Przyczyna}
 
-Ze~względu na~wykorzystanie bibliotecznych wyrażeń regularnych (szczegóły w~rozdziale~\ref{sec:dfa-vs-regex}), system dopasowuje tokeny według kolejności definicji, a~nie według reguły najdłuższego dopasowania.
-Problem jest szczególnie trudny do znalezienia, ponieważ:
+Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:dfa-vs-regex}).
+
+Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
+
 \begin{itemize}
-    \item Błąd nie~objawia się podczas definiowania leksera (kompilacja przebiega poprawnie)
-    \item Objawy pojawiają się dopiero podczas parsowania konkretnego wejścia
-    \item Komunikat błędu odnosi się do~parsera (\enquote{nieoczekiwany symbol}), nie~do~leksera
+    \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera;
+    \item Błędy ujawniają się~dopiero w~fazie parsowania konkretnego wejścia;
+    \item Komunikat diagnostyczny wskazuje na parser (\enquote{nieoczekiwany symbol}), a~nie~lekser, utrudniając identyfikację pierwotnej przyczyny.
 \end{itemize}
 
 \subsubsection{Rozwiązanie}
 
-System automatycznie wykrywa takie konflikty podczas kompilacji dzięki modułowi \verb|RegexChecker| (algorytm opisany w~rozdziale~\ref{subsec:lexer-impl-regexchecker}).
-Przed wygenerowaniem kodu leksera, wszystkie wzorce są~analizowane pod~kątem konfliktów, a~użytkownik otrzymuje czytelny komunikat błędu wskazujący źródło problemu.
+Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker| (por. rozdział~\ref{subsec:lexer-impl-regexchecker}).
+Przed~generacją kodu leksera moduł \verb|RegexChecker| analizuje wzorce w~poszukiwaniu potencjalnych konfliktów.
+W~przypadku wykrycia nieprawidłowości użytkownik otrzymuje komunikat błędu wskazujący źródło problemu.
 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/PatternShadowing.png}
-    \caption{Przykład wykrycia konfliktu w~kolejności definicji tokenów}
+    \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów}
     \label{fig:regex_checker_error}
 \end{figure}
 
 \subsubsection{Rezultat}
 
-Błędy są wykrywane w~fazie kompilacji, zanim użytkownik uruchomi kod.
-Komunikat diagnostyczny jasno wskazuje, które wzorce kolidują, umożliwiając natychmiastową korektę.
-Użytkownik musi jedynie zmienić kolejność definicji (najpierw \verb|<=|, potem \verb|<|) lub~zmodyfikować wyrażenia regularne, aby~wyeliminować konflikt.
+Konflikty w~kolejności wzorców są~wykrywane w~fazie kompilacji poprzez komunikaty, które jasno wskazują, które wzorce~się~nakładają i~wymagają zdefiniowania precedencji.
 
-Mechanizm ten znacząco skrócił czas debugowania błędów leksykalnych podczas rozwoju projektów demonstracyjnych (parser wyrażeń arytmetycznych, parser JSON).
+Korekta wymaga zmiany kolejności definicji tokenów (np.~umieszczenie \verb|<=| przed~\verb|<|) lub~modyfikacji wyrażeń regularnych, aby~wyeliminować nakładania się~wzorców.
+
+Wczesna detekcja konfliktów wzorców okazała się~istotna przy~implementacji przykładowych parserów (parser wyrażeń arytmetycznych, parser~JSON).
 
 \subsection{Problem 7: Konflikty precedencji operatorów}
 \label{subsec:problem-7:-konflikty-w-tabeli-shift-reduce}
 
 \subsubsection{Problem}
 
-Użytkownicy definiujący gramatyki dla~wyrażeń arytmetycznych napotykają problem: jak~powiedzieć parserowi, że~mnożenie ma~wyższy priorytet niż~dodawanie?
+Definiowanie gramatyk dla~wyrażeń arytmetycznych wymaga określenia reguł precedencji operatorów, aby~wymusić poprawny porządek wykonywania operacji (np.~mnożenie przed~dodawaniem).
 
-Bez~jawnych reguł precedencji, parser nie~wie, czy~wyrażenie \verb|2 + 3 * 4| powinno być parsowane jako~\verb|(2 + 3) * 4 = 20| czy~\verb|2 + (3 * 4) = 14|.
-System zgłasza błąd kompilacji wskazujący na~konflikt, wymagając od~użytkownika rozstrzygnięcia.
+Brak jawnych reguł precedencji powoduje wieloznaczność strukturalną wyrażenia \verb|2 + 3 * 4|, które może być interpretowane jako $(2 + 3) \times 4 = 20$ lub $2 + (3 \times 4) = 14$.
+System sygnalizuje błąd kompilacji wskazujący na~konflikt typu shift--reduce, który wymaga jawnego rozstrzygnięcia przez~użytkownika.
 
-Dodatkowo, użytkownicy mogą przypadkowo zdefiniować sprzeczne reguły precedencji.
-Na~przykład, próbując zdefiniować unary minus, użytkownik może przez pomyłkę użyć zwykłego operatora odejmowania, tworząc cykliczną zależność: operator~$-$ ma~pierwszeństwo przed~$*$, $*$ przed~$-$, co~jest niemożliwe do~rozstrzygnięcia.
+Błędy mogą wynikać również z~niespójności w~definicjach reguł precedencji.
+Na~przykład, próba definiowania operatora unarnego minus przy~użyciu zwykłego operatora odejmowania może prowadzić do~cyklicznych zależności precedencji, gdzie $-$ ma~pierwszeństwo przed~$*$, a~$*$ przed~$-$, co jest niemożliwe do rozstrzygnięcia.
 
 \subsubsection{Przyczyna}
 
 Wiele naturalnych gramatyk języków programowania zawiera niejednoznaczności, takie jak wyrażenia arytmetyczne z~różnymi poziomami precedencji operatorów, czy konstrukcje warunkowe z~\enquote{dangling else}:
 
-Bez mechanizmu wykrywania i~rozwiązywania tych konfliktów, użytkownik byłby zmuszony do przepisania gramatyki do~formy jednoznacznej (np.~różne nieterminale dla~każdego poziomu precedencji), co~jest uciążliwe i~zmniejsza czytelność specyfikacji.
+Bez~takiego mechanizmu użytkownik byłby zmuszony do przepisania gramatyki do~formy jednoznacznej (np.~przez~wprowadzenie odrębnych nieterminali dla~każdego poziomu precedencji), co~znacznie komplikuje specyfikację i~zmniejsza jej przejrzystość.
 
 \subsubsection{Rozwiązanie}
 
 System ALPACA oferuje mechanizm deklaratywnego rozwiązywania konfliktów bez~konieczności przepisywania gramatyki (algorytmy opisane w~rozdziale~\ref{subsec:parser-conflict-resolution}).
 
-\paragraph{Prosty przykład użycia}
+\paragraph{Przykład użycia}
 Dla~gramatyki wyrażeń arytmetycznych użytkownik definiuje jedynie łańcuch relacji:
+
 \begin{verbatim}
 pow before mul
 mul before add
 \end{verbatim}
 
+Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
+
 System automatycznie:
+
 \begin{enumerate}
     \item \textbf{Wyprowadza przechodniość}: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
     \item \textbf{Rozwiązuje wszystkie konflikty}: Używając grafu relacji pierwszeństwa
     \item \textbf{Weryfikuje spójność}: Sprawdza czy~nie~ma~cykli w~relacjach
 \end{enumerate}
 
-
-Jeśli~użytkownik przez pomyłkę zdefiniuje sprzeczne reguły (np.~$A$ przed~$B$, $B$ przed~$C$, $C$ przed~$A$), system wykrywa cykl podczas kompilacji i~zgłasza czytelny błąd:
+Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:
 
 \begin{verbatim}
 Inconsistent conflict resolution detected:
@@ -612,20 +622,20 @@ at the same time.
 Consider revising the before/after rules to eliminate cycles
 \end{verbatim}
 
+Komunikat wskazuje dokładne położenie sprzeczności, umożliwiając szybką korektę.
+
 \subsubsection{Rezultat}
+Zastosowanie mechanizmu rozwiązywania konfliktów przynosi kilka istotnych korzyści.
+Po pierwsze, pozwala na~definiowanie gramatyki w~formie deklaratywnej, bez~konieczności ręcznego przekształcania struktury.
+Po drugie, znacznie redukuje liczbę wymaganych deklaracji --- w~praktyce z~$O(n^2)$ do~$O(n)$ dla~typowych gramatyk.
+Ponadto, system wykrywa niespójności już w~fazie kompilacji, a~komunikaty diagnostyczne jasno wskazują źródło konfliktu,
+ułatwiając szybką~korektę.
 
-\begin{itemize}
-    \item Definicja gramatyki w~naturalnej formie, bez~sztucznych przekształceń
-    \item Redukcja liczby wymaganych deklaracji z~$O(n^2)$ do~$O(n)$ w~typowych przypadkach
-    \item Wczesna walidacja konfliktów i~niespójności wykrywana w~fazie kompilacji
-    \item Pomocne komunikaty wskazujące źródło problemu i~sugestie rozwiązania
-\end{itemize}
-
-Mechanizm ten umożliwił implementację przykładowego parsera wyrażeń arytmetycznych z~pełną obsługą operatorów \verb|+|, \verb|-|, \verb|*|, \verb|/|, \verb|^| oraz~nawiasów w~mniej niż~40~liniach kodu.
+Zastosowanie tego mechanizmu pozwoliło na~zrealizowanie kompletnego parsera wyrażeń arytmetycznych obejmującego operatory \verb|+|, \verb|-|, \verb|*|, \verb|/|, \verb|^| oraz~zagnieżdżone nawiasy w~mniej niż~40~liniach kodu.
 
 
-\section[Wdrożenia, testy i~eksperymenty]{Opis wdrożeń, testów i~eksperymentów}
-\label{sec:wdrozenia-testy}
+\section[Wdrożenia, testy i eksperymenty]{Wdrożenia, testy i~eksperymenty}
+\label{sec:wdrozenia-testy-eksperymenty}
 
 \subsection{Testowanie jednostkowe}
 \label{subsec:testowanie-jednostkowe}
@@ -664,22 +674,78 @@ Projekt zawiera kilka pełnych przykładów integracyjnych, demonstrujących dzi
 
 \subsubsection{Kalkulator wyrażeń arytmetycznych}
 
-Zaimplementowano parser wyrażeń arytmetycznych z~operatorami \verb|+|, \verb|-|, \verb|*|, \verb|/| oraz zagnieżdżonymi nawiasami.
-Akcje semantyczne obliczają wartość analizowanego wyrażenia.
+Zaimplementowano kompleksowy parser wyrażeń arytmetycznych demonstrujący pełne możliwości systemu ALPACA.
+Parser obsługuje szeroką~gamę operatorów (dodawanie, odejmowanie, mnożenie, dzielenie, modulo, potęgowanie,
+dzielenie całkowite) oraz~funkcje matematyczne (trygonometryczne, hiperboliczne i~odwrotne),
+a~także stałe matematyczne (pi, e, tau, nieskończoność, NaN). Akcje semantyczne obliczają wartość wyrażenia
+poprzez wyodrębnianie wartości liczbowych z~tokenów i~wykonywanie odpowiednich operacji arytmetycznych.
 
-\begin{itemize}
-    \item Przykładowe wejście: \verb|3 + 4 * 2|
-    \item Oczekiwany rezultat: \verb|11|
-\end{itemize}
+Lekser systemu obsługuje ignorowanie białych znaków i~komentarzy, definiuje operatory wieloznakowe (\\verb|**|, \\verb|//|)
+przed~operatorami jednoznakowymi, by~uniknąć konfliktów w~kolejności dopasowania. Ponadto rozpoznaje liczby zmiennoprzecinkowe
+i~całkowite (w~tym notację wykładniczą) oraz~funkcje matematyczne jako~słowa kluczowe.
+
+Parser definiuje kompleksowy zbiór reguł precedencji, gdzie potęgowanie ma~najwyższy priorytet,
+następnie operatory unarny plus i~minus, potem mnożenie i~operatory pochodne (modulo, dzielenie całkowite),
+a~wreszcie dodawanie i~odejmowanie jako~operatory o~najniższym priorytecie. Ta~hierarchia jest jawnie zdeklarowana
+w~zbiorze rozwiązań konfliktów (ang. \textit{resolutions}), zapewniając poprawną interpretację wyrażeń.
+
+System weryfikowany był na~trzech poziomach złożoności:
+
+\begin{enumerate}
+    \item \textbf{Test podstawowy} --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
+
+    \item \textbf{Test złożoności średniej} --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
+          takie jak~wyrażenie \verb|((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)...|,
+          potwierdzające poprawną ewaluację zagnieżdżonych wyrażeń;
+
+    \item \textbf{Test zaawansowany} --- wyrażenie zawierające funkcje trygonometryczne,
+          operatory potęgowania i~dzielenia całkowitego, takie jak~\verb|sin(pi/6) + cos(pi/3) + (2 ** 3 ** 2) / (3 + 1) + ...|,
+          demonstrujące prawidłową obsługę złożonych operacji i~funkcji matematycznych.
+\end{enumerate}
+
+Wszystkie testy przechodzą pomyślnie, co~świadczy o~poprawności implementacji leksera, parsera,
+zarządzania priorytetami operatorów oraz~akcji semantycznych w~kontekście wyrażeń o~dużej złożoności strukturalnej.
 
 \subsubsection{Parser JSON (uproszczony)}
 
-Zaimplementowano parser dla podzbioru formatu JSON (obsługujący obiekty, tablice, napisy, liczby, wartości logiczne i~\verb|null|).
+Zaimplementowano parser dla~podzbioru formatu JSON, demonstrujący obsługę złożonych struktur danych zbudowanych z~elementów primitywnych.
+Parser obsługuje wszystkie podstawowe typy danych JSON: wartości logiczne, wartości puste (\verb|null|), liczby zmiennoprzecinkowe,
+napisy, obiekty (mapy klucz-wartość) oraz~tablice (listy elementów). Akcje semantyczne transformują tokeny w~struktury danych reprezentujące
+obiekty i~tablice jako~typy Scali (\verb|Map[String, Any]| oraz~\verb|List[Any]|).
 
-\begin{itemize}
-    \item Przykładowe wejście: \verb|{"name": "Alice", "age": 30}|
-    \item Rezultat: struktura danych reprezentująca obiekt JSON\@.
-\end{itemize}
+Lekser ignoruje białe znaki i~rozpoznaje znaki interpunkcji (\verb|{|, \verb|}|, \verb|[|, \verb|]|, \verb|:|, \verb|,|) jako~oddzielne tokeny.
+Słowa kluczowe \verb|true|, \verb|false| i~\verb|null| są~tokenizowane odpowiednio jako~wartości logiczne i~puste.
+Liczby są~rozpoznawane za~pośrednictwem wyrażenia regularnego obsługującego notację dziesiętną ze~znakami i~częściami ułamkowymi,
+natomiast napisy są~wyodrębnianie poprzez dopasowanie tekstu w~cudzysłowach (z~obsługą znaków specjalnych poprzez backslash).
+
+Parser definiuje hierarchię reguł produkcji: `Value` stanowi punkt wejścia i~rozpoznaje wszystkie typy wartości JSON,
+zaś `Object` i~Array` są~regułami zagnieżdżonymi obsługującymi struktury złożone.
+Reguła `ObjectMembers` obsługuje sekwencyjne oddzielone przecinkami pary klucz-wartość,
+natomiast `ArrayElements` obsługuje listy elementów oddzielane przecinkami.
+Rekurencja lewostronna w~regułach `ObjectMembers` i~ArrayElements` pozwala na~parsowanie dowolnie długich struktur,
+zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
+
+System weryfikowany był na~czterech poziomach złożoności:
+
+\begin{enumerate}
+    \item \textbf{Test primitywnych wartości} --- proste wyrażenie \verb|true| zwracające wartość logiczną;
+
+    \item \textbf{Test struktur zagnieżdżonych} --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
+          takie jak~struktury zawierające dane osobowe (imię, wiek, kursy, adres z~ulicą i~kodem pocztowym),
+          demonstrujące prawidłową rekonstrukcję głębokich struktur danych;
+
+    \item \textbf{Test tablic obiektów} --- tablica zawierająca wiele obiektów o~jednolitej strukturze,
+          taka jak~lista rekordów z~polami identyfikacyjnymi i~nazwami, potwierdzająca obsługę iteracyjnych struktur;
+
+    \item \textbf{Test rzeczywistej złożoności} --- struktura naśladująca rzeczywisty format konfiguracyjny
+          (menu z~zagnieżdżonymi polami popup i~listami elementów menu z~akcjami),
+          zawierająca trzy poziomy zagnieżdżenia i~mieszaniny obiektów oraz~tablic.
+\end{enumerate}
+
+Wszystkie testy przechodzą pomyślnie, potwierdzając poprawność implementacji leksera w~obsłudze białych znaków i~znaków specjalnych,
+prawidłowość parsowania struktur rekurencyjnych, prawidłową transformację danych przez~akcje semantyczne
+oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności strukturalnej.
+
 
 \subsection{Benchmarki wydajności}
 \label{subsec:benchmarki-wydajnosci}
@@ -687,7 +753,6 @@ Zaimplementowano parser dla podzbioru formatu JSON (obsługujący obiekty, tabli
 Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \textit{ALPACA} z~innymi podejściami.
 
 TODO: to zmyślone
-
 
 \subsection{Walidacja poprawności}
 \label{subsec:walidacja-poprawnosci}
