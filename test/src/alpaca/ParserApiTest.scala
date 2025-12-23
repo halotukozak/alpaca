@@ -5,6 +5,10 @@ import Production as P
 import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.internal.lexer.Lexeme
+import alpaca.internal.lexer.LexerRefinement
+
+import scala.deriving.Mirror
 
 import scala.collection.mutable
 
@@ -31,19 +35,10 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
 
   case class CalcContext(
     names: mutable.Map[String, Int] = mutable.Map.empty,
-    errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
+    errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
   ) extends ParserCtx derives Copyable
 
   object CalcParser extends Parser[CalcContext] {
-    override val resolutions = Set(
-      P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      P(Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      P.ofName("plus").before(CalcLexer.PLUS, CalcLexer.MINUS),
-      P.ofName("plus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-      P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
-      P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    )
     val Expr: Rule[Int] = rule(
       { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
       { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
@@ -55,7 +50,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       { case CalcLexer.ID(id) =>
         ctx.names.getOrElse(
           id.value, {
-            ctx.errors.append(("undefined", id));
+            ctx.errors.append(("undefined", id, id.line));
             0
           },
         )
@@ -73,6 +68,16 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       { case Expr(expr) => expr },
     )
     val root = rule { case Statement(stmt) => stmt }
+
+    override val resolutions = Set(
+      P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("plus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+      P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
+      P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+    )
   }
 
   test("basic recognition of various tokens and literals") {
