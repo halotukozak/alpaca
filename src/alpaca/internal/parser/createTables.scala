@@ -71,6 +71,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     case '{ rule(${ Varargs(cases) }*) } =>
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
+          given Quotes = methSym.asQuotes
+
           val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
           val seq = param.asExprOf[Seq[Any]]
 

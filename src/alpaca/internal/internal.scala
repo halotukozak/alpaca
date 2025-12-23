@@ -36,7 +36,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
     override def transformTerm(tree: Term)(owner: Symbol): Term =
       filtered
         .collectFirst:
-          case (find, replace) if find == tree.symbol => replace
+          case (find, replace) if find == tree.symbol => replace.changeOwner(owner)
         .getOrElse(super.transformTerm(tree)(owner))
   }
 }
@@ -50,6 +50,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
+
 private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 

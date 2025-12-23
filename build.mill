@@ -27,7 +27,7 @@ object `package` extends ScalaModule with SonatypeCentralPublishModule with Scov
     "-language:noAutoTupling",
     "-Vprofile",
     "-Xprint-inline",
-    // "-Ycheck:all", // cannot be enabled when scoverage used :/
+    // "-Ycheck:all", // todo: cannot be enabled :/
     "-Ycheck:macros",
     // "-Ydebug-error",
     "-Ydebug-flags",

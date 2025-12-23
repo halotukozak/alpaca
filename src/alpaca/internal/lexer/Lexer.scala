@@ -43,7 +43,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
             if value.asTerm.symbol == tree.symbol =>
           compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
-              '{ DefinedToken[name, Ctx, String | Char]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
+              '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
 
         case '{ type name <: ValidNameLike; Token[name]($value: value)(using $ctx) } =>
           compileNameAndPattern[name](tree).map:
@@ -170,14 +170,14 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   )
 
   val body = {
-    val definedTokenVals = definedTokens.collect:
+    val definedTokenVals = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
         ValDef(
           cls.fieldMember(ValidName.from[name]),
           Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
         )
 
-    val ignoredTokenVals = ignoredTokens.collect:
+    val ignoredTokenVals = ignoredTokens.map:
       case '{ $token: IgnoredToken[name, Ctx] } =>
         ValDef(
           cls.fieldMember(ValidName.from[name]),
@@ -189,6 +189,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       ValDef(
         cls.fieldMember("compiled"),
         Some {
+          given Quotes = cls.fieldMember("compiled").asQuotes
           val regex = Expr(
             infos
               .map: tokenInfo =>
@@ -200,40 +201,48 @@ def lexerImpl[Ctx <: LexerCtx: Type](
               .regex, // we'd like to compile it here to fail in compile time if regex is invalid
           )
 
-          '{ Regex($regex) }.asTerm.changeOwner(cls.fieldMember("compiled"))
+          '{ Regex($regex) }.asTerm
         },
       ),
       ValDef(
         cls.fieldMember("tokens"),
         Some {
-          val tokens = infos.map:
-            case TokenInfo(name, _, _) =>
-              This(cls).select(cls.fieldMember(name)).asExprOf[Token[?, Ctx, ?]]
+          given Quotes = cls.fieldMember("tokens").asQuotes
+          val tokens = (definedTokenVals ++ ignoredTokenVals).map: valDef =>
+            Ref(valDef.symbol).asExprOf[Token[?, Ctx, ?]]
 
-          Expr.ofList(tokens).asTerm.changeOwner(cls.fieldMember("tokens"))
+          Expr.ofList(tokens).asTerm
         },
       ),
       ValDef(
         cls.fieldMember("byName"),
         Some {
+          given Quotes = cls.fieldMember("byName").asQuotes
           val all = Expr.ofSeq {
             definedTokenVals.map(valDef =>
               Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]])),
             )
           }
 
-          '{ Map($all*) }.asTerm.changeOwner(cls.fieldMember("byName"))
+          '{ Map($all*) }.asTerm
         },
       ),
       ValDef(
         cls.fieldMember("byLiteral"),
         Some {
+          given Quotes = cls.fieldMember("byLiteral").asQuotes
+
           val all = Expr.ofSeq {
             (definedTokenVals ++ ignoredTokenVals).collect:
               case valDef if valDef.name.length == 1 =>
-                Expr.ofTuple((Expr(valDef.name.head), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]]))
+                Expr.ofTuple(
+                  (
+                    Expr(valDef.name.head),
+                    Ref(valDef.symbol).asExprOf[Token[?, Ctx, ?]],
+                  ),
+                )
           }
-          '{ Map($all*) }.asTerm.changeOwner(cls.fieldMember("byLiteral"))
+          '{ Map($all*) }.asTerm
         },
       ),
     )
@@ -258,4 +267,3 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
-}
