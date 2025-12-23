@@ -17,10 +17,17 @@ import scala.annotation.tailrec
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
   import quotes.reflect.*
 
-  private val extractOrTypes: PartialFunction[Tree, List[Tree]] =
-    case Applied(tpt, List(left, right)) if tpt.tpe =:= TypeRepr.of[|] => extractOrTypes(left) ++ extractOrTypes(right)
-    case Typed(_, pattern) => extractOrTypes(pattern)
-    case pattern => List(pattern)
+  private def extractOrTypes(tree: Tree): List[Tree] = tree match
+    case tree @ Applied(tpt, List(left, right)) if tpt.tpe =:= TypeRepr.of[|] =>
+      (tree.toString + "\n").soft
+      extractOrTypes(left) ++ extractOrTypes(right)
+    case tree @ Typed(_, pattern) =>
+      (tree.toString + "\n").soft
+      extractOrTypes(pattern)
+    case pattern =>
+      (pattern.toString + "\n").soft
+      List(pattern)
+
   /**
    * Compiles a pattern tree into token information.
    *
@@ -68,10 +75,10 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         case (ConstantType(StringConstant(name)), Literal(CharConstant(regex))) =>
           TokenInfo.unsafe(name, Vector(regex)) :: Nil
         // case x : ("regex" | 'l') => Token["name"]
-        case (ConstantType(StringConstant(str)), extractOrTypes(alternatives)) =>
+        case (ConstantType(StringConstant(str)), alternatives) =>
           TokenInfo.unsafe(
             str,
-            alternatives
+            extractOrTypes(alternatives)
               .unsafeMap:
                 case Literal(StringConstant(str)) => str
                 case Singleton(Literal(StringConstant(str))) => str
@@ -80,8 +87,8 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
               .toVector,
           ) :: Nil
         // case x: ("regex" | 'l') => Token[x.type]
-        case (TermRef(qual, name), extractOrTypes(alternatives)) =>
-          alternatives.unsafeMap:
+        case (TermRef(qual, name), alternatives) =>
+          extractOrTypes(alternatives).unsafeMap:
             case Literal(StringConstant(str)) => TokenInfo.unsafe(str, Vector(str))
             case Singleton(Literal(StringConstant(str))) => TokenInfo.unsafe(str, Vector(str))
             case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))

@@ -7,6 +7,7 @@ import scala.annotation.compileTimeOnly
 import NamedTuple.AnyNamedTuple
 import java.util.jar.Attributes.Name
 import scala.collection.mutable
+import scala.util.NotGiven
 
 /**
  * Creates a lexer from a DSL-based definition.

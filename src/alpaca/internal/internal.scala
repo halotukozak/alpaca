@@ -29,14 +29,28 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
    * @param queries pairs of (symbol to find, replacement term)
    * @return a TreeMap that performs the replacements
    */
-  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap {
-    // skip NoSymbol
-    private val filtered = queries.view.filterNot(_.find.isNoSymbol)
+  def apply(queries: (find: Tree, replace: Term)*): TreeMap = new TreeMap {
+    private val filtered = queries.view
+      .collect:
+        case (find, replace) if !find.symbol.isNoSymbol => (find.symbol, replace)
+      .toMap
+
+    private val singletons: Map[Constant | Null, Term] = queries.view
+      .collect:
+        case (Bind(_, Literal(term)), replace) => (term, replace)
+        case (Literal(term), replace) => (term, replace)
+      .toMap
 
     override def transformTerm(tree: Term)(owner: Symbol): Term =
+      val term = tree match
+        case Bind(_, Literal(term)) => term
+        case Literal(term) => term
+        case _ => null
+
       filtered
-        .collectFirst:
-          case (find, replace) if find == tree.symbol => replace.changeOwner(owner)
+        .get(tree.symbol)
+        .orElse(singletons.get(term))
+        .map(_.changeOwner(owner))
         .getOrElse(super.transformTerm(tree)(owner))
   }
 }

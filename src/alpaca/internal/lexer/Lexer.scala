@@ -5,6 +5,8 @@ package lexer
 import scala.NamedTuple.NamedTuple
 import scala.util.matching.Regex
 import NamedTuple.AnyNamedTuple
+import scala.annotation.tailrec
+import org.jparsec.Terminals.StringLiteral
 
 //todo: private[alpaca]
 def lexerImpl[Ctx <: LexerCtx: Type](
@@ -22,25 +24,27 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
   val (tokens, infos) = cases.foldLeft((List.empty[Expr[Token[?, Ctx, ?]]], List.empty[TokenInfo[?]])):
     case ((accTokens, accInfos), CaseDef(tree, None, body)) =>
-      def replaceWithNewCtx(newCtx: Term) = new ReplaceRefs[quotes.type].apply(
-        (find = oldCtx.symbol, replace = newCtx),
-        (find = tree.symbol, replace = Select.unique(newCtx, "lastRawMatched")),
-      )
+      def replaceWithNewCtx(newCtx: Term) =
+        new ReplaceRefs[quotes.type].apply(
+          (find = oldCtx, replace = newCtx),
+          (find = tree, replace = Select.unique(newCtx, "lastRawMatched")),
+        )
 
       def extractSimple(
         ctxManipulation: Expr[CtxManipulation[Ctx]],
       ): PartialFunction[Expr[TokenDefinition[ValidNameLike, Ctx, Any]], List[Expr[Token[?, Ctx, ?]]]] =
         case '{ Token.Ignored(using $ctx) } =>
           compileNameAndPattern[Nothing](tree).map:
-            case '{ $tokenInfo: TokenInfo[name] } => '{ IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) }
+            case '{ $tokenInfo: TokenInfo[name] } =>
+              '{ IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) }
 
         case '{ type name <: ValidNameLike; Token[name](using $ctx) } =>
           compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
-        case '{ type name <: ValidNameLike; Token[name]($value: String | Char)(using $ctx) }
-            if value.asTerm.symbol == tree.symbol =>
+        case '{ type name <: ValidNameLike; Token[name]($value: value)(using $ctx) }
+            if TypeRepr.of[value] =:= tree.asInstanceOf[Term].tpe => // todo: find sth better than cast
           compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
@@ -196,7 +200,6 @@ def lexerImpl[Ctx <: LexerCtx: Type](
                 val regex = tokenInfo.toEscapedRegex // todo: literals should be handled separately
                 s"(?<${tokenInfo.regexGroupName}>$regex)"
               .mkString("|")
-              .tap(_.soft)
               .r
               .regex, // we'd like to compile it here to fail in compile time if regex is invalid
           )
