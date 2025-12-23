@@ -29,8 +29,8 @@ object Tables:
    * @param debugSettings debug configuration
    * @return the generated parse and action tables
    */
-  inline given [Ctx <: ParserCtx](using inline debugSettings: DebugSettings): Tables[Ctx] =
-    ${ createTablesImpl[Ctx](using '{ debugSettings }) }
+  inline given [Ctx <: ParserCtx](using inline debugSettings: DebugSettings.Any): Tables[Ctx] =
+    ${ createTablesImpl[Ctx]('{ debugSettings }) }
 
 /**
  * Macro implementation that builds parse and action tables at compile time.
@@ -51,9 +51,9 @@ object Tables:
  * @return an expression containing the parse and action tables
  */
 private def createTablesImpl[Ctx <: ParserCtx: Type](
-  using debugSettings: Expr[DebugSettings],
+  debugSettings: Expr[DebugSettings.Any],
 )(using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = runWithTimeout:
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = runWithTimeout(debugSettings.valueOrAbort):
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner

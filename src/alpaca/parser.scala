@@ -188,7 +188,7 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
    * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse(lexems: List[Lexeme[?, ?]])(using inline debugSettings: DebugSettings): (
+  inline def parse(lexems: List[Lexeme[?, ?]])(using inline debugSettings: DebugSettings.Any): (
     ctx: Ctx,
     result: (parser.root.type match
       case Rule[t] => t

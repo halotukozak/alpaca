@@ -11,9 +11,9 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
-)(using debugSettings: Expr[DebugSettings],
+  debugSettings: Expr[DebugSettings.Any],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx]] = runWithTimeout {
+): Expr[Tokenization[Ctx]] = runWithTimeout(debugSettings.valueOrAbort):
   import quotes.reflect.*
   // val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$") //todo: parser debug
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]

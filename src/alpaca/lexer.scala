@@ -37,9 +37,9 @@ transparent inline def lexer[Ctx <: LexerCtx](
   copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
 )(using inline
-  debugSettings: DebugSettings,
+  debugSettings: DebugSettings.Any,
 ): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages })(using '{ debugSettings }) }
+  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ betweenStages }, '{ debugSettings }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token {

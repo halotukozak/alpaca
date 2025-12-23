@@ -77,26 +77,17 @@ private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
 
 // todo: it's temporary, remove when we have a proper timeout implementation
-inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
+inline private[internal] def runWithTimeout[T](
+  debugSettings: DebugSettings.Any,
+)(
+  inline block: DebugSettings.Any ?=> T,
+): T =
   import scala.concurrent.{Await, Future}
   import scala.concurrent.duration.*
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val future = Future(block)
+  val future = Future(block(using debugSettings))
   Await.result(future, debugSettings.timeout.seconds)
-
-given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] with
-  def apply(x: Expr[DebugSettings]): DebugSettings =
-    import quotes.reflect.*
-    x match
-      case '{ DebugSettings($enabled, $directory, $timeout) } =>
-        DebugSettings(
-          enabled = enabled.valueOrAbort,
-          directory = directory.valueOrAbort,
-          timeout = timeout.valueOrAbort,
-        )
-      case _ =>
-        report.errorAndAbort("DebugSettings must be defined inline")
 
 given [T: ToExpr as toExpr]: ToExpr[T | Null] with
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match

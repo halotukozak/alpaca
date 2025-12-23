@@ -45,7 +45,7 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   private[alpaca] def unsafeParse[R](
     lexems: List[Lexeme[?, ?]],
-  )(using debugSettings: DebugSettings,
+  )(using debugSettings: DebugSettings.Any,
   ): (ctx: Ctx, result: R | Null) = {
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
