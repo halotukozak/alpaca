@@ -34,7 +34,7 @@ enum Result[+T]:
     case Failure(value, messages) =>
       f(value) match
         case Success(newValue) => Failure(newValue, messages)
-        case Failure(newValue, newmessages) => Failure(newValue, messages ++ newmessages)
+        case Failure(newValue, newMessages) => Failure(newValue, messages ++ newMessages)
 
   def filter(predicate: T => Boolean, message: Message): Result[T] = this match
     case Success(value) if predicate(value) => this
@@ -46,7 +46,7 @@ enum Result[+T]:
     case Result.Success(value) => s"$value"
     case Result.Failure(value, messages) =>
       s"""|$value
-          |${messages.toList.mkString("\n").trim} //todo: can we not use .toList?
+          |${messages.toList.mkString("\n").trim}
           |""".stripMargin
 
 object Result:

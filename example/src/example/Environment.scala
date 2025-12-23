@@ -123,9 +123,9 @@ val globalFunctions = Map[String, DynamicFunction](
         .mkString(" "),
     )
   },
-  "ZEROS" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(0)))) },
-  "ONES" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
-  "EYE" -> { case (n: Int) *: EmptyTuple => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
+  "zeros" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(0)))) },
+  "ones" -> { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(1)))) },
+  "eye" -> { case (n: Int) *: EmptyTuple => Matrix.tabulate(n, n)((i, j) => if i == j then 1 else 0) },
   "INIT" -> {
     case args @ (_: Numerical) *: _ => Vector(args.toList.asInstanceOf[List[Numerical]])
     case args @ (_: Vector) *: _ => Matrix(args.toList.asInstanceOf[List[Vector]])
@@ -137,7 +137,7 @@ val globalFunctions = Map[String, DynamicFunction](
   "<" -> { case (a: Numerical, b: Numerical) => a < b },
   ">" -> { case (a: Numerical, b: Numerical) => a > b },
   "DOTADD" -> { case (a: Matrix, b: Matrix) => a + b },
-  "DOTSUBB" -> { case (a: Matrix, b: Matrix) => a - b },
+  "DOTSUB" -> { case (a: Matrix, b: Matrix) => a - b },
   "DOTMUL" -> { case (a: Matrix, b: Matrix) => a * b },
   "DOTDIV" -> { case (a: Matrix, b: Matrix) => a / b },
   "TRANSPOSE" -> { case (m: Matrix) *: EmptyTuple =>
