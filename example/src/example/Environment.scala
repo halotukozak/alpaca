@@ -62,16 +62,16 @@ object Vector:
       source(index)
 
     def +(other: Vector): Vector =
-      for (v, w) <- source zip source yield Numerical.+(v)(w)
+      for (v, w) <- source zip other yield Numerical.+(v)(w)
 
     def -(other: Vector): Vector =
-      for (v, w) <- source zip source yield Numerical.-(v)(w)
+      for (v, w) <- source zip other yield Numerical.-(v)(w)
 
     def *(other: Vector): Vector =
-      for (v, w) <- source zip source yield Numerical.*(v)(w)
+      for (v, w) <- source zip other yield Numerical.*(v)(w)
 
     def /(other: Vector): Vector =
-      for (v, w) <- source zip source yield Numerical./(v)(w)
+      for (v, w) <- source zip other yield Numerical./(v)(w)
 
 opaque type Matrix = Array[Vector]
 
@@ -91,16 +91,16 @@ object Matrix:
       source(row)
 
     def +(other: Matrix): Matrix =
-      Matrix(for (v, w) <- source zip source yield Vector.+(v)(w))
+      Matrix(for (v, w) <- source zip other yield Vector.+(v)(w))
 
     def -(other: Matrix): Matrix =
-      Matrix(for (v, w) <- source zip source yield Vector.-(v)(w))
+      Matrix(for (v, w) <- source zip other yield Vector.-(v)(w))
 
     def *(other: Matrix): Matrix =
-      Matrix(for (v, w) <- source zip source yield Vector.*(v)(w))
+      Matrix(for (v, w) <- source zip other yield Vector.*(v)(w))
 
     def /(other: Matrix): Matrix =
-      Matrix(for (v, w) <- source zip source yield Vector./(v)(w))
+      Matrix(for (v, w) <- source zip other yield Vector./(v)(w))
 
 type DynamicFunction = PartialFunction[Tuple, ?]
 
