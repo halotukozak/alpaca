@@ -101,7 +101,7 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
     \item \nameref{ch:implementacja}.\ (BK)
     \item \nameref{ch:lexer-algorithmic}.\ (BB)
     \item \nameref{ch:parser-algorithmic}.\ (BB)
-    \item TODO (BB)
+    \item \nameref{ch:analiza-porownawcza}.\ (BB)
     \item \nameref{ch:organizacja-pracy}.\ (BK)
 \end{itemize}
 
@@ -519,7 +519,7 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 
 \subsubsection{Rezultat}
 
-Osiągnięto pokrycie testami na~poziomie około TODO kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
+Osiągnięto pokrycie testami na~poziomie około 15\% kodu, przy czym objęto nimi główne ścieżki wykonania oraz przypadki brzegowe.
 
 \subsection[Problem 6: Błędy w kolejności definicji tokenów]{Problem 6: Błędy w~kolejności definicji tokenów}
 \label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
@@ -752,7 +752,13 @@ oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności struktur
 
 Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \textit{ALPACA} z~innymi podejściami.
 
-TODO: to zmyślone
+Testy wydajnościowe obejmowały dwa rodzaje gramatyk (wyrażenia arytmetyczne oraz format JSON), dla~których przygotowano zarówno dane o~strukturze iteracyjnej (płaskiej), jak~i~rekurencyjnej (głęboko zagnieżdżonej).
+Pomiary wykonano dla różnych rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów.
+
+System \textit{ALPACA} porównano z~biblioteką SLY (Python) reprezentującą podejście oparte na~refleksji oraz~z~FastParse (Scala) reprezentującą kombinatory parserów.
+Dla każdego narzędzia mierzono czas leksykalizacji, czas parsowania oraz całkowity czas przetwarzania.
+
+Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza porównawcza przedstawione są~w~rozdziale~\ref{ch:analiza-porownawcza}.
 
 \subsection{Walidacja poprawności}
 \label{subsec:walidacja-poprawnosci}
