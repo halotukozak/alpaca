@@ -141,39 +141,6 @@ private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Pos
      |sourceFile: ${pos.sourceFile},
      |""".stripMargin
 
-/**
- * An opaque type representing a source code position for debug messages.
- *
- * This type wraps a line number and is used to annotate debug output
- * with the location where a debug call was made.
- */
-opaque private[internal] type DebugPosition = Int
-
-private[internal] object DebugPosition {
-
-  /**
-   * Implicit instance that captures the current source line number.
-   *
-   * When used in a debug call, this automatically provides the line number
-   * where the call was made.śśś
-   */
-  inline given here: DebugPosition = ${ hereImpl }
-
-  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
-    import quotes.reflect.*
-    val pos = Position.ofMacroExpansion
-    Expr(pos.startLine + 1)
-  }
-
-  given ToExpr[DebugPosition] with
-    def apply(x: DebugPosition)(using quotes: Quotes): Expr[DebugPosition] =
-      ToExpr.IntToExpr(x)
-
-  given FromExpr[DebugPosition] with
-    def unapply(x: Expr[DebugPosition])(using Quotes): Option[DebugPosition] =
-      FromExpr.IntFromExpr.unapply(x)
-}
-
 extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
   /**
    * Prints the tree and aborts compilation at that point.
@@ -185,7 +152,8 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @return the tree (never actually returns due to abort)
    */
   private[internal] def dbg(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
+    import quotes.reflect.*
+    report.errorAndAbort(show"${Printer.TreeShortCode.show(tree)} $pos")
     tree
   }
 
@@ -198,7 +166,8 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @return the tree unchanged
    */
   private[internal] def info(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.info(show"$tree at line $pos")
+    import quotes.reflect.*
+    report.info(show"${Printer.TreeShortCode.show(tree)} $pos")
     tree
   }
 
@@ -234,7 +203,7 @@ extension (using quotes: Quotes)(e: Any)
    * @throws Nothing always aborts compilation
    */
   private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+    quotes.reflect.report.errorAndAbort(show"${e.toString} $pos")
 
   /**
    * Prints any value's string representation as an info message.
@@ -243,7 +212,7 @@ extension (using quotes: Quotes)(e: Any)
    * @return the value unchanged
    */
   private[internal] def soft(using pos: DebugPosition): e.type =
-    quotes.reflect.report.info(show"${e.toString} at line $pos")
+    quotes.reflect.report.info(show"${e.toString} $pos")
     e
 
 /**
@@ -255,10 +224,11 @@ extension (using quotes: Quotes)(e: Any)
  * @param body the code to inspect
  * @param pos implicit source position
  */
-inline private[internal] def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
-private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
+inline private[internal] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
+
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
   import quotes.reflect.*
-  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
+  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
 /**
  * Shows the raw AST structure of a code block and aborts compilation.
@@ -269,8 +239,7 @@ private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes:
  * @param body the code to inspect
  * @param pos implicit source position
  */
-inline private[internal] def showRawAst(inline body: Any)(using pos: DebugPosition) =
-  ${ showRawAstImpl('{ body }, '{ pos }) }
-private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
+inline private[internal] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
   import quotes.reflect.*
-  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
+  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

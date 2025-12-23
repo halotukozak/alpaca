@@ -62,8 +62,6 @@ private[internal] object Showable {
     import quotes.reflect.*
     expr => expr.asTerm.show
 
-  given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
-
   given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
 
   /**

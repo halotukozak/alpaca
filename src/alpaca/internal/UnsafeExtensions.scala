@@ -5,13 +5,15 @@ import scala.collection.IterableOnceOps
 import scala.quoted.*
 
 inline private[alpaca] def raiseShouldNeverBeCalled[E](elem: E)[T]: T =
-  val showable = compiletime.summonFrom:
-    case s: Showable[E] => s
-    case _ => Showable.fromToString
+  val shown = compiletime
+    .summonFrom:
+      case s: Showable[E] => s
+      case _ => Showable.fromToString
+    .show(elem)
 
   val pos = compiletime.summonInline[DebugPosition]
 
-  val message = "This code should never be called: " + showable.show(elem) + " at " + pos
+  val message = show"This code should never be called: $shown $pos"
 
   compiletime.summonFrom:
     case quotes: Quotes => quotes.reflect.report.error(message)
