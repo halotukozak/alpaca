@@ -4,6 +4,8 @@ import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 import scala.util.control.NoStackTrace
 
+import runtime._
+
 enum Exit extends RuntimeException with NoStackTrace:
   case ReturnException(value: Any)
   case BreakException
@@ -61,10 +63,10 @@ object MatrixInterpreter extends TreeTraverser[Env, ScalaResult]:
 
     case AST.Assign(varRef: AST.VectorRef, expr, line) =>
       val vector = env.getValue[Vector](varRef.vector.name, line)
-      vector(varRef.element.eval[Int](env)) = expr.eval[Int](env)
+      vector(varRef.element.eval[Int](env)) = expr.eval[Number](env)
 
     case AST.Assign(AST.MatrixRef(matrix, row: AST.Expr, col: AST.Expr, _), expr, line) =>
-      env.getValue[Matrix](matrix.name, line)(row.eval[Int](env))(col.eval[Int](env)) = expr.eval[Int](env)
+      env.getValue[Matrix](matrix.name, line)(row.eval[Int](env))(col.eval[Int](env)) = expr.eval[Number](env)
 
     case _ => ???
 

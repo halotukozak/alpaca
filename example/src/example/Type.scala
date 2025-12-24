@@ -120,7 +120,6 @@ object Type:
         case EmptyTuple => "()"
         case Type.VarArg(tpe) => s"...$tpe"
         case t: Tuple => t.toList.mkString("(", ", ", ")")
-        case other => other.toString
       s"OverloadedFunction$argsRepr => $resultHint"
 
     private def unsafeResult(arguments: scala.Any) =
@@ -293,56 +292,3 @@ val matrix_type = Type.OverloadedFunction(
     case e @ AST.Literal(tpe, _, _) => Result.error(e.line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
     case e => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
 )
-
-val symbols: Map[String, AST.SymbolRef] = Map(
-  // unary
-  "UMINUS" -> (unary_numerical_type | unary_vector_type | unary_matrix_type),
-  "TRANSPOSE" -> Type.OverloadedFunction(
-    arg = Type.Matrix(),
-    resultHint = Type.Matrix(),
-    resultTypeFactory = expr =>
-      val tpe = expr.tpe.asInstanceOf[Type.Matrix]
-      Result.Success(Type.Matrix(tpe.cols, tpe.rows)),
-  ),
-  "eye" -> matrix_type,
-  "zeros" -> matrix_type,
-  "ones" -> matrix_type,
-
-  // binary
-  "+" -> binary_numerical_type,
-  "-" -> binary_numerical_type,
-  "*" -> (binary_numerical_type | scalar_type | binary_matrix_type | Type.Function(Tuple(Type.String), Type.Int)),
-  "/" -> (binary_numerical_type | scalar_type),
-  "==" -> binary_numerical_condition_type,
-  "!=" -> binary_numerical_condition_type,
-  "<=" -> binary_numerical_condition_type,
-  ">=" -> binary_numerical_condition_type,
-  ">" -> binary_numerical_condition_type,
-  "<" -> binary_numerical_condition_type,
-  "DOTADD" -> (binary_matrix_type | binary_vector_type),
-  "DOTSUB" -> (binary_matrix_type | binary_vector_type),
-  "DOTMUL" -> (binary_matrix_type | binary_vector_type),
-  "DOTDIV" -> (binary_matrix_type | binary_vector_type),
-
-  // varargs
-  "INIT" ->
-    (Type.OverloadedFunction(
-      args = Type.VarArg(Type.Numerical),
-      resultHint = Type.Vector(),
-      resultTypeFactory = args => Result.Success(Type.Vector(args.size)),
-    ) | Type.OverloadedFunction(
-      args = Type.VarArg(Type.Vector()),
-      resultHint = Type.Matrix(),
-      resultTypeFactory = args =>
-        args.map(_.tpe.asInstanceOf[Type.Vector].arity).distinct match
-          case Seq(arity) =>
-            Result.Success(Type.Matrix(args.size, arity))
-          case arities =>
-            val e = args.head
-            if !arities.contains(null) then
-              Result.warn(e.line)(Type.Matrix(args.size), s"Vector arities $arities are not the same")
-            else Result.warn(e.line)(Type.Matrix(), "Cannot infer matrix size"),
-    )),
-  "PRINT" -> Type.Function(Type.VarArg(Type.Any), Type.Unit),
-).map:
-  case (name, tpe) => name -> AST.SymbolRef(tpe, name, -1)

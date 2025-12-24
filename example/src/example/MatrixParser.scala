@@ -25,7 +25,7 @@ object MatrixParser extends Parser {
     { case ML.break(l) => AST.Break(l.line) },
     { case ML.continue(l) => AST.Continue(l.line) },
     { case (ML.`return`(l), Expr(e)) => AST.Return(e, l.line) },
-    { case (ML.print(l), Varargs(args)) => AST.Apply(symbols("PRINT"), args, Type.Undef, l.line) },
+    { case (ML.print(l), Varargs(args)) => AST.Apply(runtime.Function.PRINT.toRef, args, Type.Undef, l.line) },
     { case Assignment(a) => a },
   )
 
@@ -60,34 +60,40 @@ object MatrixParser extends Parser {
   }
 
   def Comparator: Rule[String] = rule(
-    { case ML.`>`(_) => ">" },
-    { case ML.`<`(_) => "<" },
-    { case ML.EQUAL(_) => "==" },
-    { case ML.NOT_EQUAL(_) => "!=" },
-    { case ML.LESS_EQUAL(_) => "<=" },
-    { case ML.GREATER_EQUAL(_) => ">=" },
+    { case ML.`>`(comp) => comp.name },
+    { case ML.`<`(comp) => comp.name },
+    { case ML.EQUAL(comp) => comp.name },
+    { case ML.NOT_EQUAL(comp) => comp.name },
+    { case ML.LESS_EQUAL(comp) => comp.name },
+    { case ML.GREATER_EQUAL(comp) => comp.name },
   )
 
   def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
     AST.Apply(
-      symbols(op).asInstanceOf[AST.SymbolRef],
+      runtime.Function.valueOf(op).toRef,
       scala.List(e1, e2),
       Type.Undef,
       e1.line,
     )
   }
 
-  def AssignOp: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
-    { case ML.ADDASSIGN(_) => (e1, e2) => AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case ML.SUBASSIGN(_) => (e1, e2) => AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case ML.MULASSIGN(_) => (e1, e2) => AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line) },
-    { case ML.DIVASSIGN(_) => (e1, e2) => AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line) },
+  def AssignOp: Rule[String] = rule(
+    { case ML.ADDASSIGN(op) => op.name },
+    { case ML.SUBASSIGN(op) => op.name },
+    { case ML.MULASSIGN(op) => op.name },
+    { case ML.DIVASSIGN(op) => op.name },
+  )
+
+  def Assign: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
+    { case AssignOp(op) =>
+      (e1, e2) => AST.Apply(runtime.Function.valueOf(op).toRef, scala.List(e1, e2), Type.Undef, e1.line)
+    },
     { case ML.`=`(_) => (e1, e2) => e2 },
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (Var(v), AssignOp(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
-    { case (Element(el), AssignOp(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
+    { case (Var(v), Assign(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
+    { case (Element(el), Assign(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
   )
 
   def FunctionName: Rule[String] = rule(
@@ -97,7 +103,7 @@ object MatrixParser extends Parser {
   )
 
   def Matrix: Rule[AST.Apply] = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
-    AST.Apply(symbols("INIT"), varArgs, Type.Undef, varArgs.headOption.map(_.line).getOrElse(-1))
+    AST.Apply(runtime.Function.INIT.toRef, varArgs, Type.Undef, varArgs.headOption.map(_.line).getOrElse(-1))
   }
 
   def Element: Rule[AST.Ref] = rule { case (Var(v), ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
@@ -118,39 +124,39 @@ object MatrixParser extends Parser {
     { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
     { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
-      AST.Apply(symbols("UMINUS"), scala.List(e), Type.Undef, l.line)
+      AST.Apply(runtime.Function.UMINUS.toRef, scala.List(e), Type.Undef, l.line)
     }: @name("uminus"),
     { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
-      AST.Apply(symbols("+"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.+.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("add"),
     { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
-      AST.Apply(symbols("-"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.-.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("sub"),
     { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
-      AST.Apply(symbols("*"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.*.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("mul"),
     { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
-      AST.Apply(symbols("/"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function./.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("div"),
     { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTADD"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTADD.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotadd"),
     { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTSUB"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTSUB.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotsub"),
     { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTMUL"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTMUL.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotmul"),
     { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      AST.Apply(symbols("DOTDIV"), scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTDIV.toRef, scala.List(e1, e2), Type.Undef, e1.line)
     }: @name("dotdiv"),
-    { case (Expr(e), ML.`'`(_)) => AST.Apply(symbols("TRANSPOSE"), scala.List(e), Type.Undef, e.line) },
+    { case (Expr(e), ML.`'`(_)) => AST.Apply(runtime.Function.TRANSPOSE.toRef, scala.List(e), Type.Undef, e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
     { case Matrix(m) => m },
     { case (FunctionName(name), ML.`\\(`(_), Varargs(args), ML.`\\)`(_)) =>
-      AST.Apply(symbols(name), args, Type.Undef, args.headOption.map(_.line).getOrElse(-1))
+      AST.Apply(runtime.Function.valueOf(name).toRef, args, Type.Undef, args.headOption.map(_.line).getOrElse(-1))
     },
   )
 

@@ -67,3 +67,5 @@ object AST:
   case class Continue(line: Int) extends Statement
 
   case class Break(line: Int) extends Statement
+
+extension (func: runtime.Function) private def toRef = AST.SymbolRef(func.tpe, func.productPrefix, -1)
