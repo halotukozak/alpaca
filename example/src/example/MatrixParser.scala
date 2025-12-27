@@ -48,7 +48,7 @@ object MatrixParser extends Parser {
     AST.While(cond, body, l.line)
   }
 
-  def For: Rule[AST.For] = rule { case (ML.`for`(l), ML.ID(id), ML.`=`(_), Range(r), Block(body)) =>
+  def For: Rule[AST.For] = rule { case (ML.`for`(l), ML.Id(id), ML.`=`(_), Range(r), Block(body)) =>
     AST.For(AST.SymbolRef(Type.Int, id.value, id.line), r, body, l.line)
   }
 
@@ -56,25 +56,9 @@ object MatrixParser extends Parser {
     AST.Range(start, end, start.line)
   }
 
-  def Comparator: Rule[String] = rule(
-    { case ML.`>`(comp) => comp.name },
-    { case ML.`<`(comp) => comp.name },
-    { case ML.EQUAL(comp) => comp.name },
-    { case ML.NOT_EQUAL(comp) => comp.name },
-    { case ML.LESS_EQUAL(comp) => comp.name },
-    { case ML.GREATER_EQUAL(comp) => comp.name },
-  )
-
-  def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
-    AST.Apply(runtime.Function.valueOf(op).toRef, List(e1, e2), Type.Undef, e1.line)
+  def Condition: Rule[AST.Expr] = rule { case (Expr(e1), ML.Comparator(op), Expr(e2)) =>
+    AST.Apply(runtime.Function.valueOf(op.value).toRef, List(e1, e2), Type.Undef, e1.line)
   }
-
-  def AssignOp: Rule[String] = rule(
-    { case ML.ADDASSIGN(op) => op.name },
-    { case ML.SUBASSIGN(op) => op.name },
-    { case ML.MULASSIGN(op) => op.name },
-    { case ML.DIVASSIGN(op) => op.name },
-  )
 
   def AssignTarget: Rule[AST.Ref] = rule(
     { case Var(v) => v },
@@ -82,20 +66,14 @@ object MatrixParser extends Parser {
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (AssignTarget(target), AssignOp(op), Expr(e)) =>
+    { case (AssignTarget(target), ML.AssignOp(op), Expr(e)) =>
       AST.Assign(
         target,
-        AST.Apply(runtime.Function.valueOf(op).toRef, List(target, e), Type.Undef, target.line),
+        AST.Apply(runtime.Function.valueOf(op.name).toRef, List(target, e), Type.Undef, target.line),
         target.line,
       )
     },
     { case (AssignTarget(target), ML.`=`(_), Expr(e)) => AST.Assign(target, e, target.line) },
-  )
-
-  def FunctionName: Rule[String] = rule(
-    { case ML.eye(name) => name.value },
-    { case ML.zeros(name) => name.value },
-    { case ML.ones(name) => name.value },
   )
 
   def Matrix: Rule[AST.Apply] = rule { case (ML.`\\[`(_), Varargs(varArgs), ML.`\\]`(_)) =>
@@ -112,12 +90,12 @@ object MatrixParser extends Parser {
         throw new MatrixRuntimeException("Invalid matrix element reference", v.line)
   }
 
-  def Var: Rule[AST.SymbolRef] = rule { case ML.ID(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
+  def Var: Rule[AST.SymbolRef] = rule { case ML.Id(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
 
   def Expr: Rule[AST.Expr] = rule(
-    { case ML.INTNUM(l) => AST.Literal(Type.Int, l.value, l.line) },
-    { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
-    { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
+    { case ML.Int(l) => AST.Literal(Type.Int, l.value, l.line) },
+    { case ML.Float(l) => AST.Literal(Type.Float, l.value, l.line) },
+    { case ML.String(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
       AST.Apply(runtime.Function.UMINUS.toRef, List(e), Type.Undef, l.line)
     }: @name("uminus"),
@@ -133,25 +111,16 @@ object MatrixParser extends Parser {
     { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
       AST.Apply(runtime.Function./.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("div"),
-    { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTADD.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("dotadd"),
-    { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTSUB.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("dotsub"),
-    { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTMUL.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("dotmul"),
-    { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTDIV.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("dotdiv"),
+    { case (Expr(e1), ML.DotOp(op), Expr(e2)) =>
+      AST.Apply(runtime.Function.valueOf(op.value).toRef, List(e1, e2), Type.Undef, e1.line)
+    }: @name("dot"),
     { case (Expr(e), ML.`'`(_)) => AST.Apply(runtime.Function.TRANSPOSE.toRef, List(e), Type.Undef, e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
     { case Matrix(m) => m },
-    { case (FunctionName(name), ML.`\\(`(_), Varargs(args), ML.`\\)`(_)) =>
-      AST.Apply(runtime.Function.valueOf(name).toRef, args, Type.Undef, args.headOption.map(_.line).getOrElse(-1))
+    { case (ML.Function(name), ML.`\\(`(_), Varargs(args), ML.`\\)`(_)) =>
+      AST.Apply(runtime.Function.valueOf(name.value).toRef, args, Type.Undef, args.headOption.map(_.line).getOrElse(-1))
     },
   )
 
@@ -162,20 +131,15 @@ object MatrixParser extends Parser {
 
   override val resolutions: Set[ConflictResolution] = Set(
     ML.`'`.before(P.ofName("uminus")),
-    P.ofName("uminus").before(P.ofName("dotmul"), P.ofName("dotdiv")),
-    P.ofName("dotmul").before(ML.DOTMUL, ML.DOTDIV),
-    ML.DOTMUL.before(P.ofName("mul"), P.ofName("div")),
-    P.ofName("dotdiv").before(ML.DOTMUL, ML.DOTDIV),
-    ML.DOTDIV.before(P.ofName("mul"), P.ofName("div")),
+    P.ofName("uminus").before(P.ofName("dot")),
+    P.ofName("dot").before(P.ofName("mul"), P.ofName("div")),
+    P.ofName("dot").before(ML.DotOp),
+    ML.DotOp.before(P.ofName("mul"), P.ofName("div")),
     P.ofName("mul").before(ML.`\\*`, ML.`/`),
-    ML.`\\*`.before(P.ofName("dotadd"), P.ofName("dotsub")),
     P.ofName("div").before(ML.`\\*`, ML.`/`),
-    ML.`/`.before(P.ofName("dotadd"), P.ofName("dotsub")),
-    P.ofName("dotadd").before(ML.DOTADD, ML.DOTSUB),
-    ML.DOTADD.before(P.ofName("add"), P.ofName("sub")),
-    P.ofName("dotsub").before(ML.DOTADD, ML.DOTSUB),
-    ML.DOTSUB.before(P.ofName("add"), P.ofName("sub")),
     P.ofName("add").before(ML.`\\+`, ML.`-`),
+    P.ofName("add").after(ML.`\\*`, ML.`/`),
+    P.ofName("sub").after(ML.`\\*`, ML.`/`),
     P.ofName("sub").before(ML.`\\+`, ML.`-`),
     P.ofName("if-else").before(ML.`else`),
     ML.`else`.before(P.ofName("if")),

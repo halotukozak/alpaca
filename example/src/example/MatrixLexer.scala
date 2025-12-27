@@ -4,34 +4,21 @@ import alpaca.{*, given}
 
 @annotation.nowarn("msg=flexible type in")
 val MatrixLexer = lexer:
-  case "\\+=" => Token["ADDASSIGN"]
-  case "-=" => Token["SUBASSIGN"]
-  case "\\*=" => Token["MULASSIGN"]
-  case "/=" => Token["DIVASSIGN"]
-
-  case "!=" => Token["NOT_EQUAL"]
-  case "<=" => Token["LESS_EQUAL"]
-  case ">=" => Token["GREATER_EQUAL"]
-  case "==" => Token["EQUAL"]
-
-  case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
-      "'" | "," | ";") =>
-    Token[literal.type](literal)
-
-  case "\\.\\+" => Token["DOTADD"]
-  case "\\.\\-" => Token["DOTSUB"]
-  case "\\.\\*" => Token["DOTMUL"]
-  case "\\./" => Token["DOTDIV"]
-
-  case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
-      "print") =>
-    Token[keyword.type](keyword)
-  case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
+  case assignOp @ ("\\+=" | "-=" | "\\*=" | "/=") => Token["AssignOp"](assignOp)
+  case comp @ ("<" | ">" | "!=" | "<=" | ">=" | "==") => Token["Comparator"](comp)
+  case literal @ ("=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" | "'" | "," |
+      ";") =>
+    Token[literal.type]
+  case dotOp @ ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token["DotOp"](dotOp)
+  case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "print") =>
+    Token[keyword.type]
+  case function @ ("eye" | "zeros" | "ones") => Token["Function"](function)
+  case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["Id"](id)
   case float @ "(\\d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" =>
-    Token["FLOAT"](float.toDouble)
-  case int @ "[0-9]+" => Token["INTNUM"](int.toInt)
+    Token["Float"](float.toDouble)
+  case int @ "[0-9]+" => Token["Int"](int.toInt)
   case string @ "\"[^\"]*\"" =>
-    Token["STRING"](string.substring(1, string.length - 1))
+    Token["String"](string.substring(1, string.length - 1))
   case (" " | "\t" | "\\#.*") => Token.Ignored
   // todo: why it does not count properly
   // case newLines @ "\n+" =>
