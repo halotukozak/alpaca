@@ -28,7 +28,7 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
  *
  * Used to ensure type safety in string interpolation.
  */
-opaque private[internal] type Shown <: String = String
+opaque into private[internal] type Shown <: String = String
 
 object Shown {
 
@@ -50,14 +50,6 @@ private[internal] object Showable {
 
   def fromToString[T]: Showable[T] = _.toString
 
-  /** Showable instance for nullable types. */
-  given [T: Showable as showable]: Showable[T | Null] =
-    case null => ""
-    case value: T @unchecked => showable.show(value)
-
-  // todo: add names
-  given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
-
   given [T](using quotes: Quotes): Showable[Expr[T]] =
     import quotes.reflect.*
     expr => expr.asTerm.show
@@ -65,6 +57,14 @@ private[internal] object Showable {
   given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
 
   given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
+
+  given [Tup <: Tuple: Showable](using showables: Tuple.Map[Tup, Showable]): Showable[Tup] = tuple =>
+    showables
+      .zip(tuple)
+      .toList
+      .asInstanceOf[List[(Showable[Any], Any)]]
+      .map(_.show(_))
+      .mkShow("(", ", ", ")")
 
   /**
    * Automatically derives a Showable instance for Product types (case classes).
