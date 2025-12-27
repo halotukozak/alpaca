@@ -4,17 +4,18 @@ package runtime
 import scala.math.Numeric.Implicits.infixNumericOps
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-type DynamicFunction = PartialFunction[Tuple, ?]
+type DynamicFunction = PartialFunction[List[?], ?]
 
 enum Function(val tpe: Type, val implementation: DynamicFunction):
+  export implementation.apply
   // unary
   case UMINUS
     extends Function(
       unary_numerical_type | unary_vector_type | unary_matrix_type,
       {
-        case (a: Number) *: EmptyTuple => -a
-        case (a: Vector) *: EmptyTuple => -a
-        case (a: Matrix) *: EmptyTuple => -a
+        case List(a: Number) => -a
+        case List(a: Vector) => -a
+        case List(a: Matrix) => -a
       },
     )
   case TRANSPOSE
@@ -33,40 +34,48 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
       },
     )
   case zeros
-    extends Function(matrix_type, { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(0))))) })
+    extends Function(
+      Type.MatrixInit,
+      { case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(0))))) },
+    )
   case ones
-    extends Function(matrix_type, { case (n: Int) *: EmptyTuple => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(1))))) })
+    extends Function(
+      Type.MatrixInit,
+      { case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(1))))) },
+    )
   case eye
     extends Function(
       matrix_type,
       { case (n: Int) *: EmptyTuple =>
+      Type.MatrixInit,
+      { case List(n: Int) =>
         Matrix.tabulate(n, n)((i, j) => if i == j then Number(1) else Number(0))
       },
     )
 
   // binary
-  case + extends Function(binary_numerical_type, { case (a: Number, b: Number) => a + b })
-  case - extends Function(binary_numerical_type, { case (a: Number, b: Number) => a - b })
+  case + extends Function(Type.binary.Numerical, { case List(a: Number, b: Number) => a + b })
+  case - extends Function(Type.binary.Numerical, { case List(a: Number, b: Number) => a - b })
   case *
     extends Function(
-      binary_numerical_type | scalar_type | binary_matrix_type | Type.Function(Tuple(Type.String), Type.Int),
+      Type.binary.Numerical | Type.Scalar | Type.binary.Matrix | Type.Function(Tuple(Type.String), Type.Int),
       {
-        case (a: Number, b: Number) => a * b
-        case (a: Matrix, b: Number) => a.toArray.map(_.toArray.map(_ * b))
-        case (a: Vector, b: Number) => a.toArray.map(_ * b)
+        case List(a: Number, b: Number) => a * b
+        case List(a: Matrix, b: Number) => a.toArray.map(_.toArray.map(_ * b))
+        case List(a: Vector, b: Number) => a.toArray.map(_ * b)
       },
     )
-  case / extends Function(binary_numerical_type | scalar_type, { case (a: Number, b: Number) => a / b })
-  case == extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a == b })
-  case != extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a != b })
-  case <= extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a <= b })
-  case >= extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a >= b })
-  case < extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a < b })
-  case > extends Function(binary_numerical_condition_type, { case (a: Number, b: Number) => a > b })
-  case DOTADD extends Function(binary_matrix_type | binary_vector_type, { case (a: Matrix, b: Matrix) => a + b })
-  case DOTSUB extends Function(binary_matrix_type | binary_vector_type, { case (a: Matrix, b: Matrix) => a - b })
-  case DOTMUL extends Function(binary_matrix_type | binary_vector_type, { case (a: Matrix, b: Matrix) => a * b })
-  case DOTDIV extends Function(binary_matrix_type | binary_vector_type, { case (a: Matrix, b: Matrix) => a / b })
+  case / extends Function(Type.binary.Numerical | Type.Scalar, { case List(a: Number, b: Number) => a / b })
+  case == extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a == b })
+  case != extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a != b })
+  case <= extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a <= b })
+  case >= extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a >= b })
+  case < extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a < b })
+  case > extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a > b })
+  case DOTADD extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a + b })
+  case DOTSUB extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a - b })
+  case DOTMUL extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a * b })
+  case DOTDIV extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a / b })
 
   // varargs
   case PRINT
@@ -74,7 +83,7 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
       Type.Function(Type.VarArg(Type.Any), Type.Unit),
       { args =>
         println(
-          args.toList
+          args
             .map:
               case m: Matrix => m.toArray.map(_.toArray.mkString("[", ", ", "]")).mkString("[", ", ", "]")
               case v: Vector => v.toArray.mkString("[", ", ", "]")
@@ -104,10 +113,10 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
               else Result.warn(e.line)(Type.Matrix(), "Cannot infer matrix size"),
       ),
       {
-        case args @ (_: Number) *: _ => Vector(args.toList.asInstanceOf[List[Number]])
-        case args @ (_: Vector) *: _ => Matrix(args.toList.asInstanceOf[List[Vector]])
+        case args @ List((_: Number), _*) => Vector(args.map(_.asInstanceOf[Number]))
+        case args @ List((_: Vector), _*) => Matrix(args.map(_.asInstanceOf[Vector]))
       },
     )
 
 object Function:
-  def unapply(func: Function): (String, DynamicFunction) = (func.productPrefix, func.implementation)
+  def unapply(func: Function): (String, func.implementation.type) = (func.productPrefix, func.implementation)
