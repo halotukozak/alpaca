@@ -5,6 +5,7 @@ import scala.util.control.Breaks.{break, breakable}
 import scala.util.control.NoStackTrace
 
 import runtime._
+import scala.reflect.Typeable
 
 enum Exit extends RuntimeException with NoStackTrace:
   case ReturnException(value: Any)
@@ -25,15 +26,16 @@ case class Env(
     else if this.parent != null && this.parent.contains(name) then this.parent.update(name, value)
     else this.memory(name) = value
 
-  def getValue[T](name: String, line: Int): T =
+  def getValue[T: Typeable](name: String, line: Int): T =
     this.memory
       .get(name)
       .orElse:
         for
           parent <- Option(this.parent)
-          value <- Option(parent.getValue(name, line))
+          value <- Option(parent.getValue[T](name, line))
         yield value
-      .map(_.asInstanceOf[T])
+      .collect:
+        case value: T => value
       .getOrElse:
         throw MatrixRuntimeException(s"Variable $name not found", line)
 

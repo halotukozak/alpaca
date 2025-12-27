@@ -5,7 +5,6 @@ import MatrixLexer as ML
 import alpaca.{Production as P, *}
 
 import java.util.jar.Attributes.Name
-import scala.reflect.ClassTag
 import scala.util.chaining.scalaUtilChainingOps
 
 object MatrixParser extends Parser {
@@ -50,8 +49,6 @@ object MatrixParser extends Parser {
   }
 
   def For: Rule[AST.For] = rule { case (ML.`for`(l), ML.ID(id), ML.`=`(_), Range(r), Block(body)) =>
-    // val varRef = AST.SymbolRef(id.value, Type.Int, id.line) //todo: why fails?
-    // AST.For(varRef, r, body, l.line)
     AST.For(AST.SymbolRef(Type.Int, id.value, id.line), r, body, l.line)
   }
 
@@ -69,12 +66,7 @@ object MatrixParser extends Parser {
   )
 
   def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
-    AST.Apply(
-      runtime.Function.valueOf(op).toRef,
-      scala.List(e1, e2),
-      Type.Undef,
-      e1.line,
-    )
+    AST.Apply(runtime.Function.valueOf(op).toRef, List(e1, e2), Type.Undef, e1.line)
   }
 
   def AssignOp: Rule[String] = rule(
@@ -84,16 +76,20 @@ object MatrixParser extends Parser {
     { case ML.DIVASSIGN(op) => op.name },
   )
 
-  def Assign: Rule[(AST.Expr, AST.Expr) => AST.Expr] = rule(
-    { case AssignOp(op) =>
-      (e1, e2) => AST.Apply(runtime.Function.valueOf(op).toRef, scala.List(e1, e2), Type.Undef, e1.line)
-    },
-    { case ML.`=`(_) => (e1, e2) => e2 },
+  def AssignTarget: Rule[AST.Ref] = rule(
+    { case Var(v) => v },
+    { case Element(el) => el },
   )
 
   def Assignment: Rule[AST.Assign] = rule(
-    { case (Var(v), Assign(op), Expr(e)) => AST.Assign(v, op(v, e), v.line) },
-    { case (Element(el), Assign(op), Expr(e)) => AST.Assign(el, op(el, e), el.line) },
+    { case (AssignTarget(target), AssignOp(op), Expr(e)) =>
+      AST.Assign(
+        target,
+        AST.Apply(runtime.Function.valueOf(op).toRef, List(target, e), Type.Undef, target.line),
+        target.line,
+      )
+    },
+    { case (AssignTarget(target), ML.`=`(_), Expr(e)) => AST.Assign(target, e, target.line) },
   )
 
   def FunctionName: Rule[String] = rule(
@@ -113,8 +109,7 @@ object MatrixParser extends Parser {
       case 2 =>
         AST.MatrixRef(v, varArgs.head, varArgs(1), v.line)
       case _ =>
-        // report_error(self, "Invalid matrix element reference", p.lineno)
-        AST.MatrixRef(v, null, null, v.line)
+        throw new MatrixRuntimeException("Invalid matrix element reference", v.line)
   }
 
   def Var: Rule[AST.SymbolRef] = rule { case ML.ID(id) => AST.SymbolRef(Type.Undef, id.value, id.line) }
@@ -124,33 +119,33 @@ object MatrixParser extends Parser {
     { case ML.FLOAT(l) => AST.Literal(Type.Float, l.value, l.line) },
     { case ML.STRING(l) => AST.Literal(Type.String, l.value, l.line) },
     { case (ML.`-`(l), Expr(e)) =>
-      AST.Apply(runtime.Function.UMINUS.toRef, scala.List(e), Type.Undef, l.line)
+      AST.Apply(runtime.Function.UMINUS.toRef, List(e), Type.Undef, l.line)
     }: @name("uminus"),
     { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.+.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.+.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("add"),
     { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.-.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.-.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("sub"),
     { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.*.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.*.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("mul"),
     { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function./.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function./.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("div"),
     { case (Expr(e1), ML.`DOTADD`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTADD.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTADD.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("dotadd"),
     { case (Expr(e1), ML.`DOTSUB`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTSUB.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTSUB.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("dotsub"),
     { case (Expr(e1), ML.`DOTMUL`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTMUL.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTMUL.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("dotmul"),
     { case (Expr(e1), ML.`DOTDIV`(_), Expr(e2)) =>
-      AST.Apply(runtime.Function.DOTDIV.toRef, scala.List(e1, e2), Type.Undef, e1.line)
+      AST.Apply(runtime.Function.DOTDIV.toRef, List(e1, e2), Type.Undef, e1.line)
     }: @name("dotdiv"),
-    { case (Expr(e), ML.`'`(_)) => AST.Apply(runtime.Function.TRANSPOSE.toRef, scala.List(e), Type.Undef, e.line) },
+    { case (Expr(e), ML.`'`(_)) => AST.Apply(runtime.Function.TRANSPOSE.toRef, List(e), Type.Undef, e.line) },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
