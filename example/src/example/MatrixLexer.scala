@@ -4,12 +4,13 @@ import alpaca.{*, given}
 
 @annotation.nowarn("msg=flexible type in")
 val MatrixLexer = lexer:
-  case assignOp @ ("\\+=" | "-=" | "\\*=" | "/=") => Token["AssignOp"](assignOp)
-  case comp @ ("<" | ">" | "!=" | "<=" | ">=" | "==") => Token["Comparator"](comp)
+  case assignOp @ ("\\+=" | "-=" | "\\*=" | "/=") => Token["AssignOp"](assignOp.take(1) /*remove =*/ )
+  case comp @ ("!=" | "<=" | ">=" | "==") => Token["LongComparator"](comp)
+  case comp @ ("<" | ">") => Token["ShortComparator"](comp)
   case literal @ ("=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" | "'" | "," |
       ";") =>
     Token[literal.type]
-  case dotOp @ ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token["DotOp"](dotOp)
+  case dotOp @ ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token["DotOp"](dotOp.drop(1) /*remove dot*/ )
   case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "print") =>
     Token[keyword.type]
   case function @ ("eye" | "zeros" | "ones") => Token["Function"](function)

@@ -56,7 +56,12 @@ object MatrixParser extends Parser {
     AST.Range(start, end, start.line)
   }
 
-  def Condition: Rule[AST.Expr] = rule { case (Expr(e1), ML.Comparator(op), Expr(e2)) =>
+  def Comparator = rule(
+    { case ML.LongComparator(op) => op },
+    { case ML.ShortComparator(op) => op },
+  )
+
+  def Condition: Rule[AST.Expr] = rule { case (Expr(e1), Comparator(op), Expr(e2)) =>
     AST.Apply(runtime.Function.valueOf(op.value).toRef, List(e1, e2), Type.Undef, e1.line)
   }
 
@@ -69,7 +74,7 @@ object MatrixParser extends Parser {
     { case (AssignTarget(target), ML.AssignOp(op), Expr(e)) =>
       AST.Assign(
         target,
-        AST.Apply(runtime.Function.valueOf(op.name).toRef, List(target, e), Type.Undef, target.line),
+        AST.Apply(runtime.Function.valueOf(op.value).toRef, List(target, e), Type.Undef, target.line),
         target.line,
       )
     },
