@@ -70,6 +70,7 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
         case List(a: Number, b: Number) => a * b
         case List(a: Matrix, b: Number) => a.toArray.map(_.toArray.map(_ * b))
         case List(a: Vector, b: Number) => a.toArray.map(_ * b)
+        case List(str: String, times: Int) => str * times
       },
     )
   case / extends Function(Type.binary.Numerical | Type.Scalar, { case List(a: Number, b: Number) => a / b })
