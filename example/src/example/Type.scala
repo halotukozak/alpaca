@@ -128,14 +128,14 @@ object Type:
     def apply(exprs: List[AST.Expr]): Result[Function] = args match
       case EmptyTuple if exprs.isEmpty => unsafeResult(EmptyTuple)
       case Type.VarArg(tpe) if exprs.forall(_.tpe <= tpe) => unsafeResult(exprs)
-      case args: Tuple if {
+      case args: Tuple if args.productArity == exprs.size && {
             args.toList
               .zip(exprs)
               .forall:
                 case (a: Type, AST.Expr(b)) => b <= a
                 case _ => false
           } =>
-        unsafeResult(exprs)
+        unsafeResult(Tuple.fromArray(exprs.toArray))
 
       case _ =>
         Result.error(exprs.head.line)(Type.Function(args, resultHint), s"Invalid arguments: $exprs, expected: $args")
@@ -272,6 +272,17 @@ object Type:
     resultHint = Type.Matrix(),
     resultTypeFactory =
       case AST.Literal(Type.Int, n: scala.Int, _) => Result.Success(Type.Matrix(n, n))
-      case e @ AST.Literal(tpe, _, _) => Result.error(e.line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
+      case AST.Literal(tpe, _, line) => Result.error(line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
       case e => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
+  ) | Type.OverloadedFunction(
+    args = (Type.Int, Type.Int),
+    resultHint = Type.Matrix(),
+    resultTypeFactory =
+      case (AST.Literal(Type.Int, r: scala.Int, _), AST.Literal(Type.Int, c: scala.Int, _)) =>
+        Result.Success(Type.Matrix(r, c))
+      case (AST.Literal(rows, _, rLine), AST.Literal(cols, _, cLine)) =>
+        Result(Type.Matrix())
+          .filter(_ => rows != Type.Int, Message.Error(s"Matrix rows must be an Int, got $rows", rLine))
+          .filter(_ => cols != Type.Int, Message.Error(s"Matrix cols must be an Int, got $cols", cLine))
+      case (e, _) => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
   )

@@ -36,18 +36,27 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
   case zeros
     extends Function(
       Type.MatrixInit,
-      { case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(0))))) },
+      {
+        case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(0)))))
+        case List(r: Int, c: Int) => Matrix(Array.fill(r)(Vector(Array.fill(c)(Number(0)))))
+      },
     )
   case ones
     extends Function(
       Type.MatrixInit,
-      { case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(1))))) },
+      {
+        case List(n: Int) => Matrix(Array.fill(n)(Vector(Array.fill(n)(Number(1)))))
+        case List(r: Int, c: Int) => Matrix(Array.fill(r)(Vector(Array.fill(c)(Number(1)))))
+      },
     )
   case eye
     extends Function(
       Type.MatrixInit,
-      { case List(n: Int) =>
-        Matrix.tabulate(n, n)((i, j) => if i == j then Number(1) else Number(0))
+      {
+        case List(n: Int) =>
+          Matrix.tabulate(n, n)((i, j) => if i == j then Number(1) else Number(0))
+        case List(r: Int, c: Int) =>
+          Matrix.tabulate(c, r)((i, j) => if i == j then Number(1) else Number(0))
       },
     )
 
