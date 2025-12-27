@@ -31,7 +31,6 @@ object `package` extends ScalaModule {
     "-Werror",
     // "-Wunused:all",
     "-experimental",
-    "-language:implicitConversions",
   )
 
   def mvnDeps = Seq(

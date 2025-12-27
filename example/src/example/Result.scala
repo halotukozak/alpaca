@@ -52,8 +52,6 @@ enum Result[+T]:
 object Result:
   def apply[T](value: T) = Result.Success(value)
 
-  given [T]: Conversion[T, Result[T]] = Result.Success(_)
-
   def warn[T](line: Int)(value: T, warns: String*): Result[T] =
     Result.Failure(value, warns.map(Message.Warning(_, line)).to(SortedSet))
 
@@ -61,7 +59,7 @@ object Result:
     Result.Failure(value, errors.map(Message.Error(_, line)).to(SortedSet))
 
   inline def sequence[T, CC[X] <: IterableOnce[X]](col: CC[Result[T]]): Result[CC[T]] =
-    traverse(col)(x => x)
+    traverse(col)(identity)
 
   inline def traverse[T, U, CC[X] <: IterableOnce[X]](
     col: CC[T],

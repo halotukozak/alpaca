@@ -58,23 +58,23 @@ object MatrixScoper extends TreeAccumulator[Scope]:
   override given Process[AST.Return] = scope =>
     case AST.Return(expr, _) =>
       for _ <- expr.visit(scope)
-      yield scope
+        yield scope
 
   override given Process[AST.Continue] = scope =>
     case _ if scope.inLoop => scope
     case tree => Result.error(tree.line)(scope, "Continue outside loop")
 
   override given Process[AST.Break] = scope =>
-    case _ if scope.inLoop => scope
+    case _ if scope.inLoop => Result(scope)
     case tree => Result.error(tree.line)(scope, "Break outside loop")
 
-  override given Process[AST.Literal] = scope => _ => scope
+  override given Process[AST.Literal] = scope => _ => Result(scope)
 
   override given Process[AST.SymbolRef] = scope =>
     case AST.SymbolRef(tpe, name, line) =>
       val symbol = scope.get(name)
       if symbol.isEmpty then Result.error(line)(scope, s"Undefined variable $name")
-      else scope
+      else Result(scope)
 
   override given Process[AST.VectorRef] = scope =>
     case AST.VectorRef(vector, element, _) =>
