@@ -85,10 +85,10 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
       for
         (typedMatrix, env) <- matrix.visit(env)
         _ <- typedMatrix.expectToBe(Type.Matrix())
-        (typedRow, env) <- row.visitNullable(env)
-        (typedCol, env) <- col.visitNullable(env)
-        _ <- if typedRow ne null then typedRow.expectToBe(Type.Int) else Result(null)
-        _ <- if typedCol ne null then typedCol.expectToBe(Type.Int) else Result(null)
+        (typedRow, env) <- row.visit(env)
+        (typedCol, env) <- col.visit(env)
+        _ <- typedRow.expectToBe(Type.Int)
+        _ <- typedCol.expectToBe(Type.Int)
       yield (AST.MatrixRef(typedMatrix, typedRow, typedCol, line), env)
 
   override given Process[AST.Apply] = env =>

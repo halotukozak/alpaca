@@ -6,9 +6,9 @@ case class Scope(
   inLoop: Boolean,
   symbols: Map[String, AST.SymbolRef] = Map.empty,
 ):
-  def get(name: String): Option[AST.SymbolRef] =
+  def getSymbol(name: String): Option[AST.SymbolRef] =
     if symbols.contains(name) then Some(symbols(name))
-    else if parent != null then parent.get(name)
+    else if parent != null then parent.getSymbol(name)
     else None
 
   def withSymbol(symbol: AST.SymbolRef): Scope =
@@ -61,7 +61,7 @@ object MatrixScoper extends TreeAccumulator[Scope]:
         yield scope
 
   override given Process[AST.Continue] = scope =>
-    case _ if scope.inLoop => scope
+    case _ if scope.inLoop => Result(scope)
     case tree => Result.error(tree.line)(scope, "Continue outside loop")
 
   override given Process[AST.Break] = scope =>
@@ -72,7 +72,7 @@ object MatrixScoper extends TreeAccumulator[Scope]:
 
   override given Process[AST.SymbolRef] = scope =>
     case AST.SymbolRef(tpe, name, line) =>
-      val symbol = scope.get(name)
+      val symbol = scope.getSymbol(name)
       if symbol.isEmpty then Result.error(line)(scope, s"Undefined variable $name")
       else Result(scope)
 
@@ -87,8 +87,8 @@ object MatrixScoper extends TreeAccumulator[Scope]:
     case AST.MatrixRef(matrix, row, column, _) =>
       for
         _ <- matrix.visit(scope)
-        _ <- if row != null then row.visit(scope) else Result.unit
-        _ <- if column != null then column.visit(scope) else Result.unit
+        _ <- row.visit(scope)
+        _ <- column.visit(scope)
       yield scope
 
   override given Process[AST.Apply] = scope =>
