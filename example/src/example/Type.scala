@@ -210,9 +210,7 @@ object Type:
       case Type.Range => true
       case _ => false
 
-type TupleFactory[N <: scala.Int, X] = N match
-  case 0 => EmptyTuple
-  case S[n] => X *: TupleFactory[n, X]
+    override protected def isSubtype(other: Type): Boolean = other == Type.Range
 
 extension [T](list: List[T])
   def toTuple: Tuple = list match

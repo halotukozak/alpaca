@@ -46,7 +46,7 @@ object AST:
   case class VectorRef(vector: SymbolRef, element: Expr, line: Int) extends Ref:
     val tpe: Type.Numerical = Type.Numerical
 
-  case class MatrixRef(matrix: SymbolRef, row: Expr | Null, col: Expr | Null, line: Int) extends Ref:
+  case class MatrixRef(matrix: SymbolRef, row: Expr, col: Expr, line: Int) extends Ref:
     val tpe: Type.Numerical = Type.Numerical
 
   case class Apply(ref: SymbolRef, args: List[Expr], tpe: Type, line: Int) extends Expr
