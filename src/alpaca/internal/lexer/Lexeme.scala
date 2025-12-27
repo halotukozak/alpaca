@@ -2,9 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.collection.immutable.SeqMap
+import scala.NamedTuple.AnyNamedTuple
 
 /**
  * A lexeme represents a token that has been matched and extracted from the input.
@@ -21,8 +19,10 @@ private[alpaca] final case class Lexeme[+Name <: ValidName, +Value](
   name: Name,
   value: Value,
   private[alpaca] val fields: Map[String, Any],
-) extends Selectable:
+) extends Selectable {
   type Fields <: AnyNamedTuple
+  def selectDynamic(name: String): Any = fields(name)
+}
 
 private[alpaca] object Lexeme:
 

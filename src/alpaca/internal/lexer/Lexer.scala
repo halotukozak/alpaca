@@ -17,17 +17,18 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 private[alpaca] type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[?, Ctx, ?]]
 
 //todo: private[alpaca]
-def lexerImpl[Ctx <: LexerCtx: Type](
+def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx]] = {
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = {
   import quotes.reflect.*
   type ThisToken = Token[?, Ctx, ?]
+  type TokenRefn = ThisToken { type LexemeTpe = LexemeRefn }
 
-  val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
+  val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$") // todo: debug lexer
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
 
@@ -108,7 +109,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       .unsafeFoldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])):
         case (
               ('[type names <: Tuple; names], '[type types <: Tuple; types]),
-              '{ $token: DefinedToken[name, Ctx, value] },
+              '{ $token: Token[name, Ctx, value] },
             ) =>
           (Type.of[name *: names], Type.of[Token[name, Ctx, value] *: types])
       .runtimeChecked
@@ -119,6 +120,14 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       parent = cls,
       name = "Fields",
       tpe = fieldTpe,
+      flags = Flags.Synthetic,
+      privateWithin = Symbol.noSymbol,
+    )
+
+    val lexemeRefinement = Symbol.newTypeAlias(
+      parent = cls,
+      name = "LexemeRefinement",
+      tpe = TypeRepr.of[LexemeRefn],
       flags = Flags.Synthetic,
       privateWithin = Symbol.noSymbol,
     )
@@ -142,12 +151,12 @@ def lexerImpl[Ctx <: LexerCtx: Type](
     val byName = Symbol.newVal(
       parent = cls,
       name = "byName",
-      tpe = TypeRepr.of[Map[String, DefinedToken[?, Ctx, ?]]],
-      flags = Flags.Synthetic | Flags.Lazy, // todo: reconsider lazy
+      tpe = TypeRepr.of[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]],
+      flags = Flags.Synthetic | Flags.Override | Flags.Lazy, // todo: reconsider lazy
       privateWithin = Symbol.noSymbol,
     )
 
-    tokenDecls ++ List(fieldsDecls, compiled, allTokens, byName)
+    tokenDecls ++ List(fieldsDecls, lexemeRefinement, compiled, allTokens, byName)
   }
 
   val cls = Symbol.newClass(
@@ -159,13 +168,14 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   )
 
   val body = {
-    val tokenVals = definedTokens.collect: case '{ $token: DefinedToken[name, Ctx, value] } =>
+    val tokenVals = definedTokens.map: case '{ $token: Token[name, Ctx, value] } =>
       ValDef(
         cls.fieldMember(ValidName.from[name]),
         Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
       )
 
     tokenVals ++ Vector(
+      TypeDef(cls.typeMember("LexemeRefinement")),
       TypeDef(cls.typeMember("Fields")),
       ValDef(
         cls.fieldMember("compiled"),
@@ -184,7 +194,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       ValDef(
         cls.fieldMember("tokens"),
         Some {
-          val declaredTokens = definedTokens.map: case '{ $token: DefinedToken[name, Ctx, ?] } =>
+          val declaredTokens = definedTokens.map: case '{ $token: Token[name, Ctx, value] } =>
             This(cls).select(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
 
           Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
@@ -194,10 +204,11 @@ def lexerImpl[Ctx <: LexerCtx: Type](
         cls.fieldMember("byName"),
         Some {
           val all = Expr.ofSeq {
-            tokenVals.map(valDef => Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]])))
+            tokenVals.map: valDef =>
+              Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]]))
           }
-
-          '{ Map($all*) }.asTerm
+          // it's simpler to add cast here than e.g. bypass apply of DefinedToken
+          '{ Map($all*).asInstanceOf[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]] }.asTerm
         },
       ),
     )
@@ -214,11 +225,16 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   definedTokens
-    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]):
-      case (tpe, '{ $token: DefinedToken[name, Ctx, value] }) => Refinement(tpe, ValidName.from[name], token.asTerm.tpe)
+    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }]):
+      case (tpe, '{ $token: Token[name, Ctx, value] }) =>
+        Refinement(
+          tpe,
+          ValidName.from[name],
+          TypeRepr.of[DefinedToken[name, Ctx, value] & TokenRefn],
+        )
     .asType match
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
-      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
+      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
 }
