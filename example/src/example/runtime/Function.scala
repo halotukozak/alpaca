@@ -11,7 +11,7 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
   // unary
   case UMINUS
     extends Function(
-      unary_numerical_type | unary_vector_type | unary_matrix_type,
+      Type.unary.Numerical | Type.unary.Vector | Type.unary.Matrix,
       {
         case List(a: Number) => -a
         case List(a: Vector) => -a
@@ -27,7 +27,7 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
           val tpe = expr.tpe.asInstanceOf[Type.Matrix]
           Result.Success(Type.Matrix(tpe.cols, tpe.rows)),
       ),
-      { case (m: Matrix) *: EmptyTuple =>
+      { case List(m: Matrix) =>
         val rows = m.toArray.length
         val cols = m.toArray.head.toArray.length
         Matrix.tabulate(cols, rows)((i, j) => m(j)(i))
@@ -45,8 +45,6 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
     )
   case eye
     extends Function(
-      matrix_type,
-      { case (n: Int) *: EmptyTuple =>
       Type.MatrixInit,
       { case List(n: Int) =>
         Matrix.tabulate(n, n)((i, j) => if i == j then Number(1) else Number(0))

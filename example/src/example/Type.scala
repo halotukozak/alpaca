@@ -115,7 +115,7 @@ object Type:
   )(using (IsVarArg[args.type] || IsValidTuple[args.type]) =:= true,
   ) extends Type(false):
 
-    override def toString =
+    override def toString: Predef.String =
       val argsRepr = args match
         case EmptyTuple => "()"
         case Type.VarArg(tpe) => s"...$tpe"
@@ -135,7 +135,7 @@ object Type:
                 case (a: Type, AST.Expr(b)) => b <= a
                 case _ => false
           } =>
-        unsafeResult(exprs.toTuple)
+        unsafeResult(exprs)
 
       case _ =>
         Result.error(exprs.head.line)(Type.Function(args, resultHint), s"Invalid arguments: $exprs, expected: $args")
@@ -186,107 +186,92 @@ object Type:
     override protected def isSubtype(other: Type): Boolean = false
 
   case object Int extends Type:
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Int => true
-      case _ => false
+    override protected def isSubtype(other: Type): Boolean = other == Type.Int
 
   case object Float extends Type:
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Float => true
-      case _ => false
+    override protected def isSubtype(other: Type): Boolean = other == Type.Float
 
   case object String extends Type:
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.String => true
-      case _ => false
+    override protected def isSubtype(other: Type): Boolean = other == Type.String
 
   case object Bool extends Type:
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Bool => true
-      case _ => false
+    override protected def isSubtype(other: Type): Boolean = other == Type.Bool
 
   case object Range extends Type:
-    override protected def isSubtype(other: Type): Boolean = other match
-      case Type.Range => true
-      case _ => false
-
     override protected def isSubtype(other: Type): Boolean = other == Type.Range
 
-extension [T](list: List[T])
-  def toTuple: Tuple = list match
-    case Nil => EmptyTuple
-    case h :: t => h *: t.toTuple
+  object unary:
+    val Numerical: Type = Type.Function(Tuple(Type.Int), Type.Int) | Type.Function(Tuple(Type.Float), Type.Float)
+    val Vector: Type = Type.OverloadedFunction(
+      arg = Type.Vector(),
+      resultHint = Type.Vector(),
+      resultTypeFactory = expr => Result.Success(expr.tpe),
+    )
+    val Matrix: Type = Type.OverloadedFunction(
+      arg = Type.Matrix(),
+      resultHint = Type.Matrix(),
+      resultTypeFactory = expr => Result.Success(expr.tpe),
+    )
 
-val unary_numerical_type = Type.Function(Tuple(Type.Int), Type.Int) | Type.Function(Tuple(Type.Float), Type.Float)
-val unary_vector_type = Type.OverloadedFunction(
-  arg = Type.Vector(),
-  resultHint = Type.Vector(),
-  resultTypeFactory = expr => Result.Success(expr.tpe),
-)
-val unary_matrix_type = Type.OverloadedFunction(
-  arg = Type.Matrix(),
-  resultHint = Type.Matrix(),
-  resultTypeFactory = expr => Result.Success(expr.tpe),
-)
+  object binary:
+    val Numerical: Type = Type.Function((Type.Int, Type.Int), Type.Int) |
+      Type.Function((Type.Numerical, Type.Numerical), Type.Float)
 
-val binary_numerical_type = Type.Function((Type.Int, Type.Int), Type.Int) |
-  Type.Function((Type.Numerical, Type.Numerical), Type.Float)
+    val Conditional: Type = Type.Function((Type.Numerical, Type.Numerical), Type.Bool)
 
-val binary_numerical_condition_type = Type.Function((Type.Numerical, Type.Numerical), Type.Bool)
+    val Matrix: Type = Type.OverloadedFunction(
+      args = (Type.Matrix(), Type.Matrix()),
+      resultHint = Type.Matrix(),
+      resultTypeFactory =
+        case (e @ AST.Expr(a: Type.Matrix), AST.Expr(b: Type.Matrix)) =>
+          val errors = mutable.Set.empty[Predef.String]
+          val warns = mutable.Set.empty[Predef.String]
 
-val binary_matrix_type = Type.OverloadedFunction(
-  args = (Type.Matrix(), Type.Matrix()),
-  resultHint = Type.Matrix(),
-  resultTypeFactory =
-    case (e @ AST.Expr(a: Type.Matrix), AST.Expr(b: Type.Matrix)) =>
-      val errors = mutable.Set.empty[String]
-      val warns = mutable.Set.empty[String]
+          var rows: scala.Int | Null = null
+          var cols: scala.Int | Null = null
 
-      var rows: Int | Null = null
-      var cols: Int | Null = null
+          if (a.rows == null) || (b.rows == null) then warns += "Matrix rows could not be inferred"
+          else if a.rows != b.rows then errors += s"Matrix rows mismatch: ${a.rows} != ${b.rows}"
+          else rows = a.rows
 
-      if (a.rows == null) || (b.rows == null) then warns += "Matrix rows could not be inferred"
-      else if a.rows != b.rows then errors += s"Matrix rows mismatch: ${a.rows} != ${b.rows}"
-      else rows = a.rows
+          if (a.cols == null) || (b.cols == null) then warns += "Matrix columns could not be inferred"
+          else if a.cols != b.cols then errors += s"Matrix columns mismatch: ${a.cols} != ${b.cols}"
+          else cols = a.cols
 
-      if (a.cols == null) || (b.cols == null) then warns += "Matrix columns could not be inferred"
-      else if a.cols != b.cols then errors += s"Matrix columns mismatch: ${a.cols} != ${b.cols}"
-      else cols = a.cols
+          if errors.nonEmpty then Result.error(e.line)(Type.Matrix(rows, cols), errors.toSeq*)
+          else if warns.nonEmpty then Result.warn(e.line)(Type.Matrix(rows, cols), warns.toSeq*)
+          else Result.Success(Type.Matrix(rows, cols)),
+    )
 
-      if errors.nonEmpty then Result.error(e.line)(Type.Matrix(rows, cols), errors.toSeq*)
-      else if warns.nonEmpty then Result.warn(e.line)(Type.Matrix(rows, cols), warns.toSeq*)
-      else Result.Success(Type.Matrix(rows, cols)),
-)
+    val Vector: Type = Type.OverloadedFunction(
+      args = (Type.Vector(), Type.Vector()),
+      resultHint = Type.Vector(),
+      resultTypeFactory =
+        case (e @ AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
+          if (a.arity == null) || (b.arity == null) then
+            Result.warn(e.line)(Type.Matrix(), "Vector arity could not be inferred")
+          else if a.arity != b.arity then
+            Result.error(e.line)(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
+          else Result.Success(Type.Vector(a.arity)),
+    )
 
-val binary_vector_type = Type.OverloadedFunction(
-  args = (Type.Vector(), Type.Vector()),
-  resultHint = Type.Vector(),
-  resultTypeFactory =
-    case (e @ AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
-      if (a.arity == null) || (b.arity == null) then
-        Result.warn(e.line)(Type.Matrix(), "Vector arity could not be inferred")
-      else if a.arity != b.arity then
-        Result.error(e.line)(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
-      else Result.Success(Type.Vector(a.arity)),
-)
+  val Scalar: Type = Type.OverloadedFunction(
+    args = (Type.Matrix(), Type.Numerical),
+    resultHint = Type.Matrix(),
+    resultTypeFactory =
+      case (expr, _) => Result.Success(expr.tpe),
+  ) | Type.OverloadedFunction(
+    args = (Type.Vector(), Type.Numerical),
+    resultHint = Type.Vector(),
+    resultTypeFactory =
+      case (expr, _) => Result.Success(expr.tpe),
+  )
 
-val scalar_type = Type.OverloadedFunction(
-  args = (Type.Matrix(), Type.Numerical),
-  resultHint = Type.Matrix(),
-  resultTypeFactory =
-    case (expr, args) => Result.Success(expr.tpe),
-) | Type.OverloadedFunction(
-  args = (Type.Vector(), Type.Numerical),
-  resultHint = Type.Vector(),
-  resultTypeFactory =
-    case (expr, args) => Result.Success(expr.tpe),
-)
-
-val matrix_type = Type.OverloadedFunction(
-  arg = Type.Int,
-  resultHint = Type.Matrix(),
-  resultTypeFactory =
-    case AST.Literal(Type.Int, n: Int, _) => Result.Success(Type.Matrix(n, n))
-    case e @ AST.Literal(tpe, _, _) => Result.error(e.line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
-    case e => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
-)
+  val MatrixInit: Type = Type.OverloadedFunction(
+    arg = Type.Int,
+    resultHint = Type.Matrix(),
+    resultTypeFactory =
+      case AST.Literal(Type.Int, n: scala.Int, _) => Result.Success(Type.Matrix(n, n))
+      case e @ AST.Literal(tpe, _, _) => Result.error(e.line)(Type.Matrix(), s"Matrix size must be an Int, got $tpe")
+      case e => Result.warn(e.line)(Type.Matrix(), "Matrix size could not be inferred"),
+  )

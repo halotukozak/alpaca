@@ -13,22 +13,22 @@ object Number:
       case number: Double => Some(number.asInstanceOf[x.type & Number])
       case _ => None
 
-  private val toDouble: PartialFunction[Number, Double] =
+  private val extractDouble: PartialFunction[Number, Double] =
     case x: Int => x.toDouble
     case x: Double => x
 
   given Numeric[Number]:
     override def plus(x: Number, y: Number): Number = (x, y).runtimeChecked match
       case (a: Int, b: Int) => a + b
-      case (toDouble(a), toDouble(b)) => a + b
+      case (extractDouble(a), extractDouble(b)) => a + b
 
     override def minus(x: Number, y: Number): Number = (x, y).runtimeChecked match
       case (a: Int, b: Int) => a - b
-      case (toDouble(a), toDouble(b)) => a - b
+      case (extractDouble(a), extractDouble(b)) => a - b
 
     override def times(x: Number, y: Number): Number = (x, y).runtimeChecked match
       case (a: Int, b: Int) => a * b
-      case (toDouble(a), toDouble(b)) => a * b
+      case (extractDouble(a), extractDouble(b)) => a * b
 
     override def negate(x: Number): Number = x match
       case a: Int => -a
@@ -57,9 +57,9 @@ object Number:
 
     override def compare(x: Number, y: Number): Int = (x, y).runtimeChecked match
       case (a: Int, b: Int) => a.compareTo(b)
-      case (toDouble(a), toDouble(b)) => a.compareTo(b)
+      case (extractDouble(a), extractDouble(b)) => a.compareTo(b)
 
   extension (x: Number)
     def /(y: Number): Number = (x, y).runtimeChecked match
       case (a: Int, b: Int) => a / b
-      case (toDouble(a), toDouble(b)) => a / b
+      case (extractDouble(a), extractDouble(b)) => a / b
