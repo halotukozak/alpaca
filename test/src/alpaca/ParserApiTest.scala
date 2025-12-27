@@ -38,7 +38,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
   ) extends ParserCtx derives Copyable
 
-  object CalcParser extends Parser[CalcContext] {
+  object CalcParser extends Parser[CalcContext]:
     val Expr: Rule[Int] = rule(
       { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
       { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
@@ -78,7 +78,6 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
       P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
       P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
     )
-  }
 
   test("basic recognition of various tokens and literals") {
     CalcParser.parse(CalcLexer.tokenize("a = 3 + 4 * (5 + 6)").lexemes) should matchPattern:
