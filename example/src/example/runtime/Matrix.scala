@@ -24,17 +24,17 @@ object Matrix:
     def apply(row: Int): Vector =
       source(row)
 
-    def +(other: Matrix): Matrix =
-      for (v, w) <- source zip other yield v + w
+    def `.+`(other: Matrix): Matrix =
+      for (v, w) <- source zip other yield v `.+` w
 
-    def -(other: Matrix): Matrix =
-      for (v, w) <- source zip other yield v - w
+    def `.-`(other: Matrix): Matrix =
+      for (v, w) <- source zip other yield v `.-` w
 
-    def *(other: Matrix): Matrix =
-      for (v, w) <- source zip other yield v * w
+    def `.*`(other: Matrix): Matrix =
+      for (v, w) <- source zip other yield v `.*` w
 
-    def /(other: Matrix): Matrix =
-      for (v, w) <- source zip other yield v / w
+    def `./`(other: Matrix): Matrix =
+      for (v, w) <- source zip other yield v `./` w
 
     def unary_- : Matrix =
       for vector <- source yield -vector

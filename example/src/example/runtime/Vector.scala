@@ -23,16 +23,16 @@ object Vector:
     def apply(index: Int): Number =
       source(index)
 
-    def +(other: Vector): Vector =
+    def `.+`(other: Vector): Vector =
       for (v, w) <- source zip other yield v + w
 
-    def -(other: Vector): Vector =
+    def `.-`(other: Vector): Vector =
       for (v, w) <- source zip other yield v - w
 
-    def *(other: Vector): Vector =
+    def `.*`(other: Vector): Vector =
       for (v, w) <- source zip other yield v * w
 
-    def /(other: Vector): Vector =
+    def `./`(other: Vector): Vector =
       for (v, w) <- source zip other yield v / w
 
     def unary_- : Vector =

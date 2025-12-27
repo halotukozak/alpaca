@@ -56,7 +56,7 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
   case - extends Function(Type.binary.Numerical, { case List(a: Number, b: Number) => a - b })
   case *
     extends Function(
-      Type.binary.Numerical | Type.Scalar | Type.binary.Matrix | Type.Function(Tuple(Type.String), Type.Int),
+      Type.binary.Numerical | Type.Scalar | Type.Function(Tuple(Type.String), Type.Int),
       {
         case List(a: Number, b: Number) => a * b
         case List(a: Matrix, b: Number) => a.toArray.map(_.toArray.map(_ * b))
@@ -70,10 +70,11 @@ enum Function(val tpe: Type, val implementation: DynamicFunction):
   case >= extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a >= b })
   case < extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a < b })
   case > extends Function(Type.binary.Conditional, { case List(a: Number, b: Number) => a > b })
-  case DOTADD extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a + b })
-  case DOTSUB extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a - b })
-  case DOTMUL extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a * b })
-  case DOTDIV extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a / b })
+
+  case `.+` extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a `.+` b })
+  case `.-` extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a `.-` b })
+  case `.*` extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a `.*` b })
+  case `./` extends Function(Type.binary.Matrix | Type.binary.Vector, { case List(a: Matrix, b: Matrix) => a `./` b })
 
   // varargs
   case PRINT
