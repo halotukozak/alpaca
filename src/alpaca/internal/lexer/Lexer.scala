@@ -229,7 +229,13 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             case List(List(fieldName: Term)) =>
               Some {
                 Match(
-                  fieldName,
+                  Typed(
+                    fieldName,
+                    Annotated(
+                      TypeTree.ref(fieldName.tpe.typeSymbol),
+                      '{ new annotation.switch }.asTerm.changeOwner(owner),
+                    ),
+                  ),
                   tokenVals.map: valDef =>
                     CaseDef(Literal(StringConstant(NameTransformer.decode(valDef.name))), None, Ref(valDef.symbol)),
                 ).changeOwner(owner)
