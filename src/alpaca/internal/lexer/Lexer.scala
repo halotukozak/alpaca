@@ -81,7 +81,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
-        .getOrElse(raiseShouldNeverBeCalled(body))
+        .getOrElse(raiseShouldNeverBeCalled[List[Expr[ThisToken]]](body))
 
       val infos = tokens.map:
         case '{ type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $remapping) } =>

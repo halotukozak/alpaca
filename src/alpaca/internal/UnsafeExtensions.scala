@@ -4,18 +4,18 @@ package internal
 import scala.collection.IterableOnceOps
 import scala.quoted.*
 
-inline private[alpaca] def raiseShouldNeverBeCalled[E](elem: E)[T]: T =
+inline private[alpaca] def raiseShouldNeverBeCalled[T: Default](elem: Any)(using debugPosition: DebugPosition): T =
   val showable = compiletime.summonFrom:
-    case s: Showable[E] => s
+    case s: Showable[elem.type] => s
     case _ => Showable.fromToString
 
-  val message = "This code should never be called: " + showable.show(elem)
+  val message = show"This code should never be called: ${showable.show(elem)} at $debugPosition"
 
   compiletime.summonFrom:
     case quotes: Quotes => quotes.reflect.report.error(message)
     case _ => throw new AlgorithmError(message)
 
-  compiletime.summonInline[Default[T]]()
+  Default[T]()
 
 extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)
   inline private[alpaca] def unsafeMap[B: Default](inline f: PartialFunction[A, B]): CC[B] =
