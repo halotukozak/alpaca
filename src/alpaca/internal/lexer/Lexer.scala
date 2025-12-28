@@ -96,13 +96,11 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
     case (tokens, CaseDef(tree, Some(guard), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  val (definedTokens, ignoredTokens) = tokens.partition(_.isExprOf[DefinedToken[?, Ctx, ?]])
-
   RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
 
   def decls(cls: Symbol): List[Symbol] = {
-    val tokenDecls = definedTokens.map:
-      case '{ $token: DefinedToken[name, Ctx, value] } =>
+    val tokenDecls = tokens.map:
+      case '{ $token: Token[name, Ctx, value] } =>
         Symbol.newVal(
           parent = cls,
           name = ValidName.from[name],
@@ -111,7 +109,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
           privateWithin = Symbol.noSymbol,
         )
 
-    val fieldTpe = definedTokens
+    val fieldTpe = tokens
       .unsafeFoldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])):
         case (
               ('[type names <: Tuple; names], '[type types <: Tuple; types]),
@@ -157,8 +155,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     val byName = Symbol.newVal(
       parent = cls,
       name = "byName",
-      tpe = TypeRepr.of[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]],
-      flags = Flags.Synthetic | Flags.Override | Flags.Lazy, // todo: reconsider lazy
+      tpe = TypeRepr.of[Map[String, ThisToken & TokenRefn]],
+      flags = Flags.Protected | Flags.Synthetic | Flags.Override,
       privateWithin = Symbol.noSymbol,
     )
 
@@ -174,7 +172,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   )
 
   val body = {
-    val tokenVals = definedTokens.map:
+    val tokenVals = tokens.map:
       case '{ $token: Token[name, Ctx, value] } =>
         ValDef(
           cls.fieldMember(ValidName.from[name]),
@@ -202,22 +200,20 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
       ValDef(
         cls.fieldMember("tokens"),
         Some {
-          val declaredTokens = definedTokens.map:
-            case '{ $token: Token[name, Ctx, value] } =>
-              This(cls).select(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
+          val all = Expr.ofList:
+            tokenVals.map(valDef => Ref(valDef.symbol).asExprOf[ThisToken])
 
-          Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
+          all.asTerm.changeOwner(cls.fieldMember("tokens"))
         },
       ),
       ValDef(
         cls.fieldMember("byName"),
         Some {
-          val all = Expr.ofSeq {
-            tokenVals.map: valDef =>
-              Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]]))
-          }
+          val all = Expr.ofSeq:
+            tokenVals.map(valDef => Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[ThisToken])))
+
           // it's simpler to add cast here than e.g. bypass apply of DefinedToken
-          '{ Map($all*).asInstanceOf[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]] }.asTerm
+          '{ Map($all*).asInstanceOf[Map[String, ThisToken & TokenRefn]] }.asTerm
         },
       ),
     )
@@ -233,7 +229,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   val clsDef = ClassDef(cls, parents, body)
 
-  definedTokens
+  tokens
     .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }]):
       case (tpe, '{ $token: Token[name, Ctx, value] }) =>
         Refinement(

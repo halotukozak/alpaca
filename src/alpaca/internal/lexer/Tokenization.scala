@@ -25,7 +25,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   def tokens: List[Token[?, Ctx, ?]]
 
   /** Map of token names to their definitions for dynamic access. */
-  def byName: Map[String, DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }] // todo: reconsider if selectDynamic should be implemented with PM
+  protected def byName: Map[String, Token[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }]
 
   /**
    * Provides dynamic access to tokens by name.
@@ -35,7 +35,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement } =
+  def selectDynamic(fieldName: String): Token[?, Ctx, ?] { type LexemeTpe = LexemeRefinement } =
     byName(scala.reflect.NameTransformer.decode(fieldName))
 
   /**
