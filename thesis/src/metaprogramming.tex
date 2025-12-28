@@ -23,9 +23,9 @@ Poniższy przykład ilustruje podstawowe wykorzystanie cytatów i~wstawek w~makr
 
 W~powyższym przykładzie:
 \begin{itemize}
-  \item \verb|'x| tworzy cytat (ang.~\emph{quote}) z~wyrażenia \verb|x|, opóźniając jego wykonanie
-  \item \verb|'{...}| tworzy blok kodu jako dane, które będzie wstawione w~miejscu wywołania makra
-  \item \verb|$x| wstawia (ang.~\emph{splice}) wartość cytatu do~nowego kontekstu
+    \item \verb|'x| tworzy cytat (ang.~\emph{quote}) z~wyrażenia \verb|x|, opóźniając jego wykonanie
+    \item \verb|'{...}| tworzy blok kodu jako dane, które będzie wstawione w~miejscu wywołania makra
+    \item \verb|$x| wstawia (ang.~\emph{splice}) wartość cytatu do~nowego kontekstu
 \end{itemize}
 
 Formalna semantyka tych konstrukcji została przedstawiona w~pracy Stuckiego, Brachthäusera i~Odersky'ego~\cite{stucki2021multistage}, gdzie cytaty i~wstawki są traktowane jako prymitywne formy w~typowanych drzewach składniowych (ang.~\emph{typed abstract syntax trees}).
@@ -98,11 +98,11 @@ Jest dostępne poprzez obiekt \verb|reflect| zdefiniowany w~typie \verb|Quotes|,
 System refleksji TASTy definiuje następującą hierarchię typów:
 
 \begin{itemize}
-  \item \textbf{Tree} --- podstawowy typ reprezentujący węzeł drzewa składni
-  \item \textbf{Term} --- wyrażenia (np.~wywołania funkcji, literały)
-  \item \textbf{TypeTree} --- reprezentacje typów w~drzewie składni
-  \item \textbf{Symbol} --- symbole (definicje klas, metod, zmiennych)
-  \item \textbf{TypeRepr} --- reprezentacje typów (niezależne od~drzewa)
+    \item \textbf{Tree} --- podstawowy typ reprezentujący węzeł drzewa składni
+    \item \textbf{Term} --- wyrażenia (np.~wywołania funkcji, literały)
+    \item \textbf{TypeTree} --- reprezentacje typów w~drzewie składni
+    \item \textbf{Symbol} --- symbole (definicje klas, metod, zmiennych)
+    \item \textbf{TypeRepr} --- reprezentacje typów (niezależne od~drzewa)
 \end{itemize}
 
 \paragraph{Przykład użycia refleksji TASTy}
@@ -120,28 +120,26 @@ Język Lisp~\cite{mccarthy1960lisp} był pionierem w~dziedzinie metaprogramowani
 Kluczową różnicą między makrami Lisp a~Scali~3 jest:
 
 \begin{itemize}
-  \item \textbf{Lisp:} makra operują na nietypo
-
-        wanych listach (\emph{S-expressions}), co umożliwia dużą elastyczność, ale eliminuje sprawdzanie typów w~czasie kompilacji
-  \item \textbf{Scala~3:} makra operują na typowanych drzewach składni (TASTy), zapewniając pełne bezpieczeństwo typów
+    \item \textbf{Lisp:} makra operują na nietypowanych listach (\emph{S-expressions}), co umożliwia dużą elastyczność, ale eliminuje sprawdzanie typów w~czasie kompilacji
+    \item \textbf{Scala~3:} makra operują na typowanych drzewach składni (TASTy), zapewniając pełne bezpieczeństwo typów
 \end{itemize}
 
-\subsection{Template Haskell}
+\subsection{Template Haskell}\label{subsec:template-haskell}
 Template Haskell~\cite{sheard2002template} wprowadza programowanie wieloetapowe do~języka Haskell poprzez cytaty i~wstawki, podobnie jak Scala~3.
 Główne podobieństwa i~różnice:
 
 \begin{itemize}
-  \item \textbf{Podobieństwa:} obie implementacje wykorzystują cytaty (\verb|[| ... |]| w~Haskell, \verb|'{ ... }| w~Scali) oraz wstawki (\verb|$(...)| w~Haskell, \verb|${...}| w~Scali)
-  \item \textbf{Różnice:} Template Haskell wymaga specjalnego trybu kompilacji (\verb|-XTemplateHaskell|), podczas gdy makra Scali~3 są standardową częścią języka; Scala~3 oferuje bogatsze API refleksji (TASTy)
+    \item \textbf{Podobieństwa:} obie implementacje wykorzystują cytaty (\verb|[| ... |]| w~Haskell, \verb|'{ ... }| w~Scali) oraz wstawki (\verb|$(...)| w~Haskell, \verb|${...}| w~Scali)
+    \item \textbf{Różnice:} Template Haskell wymaga specjalnego trybu kompilacji (\verb|-XTemplateHaskell|), podczas gdy makra Scali~3 są standardową częścią języka; Scala~3 oferuje bogatsze API refleksji (TASTy)
 \end{itemize}
 
-\subsection{Makra w~Rust}\label{subsec:makra-wrust}
+\subsection[Makra w Rust]{Makra w~Rust}\label{subsec:makra-wrust}
 Język Rust oferuje dwa systemy makr: makra deklaratywne (\verb|macro\_rules!|) oraz makra proceduralne~\cite{rust-macros,klabnik2018rust}.
 W~porównaniu do~Scali~3:
 
 \begin{itemize}
-  \item \textbf{Rust:} makra proceduralne operują na~tokenach (ang.~\emph{token stream}), co daje dużą kontrolę, ale utrudnia analizę semantyczną
-  \item \textbf{Scala~3:} makra operują na~typowanych AST, co umożliwia analizę semantyczną i~sprawdzanie typów wygenerowanego kodu
+    \item \textbf{Rust:} makra proceduralne operują na~tokenach (ang.~\emph{token stream}), co daje dużą kontrolę, ale utrudnia analizę semantyczną
+    \item \textbf{Scala~3:} makra operują na~typowanych AST, co umożliwia analizę semantyczną i~sprawdzanie typów wygenerowanego kodu
 \end{itemize}
 
 
@@ -151,13 +149,13 @@ System metaprogramowania Scali~3 stanowi fundament implementacji projektu \texti
 Kluczowe zastosowania obejmują:
 
 \begin{enumerate}
-  \item \textbf{Generacja klas anonimowych} (sekcja~\ref{subsec:generacja-klasy-anonimowej}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
+    \item \textbf{Generacja klas anonimowych} (sekcja~\ref{subsec:generacja-klasy-anonimowej}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
 
-  \item \textbf{Transformacja AST} (sekcja~\ref{subsec:transformacja-i-adaptacja-referencji}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
+    \item \textbf{Transformacja AST} (sekcja~\ref{subsubsec:transformacja-i-adaptacja-referencji}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
 
-  \item \textbf{Typy rafinowane} (sekcja~\ref{subsec:typy-rafinowane}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
+    \item \textbf{Typy rafinowane} (sekcja~\ref{subsec:typy-rafinowane}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
 
-  \item \textbf{Walidacja w~czasie kompilacji} (sekcja~\ref{subsec:walidacja-i-obsuga-bedow}) --- wykrywanie błędów gramatyki przed wykonaniem programu
+    \item \textbf{Walidacja w~czasie kompilacji} (sekcja~\ref{subsec:walidacja-i-obsuga-bedow}) --- wykrywanie błędów gramatyki przed wykonaniem programu
 \end{enumerate}
 
 Szczegółowa analiza implementacji tych mechanizmów zostanie przedstawiona w~rozdziale~\ref{ch:implementacja}.
@@ -169,13 +167,13 @@ Rozdział przedstawił system metaprogramowania Scali~3 jako fundament teoretycz
 Kluczowe wnioski:
 
 \begin{itemize}
-  \item System cytatów i~wstawek (ang.~\emph{quotes and splices}) umożliwia bezpieczne przenoszenie kodu między fazami kompilacji
+    \item System cytatów i~wstawek (ang.~\emph{quotes and splices}) umożliwia bezpieczne przenoszenie kodu między fazami kompilacji
 
-  \item Bezpieczeństwo międzyetapowe (ang.~\emph{cross-stage safety}) zapobiega błędom związanym z~dostępem do~zmiennych z~niewłaściwych faz
+    \item Bezpieczeństwo międzyetapowe (ang.~\emph{cross-stage safety}) zapobiega błędom związanym z~dostępem do~zmiennych z~niewłaściwych faz
 
-  \item Refleksja TASTy dostarcza bogatego API do~analizy i~transformacji kodu w~czasie kompilacji
+    \item Refleksja TASTy dostarcza bogatego API do~analizy i~transformacji kodu w~czasie kompilacji
 
-  \item Scala~3 łączy zalety systemów metaprogramowania z~Lisp, Template Haskell i~Rust, wprowadzając własne innowacje w~zakresie bezpieczeństwa typów
+    \item Scala~3 łączy zalety systemów metaprogramowania z~Lisp, Template Haskell i~Rust, wprowadzając własne innowacje w~zakresie bezpieczeństwa typów
 \end{itemize}
 
 Mechanizmy te stanowią podstawę implementacji opisanej w~rozdziale~\ref{ch:implementacja}, gdzie zostaną zastosowane do~konstrukcji lekserów i~parserów w~czasie kompilacji.

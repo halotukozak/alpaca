@@ -9,6 +9,7 @@ package lexer
  * number is incremented each time a newline character is matched.
  */
 trait LineTracking extends LexerCtx:
+  this: Product =>
 
   /** The current line number (1-based). */
   var line: Int

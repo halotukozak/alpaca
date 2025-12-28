@@ -2,10 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.unchecked.uncheckedVariance as uv
-import NamedTuple.AnyNamedTuple
-import NamedTuple.NamedTuple
-import collection.immutable.SeqMap
+import scala.NamedTuple.AnyNamedTuple
 
 import scala.language.experimental.modularity
 
@@ -24,6 +21,7 @@ private[alpaca] final case class Lexeme(
   private[alpaca] val fields: Map[String, Any],
 ) extends Selectable {
   type Fields <: AnyNamedTuple
+  def selectDynamic(name: String): Any = fields(name)
 }
 
 private[alpaca] object Lexeme:

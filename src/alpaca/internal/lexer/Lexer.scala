@@ -3,8 +3,6 @@ package internal
 package lexer
 
 import scala.util.matching.Regex
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.annotation.unchecked.uncheckedVariance as uv
 
 /**
  * Type alias for lexer rule definitions.
@@ -17,17 +15,19 @@ import scala.annotation.unchecked.uncheckedVariance as uv
 private[alpaca] type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[Ctx]]
 
 //todo: private[alpaca]
-def lexerImpl[Ctx <: LexerCtx: Type](
+def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Ctx is Copyable],
   empty: Expr[Ctx has Empty],
   betweenStages: Expr[Ctx has BetweenStages],
 )(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx]] = {
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = {
   import quotes.reflect.*
-  val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
-  val compileNameAndPattern = new CompileNameAndPattern
+  type TokenRefn = { type LexemeTpe = LexemeRefn }
+
+  val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$") // todo: debug lexer
+  val compileNameAndPattern = new CompileNameAndPatter
   val createLambda = new CreateLambda
   val replaceRefs = new ReplaceRefs
 
@@ -130,6 +130,14 @@ def lexerImpl[Ctx <: LexerCtx: Type](
       privateWithin = Symbol.noSymbol,
     )
 
+    val lexemeRefinement = Symbol.newTypeAlias(
+      parent = cls,
+      name = "LexemeRefinement",
+      tpe = TypeRepr.of[LexemeRefn],
+      flags = Flags.Synthetic,
+      privateWithin = Symbol.noSymbol,
+    )
+
     val compiled = Symbol.newVal(
       parent = cls,
       name = "compiled",
@@ -149,12 +157,12 @@ def lexerImpl[Ctx <: LexerCtx: Type](
     val byName = Symbol.newVal(
       parent = cls,
       name = "byName",
-      tpe = TypeRepr.of[Map[String, DefinedToken[Ctx]]],
-      flags = Flags.Synthetic | Flags.Lazy, // todo: reconsider lazy
+      tpe = TypeRepr.of[Map[String, DefinedToken[Ctx] & TokenRefn]],
+      flags = Flags.Synthetic | Flags.Override | Flags.Lazy, // todo: reconsider lazy
       privateWithin = Symbol.noSymbol,
     )
 
-    tokenDecls ++ List(fieldsDecls, compiled, allTokens, byName)
+    tokenDecls ++ List(fieldsDecls, lexemeRefinement, compiled, allTokens, byName)
   }
 
   val cls = Symbol.newClass(
@@ -166,7 +174,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   )
 
   val body = {
-    val tokenVals = definedTokens.collect:
+    val tokenVals = definedTokens.map:
       case '{ $token: NamedToken[name] } =>
         ValDef(
           cls.fieldMember(ValidName.from[name]),
@@ -174,6 +182,7 @@ def lexerImpl[Ctx <: LexerCtx: Type](
         )
 
     tokenVals ++ Vector(
+      TypeDef(cls.typeMember("LexemeRefinement")),
       TypeDef(cls.typeMember("Fields")),
       ValDef(
         cls.fieldMember("compiled"),
@@ -206,8 +215,8 @@ def lexerImpl[Ctx <: LexerCtx: Type](
           val all = Expr.ofSeq {
             tokenVals.map(valDef => Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[Ctx]])))
           }
-
-          '{ Map($all*) }.asTerm
+          // it's simpler to add cast here than e.g. bypass apply of DefinedToken
+          '{ Map($all*).asInstanceOf[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]] }.asTerm
         },
       ),
     )
@@ -224,12 +233,12 @@ def lexerImpl[Ctx <: LexerCtx: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   definedTokens
-    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx]]):
+    .unsafeFoldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }]):
       case (tpe, '{ $token: NamedToken[name] }) =>
-        Refinement(tpe, ValidName.from[name], token.asTerm.tpe)
+        Refinement(tpe, ValidName.from[name], token.asTerm.tpe /* maybe need refinement */)
     .asType match
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
-      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]
+      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
 }

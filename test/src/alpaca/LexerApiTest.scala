@@ -94,4 +94,22 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     Lexer.print: Token[LexerCtx.Default] & NamedToken["print"]
     Lexer.id: Token[LexerCtx.Default] & NamedToken["id"]
   }
+
+  test("Lexer manipulates context") {
+    case class StateCtx(
+      var text: CharSequence = "",
+      var count: Int = 0,
+    ) extends LexerCtx
+
+    val Lexer = lexer[StateCtx]:
+      case "inc" =>
+        ctx.count += 1
+        Token["inc"](ctx.count)
+      case "check" =>
+        Token["check"](ctx.count)
+      case " " => Token.Ignored
+
+    val (_, lexemes) = Lexer.tokenize("inc check inc inc check")
+    lexemes.map(_.value) shouldBe List(1, 1, 2, 3, 3)
+  }
 }

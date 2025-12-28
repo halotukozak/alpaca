@@ -4,8 +4,8 @@ import alpaca.internal.*
 import alpaca.internal.lexer.*
 
 import java.util.jar.Attributes.Name
-import scala.annotation.compileTimeOnly
 import scala.NamedTuple.AnyNamedTuple
+import scala.annotation.compileTimeOnly
 import scala.collection.mutable
 
 /**
@@ -37,10 +37,12 @@ transparent inline def lexer[Ctx <: LexerCtx](
   copy: Ctx is Copyable,
   empty: Ctx has Empty,
   betweenStages: Ctx has BetweenStages,
+  lexerRefinement: LexerRefinement[Ctx],
 )(using inline
   debugSettings: DebugSettings,
-): Tokenization[Ctx] =
-  ${ lexerImpl[Ctx]('{ rules }, '{ copy }, '{ empty }, '{ betweenStages })(using '{ debugSettings }) }
+): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } = ${
+  lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ empty }, '{ betweenStages })(using '{ debugSettings })
+}
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token {
@@ -93,7 +95,8 @@ transparent inline given ctx(using c: LexerCtx): c.type = c
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx {
+trait LexerCtx:
+  this: Product =>
 
   /** The last lexeme that was created. */
   var lastLexeme: Lexeme | Null = compiletime.uninitialized
@@ -103,7 +106,6 @@ trait LexerCtx {
 
   /** The remaining text to be tokenized. */
   var text: CharSequence
-}
 
 object LexerCtx:
 
@@ -127,12 +129,13 @@ object LexerCtx:
   given LexerCtx has BetweenStages =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
       ctx.lastRawMatched = m.matched.nn
+      ctx.text = ctx.text.from(m.end)
+      modifyCtx(ctx)
+
       val ctxAsProduct = ctx.asInstanceOf[Product]
       val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
         ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
-      ctx.text = ctx.text.from(m.end)
-      modifyCtx(ctx)
 
     case (IgnoredToken(_, modifyCtx), m, ctx) =>
       ctx.lastRawMatched = m.matched.nn

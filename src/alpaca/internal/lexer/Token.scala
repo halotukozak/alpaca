@@ -38,9 +38,8 @@ private[lexer] final case class TokenInfo(
 
 //todo: private[lexer]
 object TokenInfo {
-  private val counter = AtomicInteger(0)
-
   type AUX[Name <: ValidName] = TokenInfo { val name: Name }
+  private val counter = AtomicInteger(0)
 
   /**
    * Creates a TokenInfo expression from a name and regex pattern.
@@ -67,6 +66,8 @@ object TokenInfo {
    */
   private def nextName(): String = s"token${counter.getAndIncrement()}"
 
+  given [Name <: ValidName] => TokenInfo.AUX[Name] has Default = () => TokenInfo("".asInstanceOf[Name], "", "")
+
   /**
    * Given instance to extract TokenInfo from compile-time expressions.
    */
@@ -83,8 +84,6 @@ object TokenInfo {
   given [Name <: ValidName: Type] => ToExpr[TokenInfo.AUX[Name]]:
     def apply(x: TokenInfo.AUX[Name])(using Quotes): Expr[TokenInfo.AUX[Name]] =
       '{ TokenInfo(${ Expr[Name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }.asExprOf[TokenInfo.AUX[Name]]
-
-  given [Name <: ValidName] => TokenInfo.AUX[Name] has Default = () => TokenInfo("".asInstanceOf[Name], "", "")
 }
 
 /**
@@ -126,7 +125,7 @@ final class DefinedToken[+Ctx <: LexerCtx]private (
   val ctxManipulation: CtxManipulation[Ctx @uv],
   private val remapping: (Ctx@uv) => Any,
 ) extends Token[Ctx]:
-  type LexemeTpe = Lexeme { val name: info.name.type; val value: Value }
+  type LexemeTpe <: Lexeme { val name: info.name.type; val value: Value } // & LexemeRefinement
 
   @compileTimeOnly(RuleOnly)
   inline def unapply(x: Any): Option[LexemeTpe] = dummy
@@ -141,7 +140,7 @@ object DefinedToken:
     ): DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name] =
      new DefinedToken[Ctx](info, ctxManipulation, remapping).asInstanceOf[DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name]]
 
-   def unapply[Ctx <: LexerCtx](x: DefinedToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv], (Ctx@uv) => x.Value) = 
+   def unapply[Ctx <: LexerCtx](x: DefinedToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv], (Ctx@uv) => x.Value) =
     (x.info, x.ctxManipulation, x.remapping.asInstanceOf[(Ctx@uv) => x.Value])
 
 /**
