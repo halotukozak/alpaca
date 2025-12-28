@@ -4,6 +4,7 @@ package lexer
 
 import scala.NamedTuple.NamedTuple
 import scala.util.matching.Regex
+import java.util.regex.Pattern
 
 /**
  * Type alias for lexer rule definitions.
@@ -141,7 +142,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     val compiled = Symbol.newVal(
       parent = cls,
       name = "compiled",
-      tpe = TypeRepr.of[Regex],
+      tpe = TypeRepr.of[Pattern],
       flags = Flags.Protected | Flags.Synthetic | Flags.Override,
       privateWithin = Symbol.noSymbol,
     )
@@ -192,11 +193,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
               .map:
                 case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)"
               .mkString("|")
-              .r
-              .regex, // we'd like to compile it here to fail in compile time if regex is invalid
+              .tap(Pattern.compile), // we'd like to compile it here to fail in compile time if regex is invalid
           )
 
-          '{ Regex($regex) }.asTerm.changeOwner(cls.fieldMember("compiled"))
+          '{ Pattern.compile($regex) }.asTerm.changeOwner(cls.fieldMember("compiled"))
         },
       ),
       ValDef(
