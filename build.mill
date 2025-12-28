@@ -1,4 +1,4 @@
-//| mill-version: 1.1.0-RC2
+//| mill-version: 1.1.0-RC3
 //| mill-jvm-version: 21
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
@@ -6,16 +6,16 @@
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
 
-import mill._
-import mill.scalalib._
-import mill.scalalib.publish._
+import mill.*
+import mill.scalalib.*
+import mill.scalalib.publish.*
 import mill.contrib.scoverage.ScoverageModule
 import mill.util.VcsVersion
 
-object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule {
-  def scalaVersion = "3.8.0-RC1"
+object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
+  def scalaVersion = "3.8.0-RC4"
 
-  def scoverageVersion = "2.3.0"
+  def scoverageVersion = "2.5.2"
 
   override def scalacOptions = Seq(
     "-deprecation",
@@ -84,7 +84,5 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     mvn"org.slf4j:slf4j-simple:1.7.36",
   )
 
-  object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests {
+  object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
-  }
-}
