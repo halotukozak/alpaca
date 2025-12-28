@@ -227,7 +227,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
           owner,
           {
             case List(List(fieldName: Term)) =>
-              Some {
+              Some:
                 Match(
                   Typed(
                     fieldName,
@@ -237,9 +237,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                     ),
                   ),
                   tokenVals.map: valDef =>
-                    CaseDef(Literal(StringConstant(NameTransformer.decode(valDef.name))), None, Ref(valDef.symbol)),
+                    CaseDef(Literal(StringConstant(NameTransformer.encode(valDef.name))), None, Ref(valDef.symbol)),
                 ).changeOwner(owner)
-              }
             case _ => None
           },
         ),
