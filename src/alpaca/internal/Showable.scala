@@ -58,14 +58,6 @@ private[internal] object Showable {
 
   given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
 
-  given [Tup <: Tuple: Showable](using showables: Tuple.Map[Tup, Showable]): Showable[Tup] = tuple =>
-    showables
-      .zip(tuple)
-      .toList
-      .asInstanceOf[List[(Showable[Any], Any)]]
-      .map(_.show(_))
-      .mkShow("(", ", ", ")")
-
   /**
    * Automatically derives a Showable instance for Product types (case classes).
    *
