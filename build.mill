@@ -42,6 +42,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     // "-Wunused:all",
     "-language:experimental.modularity",
     "-preview",
+    "-Yretain-trees",
   )
 
   override def scalaDocOptions = Task {
