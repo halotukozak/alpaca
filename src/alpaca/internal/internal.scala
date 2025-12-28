@@ -102,3 +102,10 @@ given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] wit
         )
       case _ =>
         report.errorAndAbort("DebugSettings must be defined inline")
+
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
+  import quotes.reflect.*
+
+  def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
+    val owner = symbol(parent).overridingSymbol(parent)
+    body(using owner.asQuotes)(owner)
