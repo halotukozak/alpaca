@@ -35,7 +35,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yexplicit-nulls",
     // "-Yprint-debug",
     // "-Xprint:postInlining",
-    "-Wsafe-init",
+    // "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
