@@ -19,7 +19,7 @@ final case class DebugSettings(
   timeout: Int & Singleton,
 )
 
-object DebugSettings {
+object DebugSettings:
 
   /**
    * Default debug settings with debugging disabled.
@@ -27,4 +27,3 @@ object DebugSettings {
    * Debug output is disabled by default and would be written to "debug/" if enabled.
    */
   inline given default: DebugSettings = DebugSettings(false, "debug/", 90)
-}

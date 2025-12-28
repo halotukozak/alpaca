@@ -22,7 +22,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = {
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] =
   import quotes.reflect.*
   type ThisToken = Token[?, Ctx, ?]
   type TokenRefn = ThisToken { type LexemeTpe = LexemeRefn }
@@ -100,7 +100,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
 
-  def decls(cls: Symbol): List[Symbol] = {
+  def decls(cls: Symbol): List[Symbol] =
     val tokenDecls = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
         Symbol.newVal(
@@ -163,7 +163,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     )
 
     tokenDecls ++ List(fieldsDecls, lexemeRefinement, compiled, allTokens, byName)
-  }
 
   val cls = Symbol.newClass(
     Symbol.spliceOwner,
@@ -173,7 +172,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     None,
   )
 
-  val body = {
+  val body =
     val tokenVals = definedTokens.map:
       case '{ $token: Token[name, Ctx, value] } =>
         ValDef(
@@ -221,7 +220,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         },
       ),
     )
-  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
@@ -246,4 +244,3 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
-}

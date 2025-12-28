@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
  * This object provides methods to check if any token patterns are
  * shadowed by others, which would mean they could never be matched.
  */
-private[lexer] object RegexChecker {
+private[lexer] object RegexChecker:
 
   /**
    * Checks a sequence of regex patterns for shadowing.
@@ -32,4 +32,3 @@ private[lexer] object RegexChecker {
         j <- (i + 1) until regexes.size
         if regexes.get(j).isSubsetOf(regexes.get(i))
       yield s"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
-}

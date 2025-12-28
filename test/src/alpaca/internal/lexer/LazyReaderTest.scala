@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import java.io.StringReader
 import scala.util.Using
 
-final class LazyReaderTest extends AnyFunSuite {
+final class LazyReaderTest extends AnyFunSuite:
   test("charAt should return correct character at position") {
     val reader = new StringReader("hello world")
     Using(new LazyReader(reader, 11)) { lazyReader =>
@@ -85,4 +85,3 @@ final class LazyReaderTest extends AnyFunSuite {
       assert(exception.getMessage.contains("Position 0 is out of bounds"))
     }
   }
-}

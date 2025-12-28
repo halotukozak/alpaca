@@ -18,7 +18,7 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using copy: Copyable[Ctx], // todo: unused
   betweenStages: BetweenStages[Ctx],
-) extends Selectable {
+) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
@@ -52,7 +52,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   final def tokenize(
     input: CharSequence,
   )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) = {
+  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) =
     @tailrec def loop(
       globalCtx: Ctx,
     )(
@@ -77,11 +77,9 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val initialContext = empty()
     initialContext.text = input
     (initialContext, loop(initialContext)(Nil))
-  }
 
   /** The compiled regex that matches all defined tokens. */
   protected def compiled: Regex
-}
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match
