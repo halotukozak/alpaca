@@ -15,10 +15,10 @@ opaque private[internal] type DebugPosition = (line: Int, file: String)
 private[internal] object DebugPosition:
 
   /**
-   * Implicit instance that captures the current source line number.
+   * Implicit instance that captures the current source line number and file name.
    *
-   * When used in a debug call, this automatically provides the line number
-   * where the call was made.śśś
+   * When used in a debug call, this automatically provides the line number and
+   * file name where the call was made.
    */
   inline given here: DebugPosition = ${ hereImpl }
 
