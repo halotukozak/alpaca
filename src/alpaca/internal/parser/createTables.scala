@@ -94,10 +94,11 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       cases
         .map(_.asTerm)
         .map(extractProductionName)
-        .unsafeMap:
+        .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
+          case (other, name) => report.errorAndAbort(show"Unexpected production definition: $other")
         .unsafeFlatMap:
           case (CaseDef(pattern, Some(_), rhs), name) =>
             throw new NotImplementedError("Guards are not supported yet")
