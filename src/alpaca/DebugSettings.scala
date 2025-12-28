@@ -23,6 +23,7 @@ final case class DebugSettings(
 )
 
 object DebugSettings {
+
   /**
    * Default debug settings with debugging disabled.
    *

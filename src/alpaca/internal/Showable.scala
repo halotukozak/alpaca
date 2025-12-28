@@ -35,7 +35,7 @@ extension [T: Showable as showable](t: T) private[internal] def show: Shown = sh
  *
  * Used to ensure type safety in string interpolation.
  */
-opaque private[internal] into type Shown <: String = String
+opaque into private[internal] type Shown <: String = String
 
 object Shown {
   given Shown is Showable = x => x

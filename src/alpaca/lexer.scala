@@ -37,11 +37,17 @@ transparent inline def lexer[Ctx <: LexerCtx](
   copy: Ctx is Copyable,
   empty: Ctx has Empty,
   betweenStages: Ctx has BetweenStages,
-  lexerRefinement: LexerRefinement[Ctx],
+  lexerRefinement: Ctx has LexerRefinement,
 )(using inline
   debugSettings: DebugSettings,
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } = ${
-  lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ empty }, '{ betweenStages })(using '{ debugSettings })
+  lexerImpl[Ctx, lexerRefinement.Lexeme](
+    '{ rules },
+    '{ copy },
+    '{ empty },
+    '{ betweenStages },
+    '{ lexerRefinement },
+  )(using '{ debugSettings })
 }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
@@ -68,7 +74,10 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type] { type Value = String } & NamedToken[Name] = dummy
+  def apply[Name <: ValidName](using ctx: LexerCtx): Token[ctx.type] {
+    type Value = String;
+    val info: TokenInfo { val name: Name }
+  } = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -81,9 +90,10 @@ object Token {
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx)
-    : Token[ctx.type] { type Value = value.type } & NamedToken[Name] =
-    dummy
+  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[ctx.type] {
+    type Value = value.type;
+    val info: TokenInfo { val name: Name }
+  } = dummy
 }
 
 transparent inline given ctx(using c: LexerCtx): c.type = c

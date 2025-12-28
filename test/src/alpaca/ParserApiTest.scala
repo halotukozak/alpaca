@@ -3,14 +3,12 @@ package alpaca
 import Production as P
 
 import alpaca.internal.Copyable
+import alpaca.internal.lexer.{Lexeme, LexerRefinement}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.internal.lexer.Lexeme
-import alpaca.internal.lexer.LexerRefinement
-
-import scala.deriving.Mirror
 
 import scala.collection.mutable
+import scala.deriving.Mirror
 
 final class ParserApiTest extends AnyFunSuite with Matchers {
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])

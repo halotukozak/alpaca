@@ -6,7 +6,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.language.experimental.modularity
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
-private[alpaca] infix type has[A <: AnyKind, B <: Any { type Self <: AnyKind }] = B { type Self = A }
+infix private[alpaca] type has[A <: AnyKind, B <: Any { type Self <: AnyKind }] = B { type Self = A }
 
 /**
  * A TreeMap that replaces symbol references in a tree.

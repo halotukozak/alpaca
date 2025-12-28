@@ -1,7 +1,5 @@
 package alpaca.internal
 
-import alpaca.internal.lexer.TokenInfo.AUX
-
 /**
  * A type class for creating empty instances of types.
  *

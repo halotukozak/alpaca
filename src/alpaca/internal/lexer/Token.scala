@@ -30,7 +30,7 @@ private[lexer] type CtxManipulation[-Ctx <: LexerCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-private[lexer] final case class TokenInfo(
+private[alpaca] final case class TokenInfo(
   tracked val name: ValidName,
   regexGroupName: String,
   pattern: String,
@@ -38,7 +38,6 @@ private[lexer] final case class TokenInfo(
 
 //todo: private[lexer]
 object TokenInfo {
-  type AUX[Name <: ValidName] = TokenInfo { val name: Name }
   private val counter = AtomicInteger(0)
 
   /**
@@ -66,13 +65,14 @@ object TokenInfo {
    */
   private def nextName(): String = s"token${counter.getAndIncrement()}"
 
-  given [Name <: ValidName] => TokenInfo.AUX[Name] has Default = () => TokenInfo("".asInstanceOf[Name], "", "")
+  given [Name <: ValidName] => ((TokenInfo { val name: Name }) has Default) = () =>
+    TokenInfo("".asInstanceOf[Name], "", "")
 
   /**
    * Given instance to extract TokenInfo from compile-time expressions.
    */
-  given [Name <: ValidName] => FromExpr[TokenInfo.AUX[Name]]:
-    def unapply(x: Expr[TokenInfo.AUX[Name]])(using Quotes): Option[TokenInfo.AUX[Name]] = x match
+  given [Name <: ValidName] => FromExpr[TokenInfo { val name: Name }]:
+    def unapply(x: Expr[TokenInfo { val name: Name }])(using Quotes): Option[TokenInfo { val name: Name }] = x match
       case '{ TokenInfo($name, $regexGroupName: String, $pattern: String) } =>
         for
           name <- name.value
@@ -81,9 +81,10 @@ object TokenInfo {
         yield TokenInfo(name.asInstanceOf[Name], regexGroupName, pattern)
       case _ => None
 
-  given [Name <: ValidName: Type] => ToExpr[TokenInfo.AUX[Name]]:
-    def apply(x: TokenInfo.AUX[Name])(using Quotes): Expr[TokenInfo.AUX[Name]] =
-      '{ TokenInfo(${ Expr[Name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }.asExprOf[TokenInfo.AUX[Name]]
+  given [Name <: ValidName: Type] => ToExpr[TokenInfo { val name: Name }]:
+    def apply(x: TokenInfo { val name: Name })(using Quotes): Expr[TokenInfo { val name: Name }] =
+      '{ TokenInfo(${ Expr[Name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
+        .asExprOf[TokenInfo { val name: Name }]
 }
 
 /**
@@ -117,13 +118,11 @@ sealed trait Token[+Ctx <: LexerCtx]:
  * @param remapping function to extract value from context
  */
 
-type NamedToken[Name <: ValidName] = Token[?] { val info: TokenInfo.AUX[Name] }
-
 //todo: may be invariant?
-final class DefinedToken[+Ctx <: LexerCtx]private (
+final class DefinedToken[+Ctx <: LexerCtx] private (
   tracked val info: TokenInfo,
   val ctxManipulation: CtxManipulation[Ctx @uv],
-  private val remapping: (Ctx@uv) => Any,
+  private val remapping: (Ctx @uv) => Any,
 ) extends Token[Ctx]:
   type LexemeTpe <: Lexeme { val name: info.name.type; val value: Value } // & LexemeRefinement
 
@@ -135,13 +134,16 @@ final class DefinedToken[+Ctx <: LexerCtx]private (
   inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
 
 object DefinedToken:
-   def apply[Ctx <: LexerCtx, ValueTpe, Name <: ValidName](
-    info: TokenInfo.AUX[Name], ctxManipulation: CtxManipulation[Ctx @uv], remapping: (Ctx@uv) => ValueTpe,
-    ): DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name] =
-     new DefinedToken[Ctx](info, ctxManipulation, remapping).asInstanceOf[DefinedToken[Ctx]{ type Value = ValueTpe; } & NamedToken[Name]]
+  def apply[Ctx <: LexerCtx, ValueTpe, Name <: ValidName, TokenRefn](
+    info: TokenInfo { val name: Name },
+    ctxManipulation: CtxManipulation[Ctx @uv],
+    remapping: (Ctx @uv) => ValueTpe,
+  ): DefinedToken[Ctx] { type Value = ValueTpe; val info: TokenInfo { val name: Name } } & TokenRefn =
+    new DefinedToken[Ctx](info, ctxManipulation, remapping)
+      .asInstanceOf[DefinedToken[Ctx] { type Value = ValueTpe; val info: TokenInfo { val name: Name } } & TokenRefn]
 
-   def unapply[Ctx <: LexerCtx](x: DefinedToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv], (Ctx@uv) => x.Value) =
-    (x.info, x.ctxManipulation, x.remapping.asInstanceOf[(Ctx@uv) => x.Value])
+  def unapply[Ctx <: LexerCtx](x: DefinedToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv], (Ctx @uv) => x.Value) =
+    (x.info, x.ctxManipulation, x.remapping.asInstanceOf[(Ctx @uv) => x.Value])
 
 /**
  * A token that is matched but not included in the output.
@@ -153,8 +155,23 @@ object DefinedToken:
  * @param info token information
  * @param ctxManipulation function to update context
  */
-final case class IgnoredToken[+Ctx <: LexerCtx](
+final class IgnoredToken[+Ctx <: LexerCtx] private (
   tracked val info: TokenInfo,
-  ctxManipulation: CtxManipulation[Ctx @uv],
+  val ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Ctx]:
   type Value = Nothing
+
+object IgnoredToken:
+  def apply[Ctx <: LexerCtx, TokenRefn](
+    info: TokenInfo,
+    ctxManipulation: CtxManipulation[Ctx @uv],
+  ): IgnoredToken[Ctx] { val info: TokenInfo } & TokenRefn =
+    new IgnoredToken[Ctx](info, ctxManipulation)
+      .asInstanceOf[IgnoredToken[Ctx] & TokenRefn]
+
+  def unapply[Ctx <: LexerCtx](x: IgnoredToken[Ctx]): (x.info.type, CtxManipulation[Ctx @uv]) =
+    (x.info, x.ctxManipulation)
+
+private[internal] object NameExtractor:
+  type Info[Name <: ValidName] = TokenInfo { val name: Name }
+  type Token[Name <: ValidName] = alpaca.internal.lexer.Token[?] { val info: NameExtractor.Info[Name] }

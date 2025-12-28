@@ -5,7 +5,8 @@ package parser
 import NonEmptyList as NEL
 
 import alpaca.internal.Csv.toCsv
-import alpaca.internal.lexer.{NamedToken, Token}
+import alpaca.internal.lexer.Token
+import alpaca.internal.lexer.NameExtractor
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -158,7 +159,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         val args = rhs
           .map[parser.Symbol.NonEmpty]:
             case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
-            case '{ $token: NamedToken[name] } => Terminal(ValidName.from[name])
+            case '{ $token: NameExtractor.Token[name] } => Terminal(ValidName.from[name])
           .toList
 
         productionsByRhs.getOrElse(
@@ -181,7 +182,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   def extractKey(expr: Expr[Production | Token[?]]): ConflictKey = expr match
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
-    case '{ $token: NamedToken[nameTpe] } => ConflictKey(ValidName.from[nameTpe])
+    case '{ $token: NameExtractor.Token[nameTpe] } => ConflictKey(ValidName.from[nameTpe])
 
   report.info("Building conflict resolution table...")
 
