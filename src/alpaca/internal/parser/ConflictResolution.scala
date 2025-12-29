@@ -2,6 +2,7 @@ package alpaca
 package internal
 package parser
 
+
 import alpaca.internal.lexer.Token
 
 import scala.annotation.{compileTimeOnly, tailrec}
@@ -48,7 +49,7 @@ private[parser] object ConflictResolutionTable {
      * Uses the precedence rules in the table to determine which action
      * should be preferred. Returns None if no resolution rule applies.
      *
-     * @param first the first parse action
+     * @param first  the first parse action
      * @param second the second parse action
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
@@ -76,7 +77,7 @@ private[parser] object ConflictResolutionTable {
       winsOver(first, second) orElse winsOver(second, first)
     }
 
-    def verifyNoConflicts(): Unit = {
+    def verifyNoConflicts()(using DebugSettings): Unit = {
       enum VisitState:
         case Unvisited, Visited, Processed
 

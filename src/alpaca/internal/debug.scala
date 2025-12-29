@@ -37,8 +37,8 @@ private[internal] object DebugPosition:
  * debug directory only when debugging is enabled in the debug settings.
  * The directory structure is created if it doesn't exist.
  *
- * @param path the relative path within the debug directory
- * @param content the content to write
+ * @param path          the relative path within the debug directory
+ * @param content       the content to write
  * @param debugSettings the debug settings determining if/where to write
  */
 private[internal] def debugToFile(path: String)(content: Shown)(using debugSettings: DebugSettings): Unit =

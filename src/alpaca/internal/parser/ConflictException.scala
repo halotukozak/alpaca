@@ -24,7 +24,7 @@ sealed class ConflictException(message: Shown) extends Exception(message)
  * @param red the reduction to potentially apply
  * @param path the path of symbols leading to this conflict
  */
-final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbol])
+final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbol])(using DebugSettings)
   extends ConflictException(
     show"""
           |Shift \"$symbol\" vs Reduce $red
@@ -44,7 +44,7 @@ final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbo
  * @param red2 the second potential reduction
  * @param path the path of symbols leading to this conflict
  */
-final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Symbol])
+final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Symbol])(using DebugSettings)
   extends ConflictException(
     show"""
           |Reduce $red1 vs Reduce $red2
@@ -64,7 +64,7 @@ final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Sy
  * @param node the node detected in the cycle
  * @param path the chain of nodes showing the inconsistent ordering
  */
-final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])
+final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])(using DebugSettings)
   extends ConflictException(show"""
                                   |Inconsistent conflict resolution detected:
                                   |${path.dropWhile(_ != node).mkShow(" before ")} before $node

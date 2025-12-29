@@ -2,8 +2,10 @@ package alpaca
 package internal
 package parser
 
-import scala.util.Random
+import alpaca.internal.parser.Symbol.SyntheticInfix
+
 import scala.reflect.NameTransformer
+import scala.util.Random
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
@@ -73,6 +75,8 @@ object Terminal:
     new Terminal(name).asInstanceOf[Terminal & Symbol.NonEmpty]
 
 private[parser] object Symbol {
+  type NonEmpty = Symbol { type IsEmpty = false }
+
   type NonEmpty = Symbol { type IsEmpty = false }
 
   /** The augmented start symbol used internally by the parser. */

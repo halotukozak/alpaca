@@ -42,6 +42,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     // "-Wunused:all",
     "-language:implicitConversions",
     "-experimental",
+    // "-Xprint-suspension",
   )
 
   override def scalaDocOptions = Task {

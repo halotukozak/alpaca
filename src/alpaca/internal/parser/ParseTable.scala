@@ -61,6 +61,7 @@ private[parser] object ParseTable {
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
   )(using quotes: Quotes,
+  )(using DebugSettings,
   ): ParseTable = {
     import quotes.reflect.report
 
