@@ -4,7 +4,6 @@ package parser
 
 import alpaca.internal.AlgorithmError
 
-
 /**
  * Represents an LR(1) item in the parser's state machine.
  *
