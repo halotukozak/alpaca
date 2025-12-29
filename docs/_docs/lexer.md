@@ -59,7 +59,7 @@ val Lexer = lexer {
 
 ### Pattern Alternatives
 
-Use pattern alternatives for keywords:
+Use alternatives to match multiple patterns:
 
 ```scala
 val Lexer = lexer {
