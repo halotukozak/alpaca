@@ -82,23 +82,39 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
     case value => toExpr(value.asInstanceOf[T])
 
 // todo: it's temporary, remove when we have a proper timeout implementation
-inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
-  import scala.concurrent.{Await, Future}
-  import scala.concurrent.duration._
+inline private[internal] def withDebugSettings[T](inline block: DebugSettings ?=> T)(using Quotes): T =
   import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration.*
+  import scala.concurrent.{Await, Future}
+
+  given DebugSettings = Expr.summon[DebugSettings].get.valueOrAbort
 
   val future = Future(block)
-  Await.result(future, debugSettings.timeout.seconds)
+  Await.result(future, summon[DebugSettings].timeout.seconds)
 
-given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] with
-  def apply(x: Expr[DebugSettings]): DebugSettings =
+private[internal] given FromExpr[DebugSettings] with
+
+  def unapply(expr: Expr[DebugSettings])(using quotes: Quotes): Option[DebugSettings] =
     import quotes.reflect.*
-    x match
-      case '{ DebugSettings($enabled, $directory, $timeout) } =>
-        DebugSettings(
-          enabled = enabled.valueOrAbort,
-          directory = directory.valueOrAbort,
-          timeout = timeout.valueOrAbort,
-        )
-      case _ =>
-        report.errorAndAbort("DebugSettings must be defined inline")
+
+    val extractValue: Expr[DebugSettings] => Option[DebugSettings] =
+      case '{ DebugSettings($enabled, $directory, $timeout, $verboseNames) } =>
+        for
+          en <- enabled.value
+          dir <- directory.value
+          to <- timeout.value
+          vn <- verboseNames.value
+        yield DebugSettings(en, dir, to, vn)
+      case other => None
+
+    extractValue(expr)
+      .orElse:
+        extractValue:
+          expr.asTerm.symbol.tree match
+            case ValDef(_, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case DefDef(_, Nil, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case x => report.errorAndAbort("DebugSettings must be a given val")
+
+private[internal] given ToExpr[DebugSettings] with
+  def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] =
+    '{ DebugSettings(${ Expr(x.enabled) }, ${ Expr(x.directory) }, ${ Expr(x.timeout) }, ${ Expr(x.verboseNames) }) }
