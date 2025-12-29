@@ -21,9 +21,6 @@ val MatrixLexer = lexer:
   case string @ "\"[^\"]*\"" =>
     Token["String"](string.substring(1, string.length - 1))
   case (" " | "\t" | "\\#.*") => Token.Ignored
-  // todo: why it does not count properly
-  // case newLines @ "\n+" =>
-  //   ctx.line += newLines.count(_ == '\n')
-  //   Token.Ignored
-
-  case "\n" => Token.Ignored
+  case newLines @ "\n+" =>
+    ctx.line += newLines.length
+    Token.Ignored

@@ -37,7 +37,7 @@ def main(): Unit =
         val globalEnv = Environment(
           null,
           mutable.Map.empty,
-          runtime.Function.values.map(func => func.productPrefix -> func).to(mutable.Map),
+          runtime.Function.values.map(func => (func.productPrefix, func)).to(mutable.Map),
         )
         val result = MatrixInterpreter.visitNullable(typed)(globalEnv)
         println(s"Result: $result")
