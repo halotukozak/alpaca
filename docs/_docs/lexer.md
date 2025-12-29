@@ -41,7 +41,7 @@ Capture and transform matched text:
 val Lexer = lexer {
   case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
   case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
-  case str @ "\"[^\"]*\"" => Token["STRING"](str)
+  case str @ "\"[^\"]*\"" => Token["STRING"](str.slice(1, str.length - 1))
 }
 ```
 
@@ -57,7 +57,7 @@ val Lexer = lexer {
 }
 ```
 
-### Keyword vs Identifier
+### Pattern Alternatives
 
 Use pattern alternatives for keywords:
 
@@ -164,8 +164,6 @@ val Lexer = lexer {
   case "\\]" => Token["RBRACKET"]  // Literal ]
 }
 ```
-
-## Common Patterns
 
 ### Numbers
 
@@ -282,16 +280,10 @@ val Lexer = lexer {
    case "\\+" => Token["PLUS"]  // Matches literal '+'
    ```
 
-4. **Keep context immutable** - Only use `var` fields in custom contexts:
+4. **Keep context mutable** - Only use `var` fields in custom contexts:
    ```scala
    case class MyCtx(
      var text: CharSequence = "",  // Required
      var count: Int = 0              // Custom mutable state
    ) extends LexerCtx
-   ```
-
-5. **Test thoroughly** - Verify tokenization with different inputs:
-   ```scala
-   val (_, lexemes) = Lexer.tokenize("test input")
-   assert(lexemes.map(_.name) == List("TOKEN1", "TOKEN2"))
    ```
