@@ -313,7 +313,6 @@ final class CompilationTheoryTest extends AnyFunSuite:
     else if(N!=10)
         print("N!=10");
 
-
     if(N>5) {
         print("N>5");
     }
@@ -341,7 +340,6 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
         k = k - 1;
     }
-
 
     for i = 1:N
       for j = i:M

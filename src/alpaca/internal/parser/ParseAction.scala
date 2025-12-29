@@ -25,7 +25,7 @@ private[parser] object ParseAction {
    */
   opaque type Reduction = Production
 
-  given Showable[ParseAction] =
+  given ParseAction is Showable =
     case shift: Int => show"S$shift"
     case reduction: Production => show"$reduction"
 
@@ -34,7 +34,7 @@ private[parser] object ParseAction {
 
     inline def unapply(inline shift: Shift): Some[Int] = Some(shift)
 
-    given TypeTest[Any, Shift] with
+    given TypeTest[Any, Shift]:
       def unapply(x: Any): Option[Shift & x.type] = x match
         case i: Int => Some(i.asInstanceOf[Shift & x.type])
         case _ => None
@@ -45,13 +45,13 @@ private[parser] object ParseAction {
 
     inline def unapply(inline red: Reduction): Some[Production] = Some(red)
 
-    given TypeTest[Any, Reduction] with
+    given TypeTest[Any, Reduction]:
       def unapply(x: Any): Option[Reduction & x.type] = x match
         case p: Production => Some(p.asInstanceOf[Reduction & x.type])
         case _ => None
     extension (red: Reduction) inline def production: Production = red
 
-  given ToExpr[ParseAction] with
+  given ToExpr[ParseAction]:
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
       case shift: Int => '{ ${ Expr(shift) }: ParseAction.Shift }
       case production: Production => '{ ${ Expr(production) }: ParseAction.Reduction }

@@ -3,6 +3,7 @@ package internal
 package parser
 
 import scala.annotation.StaticAnnotation
+import ValidName.given
 
 /**
  * Represents a grammar production rule.
@@ -44,14 +45,14 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
 object Production {
 
   /** Showable instance for displaying productions in human-readable form. */
-  given Showable[Production] =
+  given Production is Showable =
     case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
     case NonEmpty(lhs, rhs, name) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   /** ToExpr instance for lifting productions to compile-time expressions. */
-  given ToExpr[Production] with
+  given ToExpr[Production]:
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
       case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }

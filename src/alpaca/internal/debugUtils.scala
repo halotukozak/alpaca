@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.util.Try
+import Showable.given
 
 /**
  * Generates a detailed string representation of a symbol during macro expansion.
@@ -141,39 +142,6 @@ private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Pos
      |sourceFile: ${pos.sourceFile},
      |""".stripMargin
 
-/**
- * An opaque type representing a source code position for debug messages.
- *
- * This type wraps a line number and is used to annotate debug output
- * with the location where a debug call was made.
- */
-opaque private[internal] type DebugPosition = Int
-
-private[internal] object DebugPosition {
-
-  /**
-   * Implicit instance that captures the current source line number.
-   *
-   * When used in a debug call, this automatically provides the line number
-   * where the call was made.śśś
-   */
-  inline given here: DebugPosition = ${ hereImpl }
-
-  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
-    import quotes.reflect.*
-    val pos = Position.ofMacroExpansion
-    Expr(pos.startLine + 1)
-  }
-
-  given ToExpr[DebugPosition] with
-    def apply(x: DebugPosition)(using quotes: Quotes): Expr[DebugPosition] =
-      ToExpr.IntToExpr(x)
-
-  given FromExpr[DebugPosition] with
-    def unapply(x: Expr[DebugPosition])(using Quotes): Option[DebugPosition] =
-      FromExpr.IntFromExpr.unapply(x)
-}
-
 extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
   /**
    * Prints the tree and aborts compilation at that point.
@@ -185,7 +153,8 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @return the tree (never actually returns due to abort)
    */
   private[internal] def dbg(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
+    import quotes.reflect.*
+    report.errorAndAbort(show"${Printer.TreeShortCode.show(tree)} $pos")
     tree
   }
 
@@ -198,7 +167,8 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @return the tree unchanged
    */
   private[internal] def info(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.info(show"$tree at line $pos")
+    import quotes.reflect.*
+    report.info(show"${Printer.TreeShortCode.show(tree)} $pos")
     tree
   }
 
@@ -234,14 +204,15 @@ extension (using quotes: Quotes)(msg: String)
    * @throws Nothing always aborts compilation
    */
   private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+    quotes.reflect.report.errorAndAbort(show"$msg $pos")
 
   /**
    * Prints a debug message as an info during compilation.
    *
    * @param pos the source position of the debug call
    */
-  private[internal] def soft(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+  private[internal] def soft(using pos: DebugPosition): Unit =
+    quotes.reflect.report.info(show"$msg $pos")
 
 extension (using quotes: Quotes)(e: Any)
   /**
@@ -251,7 +222,7 @@ extension (using quotes: Quotes)(e: Any)
    * @throws Nothing always aborts compilation
    */
   private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+    quotes.reflect.report.errorAndAbort(show"${e.toString} $pos")
 
   /**
    * Prints any value's string representation as an info message.
@@ -260,7 +231,7 @@ extension (using quotes: Quotes)(e: Any)
    * @return the value unchanged
    */
   private[internal] def soft(using pos: DebugPosition): e.type =
-    quotes.reflect.report.info(show"${e.toString} at line $pos")
+    quotes.reflect.report.info(show"${e.toString} $pos")
     e
 
 /**

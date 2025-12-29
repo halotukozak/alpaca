@@ -52,46 +52,46 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     //format: on
 
     // we check if compiles and not crashes
-    Lexer.< : Token["<", LexerCtx.Default, Unit]
-    Lexer.> : Token[">", LexerCtx.Default, Unit]
-    Lexer.`=`: Token["=", LexerCtx.Default, Unit]
-    Lexer.`\\+`: Token["\\+", LexerCtx.Default, Unit]
-    Lexer.- : Token["-", LexerCtx.Default, Unit]
-    Lexer.`\\*`: Token["\\*", LexerCtx.Default, Unit]
-    Lexer.`/`: Token["/", LexerCtx.Default, Unit]
-    Lexer.`\\(`: Token["\\(", LexerCtx.Default, Unit]
-    Lexer.`\\)`: Token["\\)", LexerCtx.Default, Unit]
-    Lexer.`\\[`: Token["\\[", LexerCtx.Default, Unit]
-    Lexer.`\\]`: Token["\\]", LexerCtx.Default, Unit]
-    Lexer.`\\{`: Token["\\{", LexerCtx.Default, Unit]
-    Lexer.`\\}`: Token["\\}", LexerCtx.Default, Unit]
-    Lexer.`:`: Token[":", LexerCtx.Default, Unit]
-    Lexer.`'`: Token["'", LexerCtx.Default, Unit]
-    Lexer.`,`: Token[",", LexerCtx.Default, Unit]
-    Lexer.`;`: Token[";", LexerCtx.Default, Unit]
-    Lexer.dotAdd: Token["dotAdd", LexerCtx.Default, Unit]
-    Lexer.dotSub: Token["dotSub", LexerCtx.Default, Unit]
-    Lexer.dotMul: Token["dotMul", LexerCtx.Default, Unit]
-    Lexer.dotDiv: Token["dotDiv", LexerCtx.Default, Unit]
-    Lexer.lessEqual: Token["lessEqual", LexerCtx.Default, Unit]
-    Lexer.greaterEqual: Token["greaterEqual", LexerCtx.Default, Unit]
-    Lexer.notEqual: Token["notEqual", LexerCtx.Default, Unit]
-    Lexer.equal: Token["equal", LexerCtx.Default, Unit]
-    Lexer.float: Token["float", LexerCtx.Default, Double]
-    Lexer.int: Token["int", LexerCtx.Default, Int]
-    Lexer.string: Token["string", LexerCtx.Default, String]
-    Lexer.`if`: Token["if", LexerCtx.Default, Unit]
-    Lexer.`else`: Token["else", LexerCtx.Default, Unit]
-    Lexer.`for`: Token["for", LexerCtx.Default, Unit]
-    Lexer.`while`: Token["while", LexerCtx.Default, Unit]
-    Lexer.break: Token["break", LexerCtx.Default, Unit]
-    Lexer.continue: Token["continue", LexerCtx.Default, Unit]
-    Lexer.`return`: Token["return", LexerCtx.Default, Unit]
-    Lexer.eye: Token["eye", LexerCtx.Default, Unit]
-    Lexer.zeros: Token["zeros", LexerCtx.Default, Unit]
-    Lexer.ones: Token["ones", LexerCtx.Default, Unit]
-    Lexer.print: Token["print", LexerCtx.Default, Unit]
-    Lexer.id: Token["id", LexerCtx.Default, String]
+    Lexer.< : Token[LexerCtx.Default] { val info: { val name: "<" } }
+    Lexer.> : Token[LexerCtx.Default] { val info: { val name: ">" } }
+    Lexer.`=`: Token[LexerCtx.Default] { val info: { val name: "=" } }
+    Lexer.`\\+`: Token[LexerCtx.Default] { val info: { val name: "\\+" } }
+    Lexer.- : Token[LexerCtx.Default] { val info: { val name: "-" } }
+    Lexer.`\\*`: Token[LexerCtx.Default] { val info: { val name: "\\*" } }
+    Lexer.`/`: Token[LexerCtx.Default] { val info: { val name: "/" } }
+    Lexer.`\\(`: Token[LexerCtx.Default] { val info: { val name: "\\(" } }
+    Lexer.`\\)`: Token[LexerCtx.Default] { val info: { val name: "\\)" } }
+    Lexer.`\\[`: Token[LexerCtx.Default] { val info: { val name: "\\[" } }
+    Lexer.`\\]`: Token[LexerCtx.Default] { val info: { val name: "\\]" } }
+    Lexer.`\\{`: Token[LexerCtx.Default] { val info: { val name: "\\{" } }
+    Lexer.`\\}`: Token[LexerCtx.Default] { val info: { val name: "\\}" } }
+    Lexer.`:`: Token[LexerCtx.Default] { val info: { val name: ":" } }
+    Lexer.`'`: Token[LexerCtx.Default] { val info: { val name: "'" } }
+    Lexer.`,`: Token[LexerCtx.Default] { val info: { val name: "," } }
+    Lexer.`;`: Token[LexerCtx.Default] { val info: { val name: ";" } }
+    Lexer.dotAdd: Token[LexerCtx.Default] { val info: { val name: "dotAdd" } }
+    Lexer.dotSub: Token[LexerCtx.Default] { val info: { val name: "dotSub" } }
+    Lexer.dotMul: Token[LexerCtx.Default] { val info: { val name: "dotMul" } }
+    Lexer.dotDiv: Token[LexerCtx.Default] { val info: { val name: "dotDiv" } }
+    Lexer.lessEqual: Token[LexerCtx.Default] { val info: { val name: "lessEqual" } }
+    Lexer.greaterEqual: Token[LexerCtx.Default] { val info: { val name: "greaterEqual" } }
+    Lexer.equal: Token[LexerCtx.Default] { val info: { val name: "equal" } }
+    Lexer.notEqual: Token[LexerCtx.Default] { val info: { val name: "notEqual" } }
+    Lexer.float: Token[LexerCtx.Default] { val info: { val name: "float" } }
+    Lexer.int: Token[LexerCtx.Default] { val info: { val name: "int" } }
+    Lexer.string: Token[LexerCtx.Default] { val info: { val name: "string" } }
+    Lexer.`if`: Token[LexerCtx.Default] { val info: { val name: "if" } }
+    Lexer.`else`: Token[LexerCtx.Default] { val info: { val name: "else" } }
+    Lexer.`for`: Token[LexerCtx.Default] { val info: { val name: "for" } }
+    Lexer.`while`: Token[LexerCtx.Default] { val info: { val name: "while" } }
+    Lexer.break: Token[LexerCtx.Default] { val info: { val name: "break" } }
+    Lexer.continue: Token[LexerCtx.Default] { val info: { val name: "continue" } }
+    Lexer.`return`: Token[LexerCtx.Default] { val info: { val name: "return" } }
+    Lexer.eye: Token[LexerCtx.Default] { val info: { val name: "eye" } }
+    Lexer.zeros: Token[LexerCtx.Default] { val info: { val name: "zeros" } }
+    Lexer.ones: Token[LexerCtx.Default] { val info: { val name: "ones" } }
+    Lexer.print: Token[LexerCtx.Default] { val info: { val name: "print" } }
+    Lexer.id: Token[LexerCtx.Default] { val info: { val name: "id" } }
   }
 
   test("Lexer manipulates context") {

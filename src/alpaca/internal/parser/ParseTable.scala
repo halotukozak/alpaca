@@ -42,7 +42,7 @@ private[parser] object ParseTable {
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold(show"")(_.show)))
 
       Csv(headers, rows)
 
@@ -125,7 +125,7 @@ private[parser] object ParseTable {
     table.toMap
   }
 
-  given Showable[ParseTable] = { table =>
+  given ParseTable is Showable = { table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
     val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
@@ -159,7 +159,7 @@ private[parser] object ParseTable {
     result.result()
   }
 
-  given ToExpr[ParseTable] with
+  given ToExpr[ParseTable]:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
       import quotes.reflect.*
 

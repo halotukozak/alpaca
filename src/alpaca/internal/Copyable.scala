@@ -9,11 +9,11 @@ import scala.deriving.Mirror
  *
  * This trait provides a function to copy an instance of type T.
  * It is primarily used internally for creating modified copies of context objects.
- *
- * @tparam T the type to copy, must be a case class
  */
-@implicitNotFound("${T} should be a case class.")
-private[alpaca] trait Copyable[T] extends (T => T)
+@implicitNotFound("${Self} should be a case class.")
+private[alpaca] trait Copyable:
+  type Self
+  def apply(t: Self): Self
 
 private[alpaca] object Copyable {
 
@@ -24,5 +24,5 @@ private[alpaca] object Copyable {
    * @param m the Mirror.ProductOf for type T
    * @return a Copyable instance that can create copies
    */
-  given derived[T <: Product: Mirror.ProductOf as m]: Copyable[T] = t => m.fromTuple(Tuple.fromProductTyped(t))
+  given derived: [T <: Product: Mirror.ProductOf as m] => T is Copyable = t => m.fromTuple(Tuple.fromProductTyped(t))
 }

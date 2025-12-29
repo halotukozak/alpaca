@@ -13,7 +13,7 @@ import mill.contrib.scoverage.ScoverageModule
 import mill.util.VcsVersion
 
 object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule {
-  def scalaVersion = "3.8.0-RC1"
+  def scalaVersion = "3.8.0-RC4"
 
   def scoverageVersion = "2.3.0"
 
@@ -35,13 +35,14 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yexplicit-nulls",
     // "-Yprint-debug",
     // "-Xprint:postInlining",
-    "-Wsafe-init",
+    // "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
-    "-language:implicitConversions",
-    "-experimental",
+    "-language:experimental.modularity",
+    "-preview",
+    "-Yretain-trees",
   )
 
   override def scalaDocOptions = Task {

@@ -3,6 +3,7 @@ package internal
 package parser
 
 import alpaca.internal.parser.ParseAction.Reduction
+import scala.Conversion.into
 
 /**
  * Base class for parser conflict exceptions.

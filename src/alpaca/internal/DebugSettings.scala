@@ -3,6 +3,7 @@ package internal
 
 import java.io.{File, FileWriter}
 import scala.util.Using
+import Conversion.into
 
 /**
  * Writes debug content to a file if debug settings are enabled.

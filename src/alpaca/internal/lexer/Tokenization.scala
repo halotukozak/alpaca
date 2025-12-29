@@ -2,9 +2,10 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.tailrec
 import scala.util.matching.Regex
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+
+import scala.annotation.tailrec
 
 /**
  * The result of compiling a lexer definition.
@@ -15,17 +16,16 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
  *
  * @tparam Ctx the global context type
  */
-transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using copy: Copyable[Ctx], // todo: unused
-  betweenStages: BetweenStages[Ctx],
-) extends Selectable {
-  type LexemeRefinement <: Lexeme[?, ?]
+transparent abstract class Tokenization[
+  Ctx <: LexerCtx: {Copyable as copy, Empty as empty, BetweenStages as betweenStages},
+] extends Selectable {
+  type LexemeRefinement <: Lexeme
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
-  def tokens: List[Token[?, Ctx, ?]]
+  def tokens: List[Token[Ctx]]
 
   /** Map of token names to their definitions for dynamic access. */
-  def byName: Map[String, DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }] // todo: reconsider if selectDynamic should be implemented with PM
+  def byName: Map[String, DefinedToken[Ctx] { type LexemeTpe = LexemeRefinement }] // todo: reconsider if selectDynamic should be implemented with PM
 
   /**
    * Provides dynamic access to tokens by name.
@@ -35,7 +35,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement } =
+  def selectDynamic(fieldName: String): DefinedToken[Ctx] { type LexemeTpe = LexemeRefinement } =
     byName(scala.reflect.NameTransformer.decode(fieldName))
 
   /**
@@ -46,18 +46,10 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * is encountered.
    *
    * @param input the input to tokenize
-   * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(
-    input: CharSequence,
-  )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) = {
-    @tailrec def loop(
-      globalCtx: Ctx,
-    )(
-      acc: List[Lexeme[?, ?] & LexemeRefinement],
-    ): List[Lexeme[?, ?] & LexemeRefinement] =
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme & LexemeRefinement]) = {
+    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme & LexemeRefinement]): List[Lexeme & LexemeRefinement] =
       globalCtx.text.length match
         case 0 =>
           acc.reverse // todo: make it not reversed
@@ -71,7 +63,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
           }
           betweenStages(token, m, globalCtx)
           val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
+            case _: DefinedToken[Ctx] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme & LexemeRefinement]
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

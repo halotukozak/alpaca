@@ -3,10 +3,10 @@ package internal
 package parser
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{DefinedToken, Lexeme, Token}
+import alpaca.internal.lexer.Lexeme
 import alpaca.internal.parser.*
 
-import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, tailrec}
 
 /**
  * Base class for parsers.
@@ -19,7 +19,7 @@ import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
 abstract class Parser[Ctx <: ParserCtx](
   using Ctx withDefault ParserCtx.Empty,
 )(using
-  empty: Empty[Ctx],
+  empty: Ctx is Empty,
   tables: Tables[Ctx],
 ) {
 
@@ -33,6 +33,14 @@ abstract class Parser[Ctx <: ParserCtx](
   val resolutions: Set[ConflictResolution] = Set.empty
 
   /**
+   * Provides access to the parser context within rule definitions.
+   *
+   * This is compile-time only and can only be used inside parser rule definitions.
+   */
+  @compileTimeOnly(RuleOnly)
+  inline protected final def ctx: Ctx = dummy
+
+  /**
    * Parses a list of lexems using the defined grammar.
    *
    * This method builds the parse table at compile time and uses it to
@@ -44,13 +52,13 @@ abstract class Parser[Ctx <: ParserCtx](
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](
-    lexems: List[Lexeme[?, ?]],
+    lexems: List[Lexeme],
   )(using debugSettings: DebugSettings,
   ): (ctx: Ctx, result: R | Null) = {
-    type Node = R | Lexeme[?, ?] | Null
+    type Node = R | Lexeme | Null
     val ctx = empty()
 
-    @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null = {
+    @tailrec def loop(lexems: List[Lexeme], stack: List[(index: Int, node: Node)]): R | Null = {
       val nextSymbol = Terminal(lexems.head.name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
@@ -86,12 +94,4 @@ abstract class Parser[Ctx <: ParserCtx](
 
     ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
   }
-
-  /**
-   * Provides access to the parser context within rule definitions.
-   *
-   * This is compile-time only and can only be used inside parser rule definitions.
-   */
-  @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = dummy
 }

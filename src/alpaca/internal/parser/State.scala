@@ -58,11 +58,9 @@ private[parser] object State {
 
       productions.view
         .filter(_.lhs == item.nextSymbol)
-        .foldLeft(state + item) { (acc, production) =>
-          lookAheads.foldLeft(acc) { (acc, lookAhead) =>
+        .foldLeft(state + item): (acc, production) =>
+          lookAheads.foldLeft(acc): (acc, lookAhead) =>
             val item = production.toItem(lookAhead)
             if state.contains(item) then acc else fromItem(acc, item, productions, firstSet)
-          }
-        }
     else state + item
 }

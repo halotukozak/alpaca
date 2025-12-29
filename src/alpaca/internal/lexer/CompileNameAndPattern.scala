@@ -4,6 +4,8 @@ package lexer
 
 import scala.annotation.tailrec
 
+import scala.language.experimental.modularity
+
 /**
  * Compiler for lexer token patterns during macro expansion.
  *
@@ -11,10 +13,9 @@ import scala.annotation.tailrec
  * in lexer definitions. It handles various pattern forms including simple
  * patterns, alternatives, and bindings.
  *
- * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
+private[lexer] final class CompileNameAndPattern(using tracked val quotes: Quotes) {
   import quotes.reflect.*
 
   /**
@@ -27,8 +28,8 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
+  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo]] =
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo]] =
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
@@ -59,7 +60,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
                 case Literal(StringConstant(str)) => str
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled(x)
+        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo]]](x)
 
     loop(TypeRepr.of[T], pattern)
 }

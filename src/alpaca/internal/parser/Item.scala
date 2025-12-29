@@ -59,7 +59,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
 }
 
 private[parser] object Item:
-  given Showable[Item] =
+  given Item is Showable =
     case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"
