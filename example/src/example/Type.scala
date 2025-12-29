@@ -249,9 +249,9 @@ object Type:
       resultTypeFactory =
         case (e @ AST.Expr(a: Type.Vector), AST.Expr(b: Type.Vector)) =>
           if (a.arity == null) || (b.arity == null) then
-            Result.warn(e.line)(Type.Matrix(), "Vector arity could not be inferred")
+            Result.warn(e.line)(Type.Vector(), "Vector arity could not be inferred")
           else if a.arity != b.arity then
-            Result.error(e.line)(Type.Matrix(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
+            Result.error(e.line)(Type.Vector(), s"Vector lengths mismatch: ${a.arity} != ${b.arity}")
           else Result.Success(Type.Vector(a.arity)),
     )
 
