@@ -50,7 +50,8 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using DebugSettings) {
+
   import quotes.reflect.*
 
   /**
