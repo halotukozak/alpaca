@@ -130,17 +130,17 @@ Labels are applied when these keywords appear in issue titles or descriptions:
 
 | Label | Keywords |
 |-------|----------|
-| Parser | parser, parse, parsing, shift-reduce, lr(1), syntax tree, ast, production, grammar, rule |
+| Parser | parser, parse, parsing, shift-reduce, lr1, lr(1), syntax tree, ast, production, grammar |
 | Lexer | lexer, lexeme, token, tokenize, regex, pattern matching, lexical |
-| bug | bug, error, fail, broken, issue, not work, crash, exception, incorrect |
+| bug | bug, error, fail, broken, not work, crash, exception, incorrect, does not work, doesn't work |
 | documentation | documentation, docs, readme, guide, tutorial, example, explain |
-| enhancement | feature, enhancement, improve, add, support, should, would be nice, could |
+| enhancement | feature request, enhancement, improve, add support, should support, would be nice, could have, could support |
 | testing | test, coverage, unit test, integration test, spec |
 | build | build, compile, ci, github actions, workflow, mill, sbt |
 | performance | performance, slow, optimize, speed, efficient, benchmark |
 | error-handling | error message, diagnostic, verbose, warning, better error |
-| API | api, interface, public api, user-facing, usage |
-| refactoring | refactor, clean, reorganize, restructure, code quality |
+| API | api, interface, public api, user-facing |
+| refactoring | refactor, clean up, reorganize, restructure, code quality |
 
 ## Tips for Better Automatic Labeling
 
