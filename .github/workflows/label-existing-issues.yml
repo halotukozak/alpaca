@@ -1,0 +1,131 @@
+name: Label Existing Issues and Pull Requests
+
+# This workflow can be manually triggered to label all existing issues and pull requests
+# that don't have labels or need additional labels
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (preview labels without applying)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  label-existing-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Label all existing issues and pull requests
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const dryRun = '${{ inputs.dry_run }}' === 'true';
+            
+            if (dryRun) {
+              console.log('🔍 DRY RUN MODE - No labels will be applied');
+            }
+            
+            // Define label rules based on keywords
+            const labelRules = {
+              'Parser': ['parser', 'parse', 'parsing', 'shift-reduce', 'lr1', 'lr(1)', 'syntax tree', 'ast', 'production', 'grammar'],
+              'Lexer': ['lexer', 'lexeme', 'token', 'tokenize', 'regex', 'pattern matching', 'lexical'],
+              'bug': ['bug', 'error', 'fail', 'broken', 'not work', 'crash', 'exception', 'incorrect', 'does not work', "doesn't work"],
+              'documentation': ['documentation', 'docs', 'readme', 'guide', 'tutorial', 'example', 'explain'],
+              'enhancement': ['feature request', 'enhancement', 'improve', 'add support', 'should support', 'would be nice', 'could have', 'could support'],
+              'testing': ['test', 'coverage', 'unit test', 'integration test', 'spec'],
+              'build': ['build', 'compile', 'ci', 'github actions', 'workflow', 'mill', 'sbt'],
+              'performance': ['performance', 'slow', 'optimize', 'speed', 'efficient', 'benchmark'],
+              'error-handling': ['error message', 'diagnostic', 'verbose', 'warning', 'better error'],
+              'API': ['api', 'interface', 'public api', 'user-facing'],
+              'refactoring': ['refactor', 'clean up', 'reorganize', 'restructure', 'code quality']
+            };
+            
+            // Fetch all issues and pull requests
+            const items = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            
+            const issues = items.filter(item => !item.pull_request);
+            const prs = items.filter(item => item.pull_request);
+            
+            console.log(`Found ${issues.length} issues and ${prs.length} pull requests (${items.length} total)`);
+            
+            let processedCount = 0;
+            let labeledCount = 0;
+            
+            for (const item of items) {
+              processedCount++;
+            
+              const itemType = item.pull_request ? 'PR' : 'Issue';
+            
+              const title = item.title.toLowerCase();
+              const body = (item.body || '').toLowerCase();
+              const content = title + ' ' + body;
+              const existingLabels = item.labels.map(label => label.name);
+            
+              // Collect labels to add
+              const labelsToAdd = [];
+            
+              for (const [label, keywords] of Object.entries(labelRules)) {
+                for (const keyword of keywords) {
+                  if (content.includes(keyword)) {
+                    labelsToAdd.push(label);
+                    break;
+                  }
+                }
+              }
+            
+              // Remove duplicates and filter out existing labels
+              const uniqueLabels = [...new Set(labelsToAdd)];
+              const newLabels = uniqueLabels.filter(label => !existingLabels.includes(label));
+            
+              if (newLabels.length > 0) {
+                console.log(`\n${itemType} #${item.number}: "${item.title}"`);
+                console.log(`  Existing labels: ${existingLabels.join(', ') || '(none)'}`);
+                console.log(`  Labels to add: ${newLabels.join(', ')}`);
+            
+                if (!dryRun) {
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: item.number,
+                      labels: newLabels
+                    });
+                    console.log(`  ✅ Successfully added labels`);
+                    labeledCount++;
+                  } catch (error) {
+                    console.log(`  ❌ Error adding labels: ${error.message}`);
+                  }
+                } else {
+                  console.log(`  👁️ Would add labels (dry run)`);
+                  labeledCount++;
+                }
+            
+                // Add a small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 100));
+              }
+            }
+            
+            console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log(`Summary:`);
+            console.log(`  Total items processed: ${processedCount}`);
+            console.log(`  Items ${dryRun ? 'that would be' : ''} labeled: ${labeledCount}`);
+            console.log(`  Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
