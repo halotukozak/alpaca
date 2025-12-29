@@ -1,6 +1,6 @@
-name: Label Existing Issues
+name: Label Existing Issues and Pull Requests
 
-# This workflow can be manually triggered to label all existing issues
+# This workflow can be manually triggered to label all existing issues and pull requests
 # that don't have labels or need additional labels
 
 on:
@@ -17,6 +17,7 @@ on:
 
 permissions:
   issues: write
+  pull-requests: write
   contents: read
 
 jobs:
@@ -26,7 +27,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Label all existing issues
+      - name: Label all existing issues and pull requests
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,30 +53,35 @@ jobs:
               'refactoring': ['refactor', 'clean up', 'reorganize', 'restructure', 'code quality']
             };
             
-            // Fetch all issues
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
+            // Fetch all issues and pull requests
+            const items = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'all',
               per_page: 100
             });
             
-            console.log(`Found ${issues.length} issues`);
+            const issues = items.filter(item => !item.pull_request);
+            const prs = items.filter(item => item.pull_request);
+            
+            console.log(`Found ${issues.length} issues and ${prs.length} pull requests (${items.length} total)`);
             
             let processedCount = 0;
             let labeledCount = 0;
             
-            for (const issue of issues) {
+            for (const item of items) {
               processedCount++;
-              
-              const title = issue.title.toLowerCase();
-              const body = (issue.body || '').toLowerCase();
+            
+              const itemType = item.pull_request ? 'PR' : 'Issue';
+            
+              const title = item.title.toLowerCase();
+              const body = (item.body || '').toLowerCase();
               const content = title + ' ' + body;
-              const existingLabels = issue.labels.map(label => label.name);
-              
+              const existingLabels = item.labels.map(label => label.name);
+            
               // Collect labels to add
               const labelsToAdd = [];
-              
+            
               for (const [label, keywords] of Object.entries(labelRules)) {
                 for (const keyword of keywords) {
                   if (content.includes(keyword)) {
@@ -84,22 +90,22 @@ jobs:
                   }
                 }
               }
-              
+            
               // Remove duplicates and filter out existing labels
               const uniqueLabels = [...new Set(labelsToAdd)];
               const newLabels = uniqueLabels.filter(label => !existingLabels.includes(label));
-              
+            
               if (newLabels.length > 0) {
-                console.log(`\nIssue #${issue.number}: "${issue.title}"`);
+                console.log(`\n${itemType} #${item.number}: "${item.title}"`);
                 console.log(`  Existing labels: ${existingLabels.join(', ') || '(none)'}`);
                 console.log(`  Labels to add: ${newLabels.join(', ')}`);
-                
+            
                 if (!dryRun) {
                   try {
                     await github.rest.issues.addLabels({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
-                      issue_number: issue.number,
+                      issue_number: item.number,
                       labels: newLabels
                     });
                     console.log(`  ✅ Successfully added labels`);
@@ -111,7 +117,7 @@ jobs:
                   console.log(`  👁️ Would add labels (dry run)`);
                   labeledCount++;
                 }
-                
+            
                 // Add a small delay to avoid rate limiting
                 await new Promise(resolve => setTimeout(resolve, 100));
               }
@@ -119,7 +125,7 @@ jobs:
             
             console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             console.log(`Summary:`);
-            console.log(`  Total issues processed: ${processedCount}`);
-            console.log(`  Issues ${dryRun ? 'that would be' : ''} labeled: ${labeledCount}`);
+            console.log(`  Total items processed: ${processedCount}`);
+            console.log(`  Items ${dryRun ? 'that would be' : ''} labeled: ${labeledCount}`);
             console.log(`  Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`);
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
