@@ -64,7 +64,7 @@ import alpaca.*
 
 ### Creating a Lexer
 
-Define a lexer using pattern matching with regex patterns:
+Define a lexer using pattern matching with regex patterns. For more details, see the [Lexer documentation](lexer.md).
 
 ```scala sc-name:MyLexer.scala
 import alpaca.*
@@ -82,7 +82,7 @@ val MyLexer = lexer:
 
 ### Creating a Parser
 
-Define a parser by extending the `Parser` class and defining grammar rules:
+Define a parser by extending the `Parser` class and defining grammar rules. For more details, see the [Parser documentation](parser.md).
 
 ```scala sc-name:MyParser.scala sc-compile-with:MyLexer.scala
 import alpaca.*
@@ -220,6 +220,8 @@ case "#.*" => Token.Ignored
 
 ## Documentation
 
+- 📖 [Lexer](lexer.md)
+- 📖 [Parser](parser.md)
 - 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
 
 ## Contributing
