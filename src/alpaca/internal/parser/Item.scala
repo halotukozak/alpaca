@@ -4,6 +4,7 @@ package parser
 
 import alpaca.internal.AlgorithmError
 
+
 /**
  * Represents an LR(1) item in the parser's state machine.
  *
@@ -59,7 +60,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
 }
 
 private[parser] object Item:
-  given Showable[Item] =
+  given Showable[Item] = Showable:
     case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"

@@ -28,7 +28,8 @@ private[internal] object DebugPosition:
     Expr((pos.startLine + 1, pos.sourceFile.name))
   }
 
-  given Showable[DebugPosition] = pos => show"at line ${pos.line} in ${pos.file}"
+  given Showable[DebugPosition] = Showable: pos =>
+    show"at line ${pos.line} in ${pos.file}"
 
 /**
  * Writes debug content to a file if debug settings are enabled.

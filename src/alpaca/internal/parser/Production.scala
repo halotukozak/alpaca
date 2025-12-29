@@ -44,7 +44,7 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
 object Production {
 
   /** Showable instance for displaying productions in human-readable form. */
-  given Showable[Production] =
+  given Showable[Production] = Showable:
     case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
     case NonEmpty(lhs, rhs, name) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"

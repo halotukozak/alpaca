@@ -25,7 +25,7 @@ private[parser] object ParseAction {
    */
   opaque type Reduction = Production
 
-  given Showable[ParseAction] =
+  given Showable[ParseAction] = Showable:
     case shift: Int => show"S$shift"
     case reduction: Production => show"$reduction"
 
