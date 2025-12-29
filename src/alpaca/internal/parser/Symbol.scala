@@ -88,14 +88,12 @@ private[parser] object Symbol {
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given Showable[Symbol] = new Showable[Symbol]:
-    extension (symbol: Symbol)(using settings: DebugSettings)
-      override def show: Shown =
-        NameTransformer.encode(symbol.name) match
-          case encoded if !settings.verboseNames || encoded == symbol.name =>
-            if symbol.name.contains(SyntheticInfix) then s"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
-            else symbol.name
-          case encoded => s"${symbol.name} ($encoded)"
+  given Showable[Symbol] = Showable: symbol =>
+    NameTransformer.encode(symbol.name) match
+      case encoded if !settings.verboseNames || encoded == symbol.name =>
+        if symbol.name.contains(SyntheticInfix) then s"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
+        else symbol.name
+      case encoded => s"${symbol.name} ($encoded)"
 
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =

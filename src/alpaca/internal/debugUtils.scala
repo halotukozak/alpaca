@@ -152,7 +152,7 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)(using DebugSettings)
    * @return the tree (never actually returns due to abort)
    */
   private[internal] def dbg(using pos: DebugPosition): tree.type =
-    // quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
+    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
 
   /**
@@ -164,7 +164,7 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)(using DebugSettings)
    * @return the tree unchanged
    */
   private[internal] def info(using pos: DebugPosition): tree.type =
-    // quotes.reflect.report.info(show"$tree at line $pos")
+    quotes.reflect.report.info(show"$tree at line $pos")
     tree
 
 extension (using quotes: Quotes)(expr: Expr[?])(using DebugSettings)
@@ -237,13 +237,11 @@ extension (using quotes: Quotes)(e: Any)(using DebugSettings)
  *
  * @param body the code to inspect
  */
-inline private[internal] def showAst(inline body: Any)(using debugSettings: DebugSettings) =
-  ${ showAstImpl('{ body }, '{ debugSettings }) }
+inline private[internal] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 
-private def showAstImpl(body: Expr[Any], debugSettings: Expr[DebugSettings])(using quotes: Quotes): Expr[Unit] =
-  withDebugSettings:
-    import quotes.reflect.*
-    Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
+  import quotes.reflect.*
+  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
 /**
  * Shows the raw AST structure of a code block and aborts compilation.
@@ -253,10 +251,8 @@ private def showAstImpl(body: Expr[Any], debugSettings: Expr[DebugSettings])(usi
  *
  * @param body the code to inspect
  */
-inline private[internal] def showRawAst(inline body: Any)(using debugSettings: DebugSettings) =
-  ${ showRawAstImpl('{ body }, '{ debugSettings }) }
+inline private[internal] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
 
-private def showRawAstImpl(body: Expr[Any], debugSettings: Expr[DebugSettings])(using quotes: Quotes): Expr[Unit] =
-  withDebugSettings:
-    import quotes.reflect.*
-    Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
+  import quotes.reflect.*
+  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
