@@ -52,10 +52,11 @@ jobs:
               'refactoring': ['refactor', 'clean up', 'reorganize', 'restructure', 'code quality']
             };
             
-            // Fetch all open issues
+            // Fetch all issues
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
+              state: 'all',
               per_page: 100
             });
             
