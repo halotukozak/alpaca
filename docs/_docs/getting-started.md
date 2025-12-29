@@ -60,62 +60,84 @@ import alpaca.*
 // Your code here
 ```
 
-## Quick Start
+## Basic Concepts
 
-### Creating a Lexer
+### Token
 
-Define a lexer using pattern matching with regex patterns. For more details, see the [Lexer documentation](lexer.md).
+A **token** is the basic unit produced by the lexer. It represents a meaningful sequence of characters.
 
-```scala sc-name:MyLexer.scala
+```scala
+Token[Type](value)
+```
+
+### Lexeme
+
+A **lexeme** is the actual matched text. Capture it with `@`:
+
+```scala
+case num @ "[0-9]+" => Token["NUM"](num.toDouble)
+```
+
+### Grammar Rule
+
+A **rule** defines how to parse sequences of tokens:
+
+```scala
+val Expr: Rule[Int] = rule(
+  { case (Expr(l), PLUS(_), Term(r)) => l + r },
+  { case Term(t) => t }
+)
+```
+
+## Quick Start: Calculator Example
+
+Here is a complete example of a simple calculator using Alpaca.
+
+```scala
 import alpaca.*
 
-val MyLexer = lexer:
-  case num @ "[0-9]+" => Token["NUM"](num.toDouble)
+// Lexer
+val CalcLexer = lexer:
+  case num@"[0-9]+" => Token["NUM"](num.toDouble)
   case "\\+" => Token["PLUS"]
   case "-" => Token["MINUS"]
   case "\\*" => Token["STAR"]
   case "/" => Token["SLASH"]
-  case "\\(" => Token["LP"]
-  case "\\)" => Token["RP"]
   case "\\s+" => Token.Ignored
-```
 
-### Creating a Parser
-
-Define a parser by extending the `Parser` class and defining grammar rules. For more details, see the [Parser documentation](parser.md).
-
-```scala sc-name:MyParser.scala sc-compile-with:MyLexer.scala
-import alpaca.*
-
-object MyParser extends Parser:
+// Parser
+object CalcParser extends Parser:
   val root: Rule[Double] = rule { case Expr(e) => e }
 
   val Expr: Rule[Double] = rule(
-    { case (Expr(l), MyLexer.PLUS(_), Term(r)) => l + r },
-    { case (Expr(l), MyLexer.MINUS(_), Term(r)) => l - r },
+    { case (Expr(l), CalcLexer.PLUS(_), Term(r)) => l + r },
+    { case (Expr(l), CalcLexer.MINUS(_), Term(r)) => l - r },
     { case Term(t) => t }
   )
 
   val Term: Rule[Double] = rule(
-    { case (Term(l), MyLexer.STAR(_), Factor(r)) => l * r },
-    { case (Term(l), MyLexer.SLASH(_), Factor(r)) => l / r },
+    { case (Term(l), CalcLexer.STAR(_), Factor(r)) => l * r },
+    { case (Term(l), CalcLexer.SLASH(_), Factor(r)) => l / r },
     { case Factor(f) => f }
   )
 
   val Factor: Rule[Double] = rule(
-    { case MyLexer.NUM(n) => n.value },
-    { case (MyLexer.LP(_), Expr(e), MyLexer.RP(_)) => e }
+    { case (CalcLexer.NUM(n)) => n.value },
+    { case (CalcLexer.LPAREN(_), Expr(e), CalcLexer.RPAREN(_)) => e }
   )
+
+// Usage
+@main def main(): Unit =
+  val input = "2 + 3 * 4"
+  val (_, lexemes) = CalcLexer.tokenize(input)
+  val (_, result) = CalcParser.parse(lexemes)
+  println(s"$input = $result") // Output: 2 + 3 * 4 = 14.0
 ```
 
-### Parsing Input
+## Next Steps
 
-```scala sc-compile-with:MyLexer.scala,MyParser.scala
-val input = "2 + 3 * 4"
-val (_, lexemes) = MyLexer.tokenize(input)
-val (_, result) = MyParser.parse(lexemes)
-println(result) // 14.0
-```
+- Explore the [Lexer Guide](lexer.md) for more details on tokenization.
+- Explore the [Parser Guide](parser.md) for more details on grammar rules and precedence.
 
 ## Project Structure
 
@@ -137,64 +159,6 @@ alpaca/
 ├── docs/                     # Documentation
 └── build.mill                # Mill build configuration
 ```
-## Advanced Features
-
-### Contextual Lexing and Parsing
-
-Alpaca supports context-aware lexing and parsing, allowing you to maintain state during tokenization and parsing. Here's an example that tracks brace matching:
-
-```scala
-import alpaca.*
-import scala.collection.mutable.Stack
-
-case class BraceContext(
-  var text: CharSequence = "",
-  val braces: Stack[Char] = Stack()
-) extends LexerCtx
-
-val braceLexer = lexer[BraceContext]:
-  case "\\(" => 
-    ctx.braces.push('(')
-    Token["LPAREN"]
-  case "\\)" => 
-    if ctx.braces.isEmpty || ctx.braces.pop() != '(' then
-      throw RuntimeException("Mismatched parenthesis")
-    Token["RPAREN"]
-  case "\\{" => 
-    ctx.braces.push('{')
-    Token["LBRACE"]
-  case "\\}" => 
-    if ctx.braces.isEmpty || ctx.braces.pop() != '{' then
-      throw RuntimeException("Mismatched brace")
-    Token["RBRACE"]
-  case "\\s+" => Token.Ignored
-  case "[a-zA-Z]+" => Token["ID"]
-
-// Usage
-val input = "{ foo ( bar ) }"
-val (finalCtx, lexemes) = braceLexer.tokenize(input)
-if finalCtx.braces.nonEmpty then
-  throw RuntimeException("Unclosed braces: " + finalCtx.braces.mkString)
-```
-
-### Token Extractors
-
-Tokens can carry values extracted from the input:
-
-```scala sc:nocompile
-case num @ "[0-9]+" => Token["NUM"](num.toInt)
-case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
-```
-
-### Ignored Tokens
-
-Use `Token.Ignored` for whitespace and comments that should be skipped:
-
-```scala sc:nocompile
-case "\\s+" => Token.Ignored
-case "#.*" => Token.Ignored 
-```
-
 ## Building from Source
 
 ### Prerequisites

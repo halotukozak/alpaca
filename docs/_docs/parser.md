@@ -4,14 +4,12 @@ ALPACA generates highly efficient, canonical LR(1) parsers from a declarative gr
 
 ## Defining a Parser
 
-To define a parser, create an object that extends `Parser[Ctx]`, where `Ctx` is your custom context type. Use the `rule` macro to define grammar rules.
+To define a parser, create an object that extends `Parse`. Use the `rule` macro to define grammar rules.
 
 ```scala
 import alpaca.*
 
-case class MyCtx() extends ParserCtx
-
-object MyParser extends Parser[MyCtx] {
+object MyParser extends Parser {
   val Expr: Rule[Int] = rule(
     { case (Expr(a), MyLexer.PLUS(_), Expr(b)) => a + b },
     { case (Expr(a), MyLexer.MINUS(_), Expr(b)) => a - b },
@@ -34,7 +32,6 @@ Productions use Scala's pattern matching to describe the right-hand side of a gr
 
 - **Tokens**: Reference tokens from your lexer (e.g., `MyLexer.ID(id)`).
 - **Rules**: Reference other rules as extractors (e.g., `Expr(e)`).
-- **Ignored Tokens**: Use `_` for tokens whose value you don't need (e.g., `MyLexer.PLUS(_)`).
 
 ## EBNF-like Syntax
 
@@ -63,7 +60,7 @@ val Block: Rule[List[Int]] = rule(
 LR(1) parsers can have shift/reduce or reduce/reduce conflicts when the grammar is ambiguous (like in arithmetic expressions). ALPACA allows you to resolve these using precedence rules in the `resolutions` set.
 
 ```scala
-object MyParser extends Parser[MyCtx] {
+object MyParser extends Parser {
   // ... rules ...
 
   override val resolutions = Set(
@@ -74,7 +71,7 @@ object MyParser extends Parser[MyCtx] {
 }
 ```
 
-- **`before`**: Specifies that the production should have higher precedence (bind more tightly) than the listed tokens or other productions.
+- **`before`**: Specifies that the production should have higher precedence than the listed tokens or other productions.
 - **`after`**: Specifies that the production should have lower precedence.
 
 You can refer to a production by listing its right-hand side symbols in `Production(...)`, or by name if you used the `@name` annotation:
@@ -105,7 +102,7 @@ object CalcParser extends Parser[CalcCtx] {
 }
 ```
 
-The `ctx` variable provides access to the global `ParserCtx` instance.
+The `ctx` variable provides access to the `ParserCtx` instance.
 
 ## Usage
 
@@ -115,16 +112,5 @@ To run the parser, pass the lexemes from the lexer to the `parse` method:
 val lexemes = myLexer.tokenize("1 + 2 * 3").lexemes
 val (finalCtx, result) = MyParser.parse(lexemes)
 
-result match {
-  case null => println("Parse error!")
-  case value => println(s"Result: $value")
-}
+println(s"Result: $result")
 ```
-
-## Why LR(1)?
-
-ALPACA generates **Canonical LR(1)** parsers. Unlike LALR or SLR parsers used by many other tools (like Yacc or ANTLR), LR(1) is more powerful and can handle a wider class of grammars without requiring manual transformations like left-factoring or elimination of left-recursion.
-
-- **Handles Left-Recursion**: Naturally supports rules like `Expr ::= Expr + Term`.
-- **Precise Error Messages**: Since the parser knows exactly which tokens are valid in any given state, it can provide very accurate error reports when a syntax error occurs.
-- **Linear Time**: Parsing performance is linear with respect to the number of tokens.
