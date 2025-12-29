@@ -3,6 +3,7 @@ package internal
 package lexer
 
 import scala.annotation.tailrec
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * Compiler for lexer token patterns during macro expansion.
@@ -35,8 +36,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           TokenInfo.unsafe(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
+          alternatives.unsafeMap: case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)

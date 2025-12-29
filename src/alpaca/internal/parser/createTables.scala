@@ -3,8 +3,11 @@ package internal
 package parser
 
 import NonEmptyList as NEL
+
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
+
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -99,8 +102,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
         .unsafeFlatMap:
-          case (CaseDef(pattern, Some(_), rhs), name) =>
-            throw new NotImplementedError("Guards are not supported yet")
+          case (CaseDef(pattern, Some(_), rhs), name) => throw new NotImplementedError("Guards are not supported yet")
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
@@ -134,21 +136,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   val productions = table
     .map(_.production)
-    .tap: table =>
-      debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
+    .tap: table => debugToFile(s"$parserName/productions.dbg")(table.mkShow("\n"))
 
   report.info("Productions extracted, building parse and action tables...")
 
   val findProduction: Expr[Production] => Production =
-    val productionsByName = productions
-      .collect:
-        case p if p.name != null => p.name -> p
-      .toMap
+    val productionsByName = productions.collect(case p if p.name != null => p.name -> p).toMap
 
-    val productionsByRhs = productions
-      .collect: p =>
-        p.rhs -> p
-      .toMap
+    val productionsByRhs = productions.collect(p => p.rhs -> p).toMap
 
     {
       case '{ alpaca.Production.ofName(${ Expr(name) }) } =>
@@ -201,8 +196,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   report.info("Conflict resolution table built, identifying root production...")
 
   val root = table
-    .collectFirst:
-      case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
+    .collectFirst(case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p)
     .get
 
   report.info("Root production identified, generating parse and action tables...")
@@ -218,8 +212,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   report.info("Parse and action tables generated.")
 
   val actionTable = Expr.ofList(
-    table.map:
-      case (production, action) => Expr.ofTuple(Expr(production) -> action),
+    table.map: case (production, action) => Expr.ofTuple(Expr(production) -> action),
   )
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }

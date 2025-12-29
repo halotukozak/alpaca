@@ -1,6 +1,7 @@
 package alpaca.internal.parser
 
 import scala.collection.immutable.SortedSet
+import scala.language.experimental.relaxedLambdaSyntax
 
 /**
  * An opaque type representing a parser state.
@@ -36,8 +37,8 @@ private[parser] object State {
      */
     def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet): State =
       state.view
-        .filter(item => !item.isLastItem && item.nextSymbol == step)
-        .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
+        .filter: item => !item.isLastItem && item.nextSymbol == step
+        .foldLeft(State.empty): (acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet)
   }
 
   /**
@@ -58,11 +59,10 @@ private[parser] object State {
 
       productions.view
         .filter(_.lhs == item.nextSymbol)
-        .foldLeft(state + item) { (acc, production) =>
-          lookAheads.foldLeft(acc) { (acc, lookAhead) =>
+        .foldLeft(state + item): (acc, production) =>
+          lookAheads.foldLeft(acc): (acc, lookAhead) =>
             val item = production.toItem(lookAhead)
             if state.contains(item) then acc else fromItem(acc, item, productions, firstSet)
-          }
-        }
+    
     else state + item
 }

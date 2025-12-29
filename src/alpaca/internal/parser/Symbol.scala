@@ -2,8 +2,8 @@ package alpaca
 package internal
 package parser
 
-import scala.util.Random
 import scala.reflect.NameTransformer
+import scala.util.Random
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
@@ -12,10 +12,9 @@ import scala.reflect.NameTransformer
  * productions. Terminals represent tokens from the lexer, while
  * non-terminals represent grammatical constructs.
  */
-private[parser] trait Symbol extends Any {
+private[parser] trait Symbol extends Any:
   type IsEmpty <: Boolean
   def name: String
-}
 
 /**
  * Represents a non-terminal symbol in the grammar.
@@ -72,7 +71,7 @@ object Terminal:
   inline def apply(inline name: String): Terminal & Symbol.NonEmpty =
     new Terminal(name).asInstanceOf[Terminal & Symbol.NonEmpty]
 
-private[parser] object Symbol {
+private[parser] object Symbol:
   type NonEmpty = Symbol { type IsEmpty = false }
 
   /** The augmented start symbol used internally by the parser. */
@@ -101,4 +100,3 @@ private[parser] object Symbol {
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
-}

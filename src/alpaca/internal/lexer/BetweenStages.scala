@@ -2,6 +2,7 @@ package alpaca
 package internal
 package lexer
 
+import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex.Match
 
 /**
@@ -44,8 +45,7 @@ private[alpaca] object BetweenStages {
 
     val derivedBetweenStages = Expr.ofList {
       parents
-        .map:
-          case '[type ctx >: Ctx <: LexerCtx; ctx] =>
+        .map: case '[type ctx >: Ctx <: LexerCtx; ctx] =>
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))
