@@ -48,7 +48,8 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
-private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withDebugSettings:
+private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
+  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withDebugSettings:
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner
@@ -94,7 +95,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes): Expr
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
           case (other, name) =>
-             report.errorAndAbort(show"Unexpected production definition: $other")
+            report.errorAndAbort(show"Unexpected production definition: $other")
         .unsafeFlatMap:
           case (CaseDef(pattern, Some(_), rhs), name) =>
             throw new NotImplementedError("Guards are not supported yet")

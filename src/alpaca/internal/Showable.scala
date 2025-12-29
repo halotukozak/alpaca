@@ -52,11 +52,6 @@ private[internal] object Showable {
 
   def fromToString[T]: Showable[T] = Showable(_.toString)
 
-  /** Showable instance for nullable types. */
-  given [T: Showable as showable] => Showable[T | Null] = Showable:
-    case null => ""
-    case value: T @unchecked => showable.show(value)
-
   // todo: add names
   given [N <: Tuple, V <: Tuple: Showable] => Showable[NamedTuple[N, V]] = Showable(_.toTuple.show)
 

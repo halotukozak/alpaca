@@ -2,7 +2,6 @@ package alpaca
 package internal
 package parser
 
-
 import alpaca.internal.lexer.Token
 
 import scala.annotation.{compileTimeOnly, tailrec}
@@ -19,10 +18,10 @@ object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
   given Showable[ConflictKey] = Showable:
-      case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
-      case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-      case p: Production => show"Reduction(${p.name})"
-      case s: String => show"Shift($s)"
+    case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
+    case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
+    case p: Production => show"Reduction(${p.name.nn})"
+    case s: String => show"Shift($s)"
 
 /**
  * Opaque type representing a table of conflict resolution rules.
@@ -111,11 +110,12 @@ private[parser] object ConflictResolutionTable {
    * Showable instance for displaying conflict resolution tables.
    */
   given Showable[ConflictResolutionTable] = Showable: table =>
-    table.map: (k, v) =>
-      def show(x: ConflictKey): String = x match
-        case p: Production => show"$p"
-        case s: String => show"Token[$s]"
+    table
+      .map: (k, v) =>
+        def show(x: ConflictKey): String = x match
+          case p: Production => show"$p"
+          case s: String => show"Token[$s]"
 
-      show"${show(k)} before ${v.map(show).mkShow(", ")}"
-    .mkShow("\n")
+        show"${show(k)} before ${v.map(show).mkShow(", ")}"
+      .mkShow("\n")
 }
