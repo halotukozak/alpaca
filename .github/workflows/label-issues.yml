@@ -1,0 +1,80 @@
+name: Label Issues
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  label-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Label issues based on content
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const content = title + ' ' + body;
+            
+            // Define label rules based on keywords
+            const labelRules = {
+              'Parser': ['parser', 'parse', 'parsing', 'shift-reduce', 'lr1', 'lr(1)', 'syntax tree', 'ast', 'production', 'grammar'],
+              'Lexer': ['lexer', 'lexeme', 'token', 'tokenize', 'regex', 'pattern matching', 'lexical'],
+              'bug': ['bug', 'error', 'fail', 'broken', 'not work', 'crash', 'exception', 'incorrect', 'does not work', "doesn't work"],
+              'documentation': ['documentation', 'docs', 'readme', 'guide', 'tutorial', 'example', 'explain'],
+              'enhancement': ['feature request', 'enhancement', 'improve', 'add support', 'should support', 'would be nice', 'could have', 'could support'],
+              'testing': ['test', 'coverage', 'unit test', 'integration test', 'spec'],
+              'build': ['build', 'compile', 'ci', 'github actions', 'workflow', 'mill', 'sbt'],
+              'performance': ['performance', 'slow', 'optimize', 'speed', 'efficient', 'benchmark'],
+              'error-handling': ['error message', 'diagnostic', 'verbose', 'warning', 'better error'],
+              'API': ['api', 'interface', 'public api', 'user-facing'],
+              'refactoring': ['refactor', 'clean up', 'reorganize', 'restructure', 'code quality']
+            };
+            
+            // Collect labels to add
+            const labelsToAdd = [];
+            
+            for (const [label, keywords] of Object.entries(labelRules)) {
+              for (const keyword of keywords) {
+                if (content.includes(keyword)) {
+                  labelsToAdd.push(label);
+                  break; // Only add the label once
+                }
+              }
+            }
+            
+            // Remove duplicates
+            const uniqueLabels = [...new Set(labelsToAdd)];
+            
+            if (uniqueLabels.length > 0) {
+              console.log(`Adding labels: ${uniqueLabels.join(', ')}`);
+              
+              // Get existing labels on the issue
+              const existingLabels = issue.labels.map(label => label.name);
+              
+              // Only add labels that don't already exist
+              const newLabels = uniqueLabels.filter(label => !existingLabels.includes(label));
+              
+              if (newLabels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: newLabels
+                });
+                console.log(`Successfully added labels: ${newLabels.join(', ')}`);
+              } else {
+                console.log('All applicable labels already exist on the issue');
+              }
+            } else {
+              console.log('No matching labels found for this issue');
+            }
