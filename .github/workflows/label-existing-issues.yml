@@ -131,11 +131,11 @@ jobs:
               }
             }
             
-            // Fetch all open issues and pull requests (focusing on open items first)
+            // Fetch all issues and pull requests (both open and closed)
             const items = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
+              state: 'all',
               per_page: 100
             });
             
