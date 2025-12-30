@@ -19,6 +19,7 @@ permissions:
   issues: write
   pull-requests: write
   contents: read
+  models: read
 
 jobs:
   label-existing-issues:
