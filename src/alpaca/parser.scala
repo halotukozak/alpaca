@@ -10,6 +10,23 @@ import scala.deriving.Mirror
 type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
 
 /**
+ * Defines a single production in a grammar rule.
+ *
+ * A production definition is a partial function that matches a specific pattern of
+ * symbols (as a tuple of terminals and non-terminals, or a single lexeme) and produces
+ * a result value of type `R`. Productions are the building blocks of grammar rules,
+ * specifying how input sequences are recognized and transformed.
+ *
+ * Production definitions are typically passed to the [[rule]] function to define
+ * the possible ways a non-terminal can be parsed.
+ *
+ * See the documentation for [[rule]] for more details.
+ *
+ * @tparam R the result type produced by this production
+ */
+type ProductionDefinition[R] = PartialFunction[Tuple | Lexeme[?, ?], R]
+
+/**
  * Creates a grammar rule from one or more productions.
  *
  * This is the main way to define grammar rules in the parser DSL. Each production
@@ -21,8 +38,8 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * Example:
  * {{{
  * val expr: Rule[Int] = rule(
- *   { case (a @ number(), "+", b @ number()) => a.toInt + b.toInt },
- *   { case (n @ number()) => n.toInt }
+ *   { case (number(a), Lexer.+(_), number(b)) => a.toInt + b.toInt },
+ *   { case (number(n)) => n.toInt }
  * )
  * }}}
  *
@@ -31,7 +48,35 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](productions: PartialFunction[Tuple | Lexeme[?, ?], R]*): Rule[R] = dummy
+inline def rule[R](productions: ProductionDefinition[R]*): Rule[R] = dummy
+
+extension (name: String)
+  /**
+   * Defines a named production for use in grammar rules and conflict resolution.
+   *
+   * This extension method allows you to assign a name to a specific production within a rule.
+   * Named productions can be referenced in conflict resolution rules using the `Production` selector,
+   * enabling fine-grained control over precedence and associativity.
+   *
+   * Usage:
+   * {{{
+   * val add: Rule[Int] = rule(
+   *   "sum" { case (number(a), Lexer.+(_), number(b)) => a.toInt + b.toInt },
+   *   { case (number(n)) => n.toInt }
+   * )
+   *
+   * // In conflict resolution:
+   * override val resolutions = Set(
+   *   production.sum.after(Lexer.+),
+   * )
+   * }}}
+   *
+   * @param production the production to name
+   * @tparam R the result type produced by this production
+   * @return the original production, annotated with the given name
+   */
+  @compileTimeOnly(ParserOnly)
+  inline def apply[R](production: ProductionDefinition[R]): production.type = dummy
 
 /**
  * Represents a grammar rule in the parser.
@@ -87,8 +132,6 @@ trait Rule[R]:
  */
 trait ParserCtx
 
-final class name(name: ValidName) extends StaticAnnotation
-
 /**
  * Type representing conflict resolution rules for the parser.
  *
@@ -143,18 +186,6 @@ object Production:
    */
   @compileTimeOnly(ConflictResolutionOnly)
   inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
-
-  /**
-   * Creates a production reference from a name.
-   *
-   * This is compile-time only and used in conflict resolution definitions
-   * to refer to named productions.
-   *
-   * @param name the name of the production
-   * @return a production reference
-   */
-  @compileTimeOnly(ConflictResolutionOnly)
-  inline def ofName(name: ValidName): Production = dummy
 
 object ParserCtx:
 

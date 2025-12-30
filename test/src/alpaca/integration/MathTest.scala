@@ -1,9 +1,7 @@
 package alpaca
 package integration
 
-import Production as P
-
-import alpaca.{name, Production as P, Rule, Token}
+import alpaca.{Production as P, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
 final class MathTest extends AnyFunSuite:
@@ -40,38 +38,39 @@ final class MathTest extends AnyFunSuite:
     object CalcParser extends Parser:
       val Expr: Rule[Double] = rule(
         // binary arithmetic
-        { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b }: @name("plus"),
-        { case (Expr(a), CalcLexer.`-`(_), Expr(b)) => a - b }: @name("minus"),
-        { case (Expr(a), CalcLexer.`\\*`(_), Expr(b)) => a * b }: @name("times"),
-        { case (Expr(a), CalcLexer.`/`(_), Expr(b)) => a / b }: @name("divide"),
-        { case (Expr(a), CalcLexer.`%`(_), Expr(b)) => a % b }: @name("mod"),
-        { case (Expr(a), CalcLexer.`fdiv`(_), Expr(b)) => math.floor(a / b) }: @name("fdiv"),
-        { case (Expr(a), CalcLexer.`exp`(_), Expr(b)) => math.pow(a, b) }: @name("exp"),
+        "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
+        "minus" { case (Expr(a), CalcLexer.`-`(_), Expr(b)) => a - b },
+        "times" { case (Expr(a), CalcLexer.`\\*`(_), Expr(b)) => a * b },
+        "divide" { case (Expr(a), CalcLexer.`/`(_), Expr(b)) => a / b },
+        "mod" { case (Expr(a), CalcLexer.`%`(_), Expr(b)) => a % b },
+        "fdiv" { case (Expr(a), CalcLexer.`fdiv`(_), Expr(b)) => math.floor(a / b) },
+        "exp" { case (Expr(a), CalcLexer.`exp`(_), Expr(b)) => math.pow(a, b) },
 
         // unary operators
-        { case (CalcLexer.`-`(_), Expr(a)) => -a }: @name("uminus"),
-        { case (CalcLexer.`\\+`(_), Expr(a)) => +a }: @name("uplus"),
+        "uminus" { case (CalcLexer.`-`(_), Expr(a)) => -a },
+        "uplus" { case (CalcLexer.`\\+`(_), Expr(a)) => +a },
 
         // math constants
-        { case CalcLexer.pi(_) => math.Pi }: @name("const_pi"),
-        { case CalcLexer.e(_) => math.E }: @name("const_e"),
-        { case CalcLexer.tau(_) => 2.0 * math.Pi }: @name("const_tau"),
-        { case CalcLexer.inf(_) => Double.PositiveInfinity }: @name("const_inf"),
-        { case CalcLexer.nan(_) => Double.NaN }: @name("const_nan"),
+        "const_pi" { case CalcLexer.pi(_) => math.Pi },
+        "const_e" { case CalcLexer.e(_) => math.E },
+        "const_tau" { case CalcLexer.tau(_) => 2.0 * math.Pi },
+        "const_inf" { case CalcLexer.inf(_) => Double.PositiveInfinity },
+        "const_nan" { case CalcLexer.nan(_) => Double.NaN },
 
         // trig functions (radians)
-        { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) }: @name("sin"),
-        { case (CalcLexer.cos(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.cos(a) }: @name("cos"),
-        { case (CalcLexer.tan(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.tan(a) }: @name("tan"),
-        { case (CalcLexer.asin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.asin(a) }: @name("asin"),
-        { case (CalcLexer.acos(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.acos(a) }: @name("acos"),
-        { case (CalcLexer.atan(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.atan(a) }: @name("atan"),
-        { case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
-          math.atan2(y, x)
-        }: @name("atan2"),
-        { case (CalcLexer.sinh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sinh(a) }: @name("sinh"),
-        { case (CalcLexer.cosh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.cosh(a) }: @name("cosh"),
-        { case (CalcLexer.tanh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.tanh(a) }: @name("tanh"),
+        "sin" { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) },
+        "cos" { case (CalcLexer.cos(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.cos(a) },
+        "tan" { case (CalcLexer.tan(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.tan(a) },
+        "asin" { case (CalcLexer.asin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.asin(a) },
+        "acos" { case (CalcLexer.acos(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.acos(a) },
+        "atan" { case (CalcLexer.atan(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.atan(a) },
+        "atan2" {
+          case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
+            math.atan2(y, x)
+        },
+        "sinh" { case (CalcLexer.sinh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sinh(a) },
+        "cosh" { case (CalcLexer.cosh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.cosh(a) },
+        "tanh" { case (CalcLexer.tanh(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.tanh(a) },
 
         // parentheses
         { case (CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => a },
@@ -84,25 +83,25 @@ final class MathTest extends AnyFunSuite:
 
       override val resolutions = Set(
         CalcLexer.exp.before(
-          P.ofName("uplus"),
-          P.ofName("uminus"),
-          P.ofName("mod"),
-          P.ofName("exp"),
-          P.ofName("fdiv"),
-          P.ofName("times"),
-          P.ofName("divide"),
+          production.uplus,
+          production.uminus,
+          production.mod,
+          production.exp,
+          production.fdiv,
+          production.times,
+          production.divide,
         ),
-        P.ofName("exp").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("uplus").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("uminus").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("times").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("divide").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("fdiv").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("mod").before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("plus").after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("plus").before(CalcLexer.`\\+`, CalcLexer.`-`),
-        P.ofName("minus").after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        P.ofName("minus").before(CalcLexer.`\\+`, CalcLexer.`-`),
+        production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.uplus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.times.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.fdiv.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.mod.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+        production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+        production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
       )
 
     val input = "1 + 2"
