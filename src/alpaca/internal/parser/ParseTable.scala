@@ -97,7 +97,7 @@ private[parser] object ParseTable:
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          report.info(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 

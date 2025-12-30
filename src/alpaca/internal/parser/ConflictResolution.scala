@@ -20,7 +20,10 @@ object ConflictKey:
   given Showable[ConflictKey] =
     case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
     case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-    case p: Production => show"Reduction(${p.name})"
+    case p: Production =>
+      p.name match
+        case null => "Reduction(<unknown>)"
+        case name: String => show"Reduction($name)"
     case s: String => show"Shift($s)"
 
 /**

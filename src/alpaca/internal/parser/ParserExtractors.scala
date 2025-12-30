@@ -194,12 +194,12 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
 private object ParserExtractors:
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[List[?]](x)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[Option[?]](x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
