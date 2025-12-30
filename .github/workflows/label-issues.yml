@@ -24,7 +24,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
-            const title = issue.title.toLowerCase();
+            const title = (issue.title || '').toLowerCase();
             const body = (issue.body || '').toLowerCase();
             const content = title + ' ' + body;
             
