@@ -3,9 +3,12 @@ name: Label Issues
 on:
   issues:
     types: [opened, edited]
+  pull_request:
+    types: [opened, edited]
 
 permissions:
   issues: write
+  pull-requests: write
   contents: read
 
 jobs:
