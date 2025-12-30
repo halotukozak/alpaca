@@ -12,7 +12,7 @@ import scala.deriving.Mirror
 
 import scala.collection.mutable
 
-final class ParserApiTest extends AnyFunSuite with Matchers {
+final class ParserApiTest extends AnyFunSuite with Matchers:
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])
 
   val CalcLexer = lexer {
@@ -38,7 +38,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
   ) extends ParserCtx derives Copyable
 
-  object CalcParser extends Parser[CalcContext] {
+  object CalcParser extends Parser[CalcContext]:
     val Expr: Rule[Int] = rule(
       { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 }: @name("plus"),
       { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 }: @name("minus"),
@@ -78,7 +78,6 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       P.ofName("minus").before(CalcLexer.PLUS, CalcLexer.MINUS),
       P.ofName("minus").after(CalcLexer.TIMES, CalcLexer.DIVIDE),
     )
-  }
 
   test("basic recognition of various tokens and literals") {
     CalcParser.parse(CalcLexer.tokenize("a = 3 + 4 * (5 + 6)").lexemes) should matchPattern:
@@ -101,13 +100,12 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
 
   test("api") {
     type R = (Int, Option[Int], List[Int])
-    object ApiParser extends Parser[CalcContext] {
+    object ApiParser extends Parser[CalcContext]:
       val Num = rule { case CalcLexer.NUMBER(n) => n.value }
 
       val root = rule { case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
         (n, numOpt, numList)
       }
-    }
 
     ApiParser.parse(CalcLexer.tokenize("1,,").lexemes) should matchPattern:
       case (_, (1, None, Nil)) =>
@@ -130,4 +128,3 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
     // CalcParser.parse[R](lexems) should matchPattern:
     //   case (ctx: CalcContext, Some(9)) if ctx.errors.toList == Seq(("NUMBER", 123)) =>
   }
-}

@@ -37,7 +37,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
   }
 
-  object ASTPrinterParser extends Parser {
+  object ASTPrinterParser extends Parser:
     val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
       ASTNode("program", instructions)
     }
@@ -181,7 +181,6 @@ final class CompilationTheoryTest extends AnyFunSuite:
       P.ofName("matrixAdd").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
       P.ofName("matrixSub").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
     )
-  }
 
   test("special functions, initializations") {
     withLazyReader("""

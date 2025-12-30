@@ -3,7 +3,7 @@ package alpaca.internal
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class CopyableTest extends AnyFunSuite with Matchers {
+final class CopyableTest extends AnyFunSuite with Matchers:
 
   inline def copy[T]: Copyable[T] = compiletime.summonInline[Copyable[T]]
 
@@ -62,4 +62,3 @@ final class CopyableTest extends AnyFunSuite with Matchers {
       |val c = Copyable.derived[Regular]
       |""".stripMargin shouldNot compile
   }
-}

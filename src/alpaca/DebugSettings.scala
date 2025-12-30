@@ -18,10 +18,9 @@ final case class DebugSettings(
   verboseNames: Boolean & Singleton,
 )
 
-object DebugSettings {
+object DebugSettings:
 
   /**
    * Default debug settings with debugging disabled.
    */
   given default: DebugSettings = DebugSettings(false, "debug/", 90, false)
-}

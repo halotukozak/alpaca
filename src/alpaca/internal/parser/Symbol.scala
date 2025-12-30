@@ -14,10 +14,9 @@ import scala.util.Random
  * productions. Terminals represent tokens from the lexer, while
  * non-terminals represent grammatical constructs.
  */
-private[parser] trait Symbol extends Any {
+private[parser] trait Symbol extends Any:
   type IsEmpty <: Boolean
   def name: String
-}
 
 /**
  * Represents a non-terminal symbol in the grammar.
@@ -74,7 +73,7 @@ object Terminal:
   inline def apply(inline name: String): Terminal & Symbol.NonEmpty =
     new Terminal(name).asInstanceOf[Terminal & Symbol.NonEmpty]
 
-private[parser] object Symbol {
+private[parser] object Symbol:
   final val SyntheticInfix = "$$synthetic$$"
 
   type NonEmpty = Symbol { type IsEmpty = false }
@@ -107,4 +106,3 @@ private[parser] object Symbol {
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
-}

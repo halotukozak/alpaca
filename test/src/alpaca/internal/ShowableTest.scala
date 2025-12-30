@@ -4,7 +4,7 @@ package internal
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class ShowableTest extends AnyFunSuite with Matchers {
+final class ShowableTest extends AnyFunSuite with Matchers:
 
   test("Showable should convert String to Shown") {
     val str = "Hello, World!"
@@ -49,4 +49,3 @@ final class ShowableTest extends AnyFunSuite with Matchers {
        |val shown: String = show"$unsupported"
        |""".stripMargin shouldNot compile
   }
-}

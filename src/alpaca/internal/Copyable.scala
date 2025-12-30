@@ -15,7 +15,7 @@ import scala.deriving.Mirror
 @implicitNotFound("${T} should be a case class.")
 private[alpaca] trait Copyable[T] extends (T => T)
 
-private[alpaca] object Copyable {
+private[alpaca] object Copyable:
 
   /**
    * Automatically derives a Copyable instance for any Product type (case class).
@@ -25,4 +25,3 @@ private[alpaca] object Copyable {
    * @return a Copyable instance that can create copies
    */
   given derived[T <: Product: Mirror.ProductOf as m]: Copyable[T] = t => m.fromTuple(Tuple.fromProductTyped(t))
-}

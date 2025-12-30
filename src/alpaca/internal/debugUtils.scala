@@ -122,14 +122,13 @@ private[internal] def typeReprInfo(
  * @param tree the tree to inspect
  * @return a multi-line string with tree structure and code
  */
-private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
+private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
   import quotes.reflect.*
 
   s"""
      |Structure ${Printer.TreeStructure.show(tree)}
      |ShortCode ${Printer.TreeShortCode.show(tree)}
      |""".stripMargin
-}
 private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Position): String =
   s"""
      |start: ${pos.start},

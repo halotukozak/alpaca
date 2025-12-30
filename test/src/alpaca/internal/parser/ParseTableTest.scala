@@ -9,7 +9,7 @@ import org.scalatest.LoneElement
 
 import scala.compiletime.testing.typeCheckErrors
 
-final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
+final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
   given DebugSettings = DebugSettings(true, "debug/", 90, true)
 
   val CalcLexer = lexer {
@@ -81,4 +81,3 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement {
                 |Consider revising the before/after rules to eliminate cycles
                 |""".stripMargin)
   }
-}

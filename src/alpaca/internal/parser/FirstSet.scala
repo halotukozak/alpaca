@@ -13,7 +13,7 @@ import scala.annotation.tailrec
  */
 opaque private[parser] type FirstSet = Map[NonTerminal, Set[Terminal]]
 
-private[parser] object FirstSet {
+private[parser] object FirstSet:
 
   /**
    * Computes the FIRST sets for all non-terminals in a grammar.
@@ -66,4 +66,3 @@ private[parser] object FirstSet {
     def first(symbol: Symbol): Set[Terminal] = symbol match
       case t: Terminal => Set(t)
       case nt: NonTerminal => firstSet(nt)
-}

@@ -21,7 +21,7 @@ private[internal] final case class Csv(
   rows: List[List[Shown]],
 )
 
-private[internal] object Csv {
+private[internal] object Csv:
 
   /**
    * Showable instance for Csv that formats it as a comma-separated value string.
@@ -45,19 +45,16 @@ private[internal] object Csv {
      * @return a Csv representation of the named tuples
      */
 
-    // todo extract show for Tuple
-    // todo make it working
-    inline def toCsv: Csv = Csv(
-//      compiletime
-//        .constValueTuple[N]
-//        .zip(compiletime.summonAll[Tuple.Map[N, Showable]])
-//        .toList
-//        .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-//      rows.map(
-//        _.zip(compiletime.summonAll[Tuple.Map[V, Showable]]).toList
-//          .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-//      ),
-      List("not implemented yet"),
-      List(List("not implemented yet")),
-    )
-}
+    inline def toCsv: Csv =
+      Csv(
+        compiletime.constValueTuple[N].toShowableList,
+        rows.map(_.toTuple.toShowableList),
+      )
+
+  extension [T <: Tuple](tuple: T)
+    inline private def toShowableList = compiletime
+      .summonAll[Tuple.Map[T, Showable]]
+      .zip(tuple)
+      .toList
+      .asInstanceOf[List[(Showable[Any], Any)]]
+      .map(_.show(_))

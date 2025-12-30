@@ -21,7 +21,7 @@ import scala.reflect.NameTransformer
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](
   using val quotes: Q,
 )(using DebugSettings,
-) {
+):
   import quotes.reflect.*
   private type EBNFExtractor = PartialFunction[
     Tree,
@@ -203,10 +203,9 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           ),
         ),
       )
-}
 
 //noinspection ScalaWeakerAccess
-private object ParserExtractors {
+private object ParserExtractors:
   val repeatedAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
     case x => raiseShouldNeverBeCalled[List[?]](x)
@@ -218,4 +217,3 @@ private object ParserExtractors {
     case x => raiseShouldNeverBeCalled[Option[?]](x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
-}

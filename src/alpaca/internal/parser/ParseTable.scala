@@ -15,7 +15,7 @@ import scala.collection.mutable
  */
 opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
-private[parser] object ParseTable {
+private[parser] object ParseTable:
   extension (table: ParseTable)
     /**
      * Gets the parse action for a given state and symbol.
@@ -62,7 +62,7 @@ private[parser] object ParseTable {
     conflictResolutionTable: ConflictResolutionTable,
   )(using quotes: Quotes,
   )(using DebugSettings,
-  ): ParseTable = {
+  ): ParseTable =
     import quotes.reflect.report
 
     val firstSet = FirstSet(productions)
@@ -102,14 +102,12 @@ private[parser] object ParseTable {
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
-    while states.sizeIs > currStateId do {
+    while states.sizeIs > currStateId do
       val currState = states(currStateId)
 
-      for item <- currState if item.isLastItem do {
-        addToTable(item.lookAhead, Reduction(item.production))
-      }
+      for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
-      for stepSymbol <- currState.possibleSteps do {
+      for stepSymbol <- currState.possibleSteps do
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
         states.indexOf(newState) match
@@ -118,50 +116,42 @@ private[parser] object ParseTable {
             states += newState
           case stateId =>
             addToTable(stepSymbol, Shift(stateId))
-      }
 
       currStateId += 1
-    }
 
     table.toMap
-  }
 
-  given Showable[ParseTable] = Showable { table =>
+  given Showable[ParseTable] = Showable: table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
     val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
-      else {
+      else
         val padding = width - text.length
         val leftPad = padding / 2
         val rightPad = padding - leftPad
         (" " * leftPad) + text + (" " * rightPad)
-      }
 
     val result = new StringBuilder
     result.append(centerText("State"))
     result.append("|")
-    for (s <- symbols) {
+    for s <- symbols do
       result.append(centerText(s.show))
       result.append("|")
-    }
 
-    for (i <- states) {
+    for i <- states do
       result.append('\n')
       result.append(centerText(i.toString))
       result.append("|")
-      for (s <- symbols) {
+      for s <- symbols do
         result.append(centerText(table.get((i, s)).fold("")(_.show)))
         result.append("|")
-      }
-    }
     result.append('\n')
     result.result()
-  }
 
   given ToExpr[ParseTable] with
-    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
+    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
 
       type BuilderTpe = mutable.Builder[
@@ -193,5 +183,3 @@ private[parser] object ParseTable {
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
-    }
-}
