@@ -2,7 +2,7 @@ package example
 
 import alpaca.{*, given}
 
-@annotation.nowarn("msg=flexible type in")
+@annotation.nowarn("msg=flexible type")
 val MatrixLexer = lexer:
   case assignOp @ ("\\+=" | "-=" | "\\*=" | "/=") => Token["AssignOp"](assignOp.take(1) /*remove =*/ )
   case comp @ ("!=" | "<=" | ">=" | "==") => Token["LongComparator"](comp)

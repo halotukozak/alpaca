@@ -7,7 +7,7 @@ import alpaca.{Production as P, *}
 import java.util.jar.Attributes.Name
 import scala.util.chaining.scalaUtilChainingOps
 
-object MatrixParser extends Parser {
+object MatrixParser extends Parser:
   val root: Rule[AST.Tree] = rule { case Instruction.List(is) =>
     AST.Block(is, is.head.line)
   }
@@ -36,12 +36,13 @@ object MatrixParser extends Parser {
   )
 
   def If: Rule[AST.If] = rule(
-    { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock), ML.`else`(_), Block(elseBlock)) =>
-      AST.If(cond, thenBlock, elseBlock, l.line)
-    }: @name("if-else"),
-    { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock)) =>
+    "if-else" {
+      case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock), ML.`else`(_), Block(elseBlock)) =>
+        AST.If(cond, thenBlock, elseBlock, l.line)
+    },
+    "if" { case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock)) =>
       AST.If(cond, thenBlock, null, l.line)
-    }: @name("if"),
+    },
   )
 
   def While: Rule[AST.While] = rule { case (ML.`while`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(body)) =>
@@ -101,25 +102,27 @@ object MatrixParser extends Parser {
     { case ML.Int(l) => AST.Literal(Type.Int, l.value, l.line) },
     { case ML.Float(l) => AST.Literal(Type.Float, l.value, l.line) },
     { case ML.String(l) => AST.Literal(Type.String, l.value, l.line) },
-    { case (ML.`-`(l), Expr(e)) =>
+    "uminus" { case (ML.`-`(l), Expr(e)) =>
       AST.Apply(runtime.Function.UMINUS.toRef, List(e), Type.Undef, l.line)
-    }: @name("uminus"),
-    { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
+    },
+    "add" { case (Expr(e1), ML.`\\+`(_), Expr(e2)) =>
       AST.Apply(runtime.Function.+.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("add"),
-    { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
+    },
+    "sub" { case (Expr(e1), ML.`-`(_), Expr(e2)) =>
       AST.Apply(runtime.Function.-.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("sub"),
-    { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
+    },
+    "mul" { case (Expr(e1), ML.`\\*`(_), Expr(e2)) =>
       AST.Apply(runtime.Function.*.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("mul"),
-    { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
+    },
+    "div" { case (Expr(e1), ML.`/`(_), Expr(e2)) =>
       AST.Apply(runtime.Function./.toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("div"),
-    { case (Expr(e1), ML.DotOp(op), Expr(e2)) =>
+    },
+    "dot" { case (Expr(e1), ML.DotOp(op), Expr(e2)) =>
       AST.Apply(runtime.Function.valueOf(op.value).toRef, List(e1, e2), Type.Undef, e1.line)
-    }: @name("dot"),
-    { case (Expr(e), ML.`'`(_)) => AST.Apply(runtime.Function.TRANSPOSE.toRef, List(e), Type.Undef, e.line) },
+    },
+    { case (Expr(e), ML.`'`(_)) =>
+      AST.Apply(runtime.Function.TRANSPOSE.toRef, List(e), Type.Undef, e.line)
+    },
     { case (ML.`\\(`(_), Expr(e), ML.`\\)`(_)) => e },
     { case Element(el) => el },
     { case Var(v) => v },
@@ -135,19 +138,19 @@ object MatrixParser extends Parser {
   )
 
   override val resolutions: Set[ConflictResolution] = Set(
-    ML.`'`.before(P.ofName("uminus")),
-    P.ofName("uminus").before(P.ofName("dot")),
-    P.ofName("dot").before(P.ofName("mul"), P.ofName("div")),
-    P.ofName("dot").before(ML.DotOp),
-    ML.DotOp.before(P.ofName("mul"), P.ofName("div")),
-    P.ofName("mul").before(ML.`\\*`, ML.`/`),
-    P.ofName("div").before(ML.`\\*`, ML.`/`),
-    P.ofName("add").before(ML.`\\+`, ML.`-`),
-    P.ofName("add").after(ML.`\\*`, ML.`/`),
-    P.ofName("sub").after(ML.`\\*`, ML.`/`),
-    P.ofName("sub").before(ML.`\\+`, ML.`-`),
-    P.ofName("if-else").before(ML.`else`),
-    ML.`else`.before(P.ofName("if")),
+    ML.`'`.before(production.uminus),
+    production.uminus.before(production.dot),
+    production.dot.before(production.mul, production.div),
+    production.dot.before(ML.DotOp),
+    ML.DotOp.before(production.mul, production.div),
+    production.mul.before(ML.`\\*`, ML.`/`),
+    production.div.before(ML.`\\*`, ML.`/`),
+    production.add.before(ML.`\\+`, ML.`-`),
+    production.add.after(ML.`\\*`, ML.`/`),
+    production.sub.after(ML.`\\*`, ML.`/`),
+    production.sub.before(ML.`\\+`, ML.`-`),
+    production.`if-else`.before(ML.`else`),
+    ML.`else`.before(production.`if`),
   )
 
   // todo: error reporting
@@ -156,4 +159,3 @@ object MatrixParser extends Parser {
 // // #             report_error(self, f"Syntax error: {p.type}('{p.value}')", p.lineno)
 // // #         else:
 // // #             report_error(self, "Syntax error", -1)
-}
