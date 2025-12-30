@@ -5,7 +5,6 @@ package lexer
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.language.experimental.relaxedLambdaSyntax
 import scala.util.matching.Regex
 
 /**
@@ -69,7 +68,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
                 .collectFirst:
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
-                  throw new AlgorithmError(s"$matcher matched but no token defined for it")
+                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
             else throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
 
           betweenStages(token, matcher, globalCtx)
@@ -81,7 +80,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     initialContext.text = input
     (initialContext, loop(initialContext)(Nil))
 
-  /** The compiled regex that matches all defined tokens. */
+  /** The compiled matcher that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
 
   private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] =

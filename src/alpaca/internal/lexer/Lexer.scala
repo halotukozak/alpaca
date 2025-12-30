@@ -2,11 +2,11 @@ package alpaca
 package internal
 package lexer
 
+import java.util.regex.Pattern
 import scala.NamedTuple.NamedTuple
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 import scala.util.matching.Regex
-import java.util.regex.Pattern
 
 /**
  * Type alias for lexer rule definitions.
