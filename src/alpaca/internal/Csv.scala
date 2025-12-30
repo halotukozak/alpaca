@@ -29,7 +29,7 @@ private[internal] object Csv:
    * The output has headers on the first line followed by data rows,
    * with values separated by commas.
    */
-  given Showable[Csv] = csv =>
+  given Showable[Csv] = Showable: csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
     show"$header\n$rows"
