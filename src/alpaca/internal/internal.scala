@@ -68,7 +68,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args)),
+      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
     ).asExprOf[F]
   }
 }
@@ -102,3 +102,10 @@ given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] wit
         )
       case _ =>
         report.errorAndAbort("DebugSettings must be defined inline")
+
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
+  import quotes.reflect.*
+
+  def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
+    val owner = symbol(parent).overridingSymbol(parent)
+    body(using owner.asQuotes)(owner)
