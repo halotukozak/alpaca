@@ -2,9 +2,9 @@ package alpaca
 package internal
 package lexer
 
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
 import scala.util.matching.Regex
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 
 /**
  * The result of compiling a lexer definition.
@@ -25,8 +25,8 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   def tokens: List[Token[?, Ctx, ?]]
 
   /** Map of token literals to their definitions for dynamic access. */
-  // todo: reconsider if should be implemented with PM (to use @switch
-  protected def byLiteral: Map[Char, Token[?, Ctx, ?]]
+  // todo: should it be String? What we mean by literal?
+  protected def byLiteral(name: Char): Token[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }
 
   /**
    * Provides dynamic access to tokens by name.
