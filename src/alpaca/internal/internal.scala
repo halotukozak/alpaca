@@ -16,7 +16,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
+private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -29,7 +29,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
    * @param queries pairs of (symbol to find, replacement term)
    * @return a TreeMap that performs the replacements
    */
-  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap {
+  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap:
     // skip NoSymbol
     private val filtered = queries.view.filterNot(_.find.isNoSymbol)
 
@@ -38,8 +38,6 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
         .collectFirst:
           case (find, replace) if find == tree.symbol => replace
         .getOrElse(super.transformTerm(tree)(owner))
-  }
-}
 
 /**
  * A helper for creating lambda expressions during macro expansion.
@@ -50,7 +48,8 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q) {
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using DebugSettings):
+
   import quotes.reflect.*
 
   /**
@@ -60,7 +59,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
    * @param rhsFn a function that builds the body tree given the method symbol and argument trees
    * @return an expression of type F
    */
-  def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] = {
+  def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
     require(TypeRepr.of[F].isFunctionType, s"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
@@ -68,10 +67,8 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args)),
+      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
     ).asExprOf[F]
-  }
-}
 
 private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
@@ -82,23 +79,46 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
     case value => toExpr(value.asInstanceOf[T])
 
 // todo: it's temporary, remove when we have a proper timeout implementation
-inline private[internal] def runWithTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
-  import scala.concurrent.{Await, Future}
-  import scala.concurrent.duration._
+inline private[internal] def withDebugSettings[T](inline block: DebugSettings ?=> T)(using Quotes): T =
   import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration.*
+  import scala.concurrent.{Await, Future}
+
+  given DebugSettings = Expr.summon[DebugSettings].get.valueOrAbort
 
   val future = Future(block)
-  Await.result(future, debugSettings.timeout.seconds)
+  Await.result(future, summon[DebugSettings].timeout.seconds)
 
-given (using quotes: Quotes): Conversion[Expr[DebugSettings], DebugSettings] with
-  def apply(x: Expr[DebugSettings]): DebugSettings =
+private[internal] given FromExpr[DebugSettings] with
+
+  def unapply(expr: Expr[DebugSettings])(using quotes: Quotes): Option[DebugSettings] =
     import quotes.reflect.*
-    x match
-      case '{ DebugSettings($enabled, $directory, $timeout) } =>
-        DebugSettings(
-          enabled = enabled.valueOrAbort,
-          directory = directory.valueOrAbort,
-          timeout = timeout.valueOrAbort,
-        )
-      case _ =>
-        report.errorAndAbort("DebugSettings must be defined inline")
+
+    val extractValue: Expr[DebugSettings] => Option[DebugSettings] =
+      case '{ DebugSettings($enabled, $directory, $timeout, $verboseNames) } =>
+        for
+          en <- enabled.value
+          dir <- directory.value
+          to <- timeout.value
+          vn <- verboseNames.value
+        yield DebugSettings(en, dir, to, vn)
+      case other => None
+
+    extractValue(expr)
+      .orElse:
+        extractValue:
+          expr.asTerm.symbol.tree match
+            case ValDef(_, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case DefDef(_, Nil, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case x => report.errorAndAbort("DebugSettings must be a given val")
+
+private[internal] given ToExpr[DebugSettings] with
+  def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] =
+    '{ DebugSettings(${ Expr(x.enabled) }, ${ Expr(x.directory) }, ${ Expr(x.timeout) }, ${ Expr(x.verboseNames) }) }
+
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
+  import quotes.reflect.*
+
+  def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
+    val owner = symbol(parent).overridingSymbol(parent)
+    body(using owner.asQuotes)(owner)

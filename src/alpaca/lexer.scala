@@ -34,13 +34,11 @@ transparent inline def lexer[Ctx <: LexerCtx](
   copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
-)(using inline
-  debugSettings: DebugSettings,
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ betweenStages })(using '{ debugSettings }) }
+  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ betweenStages }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
-object Token {
+object Token:
 
   /**
    * Creates an ignored token that will be matched but not included in the output.
@@ -77,7 +75,6 @@ object Token {
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
-}
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
 

@@ -3,6 +3,8 @@ package internal
 package lexer
 
 import scala.NamedTuple.NamedTuple
+import scala.annotation.switch
+import scala.reflect.NameTransformer
 import scala.util.matching.Regex
 
 /**
@@ -20,9 +22,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
-)(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = {
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = withDebugSettings:
   import quotes.reflect.*
   type ThisToken = Token[?, Ctx, ?]
   type TokenRefn = ThisToken { type LexemeTpe = LexemeRefn }
@@ -30,6 +31,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$") // todo: debug lexer
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
+  val withOverridingSymbol = new WithOverridingSymbol[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
   val (tokens, infos) = cases.foldLeft((List.empty[Expr[ThisToken]], List.empty[TokenInfo[?]])):
@@ -81,9 +83,9 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[ThisToken])
-        .getOrElse(raiseShouldNeverBeCalled(body))
+        .getOrElse(raiseShouldNeverBeCalled[List[Expr[ThisToken]]](body))
 
-      val infos = tokens.unsafeMap:
+      val infos = tokens.map:
         case '{ type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $remapping) } =>
           tokenInfo.valueOrAbort
         case '{ type name <: ValidName; IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) } =>
@@ -100,18 +102,20 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
 
-  def decls(cls: Symbol): List[Symbol] = {
-    val tokenDecls = definedTokens.map:
-      case '{ $token: DefinedToken[name, Ctx, value] } =>
-        Symbol.newVal(
-          parent = cls,
-          name = ValidName.from[name],
-          tpe = token.asTerm.tpe,
-          flags = Flags.Synthetic,
-          privateWithin = Symbol.noSymbol,
-        )
+  def tokenSymbols(cls: Symbol) = definedTokens.map:
+    case '{ $token: DefinedToken[name, Ctx, value] } =>
+      Symbol.newVal(
+        parent = cls,
+        name = ValidName.from[name],
+        tpe = TypeRepr.of[DefinedToken[name, Ctx, value] & TokenRefn],
+        flags = Flags.Synthetic,
+        privateWithin = Symbol.noSymbol,
+      )
 
-    val fieldTpe = definedTokens
+  def fieldsSymbol(cls: Symbol) = Symbol.newTypeAlias(
+    parent = cls,
+    name = "Fields",
+    tpe = definedTokens
       .unsafeFoldLeft[(Type[? <: Tuple], Type[? <: Tuple])]((Type.of[EmptyTuple], Type.of[EmptyTuple])):
         case (
               ('[type names <: Tuple; names], '[type types <: Tuple; types]),
@@ -121,107 +125,123 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
       .runtimeChecked
       .match
         case ('[type names <: Tuple; names], '[type types <: Tuple; types]) => TypeRepr.of[NamedTuple[names, types]]
+    ,
+    flags = Flags.Synthetic,
+    privateWithin = Symbol.noSymbol,
+  )
 
-    val fieldsDecls = Symbol.newTypeAlias(
-      parent = cls,
-      name = "Fields",
-      tpe = fieldTpe,
-      flags = Flags.Synthetic,
-      privateWithin = Symbol.noSymbol,
-    )
+  def lexemeRefinementSymbol(cls: Symbol) = Symbol.newTypeAlias(
+    parent = cls,
+    name = "LexemeRefinement",
+    tpe = TypeRepr.of[LexemeRefn],
+    flags = Flags.Synthetic,
+    privateWithin = Symbol.noSymbol,
+  )
 
-    val lexemeRefinement = Symbol.newTypeAlias(
-      parent = cls,
-      name = "LexemeRefinement",
-      tpe = TypeRepr.of[LexemeRefn],
-      flags = Flags.Synthetic,
-      privateWithin = Symbol.noSymbol,
-    )
+  def compiledSymbol(cls: Symbol) = Symbol.newVal(
+    parent = cls,
+    name = "compiled",
+    tpe = TypeRepr.of[Regex],
+    flags = Flags.Protected | Flags.Synthetic | Flags.Override,
+    privateWithin = Symbol.noSymbol,
+  )
 
-    val compiled = Symbol.newVal(
-      parent = cls,
-      name = "compiled",
-      tpe = TypeRepr.of[Regex],
-      flags = Flags.Protected | Flags.Synthetic | Flags.Override,
-      privateWithin = Symbol.noSymbol,
-    )
+  def tokensSymbol(cls: Symbol) = Symbol.newVal(
+    parent = cls,
+    name = "tokens",
+    tpe = TypeRepr.of[List[ThisToken]],
+    flags = Flags.Synthetic | Flags.Override,
+    privateWithin = Symbol.noSymbol,
+  )
 
-    val allTokens = Symbol.newVal(
-      parent = cls,
-      name = "tokens",
-      tpe = TypeRepr.of[List[ThisToken]],
-      flags = Flags.Synthetic | Flags.Override,
-      privateWithin = Symbol.noSymbol,
-    )
-
-    val byName = Symbol.newVal(
-      parent = cls,
-      name = "byName",
-      tpe = TypeRepr.of[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]],
-      flags = Flags.Synthetic | Flags.Override | Flags.Lazy, // todo: reconsider lazy
-      privateWithin = Symbol.noSymbol,
-    )
-
-    tokenDecls ++ List(fieldsDecls, lexemeRefinement, compiled, allTokens, byName)
-  }
+  def selectDynamicSymbol(cls: Symbol) = Symbol.newMethod(
+    parent = cls,
+    name = "selectDynamic",
+    tpe = MethodType(List("fieldName"))(
+      _ => List(TypeRepr.of[String]),
+      _ => TypeRepr.of[DefinedToken[?, Ctx, ?] & TokenRefn],
+    ),
+    flags = Flags.Synthetic | Flags.Override,
+    privateWithin = Symbol.noSymbol,
+  )
 
   val cls = Symbol.newClass(
     Symbol.spliceOwner,
     Symbol.freshName("$anon"),
     List(TypeRepr.of[Tokenization[Ctx]]),
-    decls,
+    cls =>
+      tokenSymbols(cls) ++ List(
+        fieldsSymbol(cls),
+        lexemeRefinementSymbol(cls),
+        compiledSymbol(cls),
+        tokensSymbol(cls),
+        selectDynamicSymbol(cls),
+      ),
     None,
   )
 
-  val body = {
+  val body =
     val tokenVals = definedTokens.map:
-      case '{ $token: Token[name, Ctx, value] } =>
-        ValDef(
-          cls.fieldMember(ValidName.from[name]),
-          Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
-        )
-
-    tokenVals ++ Vector(
-      TypeDef(cls.typeMember("LexemeRefinement")),
-      TypeDef(cls.typeMember("Fields")),
-      ValDef(
-        cls.fieldMember("compiled"),
-        Some {
-          val regex = Expr(
-            infos
-              .map:
-                case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)"
-              .mkString("|")
-              .r
-              .regex, // we'd like to compile it here to fail in compile time if regex is invalid
+      case '{ $token: DefinedToken[name, Ctx, value] } =>
+        withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
+          ValDef(
+            owner,
+            Some('{
+              $token.asInstanceOf[DefinedToken[name, Ctx, value] & TokenRefn]
+            }.asTerm.changeOwner(owner)),
           )
 
-          '{ Regex($regex) }.asTerm.changeOwner(cls.fieldMember("compiled"))
-        },
-      ),
-      ValDef(
-        cls.fieldMember("tokens"),
-        Some {
-          val declaredTokens = definedTokens.map:
-            case '{ $token: Token[name, Ctx, value] } =>
-              This(cls).select(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
+    tokenVals ++ Vector(
+      TypeDef(lexemeRefinementSymbol(cls)),
+      TypeDef(fieldsSymbol(cls)),
+      withOverridingSymbol(parent = cls)(compiledSymbol): owner =>
+        ValDef(
+          owner,
+          Some {
+            val regex = Expr(
+              infos
+                .map:
+                  case TokenInfo(_, regexGroupName, pattern) => s"(?<$regexGroupName>$pattern)"
+                .mkString("|")
+                .r
+                .regex, // we'd like to compile it here to fail in compile time if regex is invalid
+            )
 
-          Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(cls.fieldMember("tokens"))
-        },
-      ),
-      ValDef(
-        cls.fieldMember("byName"),
-        Some {
-          val all = Expr.ofSeq {
-            tokenVals.map: valDef =>
-              Expr.ofTuple((Expr(valDef.name), Ref(valDef.symbol).asExprOf[DefinedToken[?, Ctx, ?]]))
-          }
-          // it's simpler to add cast here than e.g. bypass apply of DefinedToken
-          '{ Map($all*).asInstanceOf[Map[String, DefinedToken[?, Ctx, ?] & TokenRefn]] }.asTerm
-        },
-      ),
+            '{ Regex($regex) }.asTerm.changeOwner(owner)
+          },
+        ),
+      withOverridingSymbol(parent = cls)(tokensSymbol): owner =>
+        ValDef(
+          owner,
+          Some {
+            val declaredTokens = definedTokens.map:
+              case '{ $token: Token[name, Ctx, value] } =>
+                Ref(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
+
+            Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(owner)
+          },
+        ),
+      withOverridingSymbol(parent = cls)(selectDynamicSymbol): owner =>
+        DefDef(
+          owner,
+          {
+            case List(List(fieldName: Term)) =>
+              Some:
+                Match(
+                  Typed(
+                    fieldName,
+                    Annotated(
+                      TypeTree.ref(fieldName.tpe.typeSymbol),
+                      '{ new annotation.switch }.asTerm.changeOwner(owner),
+                    ),
+                  ),
+                  tokenVals.map: valDef =>
+                    CaseDef(Literal(StringConstant(NameTransformer.encode(valDef.name))), None, Ref(valDef.symbol)),
+                ).changeOwner(owner)
+            case _ => None
+          },
+        ),
     )
-  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
@@ -246,4 +266,3 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
-}

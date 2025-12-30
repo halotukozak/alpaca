@@ -11,9 +11,9 @@ package internal
 //todo: make it opaque with ban on underscore
 type ValidName = String & Singleton
 
-object ValidName {
+object ValidName:
 
-  def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
+  def from[Name <: ValidName: Type](using quotes: Quotes)(using DebugSettings): ValidName =
     import quotes.reflect.*
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
@@ -32,4 +32,3 @@ object ValidName {
     name match
       case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
       case _ =>
-}

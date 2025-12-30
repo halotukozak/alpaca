@@ -21,7 +21,7 @@ private[internal] final case class Csv(
   rows: List[List[Shown]],
 )
 
-private[internal] object Csv {
+private[internal] object Csv:
 
   /**
    * Showable instance for Csv that formats it as a comma-separated value string.
@@ -29,7 +29,7 @@ private[internal] object Csv {
    * The output has headers on the first line followed by data rows,
    * with values separated by commas.
    */
-  given Showable[Csv] = csv =>
+  given Showable[Csv] = Showable: csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
     show"$header\n$rows"
@@ -45,16 +45,16 @@ private[internal] object Csv {
      * @return a Csv representation of the named tuples
      */
 
-    // todo extract show for Tuple
-    inline def toCsv: Csv = Csv(
-      compiletime
-        .constValueTuple[N]
-        .zip(compiletime.summonAll[Tuple.Map[N, Showable]])
-        .toList
-        .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-      rows.map(
-        _.zip(compiletime.summonAll[Tuple.Map[V, Showable]]).toList
-          .map { case (value, showable: Showable[Any] @unchecked) => showable.show(value) },
-      ),
-    )
-}
+    inline def toCsv: Csv =
+      Csv(
+        compiletime.constValueTuple[N].toShowableList,
+        rows.map(_.toTuple.toShowableList),
+      )
+
+  extension [T <: Tuple](tuple: T)
+    inline private def toShowableList = compiletime
+      .summonAll[Tuple.Map[T, Showable]]
+      .zip(tuple)
+      .toList
+      .asInstanceOf[List[(Showable[Any], Any)]]
+      .map(_.show(_))

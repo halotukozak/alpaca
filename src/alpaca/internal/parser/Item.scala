@@ -16,7 +16,7 @@ import alpaca.internal.AlgorithmError
  * @param dotPosition the position of the dot (0 to production.rhs.size)
  * @param lookAhead the lookahead terminal
  */
-private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal) {
+private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal):
   production match
     case Production.NonEmpty(_, rhs, name) =>
       if dotPosition < 0 || rhs.sizeIs < dotPosition then
@@ -56,10 +56,9 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
         case Some(symbol: Symbol) => firstSet.first(symbol)
         case None => Set(lookAhead)
     case _: Production.Empty => throw AlgorithmError(s"$this is an empty production, has no next terminals")
-}
 
 private[parser] object Item:
-  given Showable[Item] =
+  given Showable[Item] = Showable:
     case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"

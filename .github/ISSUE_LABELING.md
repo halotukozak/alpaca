@@ -1,6 +1,10 @@
 # Issue Labeling System
 
-This repository uses an automated issue labeling system to help organize and triage issues.
+This repository uses an **AI-powered automated issue labeling system** powered by **GitHub Copilot** to help organize and triage issues intelligently.
+
+## How It Works
+
+When you create or edit an issue or pull request, GitHub Copilot (using GPT-4o) analyzes the content and automatically applies appropriate labels based on semantic understanding of the text, not just simple keyword matching. This provides more accurate and context-aware labeling.
 
 ## Available Labels
 
@@ -21,37 +25,51 @@ This repository uses an automated issue labeling system to help organize and tri
 - **API**: Issues related to the public API or user-facing interfaces
 - **refactoring**: Code quality improvements or restructuring
 
-## How Labeling Works
+## AI-Powered Labeling
 
-The automated labeling system analyzes issue titles and bodies for keywords and automatically applies appropriate labels when issues are opened or edited.
+The labeling system uses GitHub's AI models to:
+- **Understand context**: Goes beyond keyword matching to understand the actual intent and content
+- **Analyze semantics**: Recognizes related concepts even if specific keywords aren't used
+- **Handle ambiguity**: Better handles cases where the issue could fit multiple categories
+- **Learn patterns**: Understands project-specific terminology and patterns
 
-### Keyword Mapping
+### Examples of AI Understanding
 
-Labels are automatically applied based on the following keywords:
+✅ **Issue**: "The tokenizer doesn't handle unicode properly"
+- AI recognizes this is about the **Lexer** (tokenizer = lexer component) and a **bug**
 
-- **Parser**: parser, parse, parsing, shift-reduce, lr1, lr(1), syntax tree, ast, production, grammar
-- **Lexer**: lexer, lexeme, token, tokenize, regex, pattern matching, lexical
-- **bug**: bug, error, fail, broken, not work, crash, exception, incorrect, does not work, doesn't work
-- **documentation**: documentation, docs, readme, guide, tutorial, example, explain
-- **enhancement**: feature request, enhancement, improve, add support, should support, would be nice, could have, could support
-- **testing**: test, coverage, unit test, integration test, spec
-- **build**: build, compile, ci, github actions, workflow, mill, sbt
-- **performance**: performance, slow, optimize, speed, efficient, benchmark
-- **error-handling**: error message, diagnostic, verbose, warning, better error
-- **API**: api, interface, public api, user-facing
-- **refactoring**: refactor, clean up, reorganize, restructure, code quality
+✅ **Issue**: "Could we make the grammar rule conflict resolver faster?"
+- AI understands this involves the **Parser** (grammar rules) and is a **performance** and **enhancement** request
+
+✅ **Issue**: "Need examples for context-aware lexing"
+- AI categorizes as **Lexer** and **documentation** based on understanding the request
 
 ## Manual Label Management
 
-While labels are automatically applied, maintainers can:
+While labels are automatically applied by AI, maintainers can:
 - Add additional labels manually if needed
 - Remove incorrectly applied labels
 - Create new labels for emerging categories
+- Provide feedback to improve the AI labeling system
 
 ## Contributing
 
 When creating a new issue:
-- Use descriptive keywords in your title and description
-- Be specific about which component (Parser/Lexer) is affected
-- Clearly indicate if it's a bug, enhancement, or documentation issue
-- The automated system will help categorize your issue, but maintainers may adjust labels as needed
+- Write clear, descriptive titles and descriptions
+- Include relevant details about your problem or request
+- Mention which component is affected (Parser/Lexer) if known
+- The AI system will intelligently categorize your issue, but maintainers may adjust labels as needed
+
+The AI-powered labeling works best when issues include:
+- Clear problem descriptions
+- Context about what you're trying to do
+- Expected vs. actual behavior (for bugs)
+- Use cases or examples
+
+## Technical Details
+
+The labeling system uses:
+- **GitHub Models API** with GPT-4o model
+- Triggered automatically on issue/PR creation and edits
+- Provides label suggestions based on semantic analysis
+- Respects existing labels and only adds new ones

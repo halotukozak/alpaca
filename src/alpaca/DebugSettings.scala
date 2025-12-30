@@ -1,7 +1,5 @@
 package alpaca
 
-import scala.quoted.FromExpr
-
 /**
  * Configuration settings for debug output generation.
  *
@@ -17,14 +15,12 @@ final case class DebugSettings(
   enabled: Boolean & Singleton,
   directory: String & Singleton,
   timeout: Int & Singleton,
+  verboseNames: Boolean & Singleton,
 )
 
-object DebugSettings {
+object DebugSettings:
 
   /**
    * Default debug settings with debugging disabled.
-   *
-   * Debug output is disabled by default and would be written to "debug/" if enabled.
    */
-  inline given default: DebugSettings = DebugSettings(false, "debug/", 90)
-}
+  given default: DebugSettings = DebugSettings(false, "debug/", 90, false)
