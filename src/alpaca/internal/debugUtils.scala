@@ -122,14 +122,13 @@ private[internal] def typeReprInfo(
  * @param tree the tree to inspect
  * @return a multi-line string with tree structure and code
  */
-private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
+private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
   import quotes.reflect.*
 
   s"""
      |Structure ${Printer.TreeStructure.show(tree)}
      |ShortCode ${Printer.TreeShortCode.show(tree)}
      |""".stripMargin
-}
 private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Position): String =
   s"""
      |start: ${pos.start},
@@ -151,10 +150,9 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree (never actually returns due to abort)
    */
-  private[internal] def dbg(using pos: DebugPosition): tree.type = {
+  private[internal] def dbg(using pos: DebugPosition): tree.type =
     quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
-  }
 
   /**
    * Prints the tree as an info message during compilation.
@@ -164,10 +162,9 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree unchanged
    */
-  private[internal] def info(using pos: DebugPosition): tree.type = {
+  private[internal] def info(using pos: DebugPosition): tree.type =
     quotes.reflect.report.info(show"$tree at line $pos")
     tree
-  }
 
 extension (using quotes: Quotes)(expr: Expr[?])
 

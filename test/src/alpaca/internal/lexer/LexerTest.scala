@@ -4,7 +4,7 @@ package internal.lexer
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class LexerTest extends AnyFunSuite with Matchers {
+final class LexerTest extends AnyFunSuite with Matchers:
 
   test("tokenize simple identifier") {
     val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
@@ -109,4 +109,3 @@ final class LexerTest extends AnyFunSuite with Matchers {
       )
     }
   }
-}

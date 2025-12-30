@@ -31,7 +31,7 @@ private[parser] type Action[-Ctx <: ParserCtx] = (Ctx, Seq[Any]) => Any
  */
 opaque private[parser] type ActionTable[Ctx <: ParserCtx] = Map[Production, Action[Ctx]]
 
-private[parser] object ActionTable {
+private[parser] object ActionTable:
 
   /**
    * Creates an ActionTable from a map of productions to actions.
@@ -49,4 +49,3 @@ private[parser] object ActionTable {
      * @return the semantic action for that production
      */
     def apply(production: Production): Action[Ctx] = table(production)
-}

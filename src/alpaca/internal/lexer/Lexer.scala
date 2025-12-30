@@ -3,9 +3,9 @@ package internal
 package lexer
 
 import scala.NamedTuple.NamedTuple
-import scala.util.matching.Regex
-import scala.reflect.NameTransformer
 import scala.annotation.switch
+import scala.reflect.NameTransformer
+import scala.util.matching.Regex
 
 /**
  * Type alias for lexer rule definitions.
@@ -24,7 +24,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using debugSettings: Expr[DebugSettings],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = {
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] =
   import quotes.reflect.*
   type ThisToken = Token[?, Ctx, ?]
   type TokenRefn = ThisToken { type LexemeTpe = LexemeRefn }
@@ -181,7 +181,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     None,
   )
 
-  val body = {
+  val body =
     val tokenVals = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
         withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
@@ -243,7 +243,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
           },
         ),
     )
-  }
 
   val tokenizationConstructor = TypeRepr.of[Tokenization[Ctx]].typeSymbol.primaryConstructor
 
@@ -268,4 +267,3 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
-}

@@ -90,7 +90,7 @@ extension (name: String)
  *
  * @tparam R the type of value produced when this rule is matched
  */
-trait Rule[R] {
+trait Rule[R]:
 
   /**
    * Pattern matching extractor for single occurrences of this rule.
@@ -122,7 +122,6 @@ trait Rule[R] {
    */
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[R]] = dummy
-}
 
 /**
  * Base trait for parser global context.
@@ -174,7 +173,7 @@ extension (first: Production | Token[?, ?, ?])
   @compileTimeOnly(RuleOnly)
   inline infix def before(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
-object Production {
+object Production:
 
   /**
    * Creates a production reference from symbols.
@@ -187,7 +186,6 @@ object Production {
    */
   @compileTimeOnly(ConflictResolutionOnly)
   inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
-}
 
 object ParserCtx:
 
@@ -208,7 +206,7 @@ object ParserCtx:
   final case class Empty(
   ) extends ParserCtx
 
-extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
+extension [Ctx <: ParserCtx](parser: Parser[Ctx])
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -225,4 +223,3 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
       case Rule[t] => t
     ) | Null,
   ) = parser.unsafeParse(lexems)
-}

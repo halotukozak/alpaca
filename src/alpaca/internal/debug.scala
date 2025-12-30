@@ -22,11 +22,10 @@ private[internal] object DebugPosition:
    */
   inline given here: DebugPosition = ${ hereImpl }
 
-  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
+  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] =
     import quotes.reflect.*
     val pos = Position.ofMacroExpansion
     Expr((pos.startLine + 1, pos.sourceFile.name))
-  }
 
   given Showable[DebugPosition] = pos => show"at line ${pos.line} in ${pos.file}"
 
