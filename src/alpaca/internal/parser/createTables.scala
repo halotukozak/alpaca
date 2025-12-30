@@ -164,7 +164,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
         )
 
-      case definition => raiseShouldNeverBeCalled(definition)
+      case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
     }
 
   debug("Conflict resolution rules extracted, building conflict resolution table...")
