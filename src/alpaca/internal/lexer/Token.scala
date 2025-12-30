@@ -116,7 +116,7 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
-  type LexemeTpe = Lexeme[Name, Value @uv]
+  type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
 
   @compileTimeOnly(RuleOnly)
   inline def unapply(x: Any): Option[LexemeTpe] = dummy

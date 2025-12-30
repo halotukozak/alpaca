@@ -5,6 +5,10 @@ import Production as P
 import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import alpaca.internal.lexer.Lexeme
+import alpaca.internal.lexer.LexerRefinement
+
+import scala.deriving.Mirror
 
 import scala.collection.mutable
 
@@ -31,7 +35,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
 
   case class CalcContext(
     names: mutable.Map[String, Int] = mutable.Map.empty,
-    errors: mutable.ListBuffer[(tpe: String, value: Any)] = mutable.ListBuffer.empty,
+    errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
   ) extends ParserCtx derives Copyable
 
   object CalcParser extends Parser[CalcContext] {
@@ -46,7 +50,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers {
       { case CalcLexer.ID(id) =>
         ctx.names.getOrElse(
           id.value, {
-            ctx.errors.append(("undefined", id));
+            ctx.errors.append(("undefined", id, id.line));
             0
           },
         )
