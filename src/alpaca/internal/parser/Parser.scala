@@ -3,10 +3,24 @@ package internal
 package parser
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{DefinedToken, Lexeme, Token}
+import alpaca.internal.lexer.Lexeme
 import alpaca.internal.parser.*
 
-import scala.annotation.{compileTimeOnly, tailrec, StaticAnnotation}
+import scala.NamedTuple.NamedTuple
+import scala.annotation.{compileTimeOnly, tailrec}
+import scala.collection.mutable
+
+/**
+ * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
+ *
+ * This trait is used to provide compile-time access to named productions for use in conflict resolution definitions.
+ * It is typically used when specifying conflict resolutions, enabling you to refer to productions
+ * in a type-safe and compile-time-checked manner.
+ *
+ * @note This is a compile-time only feature and should be used within parser definitions.
+ */
+transparent trait ProductionSelector extends Selectable:
+  def selectDynamic(name: String): Any
 
 /**
  * Base class for parsers.
@@ -31,6 +45,33 @@ abstract class Parser[Ctx <: ParserCtx](
   val root: Rule[?]
 
   val resolutions: Set[ConflictResolution] = Set.empty
+
+  /**
+   * Provides compile-time access to named productions for use in conflict resolution definitions.
+   *
+   * This method allows you to reference productions by their names as defined in your parser.
+   * It is typically used when specifying conflict resolutions, enabling you to refer to productions
+   * in a type-safe and compile-time-checked manner.
+   *
+   * Example usage:
+   * {{{
+   *   override val resolutions = Set(
+   *     production.plus.after(production.times)
+   *   )
+   * }}}
+   *
+   * @note This is a compile-time only feature and should be used within parser definitions.
+   */
+  @compileTimeOnly(ConflictResolutionOnly)
+  transparent inline protected def production: ProductionSelector = ${ productionImpl }
+
+  /**
+   * Provides access to the parser context within rule definitions.
+   *
+   * This is compile-time only and can only be used inside parser rule definitions.
+   */
+  @compileTimeOnly(RuleOnly)
+  inline protected final def ctx: Ctx = dummy
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -84,10 +125,38 @@ abstract class Parser[Ctx <: ParserCtx](
 
     ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
 
-  /**
-   * Provides access to the parser context within rule definitions.
-   *
-   * This is compile-time only and can only be used inside parser rule definitions.
-   */
-  @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = dummy
+private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty
+
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] =
+  import quotes.reflect.*
+
+  val parserSymbol = Symbol.spliceOwner.owner.owner
+  val parserTpe = parserSymbol.typeRef
+
+  cachedProductions.getOrElseUpdate(
+    parserTpe.asType, {
+      val rules = parserTpe.typeSymbol.declarations.collect:
+        case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+
+      val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
+        case '{ rule(${ Varargs(cases) }*) } =>
+          cases.flatMap:
+            case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } => name.value
+            case _ => None
+
+      rules
+        .unsafeFlatMap:
+          case ValDef(_, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]])
+          case DefDef(_, _, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+          case _ =>
+            report.error(s"Define resolutions as the last field of the parser.")
+            Nil
+        .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
+          case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])
+        .asType
+    },
+  ) match
+    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ DummyProductionSelector.asInstanceOf[refinedTpe] }
+
+private object DummyProductionSelector extends ProductionSelector:
+  def selectDynamic(name: String): Any = dummy

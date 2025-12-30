@@ -79,16 +79,13 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
-        case Typed(term, tpt) =>
-          // todo: maybe it is possible to pattern match on TypeTree
-          val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
-          val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value.orNull
-        case other => other -> null
+      val extractProductionName: Function[Expr[ProductionDefinition[?]], (Tree, ValidName | Null)] =
+        case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } =>
+          production.asTerm -> name.value.orNull
+        case other =>
+          other.asTerm -> null
 
       cases
-        .map(_.asTerm)
         .map(extractProductionName)
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
@@ -148,9 +145,9 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
       .collect: p =>
         p.rhs -> p
       .toMap
-
+    import scala.reflect.Selectable.reflectiveSelectable
     {
-      case '{ alpaca.Production.ofName(${ Expr(name) }) } =>
+      case '{ ($selector: ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
@@ -163,6 +160,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
           NEL.unsafe(args),
           report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
         )
+
+      case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
     }
 
   debug("Conflict resolution rules extracted, building conflict resolution table...")
