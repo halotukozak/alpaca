@@ -4,7 +4,7 @@ This document explains the automatic PR description generation feature for the A
 
 ## Overview
 
-The Alpaca repository includes an automated system that generates descriptions for pull requests when they don't have one. This helps reviewers quickly understand what changes are included in a PR without having to manually analyze commits and diffs.
+The Alpaca repository includes an AI-powered automated system that generates descriptions for pull requests when they don't have one. This helps reviewers quickly understand what changes are included in a PR without having to manually analyze commits and diffs.
 
 ## How It Works
 
@@ -12,42 +12,85 @@ The Alpaca repository includes an automated system that generates descriptions f
 
 When a pull request is created or edited, the system automatically:
 1. Checks if the PR has a meaningful description (> 50 characters of non-boilerplate content)
-2. If the description is minimal or empty, generates an automatic description
+2. If the description is minimal or empty, generates an automatic description using AI
 3. Updates the PR with the generated description
 
 **This happens automatically** - no manual intervention is needed.
 
-### Generated Content
+### AI-Powered Generation
 
-The automatic description includes:
+The workflow uses **GitHub Copilot / AI models** to generate intelligent, context-aware PR descriptions:
 
-#### 1. Change Type Detection
-Analyzes the PR title and commit messages to identify:
-- Bug fixes
-- New features
-- Refactoring
-- Documentation updates
-- Testing improvements
-- Performance optimizations
-- Build/CI changes
+#### Primary Method: AI Generation
+- Uses GitHub Models API with GPT-4 for intelligent description generation
+- Analyzes:
+  - PR title
+  - Commit messages
+  - Changed files and their statistics
+  - Code diff (first 5000 characters)
+- Generates a natural, human-like description that explains:
+  - What changed
+  - Why it changed
+  - Key technical details
+  - Impact of the changes
 
-#### 2. Summary Section
-- Lists all unique commit messages (up to 5)
-- Shows total number of commits if more than 5
+#### Fallback Method: Template-Based
+If AI generation fails (API unavailable, rate limits, etc.), the system falls back to template-based generation that includes:
 
-#### 3. Changes Statistics
-- Number of files changed
-- Total additions
-- Total deletions
+1. **Change Type Detection** - Analyzes the PR title and commit messages to identify:
+   - Bug fixes
+   - New features
+   - Refactoring
+   - Documentation updates
+   - Testing improvements
+   - Performance optimizations
+   - Build/CI changes
 
-#### 4. Affected Files
-Categorizes and lists modified files by type:
-- **Source files** - Scala/Java source code
-- **Test files** - Test files and specs
-- **Documentation** - Markdown and documentation files
-- **Configuration** - Build configs, workflow files, etc.
+2. **Summary Section** - Lists all unique commit messages (up to 5)
 
-### Example Generated Description
+3. **Changes Statistics** - Number of files changed, additions, and deletions
+
+4. **Affected Files** - Categorizes and lists modified files by type:
+   - **Source files** - Scala/Java source code
+   - **Test files** - Test files and specs
+   - **Documentation** - Markdown and documentation files
+   - **Configuration** - Build configs, workflow files, etc.
+
+### Example Generated Descriptions
+
+#### AI-Generated (Primary):
+
+```markdown
+## AI-Generated Description
+
+This pull request introduces an automatic PR description generation workflow that leverages
+AI to create meaningful descriptions when PRs are opened without one. The implementation
+adds a GitHub Actions workflow that triggers on PR creation/editing and uses the GitHub
+Models API to analyze commits, file changes, and diffs to generate context-aware descriptions.
+
+### Key Changes
+
+- New workflow file `.github/workflows/pr-auto-description.yml` implements the automation
+- Comprehensive documentation in `.github/PR_AUTO_DESCRIPTION.md` explains usage
+- Fallback template-based generation for when AI is unavailable
+- Smart detection to avoid overwriting existing meaningful descriptions
+
+### Technical Details
+
+The workflow checks for minimal descriptions (< 50 chars), fetches PR context including
+commits and file changes, and calls the GitHub Models API with GPT-4 to generate intelligent
+descriptions. If AI generation fails, it falls back to a template-based approach.
+
+---
+
+### Statistics
+
+- **2** files changed
+- **436** additions
+- **0** deletions
+```
+
+#### Template-Based (Fallback):
 
 ```markdown
 ## Automatic Description
