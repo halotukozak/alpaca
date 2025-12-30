@@ -28,7 +28,7 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
  *
  * Used to ensure type safety in string interpolation.
  */
-opaque private[internal] type Shown <: String = String
+opaque into private[internal] type Shown <: String = String
 
 object Shown {
 
@@ -49,14 +49,6 @@ private[internal] object Showable {
   given Showable[Int] = fromToString
 
   def fromToString[T]: Showable[T] = _.toString
-
-  /** Showable instance for nullable types. */
-  given [T: Showable as showable]: Showable[T | Null] =
-    case null => ""
-    case value: T @unchecked => showable.show(value)
-
-  // todo: add names
-  given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
 
   given [T](using quotes: Quotes): Showable[Expr[T]] =
     import quotes.reflect.*

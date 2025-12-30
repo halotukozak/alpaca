@@ -68,7 +68,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q) {
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args)),
+      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
     ).asExprOf[F]
   }
 }
