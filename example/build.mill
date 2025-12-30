@@ -3,9 +3,9 @@
 
 package build
 
-import mill.scalalib._
+import mill.scalalib.*
 
-object `package` extends ScalaModule {
+object `package` extends ScalaModule:
   def scalaVersion = "3.8.0-RC3"
 
   override def scalacOptions = Seq(
@@ -34,6 +34,5 @@ object `package` extends ScalaModule {
   )
 
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.2",
+    mvn"io.github.halotukozak::alpaca:0.0.3",
   )
-}
