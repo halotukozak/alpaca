@@ -35,13 +35,14 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yexplicit-nulls",
     // "-Yprint-debug",
     // "-Xprint:postInlining",
+    // "-Xprint-suspension",
     "-Wsafe-init",
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
     "-experimental",
-    "-preview",
+    "-preview"
   )
 
   override def scalaDocOptions = Task {

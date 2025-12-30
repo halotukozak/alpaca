@@ -17,13 +17,10 @@ opaque private[parser] type ConflictKey = Production | String
 object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
-  given Showable[ConflictKey] =
+  given Showable[ConflictKey] = Showable:
     case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
     case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-    case p: Production =>
-      p.name match
-        case null => "Reduction(<unknown>)"
-        case name: String => show"Reduction($name)"
+    case p: Production => show"Reduction(${p.name.nn})"
     case s: String => show"Shift($s)"
 
 /**
@@ -51,7 +48,7 @@ private[parser] object ConflictResolutionTable:
      * Uses the precedence rules in the table to determine which action
      * should be preferred. Returns None if no resolution rule applies.
      *
-     * @param first the first parse action
+     * @param first  the first parse action
      * @param second the second parse action
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
@@ -77,7 +74,7 @@ private[parser] object ConflictResolutionTable:
 
       winsOver(first, second) orElse winsOver(second, first)
 
-    def verifyNoConflicts(): Unit =
+    def verifyNoConflicts()(using DebugSettings): Unit =
       enum VisitState:
         case Unvisited, Visited, Processed
 
@@ -109,11 +106,12 @@ private[parser] object ConflictResolutionTable:
   /**
    * Showable instance for displaying conflict resolution tables.
    */
-  given Showable[ConflictResolutionTable] =
-    _.map: (k, v) =>
-      def show(x: ConflictKey): String = x match
-        case p: Production => show"$p"
-        case s: String => show"Token[$s]"
+  given Showable[ConflictResolutionTable] = Showable: table =>
+    table
+      .map: (k, v) =>
+        def show(x: ConflictKey): String = x match
+          case p: Production => show"$p"
+          case s: String => show"Token[$s]"
 
-      show"${show(k)} before ${v.map(show).mkShow(", ")}"
-    .mkShow("\n")
+        show"${show(k)} before ${v.map(show).mkShow(", ")}"
+      .mkShow("\n")

@@ -18,7 +18,7 @@ private[internal] trait Showable[-T]:
    *
    * @return the string representation of the value
    */
-  extension (t: T) def show: Shown
+  extension (t: T)(using DebugSettings) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
@@ -37,25 +37,32 @@ object Shown:
    *
    * @tparam T the type with a Showable instance
    */
-  given [T: Showable]: Conversion[T, Shown] = _.show
+  given [T: Showable] => DebugSettings => Conversion[T, Shown] = _.show
 
 private[internal] object Showable:
+  def apply[T](func: DebugSettings ?=> T => Shown): Showable[T] = new:
+    extension (t: T)(using debugSettings: DebugSettings) override def show: Shown = func(t)
 
   /** Showable instance for String (identity). */
-  given Showable[String] = _.asInstanceOf[Shown]
+  given Showable[String] = Showable(_.asInstanceOf[Shown])
 
   /** Showable instance for Int. */
   given Showable[Int] = fromToString
 
-  def fromToString[T]: Showable[T] = _.toString
+  def fromToString[T]: Showable[T] = Showable(_.toString)
 
-  given [T](using quotes: Quotes): Showable[Expr[T]] =
+  // todo: add names
+  given [N <: Tuple, V <: Tuple: Showable] => Showable[NamedTuple[N, V]] = Showable(_.toTuple.show)
+
+  given [T] => (quotes: Quotes) => Showable[Expr[T]] = Showable:
     import quotes.reflect.*
     expr => expr.asTerm.show
 
-  given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
+  given [T] => (quotes: Quotes) => Showable[quotes.reflect.Tree] = Showable:
+    quotes.reflect.Printer.TreeShortCode.show(_)
 
-  given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
+  given [A: Showable, B: Showable] => Showable[(A, B)] = Showable: (a, b) =>
+    show"$a : $b"
 
   /**
    * Automatically derives a Showable instance for Product types (case classes).
@@ -66,7 +73,7 @@ private[internal] object Showable:
    * @param m the Mirror.ProductOf for type T
    * @return a Showable instance
    */
-  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
+  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = Showable: t =>
     val name = compiletime.constValue[m.MirroredLabel]
     val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
     val showables =
@@ -75,7 +82,7 @@ private[internal] object Showable:
     val shown = showables.zip(values).map(_.show(_))
     s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
 
-extension [C[X] <: Iterable[X], T: Showable](c: C[T])
+extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using DebugSettings)
 
   /**
    * Creates a string representation with custom start, separator, and end strings.

@@ -37,7 +37,7 @@ private[parser] object ParseTable:
      *
      * @return a Csv representation of the parse table
      */
-    def toCsv: Csv =
+    def toCsv(using DebugSettings): Csv =
       val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
@@ -61,6 +61,7 @@ private[parser] object ParseTable:
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
   )(using quotes: Quotes,
+  )(using DebugSettings,
   ): ParseTable =
     import quotes.reflect.report
 
@@ -120,7 +121,7 @@ private[parser] object ParseTable:
 
     table.toMap
 
-  given Showable[ParseTable] = table =>
+  given Showable[ParseTable] = Showable: table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
     val states = table.keysIterator.map(_.state).distinct.toList.sorted
 

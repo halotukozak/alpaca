@@ -25,7 +25,7 @@ private[parser] object ParseAction:
    */
   opaque type Reduction = Production
 
-  given Showable[ParseAction] =
+  given Showable[ParseAction] = Showable:
     case shift: Int => show"S$shift"
     case reduction: Production => show"$reduction"
 
@@ -38,6 +38,7 @@ private[parser] object ParseAction:
       def unapply(x: Any): Option[Shift & x.type] = x match
         case i: Int => Some(i.asInstanceOf[Shift & x.type])
         case _ => None
+
     extension (shift: Shift) inline def newState: Int = shift
 
   object Reduction:
@@ -49,6 +50,7 @@ private[parser] object ParseAction:
       def unapply(x: Any): Option[Reduction & x.type] = x match
         case p: Production => Some(p.asInstanceOf[Reduction & x.type])
         case _ => None
+
     extension (red: Reduction) inline def production: Production = red
 
   given ToExpr[ParseAction] with

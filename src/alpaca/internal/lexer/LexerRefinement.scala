@@ -2,8 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import scala.NamedTuple.AnyNamedTuple
 import scala.deriving.Mirror
-import NamedTuple.AnyNamedTuple
 
 trait LexerRefinement[Ctx <: LexerCtx]:
   type Lexeme <: alpaca.internal.lexer.Lexeme[?, ?]
@@ -14,7 +14,7 @@ object LexerRefinement:
     ${ derivedImpl[Ctx, m.MirroredElemLabels, m.MirroredElemTypes] }
 
   def derivedImpl[Ctx <: LexerCtx: Type, Labels <: Tuple: Type, Types <: Tuple: Type](using quotes: Quotes)
-    : Expr[LexerRefinement[Ctx]] =
+    : Expr[LexerRefinement[Ctx]] = withDebugSettings:
     import quotes.reflect.*
     def extractAll(tup: Type[? <: Tuple]): List[TypeRepr] = tup match
       case '[h *: t] => TypeRepr.of[h] :: extractAll(Type.of[t])
