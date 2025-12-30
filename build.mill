@@ -20,7 +20,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   override def scalacOptions = Seq(
     "-deprecation",
     "-feature",
-    // "-explain",
+    "-explain",
     "-new-syntax",
     "-unchecked",
     "-language:noAutoTupling",

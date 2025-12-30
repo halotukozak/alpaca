@@ -19,13 +19,14 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
 
   private def extractOrTypes(tree: Tree): List[Tree] = tree match
     case tree @ Applied(tpt, List(left, right)) if tpt.tpe =:= TypeRepr.of[|] =>
-      (tree.toString + "\n").soft
+//      (tree.toString + "\n").soft
       extractOrTypes(left) ++ extractOrTypes(right)
-    case tree @ Typed(_, pattern) =>
-      (tree.toString + "\n").soft
-      extractOrTypes(pattern)
+    // case tree @ Typed(_, pattern) =>
+// //      (tree.toString + "\n").soft
+//       Nil
+//       //extractOrTypes(pattern)
     case pattern =>
-      (pattern.toString + "\n").soft
+//      (pattern.toString + "\n").soft
       List(pattern)
 
   /**
@@ -94,7 +95,6 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
             case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))
             case Singleton(Literal(CharConstant(str))) => TokenInfo.unsafe(str.toString, Vector(str))
 
-        case _ => Nil // todo
-        // case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
+        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
 
     loop(TypeRepr.of[T], pattern)

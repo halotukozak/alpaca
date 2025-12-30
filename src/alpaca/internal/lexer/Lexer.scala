@@ -4,7 +4,6 @@ package lexer
 
 import org.jparsec.Terminals.StringLiteral
 
-import java.util.regex.Pattern
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.{switch, tailrec}
 import scala.reflect.NameTransformer
@@ -38,31 +37,31 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         ctxManipulation: Expr[CtxManipulation[Ctx]],
       ): PartialFunction[Expr[TokenDefinition[ValidNameLike, Ctx, Any]], List[Expr[Token[?, Ctx, ?]]]] =
         case '{ Token.Ignored(using $ctx) } =>
-          compileNameAndPattern[Nothing](tree).unsafeMap:
+          compileNameAndPattern[Nothing](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) }
 
         case '{ type name <: ValidNameLike; Token[name](using $ctx) } =>
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
         case '{ type name <: ValidNameLike; Token[name]($value: value)(using $ctx) }
             if TypeRepr.of[value] =:= tree.asInstanceOf[Term].tpe => // todo: find sth better than cast
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
 
         case '{ type name <: ValidNameLike; Token[name]($value: value)(using $ctx) } =>
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               // we need to widen here to avoid weird types
               TypeRepr.of[value].widen.asType match
                 case '[result] =>
-                  val reunsafeMapping = createLambda[Ctx => result]:
+                  val remapping = createLambda[Ctx => result]:
                     case (methSym, (newCtx: Term) :: Nil) =>
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
-                  '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $reunsafeMapping) }
+                  '{ DefinedToken[name, Ctx, result]($tokenInfo, $ctxManipulation, $remapping) }
 
       val tokens = extractSimple('{ _ => () })
         .lift(body.asExprOf[TokenDefinition[ValidNameLike, Ctx, Any]])
@@ -72,16 +71,14 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
               val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
                 case (methSym, (newCtx: Term) :: Nil) =>
                   replaceWithNewCtx(newCtx).transformTerm(
-                    Block(statements.unsafeMap(_.changeOwner(methSym)), Literal(UnitConstant())),
+                    Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDefinition[ValidNameLike, Ctx, Any]])
         .getOrElse(raiseShouldNeverBeCalled[List[Expr[Token[?, Ctx, ?]]]](body))
 
-      val infos = tokens.unsafeMap:
-        case '{
-              type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $reunsafeMapping)
-            } =>
+      val infos: List[TokenInfo[?]] = tokens.map:
+        case '{ type name <: ValidName; DefinedToken[name, Ctx, value]($tokenInfo, $ctxManipulation, $remapping) } =>
           tokenInfo.valueOrAbort
         case '{ type name <: ValidName; IgnoredToken[name, Ctx]($tokenInfo, $ctxManipulation) } =>
           tokenInfo.valueOrAbort
@@ -96,7 +93,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   RegexChecker.checkInfos(infos)
 
-  def definedTokenSymbols(cls: Symbol) = definedTokens.unsafeMap:
+  def definedTokenSymbols(cls: Symbol) = definedTokens.map:
     case '{ $token: DefinedToken[name, Ctx, value] } =>
       Symbol.newVal(
         parent = cls,
@@ -106,13 +103,13 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         privateWithin = Symbol.noSymbol,
       )
 
-  def ignoredTokenSymbols(cls: Symbol) = ignoredTokens.unsafeMap:
-    case '{ $token: DefinedToken[name, Ctx, value] } =>
+  def ignoredTokenSymbols(cls: Symbol) = ignoredTokens.map:
+    case '{ $token: IgnoredToken[name, Ctx] } =>
       Symbol.newVal(
         parent = cls,
         name = ValidName.from[name],
-        tpe = TypeRepr.of[DefinedToken[name, Ctx, value] & TokenRefn],
-        flags = Flags.Synthetic | Flags.Private,
+        tpe = TypeRepr.of[IgnoredToken[name, Ctx] & TokenRefn],
+        flags = Flags.Synthetic | Flags.Protected,
         privateWithin = Symbol.noSymbol,
       )
 
@@ -196,8 +193,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     None,
   )
 
+  given Default[ValDef] = () => ???
+
   val body =
-    val definedTokenVals = definedTokens.unsafeMap:
+    val definedTokenVals = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
         withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
           ValDef(
@@ -207,11 +206,14 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             }.asTerm.changeOwner(owner)),
           )
 
-    val ignoredTokenVals = ignoredTokens.unsafeMap:
+    val ignoredTokenVals = ignoredTokens.map:
       case '{ $token: IgnoredToken[name, Ctx] } =>
-        ValDef(
-          cls.fieldMember(ValidName.from[name]),
-          Some(token.asTerm.changeOwner(cls.fieldMember(ValidName.from[name]))),
+        withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
+          ValDef(
+            owner,
+            Some('{
+              $token.asInstanceOf[IgnoredToken[name, Ctx] & TokenRefn]
+            }.asTerm.changeOwner(owner)),
         )
 
     definedTokenVals ++ ignoredTokenVals ++ Vector(
@@ -223,21 +225,22 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
           Some {
             val regex = Expr(
               infos
-                .unsafeMap: tokenInfo =>
+                .map: tokenInfo =>
                   val regex = tokenInfo.toEscapedRegex // todo: literals should be handled separately
                   s"(?<${tokenInfo.regexGroupName}>$regex)"
                 .mkString("|")
-                .tap(Pattern.compile),
+                .r
+                .regex, // we'd like to compile it here to fail in compile time if regex is invalid
             )
 
-            '{ Pattern.compile($regex) }.asTerm.changeOwner(owner)
+            '{ Regex($regex) }.asTerm.changeOwner(owner)
           },
         ),
       withOverridingSymbol(parent = cls)(tokensSymbol): owner =>
         ValDef(
           owner,
           Some {
-            val declaredTokens = definedTokens.unsafeMap:
+            val declaredTokens = definedTokens.map:
               case '{ $token: Token[name, Ctx, value] } =>
                 Ref(cls.fieldMember(ValidName.from[name])).asExprOf[Token[?, Ctx, ?]]
 
@@ -258,7 +261,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                       '{ new annotation.switch }.asTerm.changeOwner(owner),
                     ),
                   ),
-                  definedTokenVals.unsafeMap: valDef =>
+                  definedTokenVals.map: valDef =>
                     CaseDef(Literal(StringConstant(NameTransformer.encode(valDef.name))), None, Ref(valDef.symbol)),
                 ).changeOwner(owner)
             case _ => None
@@ -278,7 +281,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                       '{ new annotation.switch }.asTerm.changeOwner(owner),
                     ),
                   ),
-                  definedTokenVals.flatunsafeMap: valDef =>
+                  definedTokenVals.flatMap: valDef =>
                     val name = NameTransformer.encode(valDef.name)
                     Option.when(name.length == 1)(CaseDef(Literal(CharConstant(name.head)), None, Ref(valDef.symbol))),
                 ).changeOwner(owner)
