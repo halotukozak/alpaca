@@ -9,9 +9,10 @@ package internal
  */
 opaque private[internal] type DebugPosition = (Int, String)
 
-private[internal] object DebugPosition {
+private[internal] object DebugPosition:
 
-  given Showable[DebugPosition] = (line, file) => s"at line $line in $file"
+  given Showable[DebugPosition] = Showable: (line, file) =>
+    s"at line $line in $file"
 
   /**
    * Implicit instance that captures the current source line number.
@@ -21,9 +22,7 @@ private[internal] object DebugPosition {
    */
   inline given here: DebugPosition = ${ hereImpl }
 
-  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
+  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] =
     import quotes.reflect.*
     val pos = Position.ofMacroExpansion
     Expr((pos.startLine + 1, pos.sourceFile.name))
-  }
-}
