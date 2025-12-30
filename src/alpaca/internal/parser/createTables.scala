@@ -119,7 +119,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
             ) :: others.flatten
 
   val rules = parserTpe.typeSymbol.declarations.collect:
-    case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+    case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
 
   debug("Rules extracted, building parse table...")
 
@@ -127,6 +127,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
       case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
+      case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
     .tap: table =>
       // csv may be not the best format for this due to the commas
       debugToFile(s"$parserName/actionTable.dbg.csv")(table.toCsv)
