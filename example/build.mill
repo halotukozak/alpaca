@@ -1,4 +1,4 @@
-//| mill-version: 1.0.6
+//| mill-version: 1.1.0-RC2
 //| mill-jvm-version: 21
 
 package build
@@ -30,7 +30,6 @@ object `package` extends ScalaModule:
     "-Yshow-var-bounds",
     "-Werror",
     // "-Wunused:all",
-    "-experimental",
   )
 
   def mvnDeps = Seq(
