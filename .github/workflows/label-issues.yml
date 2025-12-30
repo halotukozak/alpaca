@@ -20,6 +20,8 @@ jobs:
 
       - name: Label issues using GitHub Copilot
         uses: actions/github-script@v8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
