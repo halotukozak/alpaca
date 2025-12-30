@@ -2,11 +2,11 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.tailrec
-import scala.util.matching.Regex
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.experimental.relaxedLambdaSyntax
+import scala.util.matching.Regex
 
 /**
  * The result of compiling a lexer definition.
@@ -20,14 +20,11 @@ import scala.language.experimental.relaxedLambdaSyntax
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using copy: Copyable[Ctx], // todo: unused
   betweenStages: BetweenStages[Ctx],
-) extends Selectable {
+) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
   def tokens: List[Token[?, Ctx, ?]]
-
-  /** Map of token names to their definitions for dynamic access. */
-  def byName: Map[String, DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }] // todo: reconsider if selectDynamic should be implemented with PM
 
   /**
    * Provides dynamic access to tokens by name.
@@ -37,8 +34,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement } =
-    byName(scala.reflect.NameTransformer.decode(fieldName))
+  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }
 
   /**
    * Tokenizes the input character sequence.
@@ -54,7 +50,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   final def tokenize(
     input: CharSequence,
   )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) = {
+  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) =
     @tailrec def loop(
       globalCtx: Ctx,
     )(
@@ -84,12 +80,11 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val initialContext = empty()
     initialContext.text = input
     (initialContext, loop(initialContext)(Nil))
-  }
 
   /** The compiled regex that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
 
-  private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] = {
+  private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] =
     val matcher = compiled.matcher("")
     val totalGroups = matcher.groupCount
     val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
@@ -98,8 +93,6 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
       val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
       if groupIndex != null then map(groupIndex) = token
     map
-  }
-}
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match

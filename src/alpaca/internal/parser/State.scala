@@ -11,10 +11,10 @@ import scala.collection.immutable.SortedSet
  */
 opaque private[parser] type State <: SortedSet[Item] = SortedSet[Item]
 
-private[parser] object State {
+private[parser] object State:
   val empty: State = SortedSet.empty[Item](using Ordering.by(_.hashCode))
 
-  extension (state: State) {
+  extension (state: State)
 
     /**
      * Gets the set of symbols that can be shifted from this state.
@@ -38,7 +38,6 @@ private[parser] object State {
       state.view
         .filter(item => !item.isLastItem && item.nextSymbol == step)
         .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
-  }
 
   /**
    * Constructs a state closure from a single item.
@@ -65,4 +64,3 @@ private[parser] object State {
           }
         }
     else state + item
-}

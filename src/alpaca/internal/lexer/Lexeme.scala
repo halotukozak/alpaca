@@ -19,10 +19,9 @@ private[alpaca] final case class Lexeme[+Name <: ValidName, +Value](
   name: Name,
   value: Value,
   private[alpaca] val fields: Map[String, Any],
-) extends Selectable {
+) extends Selectable:
   type Fields <: AnyNamedTuple
   def selectDynamic(name: String): Any = fields(name)
-}
 
 private[alpaca] object Lexeme:
 

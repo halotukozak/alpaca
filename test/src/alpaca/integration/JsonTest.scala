@@ -26,7 +26,7 @@ final class JsonTest extends AnyFunSuite:
       case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
     }
 
-    object JsonParser extends Parser {
+    object JsonParser extends Parser:
       val root: Rule[Any] = rule { case Value(value) => value }
 
       val Value: Rule[Any] = rule(
@@ -61,7 +61,6 @@ final class JsonTest extends AnyFunSuite:
         { case Value(v) => scala.List(v) },
         { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
       )
-    }
 
     withLazyReader("true") { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
