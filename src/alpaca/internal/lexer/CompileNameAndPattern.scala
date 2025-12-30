@@ -14,7 +14,7 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using DebugSettings):
   import quotes.reflect.*
 
   private def extractOrTypes(tree: Tree): List[Tree] = tree match
@@ -93,15 +93,8 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
             case Singleton(Literal(StringConstant(str))) => TokenInfo.unsafe(str, Vector(str))
             case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))
             case Singleton(Literal(CharConstant(str))) => TokenInfo.unsafe(str.toString, Vector(str))
-        case _ =>
-          raiseShouldNeverBeCalled(
-            s"""
-               |tpe: ${tpe.show}
-               |pattern: ${pattern.show}
-               |tpe: ${tpe.toString}
-               |pattern: ${pattern.toString}
-               |""".stripMargin,
-          )
+
+        case _ => Nil // todo
+        // case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
-}

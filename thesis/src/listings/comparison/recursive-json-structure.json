@@ -1,0 +1,11 @@
+{
+  "id": 0,
+  "name": "obj0",
+  "child": {
+    "id": 1,
+    "name": "obj1",
+    "child": {
+      ...
+    }
+  }
+}

@@ -1,0 +1,304 @@
+name: Auto-generate PR Description
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+permissions:
+  pull-requests: write
+  contents: read
+  models: read
+
+jobs:
+  auto-description:
+    runs-on: ubuntu-latest
+    # Skip if the PR is from Dependabot or similar bots that provide their own descriptions
+    if: github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate and update PR description
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const currentBody = pr.body || '';
+            
+            console.log(`Processing PR #${prNumber}: "${pr.title}"`);
+            console.log(`Current body length: ${currentBody.length}`);
+            
+            // Check if the PR already has a meaningful description
+            // Skip if body is non-empty and longer than 50 characters
+            // (excluding common boilerplate)
+            const minimalPhrases = [
+              'Thanks for asking me to work on this',
+              'Original prompt',
+              'COPILOT',
+              'WIP',
+              '[WIP]'
+            ];
+            
+            // Check if the description is meaningful
+            let hasMinimalDescription = currentBody.trim().length < 50;
+            
+            // Check if it's mostly boilerplate
+            if (!hasMinimalDescription) {
+              const bodyWithoutBoilerplate = currentBody
+                .split('\n')
+                .filter(line => !minimalPhrases.some(phrase => line.includes(phrase)))
+                .join('\n')
+                .trim();
+              
+              hasMinimalDescription = bodyWithoutBoilerplate.length < 50;
+            }
+            
+            if (!hasMinimalDescription) {
+              console.log('PR already has a meaningful description. Skipping auto-generation.');
+              return;
+            }
+            
+            console.log('PR has minimal/no description. Generating automatic description with AI...');
+            
+            // Fetch PR details including commits, files, and diff
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            
+            // Get the PR diff for context
+            const { data: prDiff } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              mediaType: {
+                format: 'diff'
+              }
+            });
+            
+            // Analyze commits
+            const commitMessages = commits.map(c => c.commit.message.split('\n')[0]);
+            const uniqueCommitMessages = [...new Set(commitMessages)];
+            
+            // Analyze files and categorize them
+            // Note: These patterns are specific to this Scala project but can be customized
+            // for other project structures and naming conventions
+            const filesByType = {
+              source: [],
+              test: [],
+              docs: [],
+              config: [],
+              other: []
+            };
+            
+            files.forEach(file => {
+              const filename = file.filename;
+              // Test files: in /test/ dir, contain 'test.', or end with Test/Spec
+              if (filename.includes('/test/') || filename.includes('test.') || filename.endsWith('Test.scala') || filename.endsWith('Spec.scala')) {
+                filesByType.test.push(filename);
+              // Documentation: in docs/ dir or markdown files
+              } else if (filename.startsWith('docs/') || filename.endsWith('.md')) {
+                filesByType.docs.push(filename);
+              // Configuration: build files, workflow files, config files
+              } else if (filename.includes('build.') || filename.endsWith('.yml') || filename.endsWith('.yaml') || filename.endsWith('.conf')) {
+                filesByType.config.push(filename);
+              // Source: Scala or Java files
+              } else if (filename.endsWith('.scala') || filename.endsWith('.java')) {
+                filesByType.source.push(filename);
+              } else {
+                filesByType.other.push(filename);
+              }
+            });
+            
+            // Calculate statistics
+            const stats = {
+              additions: files.reduce((sum, f) => sum + f.additions, 0),
+              deletions: files.reduce((sum, f) => sum + f.deletions, 0),
+              filesChanged: files.length,
+            };
+            
+            // Prepare context for AI generation
+            const aiContext = {
+              title: pr.title,
+              commits: uniqueCommitMessages.slice(0, 5),
+              stats: stats,
+              files: files.slice(0, 20).map(f => ({
+                name: f.filename,
+                additions: f.additions,
+                deletions: f.deletions,
+                changes: f.changes
+              })),
+              diff: typeof prDiff === 'string' ? prDiff.slice(0, 5000) : ''
+            };
+            
+            // Try to generate AI-powered description using GitHub Models API
+            let description = '';
+            let aiGenerated = false;
+            
+            try {
+              // Use GitHub Models API with GPT-4 for intelligent description generation
+              const promptContent = 'Generate a pull request description for the following changes:\n\n' +
+                'Title: ' + aiContext.title + '\n\n' +
+                'Commit Messages:\n' + aiContext.commits.map(m => '- ' + m).join('\n') + '\n\n' +
+                'Files Changed (' + stats.filesChanged + ' total):\n' +
+                aiContext.files.map(f => '- ' + f.name + ' (+' + f.additions + '/-' + f.deletions + ')').join('\n') + '\n\n' +
+                'Statistics:\n- ' + stats.additions + ' additions, ' + stats.deletions + ' deletions\n\n' +
+                'Please generate a clear, professional PR description in markdown format with:\n' +
+                '1. A brief summary (2-3 sentences)\n' +
+                '2. Key changes section\n' +
+                '3. Technical details if relevant\n\n' +
+                'Keep it concise and focus on the what and why.';
+              
+              const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + process.env.GITHUB_TOKEN
+                },
+                body: JSON.stringify({
+                  messages: [
+                    {
+                      role: 'system',
+                      content: 'You are a helpful assistant that generates concise, informative pull request descriptions. Focus on what changed and why, using clear markdown formatting.'
+                    },
+                    {
+                      role: 'user',
+                      content: promptContent
+                    }
+                  ],
+                  model: 'gpt-4o',
+                  temperature: 0.7,
+                  max_tokens: 500
+                })
+              });
+              
+              if (response.ok) {
+                const aiResult = await response.json();
+                if (aiResult.choices && aiResult.choices[0] && aiResult.choices[0].message) {
+                  description = '## AI-Generated Description\n\n' + aiResult.choices[0].message.content.trim() + '\n\n';
+                  aiGenerated = true;
+                  console.log('✅ Successfully generated AI-powered description');
+                }
+              } else {
+                console.log(`⚠️ AI generation failed (${response.status}), falling back to template-based generation`);
+              }
+            } catch (error) {
+              console.log(`⚠️ AI generation error: ${error.message}, falling back to template-based generation`);
+            }
+            
+            // Fallback to template-based generation if AI fails
+            if (!aiGenerated) {
+              // Detect what type of change this is based on keywords
+              const allText = (pr.title + ' ' + commitMessages.join(' ')).toLowerCase();
+              const changeType = [];
+              
+              if (allText.match(/\b(fix|bug|error|crash|broken)\b/)) changeType.push('bug fix');
+              if (allText.match(/\b(feat|feature|add|new|implement)\b/)) changeType.push('feature');
+              if (allText.match(/\b(refactor|clean|reorganize)\b/)) changeType.push('refactoring');
+              if (allText.match(/\b(doc|documentation|readme)\b/)) changeType.push('documentation');
+              if (allText.match(/\b(test|coverage|spec)\b/)) changeType.push('testing');
+              if (allText.match(/\b(perf|performance|optimize)\b/)) changeType.push('performance');
+              if (allText.match(/\b(build|ci|workflow)\b/)) changeType.push('build/ci');
+              
+              description = '## Automatic Description\n\n';
+              description += `This pull request ${changeType.length > 0 ? 'includes ' + changeType.join(', ') + ' changes' : 'modifies the codebase'}.`;
+              description += '\n\n';
+              
+              // Add summary section
+              description += '### Summary\n\n';
+              if (uniqueCommitMessages.length === 1) {
+                description += `- ${uniqueCommitMessages[0]}\n`;
+              } else {
+                description += uniqueCommitMessages.slice(0, 5).map(msg => `- ${msg}`).join('\n') + '\n';
+                if (uniqueCommitMessages.length > 5) {
+                  description += `- ... and ${uniqueCommitMessages.length - 5} more commits\n`;
+                }
+              }
+              description += '\n';
+              
+              // Add changes section
+              description += '### Changes\n\n';
+              description += `- **${stats.filesChanged}** file${stats.filesChanged !== 1 ? 's' : ''} changed\n`;
+              description += `- **${stats.additions}** addition${stats.additions !== 1 ? 's' : ''}\n`;
+              description += `- **${stats.deletions}** deletion${stats.deletions !== 1 ? 's' : ''}\n`;
+              description += '\n';
+              
+              // Add affected files section
+              description += '### Affected Files\n\n';
+            
+            if (filesByType.source.length > 0) {
+              description += '**Source files:**\n';
+              filesByType.source.slice(0, 10).forEach(f => {
+                description += `- \`${f}\`\n`;
+              });
+              if (filesByType.source.length > 10) {
+                description += `- ... and ${filesByType.source.length - 10} more source files\n`;
+              }
+              description += '\n';
+            }
+            
+            if (filesByType.test.length > 0) {
+              description += '**Test files:**\n';
+              filesByType.test.forEach(f => {
+                description += `- \`${f}\`\n`;
+              });
+              description += '\n';
+            }
+            
+            if (filesByType.docs.length > 0) {
+              description += '**Documentation:**\n';
+              filesByType.docs.forEach(f => {
+                description += `- \`${f}\`\n`;
+              });
+              description += '\n';
+            }
+            
+            if (filesByType.config.length > 0) {
+              description += '**Configuration:**\n';
+              filesByType.config.forEach(f => {
+                description += `- \`${f}\`\n`;
+              });
+              description += '\n';
+            }
+            } // End of fallback template generation
+            
+            // Add statistics footer for both AI and template generation
+            if (aiGenerated) {
+              description += '\n---\n\n';
+              description += '### Statistics\n\n';
+              description += `- **${stats.filesChanged}** file${stats.filesChanged !== 1 ? 's' : ''} changed\n`;
+              description += `- **${stats.additions}** addition${stats.additions !== 1 ? 's' : ''}\n`;
+              description += `- **${stats.deletions}** deletion${stats.deletions !== 1 ? 's' : ''}\n`;
+            }
+            
+            // Preserve any existing content (like Copilot prompt sections)
+            let finalBody = description;
+            if (currentBody.includes('<!-- START COPILOT')) {
+              // Extract Copilot sections - capture until end of string or another HTML comment
+              const copilotSections = currentBody.match(/<!-- START COPILOT[\s\S]*?(?=<!--(?! START COPILOT)|$)/g) || [];
+              if (copilotSections.length > 0) {
+                finalBody += '\n---\n\n' + copilotSections.join('\n\n');
+              }
+            }
+            
+            // Update the PR description
+            console.log('Updating PR description...');
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: finalBody
+            });
+            
+            console.log('✅ PR description updated successfully!');

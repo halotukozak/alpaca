@@ -18,9 +18,11 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q) {
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](
+  using val quotes: Q,
+)(using DebugSettings,
+):
   import quotes.reflect.*
-
   private type EBNFExtractor = PartialFunction[
     Tree,
     (
@@ -126,7 +128,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ noneAction }),
-          (production = Production.NonEmpty(fresh, NEL(Terminal(name))), action = '{ someAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(Terminal(name))),
+            action = '{ someAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
@@ -156,7 +161,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
-          (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+            action = '{ repeatedAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
@@ -174,7 +182,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ noneAction }),
-          (production = Production.NonEmpty(fresh, NEL(NonTerminal(name))), action = '{ someAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
+            action = '{ someAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
@@ -186,22 +197,23 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
-          (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+            action = '{ repeatedAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
-}
 
 //noinspection ScalaWeakerAccess
-private object ParserExtractors {
-  val repeatedAction: Action[ParserCtx] =
+private object ParserExtractors:
+  val repeatedAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[List[?]](x)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
-  val someAction: Action[ParserCtx] =
+  val someAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[Option[?]](x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
-}

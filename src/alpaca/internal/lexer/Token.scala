@@ -3,9 +3,8 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.{compileTimeOnly, publicInBinary}
 import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.annotation.compileTimeOnly
-import scala.annotation.publicInBinary
 import scala.util.matching.Regex
 
 /**
@@ -41,7 +40,7 @@ private[lexer] final case class TokenInfo[+Name <: ValidName](
   lazy val toRegex: String = patterns.mkString("|")
 
 //todo: private[lexer]
-object TokenInfo {
+object TokenInfo:
   private val counter = AtomicInteger(0)
 
   /**
@@ -104,7 +103,6 @@ object TokenInfo {
       case '{ $s: String } => s.value
       case '{ $c: Char } => c.value
       case _ => None
-}
 
 /**
  * Base trait for all token types.
@@ -143,12 +141,12 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
-  type LexemeTpe = Lexeme[Name, Value @uv]
+  type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
 
   @compileTimeOnly(RuleOnly)
   inline def unapply(x: Any): Option[LexemeTpe] = dummy
   @compileTimeOnly(RuleOnly)
-  inline def List: PartialFunction[Any, Option[List[LexemeTpe]]] = dummy
+  inline def List: PartialFunction[Any, List[LexemeTpe]] = dummy
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
 
