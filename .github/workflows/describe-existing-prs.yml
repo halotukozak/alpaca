@@ -50,15 +50,15 @@ jobs:
             
             console.log(`Processing up to ${limit} PRs...`);
 
-            // Fetch all open pull requests
+            // Fetch all pull requests
             const prs = await github.paginate(github.rest.pulls.list, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
+              state: 'all',
               per_page: 100
             });
             
-            console.log(`Found ${prs.length} open pull requests.`);
+            console.log(`Found ${prs.length} pull requests.`);
             
             let processedCount = 0;
             let updatedCount = 0;
