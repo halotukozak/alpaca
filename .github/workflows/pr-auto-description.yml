@@ -80,7 +80,9 @@ jobs:
             const commitMessages = commits.map(c => c.commit.message.split('\n')[0]);
             const uniqueCommitMessages = [...new Set(commitMessages)];
             
-            // Analyze files
+            // Analyze files and categorize them
+            // Note: These patterns are specific to this Scala project but can be customized
+            // for other project structures and naming conventions
             const filesByType = {
               source: [],
               test: [],
@@ -91,12 +93,16 @@ jobs:
             
             files.forEach(file => {
               const filename = file.filename;
+              // Test files: in /test/ dir, contain 'test.', or end with Test/Spec
               if (filename.includes('/test/') || filename.includes('test.') || filename.endsWith('Test.scala') || filename.endsWith('Spec.scala')) {
                 filesByType.test.push(filename);
+              // Documentation: in docs/ dir or markdown files
               } else if (filename.startsWith('docs/') || filename.endsWith('.md')) {
                 filesByType.docs.push(filename);
+              // Configuration: build files, workflow files, config files
               } else if (filename.includes('build.') || filename.endsWith('.yml') || filename.endsWith('.yaml') || filename.endsWith('.conf')) {
                 filesByType.config.push(filename);
+              // Source: Scala or Java files
               } else if (filename.endsWith('.scala') || filename.endsWith('.java')) {
                 filesByType.source.push(filename);
               } else {
@@ -188,8 +194,8 @@ jobs:
             // Preserve any existing content (like Copilot prompt sections)
             let finalBody = description;
             if (currentBody.includes('<!-- START COPILOT')) {
-              // Extract Copilot sections
-              const copilotSections = currentBody.match(/<!-- START COPILOT[\s\S]*?(?=\n\n|$)/g) || [];
+              // Extract Copilot sections - capture until end of string or another HTML comment
+              const copilotSections = currentBody.match(/<!-- START COPILOT[\s\S]*?(?=<!--(?! START COPILOT)|$)/g) || [];
               if (copilotSections.length > 0) {
                 finalBody += '\n---\n\n' + copilotSections.join('\n\n');
               }

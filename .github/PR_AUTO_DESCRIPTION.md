@@ -110,20 +110,23 @@ You can provide your own description by:
 
 ### Adjusting the Detection Threshold
 
-To change when a description is considered "minimal", edit the workflow file:
+To change when a description is considered "minimal", edit the workflow file. In the script section, find and modify:
 
-```yaml
-# In .github/workflows/pr-auto-description.yml
-let hasMinimalDescription = currentBody.trim().length < 50;  # Change 50 to desired threshold
+```javascript
+// In .github/workflows/pr-auto-description.yml
+// Around line 46 in the script section
+let hasMinimalDescription = currentBody.trim().length < 50;  // Change 50 to desired threshold
 ```
 
 ### Adding More Change Type Keywords
 
-To detect additional change types, edit the workflow file:
+To detect additional change types, edit the workflow file. In the script section, add new keyword detection patterns:
 
-```yaml
-# In .github/workflows/pr-auto-description.yml
-if (allText.match(/\b(your|keywords|here)\b/)) changeType.push('your-type');
+```javascript
+// In .github/workflows/pr-auto-description.yml
+// Around line 118 in the script section
+if (allText.match(/\b(migrate|upgrade|database)\b/)) changeType.push('migration');
+if (allText.match(/\b(security|vulnerability|cve)\b/)) changeType.push('security');
 ```
 
 ### Modifying File Categorization
