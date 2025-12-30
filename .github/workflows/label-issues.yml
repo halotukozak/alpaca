@@ -2,9 +2,9 @@ name: Label Issues
 
 on:
   issues:
-    types: [opened, edited]
+    types: [ opened, edited ]
   pull_request:
-    types: [opened, edited]
+    types: [ opened, edited ]
 
 permissions:
   issues: write
@@ -23,7 +23,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue = context.payload.issue;
+            const issue = context.payload.issue || context.payload.pull_request;
             const title = (issue.title || '').toLowerCase();
             const body = (issue.body || '').toLowerCase();
             const content = title + ' ' + body;
@@ -60,13 +60,13 @@ jobs:
             
             if (uniqueLabels.length > 0) {
               console.log(`Adding labels: ${uniqueLabels.join(', ')}`);
-              
+            
               // Get existing labels on the issue
               const existingLabels = issue.labels.map(label => label.name);
-              
+            
               // Only add labels that don't already exist
               const newLabels = uniqueLabels.filter(label => !existingLabels.includes(label));
-              
+            
               if (newLabels.length > 0) {
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
