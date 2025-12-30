@@ -13,7 +13,7 @@ import scala.reflect.TypeTest
  */
 private[parser] type ParseAction = ParseAction.Shift | ParseAction.Reduction
 
-private[parser] object ParseAction {
+private[parser] object ParseAction:
 
   /**
    * Shift action: read the input symbol and move to a new state.
@@ -25,7 +25,7 @@ private[parser] object ParseAction {
    */
   opaque type Reduction = Production
 
-  given Showable[ParseAction] =
+  given Showable[ParseAction] = Showable:
     case shift: Int => show"S$shift"
     case reduction: Production => show"$reduction"
 
@@ -38,6 +38,7 @@ private[parser] object ParseAction {
       def unapply(x: Any): Option[Shift & x.type] = x match
         case i: Int => Some(i.asInstanceOf[Shift & x.type])
         case _ => None
+
     extension (shift: Shift) inline def newState: Int = shift
 
   object Reduction:
@@ -49,10 +50,10 @@ private[parser] object ParseAction {
       def unapply(x: Any): Option[Reduction & x.type] = x match
         case p: Production => Some(p.asInstanceOf[Reduction & x.type])
         case _ => None
+
     extension (red: Reduction) inline def production: Production = red
 
   given ToExpr[ParseAction] with
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
       case shift: Int => '{ ${ Expr(shift) }: ParseAction.Shift }
       case production: Production => '{ ${ Expr(production) }: ParseAction.Reduction }
-}

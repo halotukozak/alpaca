@@ -122,14 +122,13 @@ private[internal] def typeReprInfo(
  * @param tree the tree to inspect
  * @return a multi-line string with tree structure and code
  */
-private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
+private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
   import quotes.reflect.*
 
   s"""
      |Structure ${Printer.TreeStructure.show(tree)}
      |ShortCode ${Printer.TreeShortCode.show(tree)}
      |""".stripMargin
-}
 private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Position): String =
   s"""
      |start: ${pos.start},
@@ -141,7 +140,7 @@ private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Pos
      |sourceFile: ${pos.sourceFile},
      |""".stripMargin
 
-extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
+extension (using quotes: Quotes)(tree: quotes.reflect.Tree)(using DebugSettings)
   /**
    * Prints the tree and aborts compilation at that point.
    *
@@ -151,11 +150,9 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree (never actually returns due to abort)
    */
-  private[internal] def dbg(using pos: DebugPosition): tree.type = {
-    import quotes.reflect.*
-    report.errorAndAbort(show"${Printer.TreeShortCode.show(tree)} $pos")
+  private[internal] def dbg(using pos: DebugPosition): tree.type =
+    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
     tree
-  }
 
   /**
    * Prints the tree as an info message during compilation.
@@ -165,13 +162,11 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree unchanged
    */
-  private[internal] def info(using pos: DebugPosition): tree.type = {
-    import quotes.reflect.*
-    report.info(show"${Printer.TreeShortCode.show(tree)} $pos")
+  private[internal] def info(using pos: DebugPosition): tree.type =
+    quotes.reflect.report.info(show"$tree at line $pos")
     tree
-  }
 
-extension (using quotes: Quotes)(expr: Expr[?])
+extension (using quotes: Quotes)(expr: Expr[?])(using DebugSettings)
 
   /**
    * Prints the expression and aborts compilation.
@@ -195,7 +190,25 @@ extension (using quotes: Quotes)(expr: Expr[?])
     expr.asTerm.info
     expr
 
-extension (using quotes: Quotes)(e: Any)
+extension (using quotes: Quotes)(msg: String)(using DebugSettings)
+  /**
+   * Prints a debug message and aborts compilation.
+   *
+   * @param pos the source position of the debug call
+   * @throws Nothing always aborts compilation
+   */
+  private[internal] def dbg(using pos: DebugPosition): Nothing =
+    quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+
+  /**
+   * Prints a debug message as an info during compilation.
+   *
+   * @param pos the source position of the debug call
+   */
+  private[internal] def soft(using pos: DebugPosition): Unit =
+    quotes.reflect.report.info(show"$msg at line $pos")
+
+extension (using quotes: Quotes)(e: Any)(using DebugSettings)
   /**
    * Prints any value's string representation and aborts compilation.
    *
@@ -203,7 +216,7 @@ extension (using quotes: Quotes)(e: Any)
    * @throws Nothing always aborts compilation
    */
   private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"${e.toString} $pos")
+    quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
 
   /**
    * Prints any value's string representation as an info message.
@@ -212,7 +225,7 @@ extension (using quotes: Quotes)(e: Any)
    * @return the value unchanged
    */
   private[internal] def soft(using pos: DebugPosition): e.type =
-    quotes.reflect.report.info(show"${e.toString} $pos")
+    quotes.reflect.report.info(show"${e.toString} at line $pos")
     e
 
 /**
@@ -222,11 +235,10 @@ extension (using quotes: Quotes)(e: Any)
  * and aborts compilation. Useful for understanding what the compiler sees.
  *
  * @param body the code to inspect
- * @param pos implicit source position
  */
 inline private[internal] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 
-private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
   import quotes.reflect.*
   Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
@@ -237,9 +249,9 @@ private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
  * and aborts compilation. Useful for deep debugging of macro code.
  *
  * @param body the code to inspect
- * @param pos implicit source position
  */
 inline private[internal] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
-private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
+
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
   import quotes.reflect.*
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

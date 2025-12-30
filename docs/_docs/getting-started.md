@@ -28,7 +28,7 @@ object myproject extends ScalaModule {
   def scalaVersion = "3.7.4"
   
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.1"
+    mvn"io.github.halotukozak::alpaca:0.0.2"
   )
 }
 ```
@@ -38,7 +38,7 @@ object myproject extends ScalaModule {
 Add Alpaca to your `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.1"
+libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.2"
 ```
 
 Make sure you're using Scala 3.7.4 or later:
@@ -53,7 +53,7 @@ Use Alpaca directly in your Scala CLI scripts:
 
 ```scala
 //> using scala "3.7.4"
-//> using dep "io.github.halotukozak::alpaca:0.0.1"
+//> using dep "io.github.halotukozak::alpaca:0.0.2"
 
 import alpaca.*
 
@@ -103,7 +103,7 @@ object MyParser extends Parser:
   )
 
   val Factor: Rule[Double] = rule(
-    { case (MyLexer.NUM(n)) => n.value },
+    { case MyLexer.NUM(n) => n.value },
     { case (MyLexer.LP(_), Expr(e), MyLexer.RP(_)) => e }
   )
 ```
@@ -232,4 +232,4 @@ Created by [halotukozak](https://github.com/halotukozak) and [Corvette653](https
 
 ---
 
-Made with ❤️ and coffee -->
+Made with ❤️ and coffee

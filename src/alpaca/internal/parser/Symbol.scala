@@ -2,8 +2,10 @@ package alpaca
 package internal
 package parser
 
-import scala.util.Random
+import alpaca.internal.parser.Symbol.SyntheticInfix
+
 import scala.reflect.NameTransformer
+import scala.util.Random
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
@@ -12,10 +14,9 @@ import scala.reflect.NameTransformer
  * productions. Terminals represent tokens from the lexer, while
  * non-terminals represent grammatical constructs.
  */
-private[parser] trait Symbol extends Any {
+private[parser] trait Symbol extends Any:
   type IsEmpty <: Boolean
   def name: String
-}
 
 /**
  * Represents a non-terminal symbol in the grammar.
@@ -40,7 +41,7 @@ object NonTerminal:
    * @return a non-terminal with a unique name based on the input
    */
   def fresh(name: String): NonTerminal & Symbol.NonEmpty =
-    NonTerminal(s"${name}_${Random.alphanumeric.take(8).mkString}")
+    NonTerminal(s"${name}_${SyntheticInfix}_${Random.alphanumeric.take(8).mkString}")
 
   /**
    * Creates a non-terminal symbol from a name.
@@ -72,7 +73,9 @@ object Terminal:
   inline def apply(inline name: String): Terminal & Symbol.NonEmpty =
     new Terminal(name).asInstanceOf[Terminal & Symbol.NonEmpty]
 
-private[parser] object Symbol {
+private[parser] object Symbol:
+  final val SyntheticInfix = "$$synthetic$$"
+
   type NonEmpty = Symbol { type IsEmpty = false }
 
   /** The augmented start symbol used internally by the parser. */
@@ -84,9 +87,11 @@ private[parser] object Symbol {
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given Showable[Symbol] = symbol =>
+  given Showable[Symbol] = Showable: symbol =>
     NameTransformer.encode(symbol.name) match
-      case encoded if encoded == symbol.name => symbol.name
+      case encoded if !summon[DebugSettings].verboseNames || encoded == symbol.name =>
+        if symbol.name.contains(SyntheticInfix) then s"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
+        else symbol.name
       case encoded => s"${symbol.name} ($encoded)"
 
   given [S <: Symbol]: ToExpr[S] with
@@ -101,4 +106,3 @@ private[parser] object Symbol {
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
-}

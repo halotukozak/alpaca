@@ -1,190 +1,188 @@
- package alpaca
- package integration
+package alpaca
+package integration
 
- import org.scalatest.funsuite.AnyFunSuite
- import Production as P
+import Production as P
 
- final class CompilationTheoryTest extends AnyFunSuite:
-   final case class ASTNode(value: String, children: List[ASTNode])
+import org.scalatest.funsuite.AnyFunSuite
 
-   val CTLexer = lexer {
-     case "\\s+" => Token.Ignored
-     case "#.*" => Token.Ignored
+final class CompilationTheoryTest extends AnyFunSuite:
+  final case class ASTNode(value: String, children: List[ASTNode])
 
-     case comparator: ("<=" | ">=" | "==" | "!=") => Token[comparator.type]
-     case comparator: ('<' | '>') => Token[comparator.type]
+  val CTLexer = lexer {
+    case "\\s+" => Token.Ignored
+    case "#.*" => Token.Ignored
 
-     case assignOp: ("\\+=" | "-=" | "\\*=" | "/=" | '=') => Token[assignOp.type]
+    case comparator: ("<=" | ">=" | "==" | "!=") => Token[comparator.type]
+    case comparator: ('<' | '>') => Token[comparator.type]
 
-     case matrixOp: ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token[matrixOp.type]
+    case assignOp: ("\\+=" | "-=" | "\\*=" | "/=" | '=') => Token[assignOp.type]
 
-     case bracket: ('(' | ')' | '[' | ']' | '{' | '}') => Token[bracket.type]
+    case matrixOp: ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token[matrixOp.type]
 
-     case binaryOp: ('+' | '-' | '*' | '/') => Token[binaryOp.type]
+    case bracket: ('(' | ')' | '[' | ']' | '{' | '}') => Token[bracket.type]
 
-     case literal: (':' | '\'' | ',' | ';') => Token[literal.type]
+    case binaryOp: ('+' | '-' | '*' | '/') => Token[binaryOp.type]
 
-     case keyword: ("if" | "else" | "while" | "for" | "break" | "continue" | "return") => Token[keyword.type]
+    case literal: (':' | '\'' | ',' | ';') => Token[literal.type]
 
-     case function: ("eye" | "zeros" | "ones" | "print") => Token["function"](function)
+    case keyword: ("if" | "else" | "while" | "for" | "break" | "continue" | "return") => Token[keyword.type]
 
-     case id: "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](id)
+    case function: ("eye" | "zeros" | "ones" | "print") => Token["function"](function)
 
-     case float: """-?(\d+\.\d*|\.\d+)""" => Token["float"](float.toDouble)
+    case id: "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](id)
 
-     case int: "-?\\d+" => Token["int"](int.toInt)
+    case float: """-?(\d+\.\d*|\.\d+)""" => Token["float"](float.toDouble)
 
-     case string: """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
-   }
+    case int: "-?\\d+" => Token["int"](int.toInt)
 
-   object ASTPrinterParser extends Parser {
-     val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
-       ASTNode("program", instructions)
-     }
+    case string: """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
+  }
 
-     val Block: Rule[ASTNode] = rule(
-       { case Instruction(instruction) => ASTNode("block", scala.List(instruction)) },
-       { case (CTLexer.`\\{`(_), Instruction.List(instructions), CTLexer.`\\}`(_)) => ASTNode("block", instructions) },
-     )
+  object ASTPrinterParser extends Parser:
+    val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
+      ASTNode("program", instructions)
+    }
 
-     val Instruction: Rule[ASTNode] = rule(
-       { case (Statement(statement), CTLexer.`;`(_)) => statement },
-       { case (CTLexer.`if`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
-         ASTNode("IF", scala.List(cond, block))
-       }: @name("bareIf"),
-       {
-         case (
-               CTLexer.`if`(_),
-               CTLexer.`\\(`(_),
-               Condition(cond),
-               CTLexer.`\\)`(_),
-               Block(ifBlock),
-               CTLexer.`else`(_),
-               Block(elseBlock),
-             ) =>
-           ASTNode("IF", scala.List(cond, ifBlock, elseBlock))
-       },
-       { case (CTLexer.`while`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
-         ASTNode("WHILE", scala.List(cond, block))
-       },
-       { case (CTLexer.`for`(_), CTLexer.id(id), CTLexer.`=`(_), Range(range), Block(block)) =>
-         ASTNode("FOR", scala.List(ASTNode(id.value, Nil), range, block))
-       },
-     )
+    val Block: Rule[ASTNode] = rule(
+      { case Instruction(instruction) => ASTNode("block", scala.List(instruction)) },
+      { case (CTLexer.`\\{`(_), Instruction.List(instructions), CTLexer.`\\}`(_)) => ASTNode("block", instructions) },
+    )
 
-     val Statement: Rule[ASTNode] = rule(
-       { case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)) },
-       { case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)) },
-       { case (CTLexer.break(_)) => ASTNode("BREAK", Nil) },
-       { case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil) },
-       { case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)) },
-       { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
-         ASTNode(fname.value, args)
-       },
-     )
+    val Instruction: Rule[ASTNode] = rule(
+      { case (Statement(statement), CTLexer.`;`(_)) => statement },
+      "bareIf" { case (CTLexer.`if`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
+        ASTNode("IF", scala.List(cond, block))
+      },
+      {
+        case (
+              CTLexer.`if`(_),
+              CTLexer.`\\(`(_),
+              Condition(cond),
+              CTLexer.`\\)`(_),
+              Block(ifBlock),
+              CTLexer.`else`(_),
+              Block(elseBlock),
+            ) =>
+          ASTNode("IF", scala.List(cond, ifBlock, elseBlock))
+      },
+      { case (CTLexer.`while`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
+        ASTNode("WHILE", scala.List(cond, block))
+      },
+      { case (CTLexer.`for`(_), CTLexer.id(id), CTLexer.`=`(_), Range(range), Block(block)) =>
+        ASTNode("FOR", scala.List(ASTNode(id.value, Nil), range, block))
+      },
+    )
 
-     val Condition: Rule[ASTNode] = rule { case (Expression(lhs), Comparator(op), Expression(rhs)) =>
-       ASTNode(op, scala.List(lhs, rhs))
-     }
+    val Statement: Rule[ASTNode] = rule(
+      { case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)) },
+      { case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)) },
+      { case (CTLexer.break(_)) => ASTNode("BREAK", Nil) },
+      { case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil) },
+      { case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)) },
+      { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
+        ASTNode(fname.value, args)
+      },
+    )
 
-     val Range: Rule[ASTNode] = rule { case (Expression(start), CTLexer.`:`(_), Expression(end)) =>
-       ASTNode(":", scala.List(start, end))
-     }
+    val Condition: Rule[ASTNode] = rule { case (Expression(lhs), Comparator(op), Expression(rhs)) =>
+      ASTNode(op, scala.List(lhs, rhs))
+    }
 
-     val Arguments: Rule[List[ASTNode]] = rule(
-       { case (Expression(expr)) => scala.List(expr) },
-       { case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr },
-     )
+    val Range: Rule[ASTNode] = rule { case (Expression(start), CTLexer.`:`(_), Expression(end)) =>
+      ASTNode(":", scala.List(start, end))
+    }
 
-     val Element: Rule[ASTNode] = rule { case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
-       ASTNode("element", ASTNode(id.value, Nil) :: args)
-     }
+    val Arguments: Rule[List[ASTNode]] = rule(
+      { case (Expression(expr)) => scala.List(expr) },
+      { case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr },
+    )
 
-     val Expression: Rule[ASTNode] = rule(
-       { case CTLexer.id(id) => ASTNode(id.value, Nil) },
-       { case Matrix(matrix) => matrix },
-       { case Element(elem) => elem },
-       { case (CTLexer.`\\(`(_), Expression(expr), CTLexer.`\\)`(_)) => ASTNode("expr", scala.List(expr)) },
-       { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
-         ASTNode(fname.value, args)
-       },
-       { case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs)) }: @name("add"),
-       { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) }: @name("sub"),
-       { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) }: @name("mul"),
-       { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) }: @name("div"),
-       { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) => ASTNode(".+", scala.List(lhs, rhs)) }: @name(
-         "matrixAdd",
-       ),
-       { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) => ASTNode(".-", scala.List(lhs, rhs)) }: @name(
-         "matrixSub",
-       ),
-       { case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) => ASTNode(".*", scala.List(lhs, rhs)) }: @name(
-         "matrixMul",
-       ),
-       { case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs)) }: @name(
-         "matrixDiv",
-       ),
-       { case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs)) }: @name("uMinus"),
-       { case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs)) }: @name("transpose"),
-       { case CTLexer.int(i) => ASTNode(i.value.toString, Nil) },
-       { case CTLexer.float(f) => ASTNode(f.value.toString, Nil) },
-       { case CTLexer.string(s) => ASTNode(s.value, Nil) },
-     )
+    val Element: Rule[ASTNode] = rule { case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
+      ASTNode("element", ASTNode(id.value, Nil) :: args)
+    }
 
-     val Matrix: Rule[ASTNode] = rule { case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
-       ASTNode("matrix", args)
-     }
+    val Expression: Rule[ASTNode] = rule(
+      { case CTLexer.id(id) => ASTNode(id.value, Nil) },
+      { case Matrix(matrix) => matrix },
+      { case Element(elem) => elem },
+      { case (CTLexer.`\\(`(_), Expression(expr), CTLexer.`\\)`(_)) => ASTNode("expr", scala.List(expr)) },
+      { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
+        ASTNode(fname.value, args)
+      },
+      "add" { case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs)) },
+      "sub" { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) },
+      "mul" { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) },
+      "div" { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) },
+      "matrixAdd" { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) =>
+        ASTNode(".+", scala.List(lhs, rhs))
+      },
+      "matrixSub" { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) =>
+        ASTNode(".-", scala.List(lhs, rhs))
+      },
+      "matrixMul" { case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) =>
+        ASTNode(".*", scala.List(lhs, rhs))
+      },
+      "matrixDiv" { case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs)) },
+      "uMinus" { case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs)) },
+      "transpose" { case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs)) },
+      { case CTLexer.int(i) => ASTNode(i.value.toString, Nil) },
+      { case CTLexer.float(f) => ASTNode(f.value.toString, Nil) },
+      { case CTLexer.string(s) => ASTNode(s.value, Nil) },
+    )
 
-     val Comparator: Rule[String] = rule(
-       { case CTLexer.`<`(_) => "<" },
-       { case CTLexer.`>`(_) => ">" },
-       { case CTLexer.`<=`(_) => "<=" },
-       { case CTLexer.`>=`(_) => ">=" },
-       { case CTLexer.`==`(_) => "==" },
-       { case CTLexer.`!=`(_) => "!=" },
-     )
+    val Matrix: Rule[ASTNode] = rule { case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
+      ASTNode("matrix", args)
+    }
 
-     val AssignOp: Rule[String] = rule(
-       { case CTLexer.`\\+=`(_) => "+=" },
-       { case CTLexer.`-=`(_) => "-=" },
-       { case CTLexer.`\\*=`(_) => "*=" },
-       { case CTLexer.`/=`(_) => "/=" },
-       { case CTLexer.`=`(_) => "=" },
-     )
+    val Comparator: Rule[String] = rule(
+      { case CTLexer.`<`(_) => "<" },
+      { case CTLexer.`>`(_) => ">" },
+      { case CTLexer.`<=`(_) => "<=" },
+      { case CTLexer.`>=`(_) => ">=" },
+      { case CTLexer.`==`(_) => "==" },
+      { case CTLexer.`!=`(_) => "!=" },
+    )
 
-     override val resolutions = Set(
-       P.ofName("bareIf").after(CTLexer.`else`),
-       CTLexer.`'`.before(
-         P.ofName("uMinus"),
-         P.ofName("mul"),
-         P.ofName("div"),
-         P.ofName("matrixMul"),
-         P.ofName("matrixDiv"),
-       ),
-       P.ofName("uMinus")
-         .before(
-           CTLexer.`\\.\\*`,
-           CTLexer.`\\./`,
-           CTLexer.`\\*`,
-           CTLexer.`/`,
-         ),
-       P.ofName("mul").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-       P.ofName("div").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-       P.ofName("matrixMul").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-       P.ofName("matrixDiv").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-       CTLexer.`\\*`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-       CTLexer.`/`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-       CTLexer.`\\.\\*`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-       CTLexer.`\\./`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-       P.ofName("add").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-       P.ofName("sub").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-       P.ofName("matrixAdd").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-       P.ofName("matrixSub").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-     )
-   }
+    val AssignOp: Rule[String] = rule(
+      { case CTLexer.`\\+=`(_) => "+=" },
+      { case CTLexer.`-=`(_) => "-=" },
+      { case CTLexer.`\\*=`(_) => "*=" },
+      { case CTLexer.`/=`(_) => "/=" },
+      { case CTLexer.`=`(_) => "=" },
+    )
 
-   test("special functions, initializations") {
-     withLazyReader("""
+    override val resolutions = Set(
+      production.bareIf.after(CTLexer.`else`),
+      CTLexer.`'`.before(
+        production.uMinus,
+        production.mul,
+        production.div,
+        production.matrixMul,
+        production.matrixDiv,
+      ),
+      production.uMinus
+        .before(
+          CTLexer.`\\.\\*`,
+          CTLexer.`\\./`,
+          CTLexer.`\\*`,
+          CTLexer.`/`,
+        ),
+      production.mul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.div.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.matrixMul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.matrixDiv.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      CTLexer.`\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`/`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`\\.\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`\\./`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      production.add.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.sub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.matrixAdd.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.matrixSub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+    )
+
+  test("special functions, initializations") {
+    withLazyReader("""
        A = zeros(5);  # create 5x5 matrix filled with zeros
        B = ones(7);   # create 7x7 matrix filled with ones
        I = eye(10);   # create 10x10 matrix filled with ones on diagonal and zeros elsewhere
@@ -199,68 +197,68 @@
        x = 2;
        y = 2.5;
        """) { input =>
-       val (_, lexems) = CTLexer.tokenize(input)
-       val (_, result) = ASTPrinterParser.parse(lexems)
+      val (_, lexems) = CTLexer.tokenize(input)
+      val (_, result) = ASTPrinterParser.parse(lexems)
 
-       val expected = ASTNode(
-         "program",
-         scala.List(
-           ASTNode("=", scala.List(ASTNode("A", Nil), ASTNode("zeros", scala.List(ASTNode("5", Nil))))),
-           ASTNode("=", scala.List(ASTNode("B", Nil), ASTNode("ones", scala.List(ASTNode("7", Nil))))),
-           ASTNode("=", scala.List(ASTNode("I", Nil), ASTNode("eye", scala.List(ASTNode("10", Nil))))),
-           ASTNode(
-             "=",
-             scala.List(
-               ASTNode("E1", Nil),
-               ASTNode(
-                 "matrix",
-                 scala.List(
-                   ASTNode(
-                     "matrix",
-                     scala.List(
-                       ASTNode("1", Nil),
-                       ASTNode("2", Nil),
-                       ASTNode("3", Nil),
-                     ),
-                   ),
-                   ASTNode(
-                     "matrix",
-                     scala.List(
-                       ASTNode("4", Nil),
-                       ASTNode("5", Nil),
-                       ASTNode("6", Nil),
-                     ),
-                   ),
-                   ASTNode(
-                     "matrix",
-                     scala.List(
-                       ASTNode("7", Nil),
-                       ASTNode("8", Nil),
-                       ASTNode("9", Nil),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "=",
-             scala.List(
-               ASTNode("element", scala.List(ASTNode("A", Nil), ASTNode("1", Nil), ASTNode("3", Nil))),
-               ASTNode("0", Nil),
-             ),
-           ),
-           ASTNode("=", scala.List(ASTNode("x", Nil), ASTNode("2", Nil))),
-           ASTNode("=", scala.List(ASTNode("y", Nil), ASTNode("2.5", Nil))),
-         ),
-       )
+      val expected = ASTNode(
+        "program",
+        scala.List(
+          ASTNode("=", scala.List(ASTNode("A", Nil), ASTNode("zeros", scala.List(ASTNode("5", Nil))))),
+          ASTNode("=", scala.List(ASTNode("B", Nil), ASTNode("ones", scala.List(ASTNode("7", Nil))))),
+          ASTNode("=", scala.List(ASTNode("I", Nil), ASTNode("eye", scala.List(ASTNode("10", Nil))))),
+          ASTNode(
+            "=",
+            scala.List(
+              ASTNode("E1", Nil),
+              ASTNode(
+                "matrix",
+                scala.List(
+                  ASTNode(
+                    "matrix",
+                    scala.List(
+                      ASTNode("1", Nil),
+                      ASTNode("2", Nil),
+                      ASTNode("3", Nil),
+                    ),
+                  ),
+                  ASTNode(
+                    "matrix",
+                    scala.List(
+                      ASTNode("4", Nil),
+                      ASTNode("5", Nil),
+                      ASTNode("6", Nil),
+                    ),
+                  ),
+                  ASTNode(
+                    "matrix",
+                    scala.List(
+                      ASTNode("7", Nil),
+                      ASTNode("8", Nil),
+                      ASTNode("9", Nil),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "=",
+            scala.List(
+              ASTNode("element", scala.List(ASTNode("A", Nil), ASTNode("1", Nil), ASTNode("3", Nil))),
+              ASTNode("0", Nil),
+            ),
+          ),
+          ASTNode("=", scala.List(ASTNode("x", Nil), ASTNode("2", Nil))),
+          ASTNode("=", scala.List(ASTNode("y", Nil), ASTNode("2.5", Nil))),
+        ),
+      )
 
-       assert(result == expected)
-     }
-   }
+      assert(result == expected)
+    }
+  }
 
-   test("assignment operators, binary operators, transposition") {
-     withLazyReader("""
+  test("assignment operators, binary operators, transposition") {
+    withLazyReader("""
      C = -A;     # assignemnt with unary expression
      C = B' ;    # assignemnt with matrix transpose
      C = A+B ;   # assignemnt with binary addition
@@ -277,34 +275,34 @@
      C *= A ;  # multiply A with C
      C /= A ;  # divide A by C
      """) { input =>
-       val (_, lexemes) = CTLexer.tokenize(input)
-       val (_, result) = ASTPrinterParser.parse(lexemes)
-       val expected = ASTNode(
-         "program",
-         scala.List(
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("-", scala.List(ASTNode("A", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("'", scala.List(ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("+", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("-", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("*", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("/", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".+", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".-", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".*", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("./", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
-           ASTNode("+=", scala.List(ASTNode("C", Nil), ASTNode("B", Nil))),
-           ASTNode("-=", scala.List(ASTNode("C", Nil), ASTNode("B", Nil))),
-           ASTNode("*=", scala.List(ASTNode("C", Nil), ASTNode("A", Nil))),
-           ASTNode("/=", scala.List(ASTNode("C", Nil), ASTNode("A", Nil))),
-         ),
-       )
+      val (_, lexemes) = CTLexer.tokenize(input)
+      val (_, result) = ASTPrinterParser.parse(lexemes)
+      val expected = ASTNode(
+        "program",
+        scala.List(
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("-", scala.List(ASTNode("A", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("'", scala.List(ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("+", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("-", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("*", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("/", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".+", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".-", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode(".*", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("=", scala.List(ASTNode("C", Nil), ASTNode("./", scala.List(ASTNode("A", Nil), ASTNode("B", Nil))))),
+          ASTNode("+=", scala.List(ASTNode("C", Nil), ASTNode("B", Nil))),
+          ASTNode("-=", scala.List(ASTNode("C", Nil), ASTNode("B", Nil))),
+          ASTNode("*=", scala.List(ASTNode("C", Nil), ASTNode("A", Nil))),
+          ASTNode("/=", scala.List(ASTNode("C", Nil), ASTNode("A", Nil))),
+        ),
+      )
 
-       assert(result == expected)
-     }
-   }
+      assert(result == expected)
+    }
+  }
 
-   test("control flow instruction") {
-     withLazyReader("""
+  test("control flow instruction") {
+    withLazyReader("""
      N = 10;
      M = 20;
 
@@ -356,266 +354,266 @@
              return 0;
      }
      """) { input =>
-       val (_, lexemes) = CTLexer.tokenize(input)
-       val (_, result) = ASTPrinterParser.parse(lexemes)
-       val expected = ASTNode(
-         "program",
-         scala.List(
-           ASTNode("=", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
-           ASTNode("=", scala.List(ASTNode("M", Nil), ASTNode("20", Nil))),
-           ASTNode(
-             "IF",
-             scala.List(
-               ASTNode("==", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
-               ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N==10", Nil))))),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "IF",
-                     scala.List(
-                       ASTNode("!=", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
-                       ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N!=10", Nil))))),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "IF",
-             scala.List(
-               ASTNode(">", scala.List(ASTNode("N", Nil), ASTNode("5", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(ASTNode("print", scala.List(ASTNode("N>5", Nil)))),
-               ),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "IF",
-                     scala.List(
-                       ASTNode(">=", scala.List(ASTNode("N", Nil), ASTNode("0", Nil))),
-                       ASTNode(
-                         "block",
-                         scala.List(ASTNode("print", scala.List(ASTNode("N>=0", Nil)))),
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "IF",
-             scala.List(
-               ASTNode("<", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(ASTNode("print", scala.List(ASTNode("N<10", Nil)))),
-               ),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "IF",
-                     scala.List(
-                       ASTNode("<=", scala.List(ASTNode("N", Nil), ASTNode("15", Nil))),
-                       ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N<=15", Nil))))),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode("=", scala.List(ASTNode("k", Nil), ASTNode("10", Nil))),
-           ASTNode(
-             "WHILE",
-             scala.List(
-               ASTNode(">", scala.List(ASTNode("k", Nil), ASTNode("0", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "=",
-                     scala.List(
-                       ASTNode("k", Nil),
-                       ASTNode("-", scala.List(ASTNode("k", Nil), ASTNode("1", Nil))),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "WHILE",
-             scala.List(
-               ASTNode(">", scala.List(ASTNode("k", Nil), ASTNode("0", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "IF",
-                     scala.List(
-                       ASTNode("<", scala.List(ASTNode("k", Nil), ASTNode("5", Nil))),
-                       ASTNode(
-                         "block",
-                         scala.List(
-                           ASTNode(
-                             "=",
-                             scala.List(ASTNode("i", Nil), ASTNode("1", Nil)),
-                           ),
-                         ),
-                       ),
-                       ASTNode(
-                         "block",
-                         scala.List(
-                           ASTNode(
-                             "IF",
-                             scala.List(
-                               ASTNode("<", scala.List(ASTNode("k", Nil), ASTNode("10", Nil))),
-                               ASTNode(
-                                 "block",
-                                 scala.List(
-                                   ASTNode(
-                                     "=",
-                                     scala.List(ASTNode("i", Nil), ASTNode("2", Nil)),
-                                   ),
-                                 ),
-                               ),
-                               ASTNode(
-                                 "block",
-                                 scala.List(
-                                   ASTNode(
-                                     "=",
-                                     scala.List(ASTNode("i", Nil), ASTNode("3", Nil)),
-                                   ),
-                                 ),
-                               ),
-                             ),
-                           ),
-                         ),
-                       ),
-                     ),
-                   ),
-                   ASTNode(
-                     "=",
-                     scala.List(
-                       ASTNode("k", Nil),
-                       ASTNode("-", scala.List(ASTNode("k", Nil), ASTNode("1", Nil))),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "FOR",
-             scala.List(
-               ASTNode("i", Nil),
-               ASTNode(":", scala.List(ASTNode("1", Nil), ASTNode("N", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "FOR",
-                     scala.List(
-                       ASTNode("j", Nil),
-                       ASTNode(":", scala.List(ASTNode("i", Nil), ASTNode("M", Nil))),
-                       ASTNode(
-                         "block",
-                         scala.List(
-                           ASTNode("print", scala.List(ASTNode("i", Nil), ASTNode("j", Nil))),
-                         ),
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-           ASTNode(
-             "FOR",
-             scala.List(
-               ASTNode("i", Nil),
-               ASTNode(":", scala.List(ASTNode("1", Nil), ASTNode("N", Nil))),
-               ASTNode(
-                 "block",
-                 scala.List(
-                   ASTNode(
-                     "IF",
-                     scala.List(
-                       ASTNode(
-                         "<=",
-                         scala.List(ASTNode("i", Nil), ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("16", Nil)))),
-                       ),
-                       ASTNode(
-                         "block",
-                         scala.List(
-                           ASTNode("print", scala.List(ASTNode("i", Nil))),
-                         ),
-                       ),
-                       ASTNode(
-                         "block",
-                         scala.List(
-                           ASTNode(
-                             "IF",
-                             scala.List(
-                               ASTNode(
-                                 "<=",
-                                 scala
-                                   .List(ASTNode("i", Nil), ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("8", Nil)))),
-                               ),
-                               ASTNode("block", scala.List(ASTNode("BREAK", Nil))),
-                               ASTNode(
-                                 "block",
-                                 scala.List(
-                                   ASTNode(
-                                     "IF",
-                                     scala.List(
-                                       ASTNode(
-                                         "<=",
-                                         scala.List(
-                                           ASTNode("i", Nil),
-                                           ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("4", Nil))),
-                                         ),
-                                       ),
-                                       ASTNode("block", scala.List(ASTNode("CONTINUE", Nil))),
-                                       ASTNode(
-                                         "block",
-                                         scala.List(
-                                           ASTNode(
-                                             "IF",
-                                             scala.List(
-                                               ASTNode(
-                                                 "<=",
-                                                 scala.List(
-                                                   ASTNode("i", Nil),
-                                                   ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("2", Nil))),
-                                                 ),
-                                               ),
-                                               ASTNode("block", scala.List(ASTNode("RETURN", scala.List(ASTNode("0", Nil))))),
-                                             ),
-                                           ),
-                                         ),
-                                       ),
-                                     ),
-                                   ),
-                                 ),
-                               ),
-                             ),
-                           ),
-                         ),
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           ),
-         ),
-       )
-       assert(result == expected)
-     }
-   }
+      val (_, lexemes) = CTLexer.tokenize(input)
+      val (_, result) = ASTPrinterParser.parse(lexemes)
+      val expected = ASTNode(
+        "program",
+        scala.List(
+          ASTNode("=", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
+          ASTNode("=", scala.List(ASTNode("M", Nil), ASTNode("20", Nil))),
+          ASTNode(
+            "IF",
+            scala.List(
+              ASTNode("==", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
+              ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N==10", Nil))))),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "IF",
+                    scala.List(
+                      ASTNode("!=", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
+                      ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N!=10", Nil))))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "IF",
+            scala.List(
+              ASTNode(">", scala.List(ASTNode("N", Nil), ASTNode("5", Nil))),
+              ASTNode(
+                "block",
+                scala.List(ASTNode("print", scala.List(ASTNode("N>5", Nil)))),
+              ),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "IF",
+                    scala.List(
+                      ASTNode(">=", scala.List(ASTNode("N", Nil), ASTNode("0", Nil))),
+                      ASTNode(
+                        "block",
+                        scala.List(ASTNode("print", scala.List(ASTNode("N>=0", Nil)))),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "IF",
+            scala.List(
+              ASTNode("<", scala.List(ASTNode("N", Nil), ASTNode("10", Nil))),
+              ASTNode(
+                "block",
+                scala.List(ASTNode("print", scala.List(ASTNode("N<10", Nil)))),
+              ),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "IF",
+                    scala.List(
+                      ASTNode("<=", scala.List(ASTNode("N", Nil), ASTNode("15", Nil))),
+                      ASTNode("block", scala.List(ASTNode("print", scala.List(ASTNode("N<=15", Nil))))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode("=", scala.List(ASTNode("k", Nil), ASTNode("10", Nil))),
+          ASTNode(
+            "WHILE",
+            scala.List(
+              ASTNode(">", scala.List(ASTNode("k", Nil), ASTNode("0", Nil))),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "=",
+                    scala.List(
+                      ASTNode("k", Nil),
+                      ASTNode("-", scala.List(ASTNode("k", Nil), ASTNode("1", Nil))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "WHILE",
+            scala.List(
+              ASTNode(">", scala.List(ASTNode("k", Nil), ASTNode("0", Nil))),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "IF",
+                    scala.List(
+                      ASTNode("<", scala.List(ASTNode("k", Nil), ASTNode("5", Nil))),
+                      ASTNode(
+                        "block",
+                        scala.List(
+                          ASTNode(
+                            "=",
+                            scala.List(ASTNode("i", Nil), ASTNode("1", Nil)),
+                          ),
+                        ),
+                      ),
+                      ASTNode(
+                        "block",
+                        scala.List(
+                          ASTNode(
+                            "IF",
+                            scala.List(
+                              ASTNode("<", scala.List(ASTNode("k", Nil), ASTNode("10", Nil))),
+                              ASTNode(
+                                "block",
+                                scala.List(
+                                  ASTNode(
+                                    "=",
+                                    scala.List(ASTNode("i", Nil), ASTNode("2", Nil)),
+                                  ),
+                                ),
+                              ),
+                              ASTNode(
+                                "block",
+                                scala.List(
+                                  ASTNode(
+                                    "=",
+                                    scala.List(ASTNode("i", Nil), ASTNode("3", Nil)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  ASTNode(
+                    "=",
+                    scala.List(
+                      ASTNode("k", Nil),
+                      ASTNode("-", scala.List(ASTNode("k", Nil), ASTNode("1", Nil))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "FOR",
+            scala.List(
+              ASTNode("i", Nil),
+              ASTNode(":", scala.List(ASTNode("1", Nil), ASTNode("N", Nil))),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "FOR",
+                    scala.List(
+                      ASTNode("j", Nil),
+                      ASTNode(":", scala.List(ASTNode("i", Nil), ASTNode("M", Nil))),
+                      ASTNode(
+                        "block",
+                        scala.List(
+                          ASTNode("print", scala.List(ASTNode("i", Nil), ASTNode("j", Nil))),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ASTNode(
+            "FOR",
+            scala.List(
+              ASTNode("i", Nil),
+              ASTNode(":", scala.List(ASTNode("1", Nil), ASTNode("N", Nil))),
+              ASTNode(
+                "block",
+                scala.List(
+                  ASTNode(
+                    "IF",
+                    scala.List(
+                      ASTNode(
+                        "<=",
+                        scala.List(ASTNode("i", Nil), ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("16", Nil)))),
+                      ),
+                      ASTNode(
+                        "block",
+                        scala.List(
+                          ASTNode("print", scala.List(ASTNode("i", Nil))),
+                        ),
+                      ),
+                      ASTNode(
+                        "block",
+                        scala.List(
+                          ASTNode(
+                            "IF",
+                            scala.List(
+                              ASTNode(
+                                "<=",
+                                scala
+                                  .List(ASTNode("i", Nil), ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("8", Nil)))),
+                              ),
+                              ASTNode("block", scala.List(ASTNode("BREAK", Nil))),
+                              ASTNode(
+                                "block",
+                                scala.List(
+                                  ASTNode(
+                                    "IF",
+                                    scala.List(
+                                      ASTNode(
+                                        "<=",
+                                        scala.List(
+                                          ASTNode("i", Nil),
+                                          ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("4", Nil))),
+                                        ),
+                                      ),
+                                      ASTNode("block", scala.List(ASTNode("CONTINUE", Nil))),
+                                      ASTNode(
+                                        "block",
+                                        scala.List(
+                                          ASTNode(
+                                            "IF",
+                                            scala.List(
+                                              ASTNode(
+                                                "<=",
+                                                scala.List(
+                                                  ASTNode("i", Nil),
+                                                  ASTNode("/", scala.List(ASTNode("N", Nil), ASTNode("2", Nil))),
+                                                ),
+                                              ),
+                                              ASTNode("block", scala.List(ASTNode("RETURN", scala.List(ASTNode("0", Nil))))),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      )
+      assert(result == expected)
+    }
+  }
