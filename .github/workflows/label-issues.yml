@@ -43,7 +43,8 @@ jobs:
               'performance': 'Performance optimization issues - slow execution, efficiency improvements',
               'error-handling': 'Issues related to error messages, diagnostics, or warnings',
               'API': 'Issues related to the public API or user-facing interfaces',
-              'refactoring': 'Code quality improvements or restructuring without changing functionality'
+              'refactoring': 'Code quality improvements or restructuring without changing functionality',
+              'thesis': 'Issues related to the thesis document, research, bibliography, or thesis-specific content'
             };
             
             // Build label descriptions for the prompt
