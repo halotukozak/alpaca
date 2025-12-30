@@ -1,15 +1,15 @@
 \chapter{Organizacja pracy}
-\label{ch:organizacja-pracy}
+\label{ch:org}
 
 Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, jego charakter, podział obowiązków pomiędzy~członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
 Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędzia wspierające współpracę zespołową oraz strategię walidacji implementacji.
 
 
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
-\label{sec:charakterystyka-projektu-realizacji}
+\label{sec:org-project}
 
 \subsection{Typ projektu}
-\label{subsec:typ-projektu}
+\label{subsec:org-type}
 
 Projekt \textit{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy elementy badań teoretycznych z~praktyczną implementacją.
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
@@ -20,10 +20,10 @@ W~drugim semestrze zrealizowano fazę wdrożeniowo-optymalizacyjną, skoncentrow
 
 
 \section[Zespół i podział obowiązków]{Zespół i~podział obowiązków}
-\label{sec:zespol-podzial-obowiazkow}
+\label{sec:org-team}
 
 \subsection[Osoby w~projekcie]{Osoby w~projekcie i~ich role}
-\label{subsec:osoby-w-projekcie}
+\label{subsec:org-members}
 
 Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rolach.
 
@@ -32,7 +32,7 @@ Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rola
 \paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
 
 \subsection{Podział prac na główne zadania}
-\label{subsec:podzial-prac-na-glowne-zadania}
+\label{subsec:org-tasks}
 
 Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem głównych odpowiedzialności.
 
@@ -96,17 +96,17 @@ Projekt podzielono na~następujące obszary funkcjonalne, z~przypisaniem główn
 \textbf{Zakres:}
 
 \begin{itemize}
-    \item \nameref{ch:cel-wizja}.\ (BB, BK)
-    \item \nameref{ch:metaprogramowanie-w-scali-3}.\ (BK)
-    \item \nameref{ch:implementacja}.\ (BK)
-    \item \nameref{ch:lexer-algorithmic}.\ (BB)
-    \item \nameref{ch:parser-algorithmic}.\ (BB)
-    \item \nameref{ch:analiza-porownawcza}.\ (BB)
-    \item \nameref{ch:organizacja-pracy}.\ (BK)
+    \item \nameref{ch:intro}.\ (BB, BK)
+    \item \nameref{ch:meta}.\ (BK)
+    \item \nameref{ch:impl}.\ (BK)
+    \item \nameref{ch:lexer-algo}.\ (BB)
+    \item \nameref{ch:parser-algo}.\ (BB)
+    \item \nameref{ch:comp}.\ (BB)
+    \item \nameref{ch:org}.\ (BK)
 \end{itemize}
 
 \subsection{Współpraca między członkami zespołu}
-\label{subsec:wspolpraca-miedzy-czlonkami-zespolu}
+\label{subsec:org-collab}
 
 Pomimo wyraźnego podziału obowiązków, współpraca między członkami zespołu miała charakter ścisły i~ciągły.
 Każdy pull request do~repozytorium był poddawany przeglądowi kodu przez drugiego członka zespołu przed włączeniem zmian do~głównej gałęzi.
@@ -116,10 +116,10 @@ Prace prowadzono z~wykorzystaniem systemu kontroli wersji Git.
 
 
 \section[Organizacja prac i~wykorzystane narzędzia]{Organizacja prac i~wykorzystane narzędzia}
-\label{sec:organizacja-prac-narzedzia}
+\label{sec:org-tools}
 
 \subsection{Komunikacja zespołowa}
-\label{subsec:komunikacja-zespoowa}
+\label{subsec:org-comm}
 
 \subsubsection{Spotkania regularne}
 
@@ -147,7 +147,7 @@ Kamienie milowe pozwoliły zespołowi na~śledzenie postępów, priorytetyzowani
 Każdy kamień milowy zawierał listę zgłoszeń (ang. \textit{issues}) reprezentujących konkretne zadania (implementacja funkcji, dokumentacja, testy).
 Postęp mierzono poprzez stosunek zamkniętych zgłoszeń do~całkowitej liczby planowanych zadań, co umożliwiało szybką ocenę stanu rzeczywistego realizacji w~stosunku do~pierwotnego planu.
 
-Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{tab:milestones-progress}.
+Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{tab:org-milestones}.
 
 \begin{table}[h]
     \centering
@@ -167,13 +167,13 @@ Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{
         \hline
     \end{tabularx}
     \caption{Kamienie milowe projektu \textit{ALPACA} i~postęp ich realizacji}
-    \label{tab:milestones-progress}
+    \label{tab:org-milestones}
 \end{table}
 
 Postęp realizacji wskazuje, że zespół pomyślnie ukończył pierwsze dwa kamienie milowe w~wyznaczonym terminie, trzecia faza (Stretch Goals) była realizowana równolegle i~bieżąco, czwarta faza wymagała intensywniejszych wysiłków na~ostatnim etapie projektu, natomiast piąta faza (Thesis) była finalizowana w~ostatnich tygodniach przed terminem oddania pracy dyplomowej.
 
 \subsection[Narzędzia programistyczne i CI/CD]{Narzędzia programistyczne i~CI/CD}
-\label{subsec:narzedzia-programistyczne-ici/cd}
+\label{subsec:org-dev-tools}
 
 \subsubsection{System kontroli wersji}
 
@@ -207,7 +207,7 @@ Dodatkowo przygotowano testy wydajnościowe oraz scenariusze integracyjne typu e
 
 Każde wypchnięcie zmian do~repozytorium uruchamia przepływ pracy CI, obejmujący kompilację projektu, uruchomienie testów, weryfikację formatowania kodu (Scalafmt) oraz prezentację statusu tych kroków na~pull requestach przed ich połączeniem z~głównym branchem.
 
-\subsection{Dokumentacja}\label{subsec:dokumentacja}
+\subsection{Dokumentacja}\label{subsec:org-docs}
 
 \subsubsection[Dokumentacja w kodzie]{Dokumentacja w~kodzie}
 
@@ -229,10 +229,10 @@ Bibliografię przygotowano w~formacie Bib\LaTeX{} (\verb|bibliografia.bib|) z~od
 
 
 \section[Zastosowane techniki i~praktyki]{Zastosowane techniki i~praktyki inżynierskie}
-\label{sec:techniki-praktyki}
+\label{sec:org-practices}
 
 \subsection{Metodologia wytwarzania oprogramowania}
-\label{subsec:metodologia-wytwarzania-oprogramowania}
+\label{subsec:org-methodology}
 
 \subsubsection[Iteracyjne podejście do projektowania]{Iteracyjne podejście do~projektowania}
 
@@ -269,7 +269,7 @@ Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne zgłosze
 Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}.
 
 \subsection{Praktyki specyficzne dla metaprogramowania}
-\label{subsec:praktyki-specyficzne-dla-metaprogramowania}
+\label{subsec:org-meta-practices}
 
 \subsubsection{Obliczenia wieloetapowe (ang. \textit{Staged Computation})}
 
@@ -284,7 +284,7 @@ Walidowano wyrażenia regularne w~definicjach leksera.
 Stosowano zasadę szybkiego zwrotu błędu (ang. \textit{fail-fast}) --- preferowano odrzucanie niepoprawnych danych na~etapie kompilacji zamiast zgłaszania błędów dopiero w~czasie wykonania.
 
 \subsection{Praktyki DevOps}
-\label{subsec:praktyki-devops}
+\label{subsec:org-devops}
 
 \subsubsection{Continuous Integration}
 
@@ -297,16 +297,16 @@ Wersje rozwojowe (SNAPSHOT) i stabilne wydania są publikowane w~repozytorium Ma
 
 
 \section[Przebieg prac --- harmonogram i~iteracje]{Przebieg prac --- harmonogram i~iteracje}
-\label{sec:przebeig-prac-harmonogram}
+\label{sec:org-schedule}
 
 \subsection[Szczegółowa oś czasu i przebieg prac]{Szczegółowa oś czasu i~przebieg prac}
-\label{subsec:szczegolowa-os-czasu}
+\label{subsec:org-timeline}
 
 Praca ALPACA realizowana była przez 27~tygodni, obejmujących dwa semestry akademickie.
 Szczegółowy przebieg oraz liczba zmian w~poszczególnych etapach dokumentowane były poprzez system kontroli wersji, umożliwiający śledzenie postępów na~poziomie pojedynczych zmian.
 
 W~toku realizacji projektu zebrano 216~commitów (zmian w~kodzie), z~których średnio przypadało 19,6~zmian na~tydzień.
-Tabela~\ref{tab:detailed-timeline} prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
+Tabela~\ref{tab:org-timeline} prezentuje podział prac na~etapy wraz z~kluczowymi osiągnięciami i~liczbą zmian wprowadzonych w~każdym okresie.
 
 \begin{table}[h]
     \centering
@@ -340,7 +340,7 @@ Tabela~\ref{tab:detailed-timeline} prezentuje podział prac na~etapy wraz z~kluc
         \hline
     \end{tabularx}
     \caption{Szczegółowa oś czasu projektu ALPACA z~liczbą zmian (commitów) w~poszczególnych etapach}
-    \label{tab:detailed-timeline}
+    \label{tab:org-timeline}
 \end{table}
 
 \subsubsection{Charakterystyka poszczególnych etapów}
@@ -358,7 +358,7 @@ Druga część projektu cechowała się szybszym tempem zmian (130~commitów), c
 Ostatnie dwa tygodnie projektu zawierały 15~commitów poświęconych przede wszystkim dokumentacji, ostatecznym poprawkom rozprawy dyplomowej oraz czyszczeniu kodu.
 
 \subsection[Szybkość pracy zespołu i postępy]{Szybkość pracy i~postępy}
-\label{subsec:velocitas-zespou-ipostepy}
+\label{subsec:org-progress}
 
 \subsubsection{Metryki wydajności}
 
@@ -371,21 +371,21 @@ Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwie
     \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}.
 \end{itemize}
 
-Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:commits} ilustruje dynamikę zespołu, wskazując na stały postęp oraz okresy intensywnej pracy nad rozwiązywaniem kluczowych wyzwań technicznych.
+Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:org-commits} ilustruje dynamikę zespołu, wskazując na stały postęp oraz okresy intensywnej pracy nad rozwiązywaniem kluczowych wyzwań technicznych.
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/Commits.png}
+    \includegraphics[width=0.7\textwidth]{figures/Commits}
     \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA}
-    \label{fig:commits}
+    \label{fig:org-commits}
 \end{figure}
 
 
 \section[Główne wyzwania i~ich rozwiązania]{Główne problemy i~ich rozwiązania}
-\label{sec:problemy-rozwiazania}
+\label{sec:org-problems}
 
 \subsection{Problem 1: Limit rozmiaru metody JVM}
-\label{subsec:problem-1:-limit-rozmiaru-metody-jvm}
+\label{subsec:prob-jvm-limit}
 
 \subsubsection{Problem}
 
@@ -408,7 +408,7 @@ Ze względu na niewielki rozmiar metod pomocniczych kompilator JIT może je skut
 Każda metoda pomocnicza zawiera jedynie kilka instrukcji, dzięki czemu pozostaje poniżej limitu rozmiaru metody w~JVM. System jest obecnie w~stanie obsługiwać gramatyki z~setkami stanów LR(1) bez naruszenia ograniczeń platformy.
 
 \subsection{Problem 2: Transmisja referencji między etapami kompilacji}
-\label{subsec:problem-2:-transmisja-referencji-miedzy-etapami-kompilacji}
+\label{subsec:prob-refs}
 
 \subsubsection{Problem}
 
@@ -438,7 +438,7 @@ Klasa \verb|ReplaceRefs| rozszerza \verb|TreeMap| z~API refleksji TASTy, co umo�
 Akcje semantyczne prawidłowo odwołują się do~kontekstu parsera oraz zmiennych otaczających, bez generowania błędów typowania.
 
 \subsection[Problem 3: Typy rafinowane a wsparcie IDE]{Problem 3: Typy rafinowane a~wsparcie IDE}
-\label{subsec:problem-3:-typ-rafinowanie-aide-support}
+\label{subsec:prob-refinement-ide}
 
 \subsubsection{Problem}
 
@@ -462,9 +462,9 @@ Zaimplementowano system typów rafinowanych, w~którym:
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/IDESupport.png}
+    \includegraphics[width=0.7\textwidth]{figures/IDESupport}
     \caption{Wsparcie IDE dzięki typom rafinowanym w~projekcie ALPACA}
-    \label{fig:ide_support}
+    \label{fig:org-ide-support}
 \end{figure}
 
 \subsubsection{Rezultat}
@@ -472,7 +472,7 @@ Zaimplementowano system typów rafinowanych, w~którym:
 Osiągnięto pełną integrację z~IDE (Metals), obejmującą autouzupełnianie, podpowiedzi typów oraz wczesne zgłaszanie błędów typów.
 
 \subsection{Problem 4: Wydajność kompilacji makr}
-\label{subsec:problem-4:-wydajnosc-kompilacji-makr}
+\label{subsec:prob-compile-perf}
 
 \subsubsection{Problem}
 
@@ -496,7 +496,7 @@ Obliczenia wykonywane na~reprezentacji AST w~makrze generują dodatkowy narzut.
 Czas kompilacji złożonych gramatyk utrzymuje się poniżej 10~sekund (w~zależności od~rozmiaru gramatyki), co jest akceptowalne z~perspektywy użytkownika biblioteki.
 
 \subsection[Problem 5: Testowanie makr i metaprogramowania]{Problem 5: Testowanie makr i~metaprogramowania}
-\label{subsec:problem-5:-testowanie-makr-imetaprogramowania}
+\label{subsec:prob-meta-testing}
 
 \subsubsection{Problem}
 
@@ -518,7 +518,7 @@ Tradycyjne frameworki testowe (np.~munit, ScalaTest) operują na~kodzie uruchami
 Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę wygenerowanego kodu.
 
 \subsection[Problem 6: Błędy w kolejności definicji tokenów]{Problem 6: Błędy w~kolejności definicji tokenów}
-\label{subsec:problem-6:-nieprawidlowa-kolejnosc-definicji-regexow}
+\label{subsec:prob-regex-order}
 
 \subsubsection{Problem}
 
@@ -536,7 +536,7 @@ Notacja jest składniowo poprawna, lecz prowadzi do~błędów w~fazie parsowania
 
 \subsubsection{Przyczyna}
 
-Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:dfa-vs-regex}).
+Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:lexer-algo-regex}).
 
 Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
 
@@ -548,15 +548,15 @@ Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynnik�
 
 \subsubsection{Rozwiązanie}
 
-Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker| (por. rozdział~\ref{subsec:lexer-impl-regexchecker}).
+Konflikty takie są~automatycznie wykrywane w~fazie kompilacji przez dedykowany moduł \verb|RegexChecker| (por. rozdział~\ref{subsec:lexer-algo-val}).
 Przed~generacją kodu leksera moduł \verb|RegexChecker| analizuje wzorce w~poszukiwaniu potencjalnych konfliktów.
 W~przypadku wykrycia nieprawidłowości użytkownik otrzymuje komunikat błędu wskazujący źródło problemu.
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/PatternShadowing.png}
+    \includegraphics[width=0.7\textwidth]{figures/PatternShadowing}
     \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów}
-    \label{fig:regex_checker_error}
+    \label{fig:org-regex-error}
 \end{figure}
 
 \subsubsection{Rezultat}
@@ -568,7 +568,7 @@ Korekta wymaga zmiany kolejności definicji tokenów (np.~umieszczenie \verb|<=|
 Wczesna detekcja konfliktów wzorców okazała się~istotna przy~implementacji przykładowych parserów (parser wyrażeń arytmetycznych, parser~JSON).
 
 \subsection{Problem 7: Konflikty precedencji operatorów}
-\label{subsec:problem-7:-konflikty-w-tabeli-shift-reduce}
+\label{subsec:prob-lr-conflicts}
 
 \subsubsection{Problem}
 
@@ -588,7 +588,7 @@ Bez~takiego mechanizmu użytkownik byłby zmuszony do przepisania gramatyki do~f
 
 \subsubsection{Rozwiązanie}
 
-System ALPACA oferuje mechanizm deklaratywnego rozwiązywania konfliktów bez~konieczności przepisywania gramatyki (algorytmy opisane w~rozdziale~\ref{subsec:parser-conflict-resolution}).
+System ALPACA oferuje mechanizm deklaratywnego rozwiązywania konfliktów bez~konieczności przepisywania gramatyki (algorytmy opisane w~rozdziale~\ref{subsec:parser-algo-conflict-res}).
 
 \paragraph{Przykład użycia}
 Dla~gramatyki wyrażeń arytmetycznych użytkownik definiuje jedynie łańcuch relacji:
@@ -631,10 +631,10 @@ Zastosowanie tego mechanizmu pozwoliło na~zrealizowanie kompletnego parsera wyr
 
 
 \section[Wdrożenia, testy i eksperymenty]{Wdrożenia, testy i~eksperymenty}
-\label{sec:wdrozenia-testy-eksperymenty}
+\label{sec:org-tests}
 
 \subsection{Testowanie jednostkowe}
-\label{subsec:testowanie-jednostkowe}
+\label{subsec:org-unit-tests}
 
 Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczególne moduły systemu.
 
@@ -664,7 +664,7 @@ Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczeg
 \end{itemize}
 
 \subsection{Testowanie integracyjne}
-\label{subsec:testowanie-integracyjne}
+\label{subsec:org-int-tests}
 
 Projekt zawiera kilka pełnych przykładów integracyjnych, demonstrujących działanie systemu w~praktyce.
 
@@ -744,7 +744,7 @@ oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności struktur
 
 
 \subsection{Benchmarki wydajności}
-\label{subsec:benchmarki-wydajnosci}
+\label{subsec:org-benchmarks}
 
 Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \textit{ALPACA} z~innymi podejściami.
 
@@ -754,10 +754,10 @@ Pomiary wykonano dla różnych rozmiarów danych wejściowych: 100, 500, 1000 or
 System \textit{ALPACA} porównano z~biblioteką SLY (Python) reprezentującą podejście oparte na~refleksji oraz~z~FastParse (Scala) reprezentującą kombinatory parserów.
 Dla każdego narzędzia mierzono czas leksykalizacji, czas parsowania oraz całkowity czas przetwarzania.
 
-Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza porównawcza przedstawione są~w~rozdziale~\ref{ch:analiza-porownawcza}.
+Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza porównawcza przedstawione są~w~rozdziale~\ref{ch:comp}.
 
 \subsection{Walidacja poprawności}
-\label{subsec:walidacja-poprawnosci}
+\label{subsec:org-validation}
 
 \subsubsection{Walidacja gramatyk}
 

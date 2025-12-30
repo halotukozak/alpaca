@@ -1,15 +1,15 @@
 \chapter[Cel pracy i wizja projektu]{Cel pracy i~wizja projektu}
-\label{ch:cel-wizja}
+\label{ch:intro}
 
 
 \section{Charakterystyka problemu}
-\label{sec:charakterystyka-problemu}
+\label{sec:intro-problem}
 
 Analizatory leksykalne (ang.~\emph{lexers}) i~składniowe (ang.~\emph{parsers}) stanowią fundamentalne komponenty procesu kompilacji, realizując odpowiednio fazę analizy leksykalnej i~syntaktycznej~\cite{aho2006}.
 Analizator leksykalny segmentuje ciąg znaków wejściowych na strumień tokenów (leksemów) zgodnie z~regułami języka regularnego~\cite{hopcroft2006}, podczas gdy analizator składniowy weryfikuje zgodność strumienia tokenów z~gramatyką bezkontekstową języka, konstruując drzewo składni abstrakcyjnej (AST, ang.~\emph{Abstract Syntax Tree})~\cite{aho2006}.
 
 \subsection{Podstawy teoretyczne}
-\label{subsec:podstawy-teoretyczne}
+\label{subsec:intro-theory}
 
 Analiza leksykalna i~składniowa opiera się na teorii języków formalnych, zapoczątkowanej przez prace Noama Chomsky'ego~\cite{chomsky1956}.
 W~hierarchii Chomsky'ego języki dzieli się na cztery klasy według mocy wyrazu gramatyk je generujących.
@@ -24,7 +24,7 @@ Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, zło
 
 
 \section[Teza i pytania badawcze]{Teza i~pytania badawcze}
-\label{sec:teza-badawcza}
+\label{sec:intro-thesis}
 
 W~niniejszej pracy przyjęto tezę, zgodnie z~którą wykorzystanie metaprogramowania w~języku Scala~3 (makra kompilacyjne, typy rafinowane) umożliwia konstrukcję systemu generującego analizatory leksykalne i~składniowe charakteryzujących się następującymi właściwościami:
 
@@ -45,7 +45,7 @@ Celem pracy jest zaprojektowanie i~zaimplementowanie narzędzia \textit{ALPACA} 
 
 
 \section{Motywacja projektu}
-\label{sec:motywacja-projektu}
+\label{sec:intro-motivation}
 
 Istniejące narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych wykazują szereg ograniczeń utrudniających ich zastosowanie w~kontekście nowoczesnych języków programowania oraz środowisk deweloperskich.
 Identyfikacja tych ograniczeń stanowiła punkt wyjścia dla projektu~\textit{ALPACA}.
@@ -63,18 +63,18 @@ Może ono służyć jako narzędzie dydaktyczne, ułatwiając naukę teorii komp
 
 
 \section{Przegląd istniejących rozwiązań}
-\label{sec:przeglad-istniejacych-rozwiazan}
+\label{sec:intro-review}
 
 Narzędzia do~konstrukcji analizatorów leksykalnych i~składniowych można sklasyfikować według strategii implementacyjnej na trzy główne kategorie: generatory kodu, biblioteki interpretowane oraz kombinatory parserów.
 
 \subsection{Generatory kodu}
-\label{subsec:generatory-kodu}
+\label{subsec:review-generators}
 
 Generatory kodu transformują deklaratywne specyfikacje gramatyk w~kod źródłowy parsera w~języku docelowym.
 Proces ten odbywa się przed kompilacją programu głównego i~wymaga dodatkowego narzędzia w~procesie budowania (ang.~\emph{build chain}).
 
 \subsubsection[Lex i Yacc]{Lex i~Yacc}
-\label{subsubsec:lex-yacc}
+\label{subsubsec:review-lex-yacc}
 
 \textit{Lex}~\cite{lesk1975lex} i~\textit{Yacc}~\cite{johnson1975yacc} to klasyczne, dobrze ugruntowane narzędzia, które odegrały kluczową rolę w~tworzeniu setek współczesnych języków programowania.
 Definicja leksera i~parsera w~tych systemach odbywa się poprzez specjalnie zaprojektowaną składnię konfiguracyjną.
@@ -84,10 +84,10 @@ Ponieważ \textit{Lex} i~\textit{Yacc} zostały zaprojektowane do współpracy z
 Rozszerzanie tych narzędzi o~dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w~porównaniu z~nowoczesnymi alternatywami.
 
-\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:ruby-parser}]{listings/introduction/intro-01-ruby-parser.y}
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:review-ruby}]{listings/introduction/intro-01-ruby-parser.y}
 
 \subsubsection{ANTLR}
-\label{subsubsec:antlr}
+\label{subsubsec:review-antlr}
 
 \textit{ANTLR}~\cite{parr2004s} to rozwiązanie inspirowane narzędziami \textit{Lex} i~\textit{Yacc}, oferujące zaawansowane mechanizmy analizy składniowej.
 Jego twórcy opracowali dedykowany język DSL, znany jako Grammar~v4, który umożliwia definiowanie składni analizowanego języka.
@@ -104,13 +104,13 @@ Dodatkowym wyzwaniem podczas korzystania z~\textit{ANTLR} jest konieczność nau
 Pełne wykorzystanie możliwości \textit{ANTLR} wymaga korzystania z~jednego z~dedykowanych środowisk, co może stanowić istotne ograniczenie dla użytkowników preferujących inne IDE\@.
 
 \subsection{Biblioteki interpretowane}
-\label{subsec:biblioteki-interpretowane}
+\label{subsec:review-interpreted}
 
 Biblioteki interpretowane definiują gramatyki jako struktury danych w~języku bazowym.
 Parser jest wykonywany w~czasie działania programu, co eliminuje krok generacji kodu, ale wprowadza narzut wydajnościowy.
 
 \subsubsection[PLY i SLY]{PLY i~SLY}
-\label{subsubsec:ply-sly}
+\label{subsubsec:review-ply-sly}
 
 \textit{PLY}~\cite{ply} i~jego nowszy odpowiednik \textit{SLY}~\cite{sly} to biblioteki inspirowane narzędziami Lex i~Yacc.
 Oferują elastyczne podejście do budowy parserów, umożliwiając samodzielną implementację obsługi leksemów, budowę drzewa AST, czy dodatkowe funkcjonalności takie jak obliczanie numeru linii w~lekserze.
@@ -120,7 +120,7 @@ Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te ch
 Mechanizm refleksji wykorzystywany przez bibliotekę~\textit{SLY} (inspekcja nazw metod i~typów) powoduje generowanie ostrzeżeń przez analizatory statyczne środowiska PyCharm.
 Ponadto należy zaznaczyć, iż autor projektu informuje o~braku dalszego rozwoju tych narzędzi~\cite{sly-github}.
 
-Przykład~\ref{lst:python-parser} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w~bibliotece \textit{SLY}:
+Przykład~\ref{lst:review-python} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w~bibliotece \textit{SLY}:
 
 \paragraph{Dekorator \texttt{@\_()}}
 Dekorator ten definiuje wzorzec dopasowania dla produkcji.
@@ -138,29 +138,29 @@ W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakż
 Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
-\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:python-parser}]{listings/introduction/intro-02-sly-parser.py}
+\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:review-python}]{listings/introduction/intro-02-sly-parser.py}
 
-Komunikaty błędów w~bibliotece \textit{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:not-working-sly}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:sly-result}.
+Komunikaty błędów w~bibliotece \textit{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:review-sly-err}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:review-sly-out}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
 
-\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:not-working-sly}]{listings/introduction/intro-03-not-working-sly.py}
+\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:review-sly-err}]{listings/introduction/intro-03-not-working-sly.py}
 
-\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \textit{SLY}},label={lst:sly-result}]{listings/introduction/intro-04-not-working-result}
+\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \textit{SLY}},label={lst:review-sly-out}]{listings/introduction/intro-04-not-working-result}
 
 \subsection{Kombinatory parserów}
-\label{subsec:kombinatory-parserow}
+\label{subsec:review-combinators}
 
 Kombinatory parserów to funkcje wyższego rzędu konstruujące złożone parsery z~prostszych komponentów.
 Podejście to łączy elastyczność bibliotek z~czytelną składnią zbliżoną do notacji BNF\@.
 
 \subsubsection{Scala parser combinators}
-\label{subsubsec:scala-parser-combinators}
+\label{subsubsec:review-scala-pc}
 
 Biblioteka \textit{Scala parser combinators}~\cite{moors2008parser} była popularnym sposobem na tworzenie parserów, lecz jak stwierdzono w~samej dokumentacji: \enquote{Trudno jest jednak zrozumieć ich działanie i~jak zacząć.
-    Po skompilowaniu i~uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może stanowić istotną przeszkodę, a~standardowa dokumentacja nie jest zbyt pomocna}~\cite{parser-combinators-readme}.
+Po skompilowaniu i~uruchomieniu kilku pierwszych przykładów, mechanizm działania staje się bardziej zrozumiały, ale do tego czasu może stanowić istotną przeszkodę, a~standardowa dokumentacja nie jest zbyt pomocna}~\cite{parser-combinators-readme}.
 
 \subsubsection{ScalaBison}
-\label{subsubsec:scala-bison}
+\label{subsubsec:review-scala-bison}
 
 Z~podsumowania artykułu na temat \textit{ScalaBison}~\cite{boyland2010tool} wiadomo, że to praktyczny generator parserów dla języka Scala oparty na technologii rekurencyjnego wstępowania i~zstępowania, który akceptuje pliki wejściowe w~formacie \textit{bison}.
 Parsery generowane przez \textit{ScalaBison} używają bardziej informacyjnych komunikatów o~błędach niż te generowane przez pierwowzór \textit{bison}, a~także szybkość parsowania i~wykorzystanie miejsca są znacznie lepsze niż \textit{scala-combinators}, ale są nieco wolniejsze niż najszybsze generatory parserów oparte na JVM\@.
@@ -169,7 +169,7 @@ Dodatkowo należy zaznaczyć, iż jest to rozwiązanie już niewspierane i~stwor
 Korzysta z~przestarzałej wersji Scali, nie posiada wyczerpującej dokumentacji i~liczba funkcjonalności jest bardzo ograniczona w~porównaniu do np.~technologii \textit{SLY}.
 
 \subsubsection{parboiled2}
-\label{subsubsec:parboiled-2}
+\label{subsubsec:review-parboiled2}
 
 \textit{parboiled2}~\cite{myltsev2019parboiled2} to biblioteka w~Scali umożliwiająca lekkie i~szybkie parsowanie dowolnego tekstu wejściowego.
 Implementuje ona oparty na makrach generator parsera dla gramatyk wyrażeń parsujących (PEG), który działa w~czasie kompilacji i~tłumaczy definicję reguły gramatycznej na odpowiadający jej bytecode JVM\@.
@@ -177,11 +177,11 @@ Ze względu na skomplikowany i~nieintuicyjny DSL, bariera wejścia dla nowych u�
 Zgodnie z~przykładem~\ref{lst:parboiled2-error}, komunikaty błędów nie zawierają informacji o~kontekście syntaktycznym oraz nie sugerują możliwych poprawek (problem z~implementacją wynika jedynie z~różnic w~liczbie parametrów funkcji).
 
 \lstinputlisting[firstline=7,lastline=20,language=terminal,caption={[Fragment błędu wygenerowanego przez bibliotekę parboiled2]
-            Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
-        },label={lst:parboiled2-error}]{listings/introduction/intro-05-parboiled2-error}
+Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \textit{parboiled2}, który pochodzi z~prezentacji Li~Haoyi na temat \textit{FastParse}~\cite{fastparse-talk}.
+},label={lst:parboiled2-error}]{listings/introduction/intro-05-parboiled2-error}
 
 \subsubsection{FastParse}
-\label{subsubsec:fastparse}
+\label{subsubsec:review-fastparse}
 
 \textit{FastParse}~\cite{fastparse-docs} to opracowana przez Li~Haoyi wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w~celu uproszczenia tworzenia parserów tekstu strukturalnego.
 Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu nadaje się do parsowania języków programowania, formatów danych, takich jak JSON, czy DSL-i.
@@ -194,9 +194,9 @@ Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby
 Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o~błędach, które wskazują dokładną lokalizację i~przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
 
 \subsection{Analiza porównawcza}
-\label{subsec:analiza-porownawcza}
+\label{subsec:review-comparison}
 
-Tabela~\ref{tab:porownanie-alternatyw} zestawia główne cechy analizowanych narzędzi.
+Tabela~\ref{tab:review-comparison} zestawia główne cechy analizowanych narzędzi.
 Widoczny jest kompromis między wydajnością a~użytecznością: generatory kodu (Lex/Yacc, ANTLR) osiągają wysoką wydajność, ale wymagają dodatkowego kroku kompilacji i~nauki DSL\@.
 Biblioteki kombinatorów (FastParse, parboiled2) oferują interfejs zintegrowany z~językiem bazowym, ale kosztem spadku wydajności związanej z~interpretacją reguł w~czasie wykonania.
 
@@ -266,19 +266,19 @@ Luka ta stanowi motywację dla projektu~\textit{ALPACA}, który wykorzystuje mak
         \bottomrule
     \end{tabular}
     \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych}
-    \label{tab:porownanie-alternatyw}
+    \label{tab:review-comparison}
 \end{table}
 
 
 \section[Ograniczenia i zakres pracy]{Ograniczenia i~zakres pracy}
-\label{sec:ograniczenia-zakres}
+\label{sec:intro-scope}
 
 Niniejsza praca koncentruje się na implementacji parsera LR(1) oraz analizatora leksykalnego wykorzystującego wyrażenia regularne.
 Następujące aspekty wykraczają poza zakres pracy:
 
 \begin{itemize}
     \item System generuje kanoniczne stany LR(1) bez minimalizacji do LALR(1), co może prowadzić do większych tablic akcji.
-          Implementacja minimalizacji stanowi potencjalny kierunek przyszłych badań.
+    Implementacja minimalizacji stanowi potencjalny kierunek przyszłych badań.
 
     \item Ewaluacja empiryczna w~kontekście dydaktycznym, czyli weryfikacja użyteczności systemu w~środowisku akademickim (badanie z~udziałem studentów) wykracza poza zakres pracy i~stanowi kierunek przyszłych badań.
 \end{itemize}

@@ -1,8 +1,8 @@
 \chapter[Metaprogramowanie w Scali 3]{Metaprogramowanie w~Scali~3}
-\label{ch:metaprogramowanie-w-scali-3}
+\label{ch:meta}
 
 
-\section{Wprowadzenie}\label{sec:wprowadzenie}
+\section{Wprowadzenie}\label{sec:meta-intro}
 Scala~3, znana również jako Dotty, wprowadza całkowicie przeprojektowany system metaprogramowania, stanowiący fundamentalną zmianę w~stosunku do eksperymentalnych makr dostępnych w~Scali~2~\cite{scala3-dropped-scala2-macros,scala3-metaprogramming}.
 Metaprogramowanie w~Scali~3 zostało zaprojektowane z~naciskiem na bezpieczeństwo typów, przenośność oraz skalowalność, umożliwiając twórcom oprogramowania generowanie i~analizowanie kodu w~czasie kompilacji przy zachowaniu pełnej ekspresywności języka~\cite{stucki2024infoscience,stucki2020inlining}.
 W~przeciwieństwie do poprzedniego systemu, który eksponował wewnętrzne mechanizmy kompilatora i~był źródłem problemów z~kompatybilnością między wersjami~\cite{stucki2020thesis}, nowy system metaprogramowania jest zaprojektowany jako stabilny i~przenośny interfejs programistyczny.
@@ -11,7 +11,7 @@ Podstawą teoretyczną systemu metaprogramowania w~Scali~3 jest programowanie wi
 W~tym modelu kod może być wykonywany w~różnych fazach: w~czasie kompilacji (ang.~\emph{compile-time}) lub w~czasie wykonania (ang.~\emph{runtime})~\cite{scala3-staging}.
 Rozdzielenie tych faz pozwala na przeniesienie obliczeń z~czasu wykonania do~czasu kompilacji, co potencjalnie eliminuje narzut wykonania i~umożliwia wcześniejszą detekcję błędów.
 
-\subsection[Cytaty i wstawki]{Cytaty i~wstawki}\label{subsec:cytaty-i-wstawki}
+\subsection[Cytaty i wstawki]{Cytaty i~wstawki}\label{subsec:meta-quotes}
 Kluczowymi koncepcjami w~systemie metaprogramowania Scali~3 są cytaty (ang.~\emph{quotes}) i~wstawki (ang.~\emph{splices})~\cite{stucki2018unification,stucki2021multistage}.
 Cytaty, oznaczane jako \verb|'{...}|, służą do opóźnienia wykonania kodu i~traktowania go jako danych~\cite{scala3-reflection}.
 Wstawki, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generującego kod i~wstawienie wyniku do otaczającego kontekstu~\cite{scala3-reflection,scala3-guides-quotes}.
@@ -19,7 +19,7 @@ Wstawki, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generują
 \paragraph[Przykład użycia cytatów i wstawek]{Przykład użycia cytatów i~wstawek}
 Poniższy przykład ilustruje podstawowe wykorzystanie cytatów i~wstawek w~makrach:
 
-\lstinputlisting[language=Scala,caption={Proste makro z wykorzystaniem cytatów i~wstawek},label={lst:meta-quotes-example}]{listings/metaprogramming/meta-01-quotes-example.scala}
+\lstinputlisting[language=Scala,caption={Proste makro z wykorzystaniem cytatów i~wstawek},label={lst:meta-quotes}]{listings/metaprogramming/meta-01-quotes-example.scala}
 
 W~powyższym przykładzie:
 \begin{itemize}
@@ -31,39 +31,39 @@ W~powyższym przykładzie:
 Formalna semantyka tych konstrukcji została przedstawiona w~pracy Stuckiego, Brachthäusera i~Odersky'ego~\cite{stucki2021multistage}, gdzie cytaty i~wstawki są traktowane jako prymitywne formy w~typowanych drzewach składniowych (ang.~\emph{typed abstract syntax trees}).
 Autorzy dowodzą, że system zachowuje bezpieczeństwo typów oraz higieniczność, zapewniając, że wygenerowany kod nie może przypadkowo powiązać identyfikatorów z~niewłaściwymi zmiennymi~\cite{stucki2021multistage}.
 
-\subsection{Bezpieczeństwo międzyetapowe}\label{subsec:bezpieczenstwo-miedzyetapowe}
+\subsection{Bezpieczeństwo międzyetapowe}\label{subsec:meta-safety}
 Scala~3 gwarantuje bezpieczeństwo międzyetapowe (ang.~\emph{cross-stage safety}) poprzez sprawdzanie poziomów etapowania w~czasie kompilacji~\cite{stucki2020thesis,stucki2021multistage}.
 Zmienne lokalne mogą być używane tylko na tym samym poziomie etapowania, na którym zostały zdefiniowane, co zapobiega dostępowi do zmiennych, które jeszcze nie istnieją lub już nie są dostępne~\cite{stucki2020thesis}.
 
 \paragraph{Przykład naruszenia bezpieczeństwa międzyetapowego}
 Następujący kod \textbf{nie skompiluje się}, ponieważ narusza zasady bezpieczeństwa międzyetapowego:
 
-\lstinputlisting[language=Scala,caption={Błąd bezpieczeństwa międzyetapowego (kod nie kompiluje się)},label={lst:meta-cross-stage-error}]{listings/metaprogramming/meta-02-cross-stage-error.scala}
+\lstinputlisting[language=Scala,caption={Błąd bezpieczeństwa międzyetapowego (kod nie kompiluje się)},label={lst:meta-safety-error}]{listings/metaprogramming/meta-02-cross-stage-error.scala}
 
 Kompilator wykryje ten błąd i~zgłosi komunikat: \texttt{error: access to value localVar from wrong staging level}.
 Aby poprawnie odnieść się do~wartości z~otaczającego kontekstu, należy użyć mechanizmu \verb|Expr.apply|:
 
-\lstinputlisting[language=Scala,caption={Poprawne przeniesienie wartości między etapami},label={lst:meta-cross-stage-correct}]{listings/metaprogramming/meta-03-cross-stage-correct.scala}
+\lstinputlisting[language=Scala,caption={Poprawne przeniesienie wartości między etapami},label={lst:meta-safety-correct}]{listings/metaprogramming/meta-03-cross-stage-correct.scala}
 
 System również zapewnia, że typy generyczne używane w~wyższym poziomie etapowania niż ich definicja wymagają instancji klasy typu \verb|Type[T]|, która niesie reprezentację typu niepoddaną wymazywaniu (ang.~\emph{type erasure})~\cite{stucki2020thesis}.
 To podejście rozwiązuje problem wymazywania typów generycznych w~JVM, zachowując informację o~typach potrzebną w~kolejnych etapach kompilacji.
 
 
-\section[Mechanizmy metaprogramowania w Scali 3]{Mechanizmy metaprogramowania w~Scali~3}\label{sec:mechanizmy-metaprogramowania-w-scali-3}
+\section[Mechanizmy metaprogramowania w Scali 3]{Mechanizmy metaprogramowania w~Scali~3}\label{sec:meta-mechanisms}
 
 Przedstawione powyżej podstawy teoretyczne znajdują bezpośrednie zastosowanie w~praktycznych mechanizmach metaprogramowania oferowanych przez język Scala~3, które zostaną omówione w~niniejszej sekcji.
 
-\subsection{Definicje inline}\label{subsec:definicje-inline}
+\subsection{Definicje inline}\label{subsec:meta-inline}
 Najprostszym narzędziem metaprogramowania jest modyfikator \verb|inline|~\cite{stucki2020semantics-preserving}.
 Gwarantuje on, że wywołanie oznaczonej nim metody lub wartości zostanie w~całości wstawione w~miejscu wywołania (ang.~\emph{inlining}) podczas kompilacji.
 Jest to instrukcja dla kompilatora, a~nie tylko sugestia, jak w~niektórych innych językach~\cite{lilis2019survey}.
 
 \paragraph{Przykład definicji inline}
-\lstinputlisting[language=Scala,caption={Użycie modyfikatora inline dla optymalizacji},label={lst:meta-inline-example}]{listings/metaprogramming/meta-04-inline-example.scala}
+\lstinputlisting[language=Scala,caption={Użycie modyfikatora inline dla optymalizacji},label={lst:meta-inline}]{listings/metaprogramming/meta-04-inline-example.scala}
 
 Modyfikator \verb|inline| różni się od zwykłych funkcji tym, że \textbf{gwarantuje} wstawienie kodu, podczas gdy standardowe funkcje mogą być zinlinowane przez kompilator jako optymalizacja, ale nie muszą.
 
-\subsection{Makra oparte na wyrażeniach}\label{subsec:makra-oparte-na-wyrazeniach}
+\subsection{Makra oparte na wyrażeniach}\label{subsec:meta-macros}
 Makra w~Scali~3 są zdefiniowane jako metody \verb|inline| zawierające wstawkę najwyższego poziomu (ang.~\emph{top-level splice})~\cite{scala3-reference-macros,scala3-guides-macros}, czyli taki, który nie jest zagnieżdżony w~żadnym cytacie (ang.~\emph{quote}) i~jest wykonywany w~czasie kompilacji~\cite{scala3-staging,scala3-reference-macros}.
 
 Typ \verb|Expr[T]| reprezentuje wyrażenie Scali o~typie \verb|T| jako typowane drzewo składniowe~\cite{scala3-reflection,scala3-guides-macros}.
@@ -71,11 +71,11 @@ Makra manipulują wartościami typu \verb|Expr[T]|, transformując je lub generu
 Ta reprezentacja gwarantuje bezpieczeństwo typów na poziomie języka metaprogramowania~\cite{scala3-reflection}.
 
 \paragraph{Przykład makra generującego kod}
-\lstinputlisting[language=Scala,caption={Makro generujące kod inspekcji typu},label={lst:meta-macro-example}]{listings/metaprogramming/meta-05-macro-example.scala}
+\lstinputlisting[language=Scala,caption={Makro generujące kod inspekcji typu},label={lst:meta-macro}]{listings/metaprogramming/meta-05-macro-example.scala}
 
-W~powyższym przykładzie makro \verb|showType| wykorzystuje refleksję TASTy (sekcja~\ref{subsec:refleksja-tasty}) do~uzyskania reprezentacji typu w~czasie kompilacji i~wygenerowania kodu zwracającego jego nazwę.
+W~powyższym przykładzie makro \verb|showType| wykorzystuje refleksję TASTy (sekcja~\ref{subsec:meta-tasty}) do~uzyskania reprezentacji typu w~czasie kompilacji i~wygenerowania kodu zwracającego jego nazwę.
 
-\subsection[Dopasowanie wzorców w cytatach kodu]{Dopasowanie wzorców w~cytatach kodu}\label{subsec:dopasowanie-wzorcow-kodu}
+\subsection[Dopasowanie wzorców w cytatach kodu]{Dopasowanie wzorców w~cytatach kodu}\label{subsec:meta-patterns}
 Scala~3 wspiera analizę kodu poprzez dopasowanie wzorców w~cytatach kodu (ang.~\emph{quote pattern matching})~\cite{stucki2020thesis,stucki2021multistage}.
 Mechanizm ten pozwala na dekonstrukcję kawałków kodu i~ekstrakcję podwyrażeń~\cite{stucki2021multistage}.
 
@@ -83,11 +83,11 @@ Stucki, Brachthäuser i~Odersky~\cite{stucki2021multistage} wprowadzają wzorce 
 System gwarantuje, że ekstrahowane wyrażenia są zamknięte względem definicji wewnątrz wzorca, zapobiegając wyciekom zakresu.
 
 \paragraph{Przykład dopasowania wzorców kodu}
-\lstinputlisting[language=Scala,caption={Optymalizacja wyrażeń algebraicznych poprzez dopasowanie wzorców},label={lst:meta-pattern-matching}]{listings/metaprogramming/meta-06-pattern-matching.scala}
+\lstinputlisting[language=Scala,caption={Optymalizacja wyrażeń algebraicznych poprzez dopasowanie wzorców},label={lst:meta-patterns}]{listings/metaprogramming/meta-06-pattern-matching.scala}
 
 Makro \verb|optimize| rozpoznaje wzorce wyrażeń arytmetycznych i~zastępuje je uproszczonymi wersjami w~czasie kompilacji, eliminując zbędne operacje.
 
-\subsection{Refleksja TASTy}\label{subsec:refleksja-tasty}
+\subsection{Refleksja TASTy}\label{subsec:meta-tasty}
 Dla przypadków wymagających głębszej analizy kodu, Scala~3 oferuje API refleksji TASTy~\cite{scala3-reflection,scala3-guides-reflection}.
 TASTy (ang.~\emph{Typed Abstract Syntax Trees}) jest binarnym formatem serializacji typowanych drzew składniowych używanym przez kompilator Scali~3~\cite{stucki2020thesis}.
 
@@ -106,16 +106,16 @@ System refleksji TASTy definiuje następującą hierarchię typów:
 \end{itemize}
 
 \paragraph{Przykład użycia refleksji TASTy}
-\lstinputlisting[language=Scala,caption={Inspekcja struktury klasy przypadku za pomocą refleksji TASTy},label={lst:meta-tasty-reflection}]{listings/metaprogramming/meta-07-tasty-reflection.scala}
+\lstinputlisting[language=Scala,caption={Inspekcja struktury klasy przypadku za pomocą refleksji TASTy},label={lst:meta-tasty}]{listings/metaprogramming/meta-07-tasty-reflection.scala}
 
 Makro \verb|inspectFields| wykorzystuje refleksję TASTy do~ekstrakcji nazw pól klasy przypadku w~czasie kompilacji, co pozwala na~generowanie kodu specyficznego dla struktury typu bez ręcznej specyfikacji.
 
 
-\section[Porównanie z innymi systemami metaprogramowania]{Porównanie z~innymi systemami metaprogramowania}\label{sec:porownanie-metaprogramowania}
+\section[Porównanie z innymi systemami metaprogramowania]{Porównanie z~innymi systemami metaprogramowania}\label{sec:meta-comparison}
 
 System metaprogramowania Scali~3 czerpie inspiracje z~innych języków, ale wprowadza własne innowacje w~zakresie bezpieczeństwa typów i~ergonomii.
 
-\subsection[Makra w Lisp i Scheme]{Makra w~Lisp i~Scheme}\label{subsec:makra-wlisp-ischeme}
+\subsection[Makra w Lisp i Scheme]{Makra w~Lisp i~Scheme}\label{subsec:meta-lisp}
 Język Lisp~\cite{mccarthy1960lisp} był pionierem w~dziedzinie metaprogramowania, wprowadzając koncepcję makr jako transformacji list reprezentujących kod.
 Kluczową różnicą między makrami Lisp a~Scali~3 jest:
 
@@ -124,7 +124,7 @@ Kluczową różnicą między makrami Lisp a~Scali~3 jest:
     \item \textbf{Scala~3:} makra operują na typowanych drzewach składni (TASTy), zapewniając pełne bezpieczeństwo typów
 \end{itemize}
 
-\subsection{Template Haskell}\label{subsec:template-haskell}
+\subsection{Template Haskell}\label{subsec:meta-haskell}
 Template Haskell~\cite{sheard2002template} wprowadza programowanie wieloetapowe do~języka Haskell poprzez cytaty i~wstawki, podobnie jak Scala~3.
 Główne podobieństwa i~różnice:
 
@@ -133,7 +133,7 @@ Główne podobieństwa i~różnice:
     \item \textbf{Różnice:} Template Haskell wymaga specjalnego trybu kompilacji (\verb|-XTemplateHaskell|), podczas gdy makra Scali~3 są standardową częścią języka; Scala~3 oferuje bogatsze API refleksji (TASTy)
 \end{itemize}
 
-\subsection[Makra w Rust]{Makra w~Rust}\label{subsec:makra-wrust}
+\subsection[Makra w Rust]{Makra w~Rust}\label{subsec:meta-rust}
 Język Rust oferuje dwa systemy makr: makra deklaratywne (\verb|macro\_rules!|) oraz makra proceduralne~\cite{rust-macros,klabnik2018rust}.
 W~porównaniu do~Scali~3:
 
@@ -143,25 +143,25 @@ W~porównaniu do~Scali~3:
 \end{itemize}
 
 
-\section[Zastosowania metaprogramowania w projekcie ALPACA]{Zastosowania metaprogramowania w~projekcie ALPACA}\label{sec:zastosowania-metaprogramowania}
+\section[Zastosowania metaprogramowania w projekcie ALPACA]{Zastosowania metaprogramowania w~projekcie ALPACA}\label{sec:meta-alpaca}
 
 System metaprogramowania Scali~3 stanowi fundament implementacji projektu \textit{ALPACA}.
 Kluczowe zastosowania obejmują:
 
 \begin{enumerate}
-    \item \textbf{Generacja klas anonimowych} (sekcja~\ref{subsec:generacja-klasy-anonimowej}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
+    \item \textbf{Generacja klas anonimowych} (sekcja~\ref{subsec:impl-lexer-anon-class}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
 
-    \item \textbf{Transformacja AST} (sekcja~\ref{subsubsec:transformacja-i-adaptacja-referencji}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
+    \item \textbf{Transformacja AST} (sekcja~\ref{subsubsec:impl-lexer-refs}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
 
-    \item \textbf{Typy rafinowane} (sekcja~\ref{subsec:typy-rafinowane}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
+    \item \textbf{Typy rafinowane} (sekcja~\ref{subsec:impl-lexer-refinement}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
 
-    \item \textbf{Walidacja w~czasie kompilacji} (sekcja~\ref{subsec:walidacja-i-obsuga-bedow}) --- wykrywanie błędów gramatyki przed wykonaniem programu
+    \item \textbf{Walidacja w~czasie kompilacji} (sekcja~\ref{subsec:impl-errors}) --- wykrywanie błędów gramatyki przed wykonaniem programu
 \end{enumerate}
 
-Szczegółowa analiza implementacji tych mechanizmów zostanie przedstawiona w~rozdziale~\ref{ch:implementacja}.
+Szczegółowa analiza implementacji tych mechanizmów zostanie przedstawiona w~rozdziale~\ref{ch:impl}.
 
 
-\section{Podsumowanie rozdziału}\label{sec:metaprogramming-summary}
+\section{Podsumowanie rozdziału}\label{sec:meta-summary}
 
 Rozdział przedstawił system metaprogramowania Scali~3 jako fundament teoretyczny dla projektu \textit{ALPACA}.
 Kluczowe wnioski:
@@ -176,4 +176,4 @@ Kluczowe wnioski:
     \item Scala~3 łączy zalety systemów metaprogramowania z~Lisp, Template Haskell i~Rust, wprowadzając własne innowacje w~zakresie bezpieczeństwa typów
 \end{itemize}
 
-Mechanizmy te stanowią podstawę implementacji opisanej w~rozdziale~\ref{ch:implementacja}, gdzie zostaną zastosowane do~konstrukcji lekserów i~parserów w~czasie kompilacji.
+Mechanizmy te stanowią podstawę implementacji opisanej w~rozdziale~\ref{ch:impl}, gdzie zostaną zastosowane do~konstrukcji lekserów i~parserów w~czasie kompilacji.
