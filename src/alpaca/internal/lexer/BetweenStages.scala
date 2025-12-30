@@ -16,7 +16,7 @@ import scala.util.matching.Regex.Match
 // todo: i do not like this name
 private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)
 
-private[alpaca] object BetweenStages {
+private[alpaca] object BetweenStages:
 
   /**
    * Automatically derives a BetweenStages instance for a context type.
@@ -29,7 +29,7 @@ private[alpaca] object BetweenStages {
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = {
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] =
     import quotes.reflect.*
 
     val parents = TypeRepr
@@ -54,5 +54,3 @@ private[alpaca] object BetweenStages {
     '{ (token, m, ctx) =>
       $derivedBetweenStages.foreach(_.apply(token, m, ctx)) // todo: do not init List
     }
-  }
-}

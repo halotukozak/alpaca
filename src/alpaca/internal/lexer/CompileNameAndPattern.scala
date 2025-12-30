@@ -14,7 +14,7 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q) {
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -62,4 +62,3 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
-}
