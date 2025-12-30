@@ -10,6 +10,8 @@ import org.scalatest.LoneElement
 import scala.compiletime.testing.typeCheckErrors
 
 final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
+  given DebugSettings = DebugSettings(true, "debug/", 90, true)
+
   val CalcLexer = lexer {
     case "\\+" => Token["+"]
     case value @ "[1-9][0-9]*" => Token["Num"](value.toInt)
@@ -61,14 +63,14 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
   test("conflict resolution cycle detection") {
     typeCheckErrors("""
     object CalcParser extends Parser[CalcContext] {
-      val A = rule({ case CalcLexer.Num(lexem) => lexem.value }: @name("A"))
+      val A = rule("A" { case CalcLexer.Num(lexem) => lexem.value })
       val B = rule { case CalcLexer.`+`(_) => "+" }
       val root = rule { case A(a) => a }
 
       override val resolutions = Set(
-        P.ofName("A").before(CalcLexer.`+`),
+        production.A.before(CalcLexer.`+`),
         CalcLexer.`+`.before(P(CalcLexer.`+`)),
-        P(CalcLexer.`+`).before(P.ofName("A")),
+        P(CalcLexer.`+`).before(production.A),
       )
     }
     """).loneElement.message should

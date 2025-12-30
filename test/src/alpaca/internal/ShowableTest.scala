@@ -22,7 +22,8 @@ final class ShowableTest extends AnyFunSuite with Matchers:
 
   test("Showable should convert custom case class to Shown") {
     case class Person(name: String, age: Int)
-    given Showable[Person] = person => s"${person.name} is ${person.age} years old."
+    given Showable[Person] = Showable: person =>
+      show"${person.name} is ${person.age} years old."
 
     val person = Person("Alice", 30)
     val shown: String = show"$person"

@@ -13,7 +13,7 @@ type ValidName = String & Singleton
 
 object ValidName:
 
-  def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
+  def from[Name <: ValidName: Type](using quotes: Quotes)(using DebugSettings): ValidName =
     import quotes.reflect.*
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str

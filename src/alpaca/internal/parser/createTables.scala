@@ -3,6 +3,7 @@ package internal
 package parser
 
 import NonEmptyList as NEL
+
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 
@@ -26,11 +27,9 @@ object Tables:
    * the parser's grammar rules and generate the necessary tables.
    *
    * @tparam Ctx the parser context type
-   * @param debugSettings debug configuration
    * @return the generated parse and action tables
    */
-  inline given [Ctx <: ParserCtx](using inline debugSettings: DebugSettings): Tables[Ctx] =
-    ${ createTablesImpl[Ctx](using '{ debugSettings }) }
+  inline given [Ctx <: ParserCtx]: Tables[Ctx] = ${ createTablesImpl[Ctx] }
 
 /**
  * Macro implementation that builds parse and action tables at compile time.
@@ -47,13 +46,10 @@ object Tables:
  *
  * @tparam Ctx the parser context type
  * @param quotes the Quotes instance
- * @param debugSettings debug configuration
  * @return an expression containing the parse and action tables
  */
-private def createTablesImpl[Ctx <: ParserCtx: Type](
-  using debugSettings: Expr[DebugSettings],
-)(using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = runWithTimeout:
+private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
+  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withDebugSettings:
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner
@@ -83,22 +79,20 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
-      val extractProductionName: Function[Tree, (Tree, ValidName | Null)] =
-        case Typed(term, tpt) =>
-          // todo: maybe it is possible to pattern match on TypeTree
-          val AnnotatedType(_, annot) = tpt.tpe.runtimeChecked
-          val '{ new `name`($name: ValidName) } = annot.asExpr.runtimeChecked
-          term -> name.value.orNull
-        case other => other -> null
+      val extractProductionName: Function[Expr[ProductionDefinition[?]], (Tree, ValidName | Null)] =
+        case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } =>
+          production.asTerm -> name.value.orNull
+        case other =>
+          other.asTerm -> null
 
       cases
-        .map(_.asTerm)
         .map(extractProductionName)
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
           case (Lambda(_, Match(_, caseDefs)), name) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
-          case (other, name) => report.errorAndAbort(show"Unexpected production definition: $other")
+          case (other, name) =>
+            report.errorAndAbort(show"Unexpected production definition: $other")
         .unsafeFlatMap:
           case (CaseDef(pattern, Some(_), rhs), name) =>
             throw new NotImplementedError("Guards are not supported yet")
@@ -151,9 +145,9 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       .collect: p =>
         p.rhs -> p
       .toMap
-
+    import scala.reflect.Selectable.reflectiveSelectable
     {
-      case '{ alpaca.Production.ofName(${ Expr(name) }) } =>
+      case '{ ($selector: ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
@@ -166,6 +160,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           NEL.unsafe(args),
           report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
         )
+
+      case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
     }
 
   debug("Conflict resolution rules extracted, building conflict resolution table...")

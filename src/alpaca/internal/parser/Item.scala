@@ -58,7 +58,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
     case _: Production.Empty => throw AlgorithmError(s"$this is an empty production, has no next terminals")
 
 private[parser] object Item:
-  given Showable[Item] =
+  given Showable[Item] = Showable:
     case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"

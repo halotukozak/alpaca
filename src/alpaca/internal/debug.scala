@@ -27,7 +27,8 @@ private[internal] object DebugPosition:
     val pos = Position.ofMacroExpansion
     Expr((pos.startLine + 1, pos.sourceFile.name))
 
-  given Showable[DebugPosition] = pos => show"at line ${pos.line} in ${pos.file}"
+  given Showable[DebugPosition] = Showable: pos =>
+    show"at line ${pos.line} in ${pos.file}"
 
 /**
  * Writes debug content to a file if debug settings are enabled.
@@ -36,8 +37,8 @@ private[internal] object DebugPosition:
  * debug directory only when debugging is enabled in the debug settings.
  * The directory structure is created if it doesn't exist.
  *
- * @param path the relative path within the debug directory
- * @param content the content to write
+ * @param path          the relative path within the debug directory
+ * @param content       the content to write
  * @param debugSettings the debug settings determining if/where to write
  */
 private[internal] def debugToFile(path: String)(content: Shown)(using debugSettings: DebugSettings): Unit =
