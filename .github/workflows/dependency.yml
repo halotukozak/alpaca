@@ -1,0 +1,22 @@
+name: github-dependency-graph
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      # - master
+      - none
+
+jobs:
+  submit-dependency-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: coursier/cache-action@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - uses: ckipp01/mill-dependency-submission@v1
