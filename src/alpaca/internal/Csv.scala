@@ -21,7 +21,7 @@ private[internal] final case class Csv(
   rows: List[List[Shown]],
 )
 
-private[internal] object Csv {
+private[internal] object Csv:
 
   /**
    * Showable instance for Csv that formats it as a comma-separated value string.
@@ -58,4 +58,3 @@ private[internal] object Csv {
       .toList
       .asInstanceOf[List[(Showable[Any], Any)]]
       .map(_.show(_))
-}
