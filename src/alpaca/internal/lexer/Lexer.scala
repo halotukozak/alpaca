@@ -193,8 +193,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     None,
   )
 
-  given Default[ValDef] = () => ???
-
   val body =
     val definedTokenVals = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
@@ -214,7 +212,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             Some('{
               $token.asInstanceOf[IgnoredToken[name, Ctx] & TokenRefn]
             }.asTerm.changeOwner(owner)),
-        )
+          )
 
     definedTokenVals ++ ignoredTokenVals ++ Vector(
       TypeDef(lexemeRefinementSymbol(cls)),

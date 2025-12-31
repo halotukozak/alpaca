@@ -17,17 +17,23 @@ import scala.annotation.tailrec
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using DebugSettings):
   import quotes.reflect.*
 
-  private def extractOrTypes(tree: Tree): List[Tree] = tree match
+  private def extractOrTypes(tree: Tree, level: Int = 0): List[Tree] = tree match
     case tree @ Applied(tpt, List(left, right)) if tpt.tpe =:= TypeRepr.of[|] =>
-//      (tree.toString + "\n").soft
-      extractOrTypes(left) ++ extractOrTypes(right)
-    // case tree @ Typed(_, pattern) =>
-// //      (tree.toString + "\n").soft
-//       Nil
-//       //extractOrTypes(pattern)
+      s"Level $level: ${tree.toString}\n".soft
+      extractOrTypes(left, level + 1) ++ extractOrTypes(right, level + 1)
+    case tree @ Typed(_, pattern) =>
+      s"Level $level: ${tree.toString}\n".soft
+      extractOrTypes(pattern, level + 1)
     case pattern =>
-//      (pattern.toString + "\n").soft
+      s"Final Level $level: ${pattern.toString}\n".soft
       List(pattern)
+
+  def treeToStr(tree: Tree): String | Char = tree match
+    case Literal(StringConstant(str)) => str
+    case Singleton(Literal(StringConstant(str))) => str
+    case Literal(CharConstant(char)) => char
+    case Singleton(Literal(CharConstant(char))) => char
+    case x => raiseShouldNeverBeCalled[String](x.toString)
 
   /**
    * Compiles a pattern tree into token information.
@@ -50,9 +56,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           TokenInfo.unsafe(regex.toString, Vector(regex)) :: Nil
         // case x @ ("regex" | 'l') => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, Vector(str))
-            case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))
+          alternatives.map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)
@@ -64,11 +68,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           TokenInfo.unsafe(str.toString, Vector(str)) :: Nil
         // case x : ("regex" | 'l') => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, Vector(str))
-            case Singleton(Literal(StringConstant(str))) => TokenInfo.unsafe(str, Vector(str))
-            case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))
-            case Singleton(Literal(CharConstant(str))) => TokenInfo.unsafe(str.toString, Vector(str))
+          alternatives.map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
           TokenInfo.unsafe(name, Vector(regex)) :: Nil
@@ -79,21 +79,11 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         case (ConstantType(StringConstant(str)), alternatives) =>
           TokenInfo.unsafe(
             str,
-            extractOrTypes(alternatives)
-              .unsafeMap:
-                case Literal(StringConstant(str)) => str
-                case Singleton(Literal(StringConstant(str))) => str
-                case Literal(CharConstant(char)) => char
-                case Singleton(Literal(CharConstant(char))) => char
-              .toVector,
+            extractOrTypes(alternatives).map(treeToStr).toVector,
           ) :: Nil
         // case x: ("regex" | 'l') => Token[x.type]
         case (TermRef(qual, name), alternatives) =>
-          extractOrTypes(alternatives).unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, Vector(str))
-            case Singleton(Literal(StringConstant(str))) => TokenInfo.unsafe(str, Vector(str))
-            case Literal(CharConstant(str)) => TokenInfo.unsafe(str.toString, Vector(str))
-            case Singleton(Literal(CharConstant(str))) => TokenInfo.unsafe(str.toString, Vector(str))
+          extractOrTypes(alternatives).map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
 
         case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
 

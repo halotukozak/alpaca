@@ -26,7 +26,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-language:noAutoTupling",
     "-Vprofile",
     "-Xprint-inline",
-    // "-Ycheck:all", // cannot be enabled when scoverage used :/
+//    "-Ycheck:all", // cannot be enabled when scoverage used :/
     "-Ycheck:macros",
     // "-Ydebug-error",
     "-Ydebug-flags",
