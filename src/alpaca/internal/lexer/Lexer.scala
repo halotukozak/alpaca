@@ -234,11 +234,11 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         ValDef(
           owner,
           Some {
-            val declaredTokens = definedTokens.map:
+            val tokens = (ignoredTokens ++ definedTokens).map:
               case '{ $token: Token[name, Ctx, value] } =>
                 Ref(cls.fieldMember(ValidName.from[name])).asExprOf[ThisToken]
 
-            Expr.ofList(ignoredTokens ++ declaredTokens).asTerm.changeOwner(owner)
+            Expr.ofList(tokens).asTerm.changeOwner(owner)
           },
         ),
       withOverridingSymbol(parent = cls)(selectDynamicSymbol): owner =>
