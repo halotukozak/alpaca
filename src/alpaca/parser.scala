@@ -214,12 +214,12 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx])
    * This is a convenience method that infers the result type from the root rule.
    *
    * @param lexems the list of lexems to parse
-   * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse(lexems: List[Lexeme[?, ?]])(using inline debugSettings: DebugSettings): (
+  inline def parse(lexems: List[Lexeme[?, ?]])(using debugSettings:DebugSettings) : (
     ctx: Ctx,
     result: (parser.root.type match
       case Rule[t] => t
     ) | Null,
-  ) = parser.unsafeParse(lexems)
+  )= withDebugSettings(debugSettings):
+    parser.unsafeParse(lexems)
