@@ -24,6 +24,10 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   /** List of all tokens defined in this lexer, including ignored tokens. */
   def tokens: List[Token[?, Ctx, ?]]
 
+  /** Map of token literals to their definitions for dynamic access. */
+  // todo: should it be String? What we mean by literal?
+  protected def byLiteral(name: Char): Token[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }
+
   /**
    * Provides dynamic access to tokens by name.
    *

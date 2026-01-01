@@ -3,9 +3,9 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.{compileTimeOnly, publicInBinary}
 import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.annotation.compileTimeOnly
-import scala.annotation.publicInBinary
+import scala.util.matching.Regex
 
 /**
  * Type alias for context manipulation functions.
@@ -24,13 +24,20 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @tparam Name the token name type
  * @param name the token name
  * @param regexGroupName a unique name for the regex capture group
- * @param pattern the regex pattern that matches this token
+ * @param patterns the regex patterns or literals that matches this token
  */
 private[lexer] final case class TokenInfo[+Name <: ValidName](
   name: Name,
   regexGroupName: String,
-  pattern: String,
-)
+  patterns: Seq[String | Char],
+):
+  lazy val toEscapedRegex: String = patterns
+    .map:
+      case s: String => s
+      case c: Char => Regex.quote(c.toString)
+    .mkString("|")
+
+  lazy val toRegex: String = patterns.mkString("|")
 
 //todo: private[lexer]
 object TokenInfo:
@@ -46,13 +53,21 @@ object TokenInfo:
    * @param regex the regex pattern
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
+   *
+   * @note Do not change patterns type to Seq, it will make String => Seq[Char] conversion available
    */
-  def unsafe(name: String, regex: String)(using quotes: Quotes): Expr[TokenInfo[?]] =
+  def unsafe(name: String, patterns: Vector[String | Char])(using quotes: Quotes): Expr[TokenInfo[?]] =
     import quotes.reflect.*
     ValidName.check(name)
     ConstantType(StringConstant(name)).asType match
-      case '[type nameTpe <: ValidName; nameTpe] =>
-        '{ TokenInfo[nameTpe](${ Expr(name).asExprOf[nameTpe] }, ${ Expr(nextName()) }, ${ Expr(regex) }) }
+      case '[type name <: ValidName; name] =>
+        '{
+          TokenInfo[name](
+            ${ Expr(name).asExprOf[name] },
+            ${ Expr(nextName()) },
+            ${ Expr[Seq[String | Char]](patterns) },
+          )
+        }
 
   /**
    * Generates a unique name for a regex capture group.
@@ -66,17 +81,28 @@ object TokenInfo:
    */
   given [name <: ValidName]: FromExpr[TokenInfo[name]] with
     def unapply(x: Expr[TokenInfo[name]])(using Quotes): Option[TokenInfo[name]] = x match
-      case '{ TokenInfo($name, $regexGroupName: String, $pattern: String) } =>
+      case '{ TokenInfo($name, $regexGroupName, $patterns) } =>
         for
           name <- name.value
           regexGroupName <- regexGroupName.value
-          pattern <- pattern.value
-        yield TokenInfo(name.asInstanceOf[name], regexGroupName, pattern)
+          patterns <- patterns.value
+        yield TokenInfo(name.asInstanceOf[name], regexGroupName, patterns)
       case _ => None
 
   given [name <: ValidName: {Type}]: ToExpr[TokenInfo[name]] with
     def apply(x: TokenInfo[name])(using Quotes): Expr[TokenInfo[name]] =
-      '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
+      '{ TokenInfo[name](${ Expr[name](x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.patterns) }) }
+
+  given ToExpr[String | Char] with
+    def apply(x: String | Char)(using Quotes): Expr[String | Char] = x match
+      case s: String => Expr(s)
+      case c: Char => Expr(c)
+
+  given FromExpr[String | Char] with
+    def unapply(x: Expr[String | Char])(using Quotes): Option[String | Char] = x match
+      case '{ $s: String } => s.value
+      case '{ $c: Char } => c.value
+      case _ => None
 
 /**
  * Base trait for all token types.

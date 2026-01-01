@@ -10,20 +10,20 @@ final class JsonTest extends AnyFunSuite:
       case "\\s+" => Token.Ignored
 
       // brackets and punctuation marks
-      case "\\{" => Token["{"]
-      case "\\}" => Token["}"]
-      case "\\[" => Token["["]
-      case "\\]" => Token["]"]
-      case ":" => Token[":"]
-      case "," => Token[","]
+      case '{' => Token["{"]
+      case '}' => Token["}"]
+      case '[' => Token["["]
+      case ']' => Token["]"]
+      case ':' => Token[":"]
+      case ',' => Token[","]
 
       // literals
-      case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
+      case x: ("false" | "true") => Token["Bool"](x.toBoolean)
       case "null" => Token["Null"](null)
 
       // numbers and strings
-      case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
-      case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
+      case x: """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
+      case x: """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
     }
 
     object JsonParser extends Parser:
@@ -69,20 +69,20 @@ final class JsonTest extends AnyFunSuite:
     }
 
     withLazyReader("""
-      {
-        "name": "John Doe",
-        "age": 30,
-        "isStudent": false,
-        "courses": ["Math", "Science", "History"],
-        "address": {
-          "street": "123 Main St",
-          "city": "Anytown",
-          "zip": "12345"
-        },
-        "scores": [95.5, 88.0, 76.5],
-        "nullValue": null
-      }
-      """) { input =>
+       {
+         "name": "John Doe",
+         "age": 30,
+         "isStudent": false,
+         "courses": ["Math", "Science", "History"],
+         "address": {
+           "street": "123 Main St",
+           "city": "Anytown",
+           "zip": "12345"
+         },
+         "scores": [95.5, 88.0, 76.5],
+         "nullValue": null
+       }
+       """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 
@@ -104,21 +104,21 @@ final class JsonTest extends AnyFunSuite:
     }
 
     withLazyReader("""
-      [
-        {
-          "id": 1,
-          "name": "Alice"
-        },
-        {
-          "id": 2,
-          "name": "Bob"
-        },
-        {
-          "id": 3,
-          "name": "Charlie"
-        }
-      ]
-      """) { input =>
+       [
+         {
+           "id": 1,
+           "name": "Alice"
+         },
+         {
+           "id": 2,
+           "name": "Bob"
+         },
+         {
+           "id": 3,
+           "name": "Charlie"
+         }
+       ]
+       """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 
@@ -132,20 +132,20 @@ final class JsonTest extends AnyFunSuite:
     }
 
     withLazyReader("""
-      {
-        "menu": {
-          "id": "file",
-          "value": "File",
-          "popup": {
-            "menuitem": [
-              {"value": "New", "onclick": "CreateNewDoc()"},
-              {"value": "Open", "onclick": "OpenDoc()"},
-              {"value": "Close", "onclick": "CloseDoc()"}
-            ]
-          }
-        }
-      }
-      """) { input =>
+       {
+         "menu": {
+           "id": "file",
+           "value": "File",
+           "popup": {
+             "menuitem": [
+               {"value": "New", "onclick": "CreateNewDoc()"},
+               {"value": "Open", "onclick": "OpenDoc()"},
+               {"value": "Close", "onclick": "CloseDoc()"}
+             ]
+           }
+         }
+       }
+       """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 

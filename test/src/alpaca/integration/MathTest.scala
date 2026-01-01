@@ -8,26 +8,26 @@ final class MathTest extends AnyFunSuite:
   test("e2e math test") {
     val CalcLexer = lexer {
       // ignore whitespace/comments
-      case _ @ "[ \t\r\n]+" => Token.Ignored
-      case _ @ "#.*" => Token.Ignored
+      case "[ \t\r\n]+" => Token.Ignored
+      case "#.*" => Token.Ignored
 
       // multi-char ops FIRST
       case "\\*\\*" => Token["exp"]
       case "//" => Token["fdiv"]
 
       // single-char ops
-      case literal @ ("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | "!" | ",") =>
+      case literal: ('+' | '-' | '*' | '/' | '%' | '(' | ')' | '!' | ',') =>
         Token[literal.type]
 
       // math constants (lowercase)
-      case keyword @ ("pi" | "e" | "tau" | "inf" | "nan") =>
+      case keyword: ("pi" | "e" | "tau" | "inf" | "nan") =>
         Token[keyword.type]
 
       // trig functions (lowercase)
-      case keyword @ ("atan2" | "sinh" | "cosh" | "tanh") =>
+      case keyword: ("atan2" | "sinh" | "cosh" | "tanh") =>
         Token[keyword.type]
 
-      case keyword @ ("sin" | "cos" | "tan" | "asin" | "acos" | "atan") =>
+      case keyword: ("sin" | "cos" | "tan" | "asin" | "acos" | "atan") =>
         Token[keyword.type]
 
       // numbers
@@ -110,24 +110,24 @@ final class MathTest extends AnyFunSuite:
     assert(result == 3.0)
 
     withLazyReader("""
-      ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5) 
-      * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
-      - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
-      + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
-    """) { input =>
+       ((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)
+       * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1)))
+       - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2))))
+       + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
+     """) { input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
       val (_, result) = CalcParser.parse(lexemes)
       assert(result == 2096.0)
     }
 
     withLazyReader("""
-      + sin(pi/6) + cos(pi/3) + tan(pi/4)
-      + (2 ** 3 ** 2) / (3 + 1)
-      + ((7 // 3) * 5 + (10 % 4))
-      - (-cos(0) + +sin(pi/2))
-      + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
-      + atan2(1, 0)
-    """) { input =>
+       + sin(pi/6) + cos(pi/3) + tan(pi/4)
+       + (2 ** 3 ** 2) / (3 + 1)
+       + ((7 // 3) * 5 + (10 % 4))
+       - (-cos(0) + +sin(pi/2))
+       + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
+       + atan2(1, 0)
+     """) { input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
       val (_, result) = CalcParser.parse(lexemes)
       val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)

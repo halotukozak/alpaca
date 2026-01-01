@@ -23,7 +23,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
       "[a-zA-Z]+",
       "[ \\t\\n]+",
     )
-    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe (3, 0)
   }
 
   test("checkPatterns should report prefix shadowing") {
@@ -35,7 +35,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
       "[a-zA-Z]+",
       "[ \\t\\n]+",
     )
-    RegexChecker.checkPatterns(patterns).loneElement shouldBe "Pattern if is shadowed by i"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe (2, 0)
   }
 
   test("checkPatterns should report identical patterns as overlapping") {
@@ -46,8 +46,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
       "[a-zA-Z_][a-zA-Z0-9_]*",
       "[ \\t\\n]+",
     )
-    RegexChecker.checkPatterns(patterns).loneElement shouldBe
-      "Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*"
+    RegexChecker.checkPatterns(patterns).loneElement shouldBe (3, 0)
   }
 
   test("checkPatterns should not report patterns in proper order") {

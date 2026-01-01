@@ -16,19 +16,19 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])
 
   val CalcLexer = lexer {
-    case " " => Token.Ignored
-    case "\\t" => Token.Ignored
-    case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
-    case "\\+" => Token["PLUS"]
-    case "-" => Token["MINUS"]
-    case "\\*" => Token["TIMES"]
-    case "/" => Token["DIVIDE"]
-    case "=" => Token["ASSIGN"]
-    case "," => Token["COMMA"]
-    case parenthesis @ ("\\(" | "\\)") => Token[parenthesis.type]
-    case number @ "\\d+" => Token["NUMBER"](number.toInt)
+    case ' ' => Token.Ignored
+    case '\t' => Token.Ignored
+    case id: "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
+    case '+' => Token["PLUS"]
+    case '-' => Token["MINUS"]
+    case '*' => Token["TIMES"]
+    case '/' => Token["DIVIDE"]
+    case '=' => Token["ASSIGN"]
+    case ',' => Token["COMMA"]
+    case parenthesis: ('(' | ')') => Token[parenthesis.type]
+    case number: "\\d+" => Token["NUMBER"](number.toInt)
     case "#.*" => Token.Ignored
-    case newline @ "\n+" =>
+    case newline: "\n+" =>
       ctx.line += newline.count(_ == '\n')
       Token.Ignored
   }
@@ -39,6 +39,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
   ) extends ParserCtx derives Copyable
 
   object CalcParser extends Parser[CalcContext]:
+
     val Expr: Rule[Int] = rule(
       "plus" { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 },
       "minus" { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 },

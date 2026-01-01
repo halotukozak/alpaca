@@ -7,8 +7,8 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
   test("remapping maps matched text to custom values using ctx.text") {
     val L = lexer {
       case "\\s+" => Token.Ignored
-      case x @ "[0-9]+" => Token["int"](x.toInt)
-      case s @ "[a-z]+" => Token["id"](s.toUpperCase)
+      case x: "[0-9]+" => Token["int"](x.toInt)
+      case s: "[a-z]+" => Token["id"](s.toUpperCase)
     }
 
     val (_, res) = L.tokenize("12 abc 7")
@@ -18,11 +18,11 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
 
   test("ctx manipulation influences error position after ignored token") {
     val L2 = lexer {
-      case "A" => Token["A"]
-      case "!" =>
+      case 'A' => Token["A"]
+      case '!' =>
         ctx.position += 5
         Token.Ignored
-      case x @ "\n+" =>
+      case x: "\n+" =>
         ctx.position += x.count(_ == '\n')
         Token.Ignored
     }

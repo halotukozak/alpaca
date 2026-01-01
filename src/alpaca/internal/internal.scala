@@ -29,14 +29,28 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
    * @param queries pairs of (symbol to find, replacement term)
    * @return a TreeMap that performs the replacements
    */
-  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap:
-    // skip NoSymbol
-    private val filtered = queries.view.filterNot(_.find.isNoSymbol)
+  def apply(queries: (find: Tree, replace: Term)*): TreeMap = new TreeMap:
+    private val filtered = queries.view
+      .collect:
+        case (find, replace) if !find.symbol.isNoSymbol => (find.symbol, replace)
+      .toMap
+
+    private val singletons: Map[Constant | Null, Term] = queries.view
+      .collect:
+        case (Bind(_, Literal(term)), replace) => (term, replace)
+        case (Literal(term), replace) => (term, replace)
+      .toMap
 
     override def transformTerm(tree: Term)(owner: Symbol): Term =
+      val term = tree match
+        case Bind(_, Literal(term)) => term
+        case Literal(term) => term
+        case _ => null
+
       filtered
-        .collectFirst:
-          case (find, replace) if find == tree.symbol => replace
+        .get(tree.symbol)
+        .orElse(singletons.get(term))
+        .map(_.changeOwner(owner))
         .getOrElse(super.transformTerm(tree)(owner))
 
 /**
@@ -48,8 +62,8 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using DebugSettings):
 
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using DebugSettings):
   import quotes.reflect.*
 
   /**
@@ -67,7 +81,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(usi
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
+      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)).changeOwner(sym),
     ).asExprOf[F]
 
 private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
@@ -79,15 +93,20 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
     case value => toExpr(value.asInstanceOf[T])
 
 // todo: it's temporary, remove when we have a proper timeout implementation
-inline private[internal] def withDebugSettings[T](inline block: DebugSettings ?=> T)(using Quotes): T =
+inline private[alpaca] def withDebugSettings[T](inline block: DebugSettings ?=> T): T =
+  ${ withDebugSettingsImpl('{ block }) }
+
+def withDebugSettingsImpl[T: Type](block: Expr[DebugSettings ?=> T])(using Quotes): Expr[T] =
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration.*
   import scala.concurrent.{Await, Future}
 
-  given DebugSettings = Expr.summon[DebugSettings].get.valueOrAbort
+  val debugSettings = Expr.summon[DebugSettings].get
 
-  val future = Future(block)
-  Await.result(future, summon[DebugSettings].timeout.seconds)
+  '{
+    val future = Future($block(using $debugSettings))
+    Await.result(future, $debugSettings.timeout.seconds)
+  }
 
 private[internal] given FromExpr[DebugSettings] with
 

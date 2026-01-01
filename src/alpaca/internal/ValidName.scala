@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import compiletime.ops.any.ToString
+
 /**
  * Type alias for valid token names.
  *
@@ -11,8 +13,10 @@ package internal
 //todo: make it opaque with ban on underscore
 type ValidName = String & Singleton
 
-object ValidName:
+//todo: find better name
+type ValidNameLike = (Char | String) & Singleton
 
+object ValidName:
   def from[Name <: ValidName: Type](using quotes: Quotes)(using DebugSettings): ValidName =
     import quotes.reflect.*
     TypeRepr.of[Name] match

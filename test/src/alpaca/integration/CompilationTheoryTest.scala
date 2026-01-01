@@ -1,8 +1,9 @@
 package alpaca
 package integration
 
-import org.scalatest.funsuite.AnyFunSuite
 import Production as P
+
+import org.scalatest.funsuite.AnyFunSuite
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])
@@ -11,30 +12,30 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case "\\s+" => Token.Ignored
     case "#.*" => Token.Ignored
 
-    case comparator @ ("<=" | ">=" | "==" | "!=") => Token[comparator.type]
-    case comparator @ ("<" | ">") => Token[comparator.type]
+    case comparator: ("<=" | ">=" | "==" | "!=") => Token[comparator.type]
+    case comparator: ('<' | '>') => Token[comparator.type]
 
-    case assignOp @ ("\\+=" | "-=" | "\\*=" | "/=" | "=") => Token[assignOp.type]
+    case assignOp: ("\\+=" | "-=" | "\\*=" | "/=" | '=') => Token[assignOp.type]
 
-    case matrixOp @ ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token[matrixOp.type]
+    case matrixOp: ("\\.\\+" | "\\.\\-" | "\\.\\*" | "\\./") => Token[matrixOp.type]
 
-    case bracket @ ("\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}") => Token[bracket.type]
+    case bracket: ('(' | ')' | '[' | ']' | '{' | '}') => Token[bracket.type]
 
-    case binaryOp @ ("\\+" | "-" | "\\*" | "/") => Token[binaryOp.type]
+    case binaryOp: ('+' | '-' | '*' | '/') => Token[binaryOp.type]
 
-    case literal @ (":" | "'" | "," | ";") => Token[literal.type]
+    case literal: (':' | '\'' | ',' | ';') => Token[literal.type]
 
-    case keyword @ ("if" | "else" | "while" | "for" | "break" | "continue" | "return") => Token[keyword.type]
+    case keyword: ("if" | "else" | "while" | "for" | "break" | "continue" | "return") => Token[keyword.type]
 
-    case function @ ("eye" | "zeros" | "ones" | "print") => Token["function"](function)
+    case function: ("eye" | "zeros" | "ones" | "print") => Token["function"](function)
 
-    case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](id)
+    case id: "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](id)
 
-    case float @ """-?(\d+\.\d*|\.\d+)""" => Token["float"](float.toDouble)
+    case float: """-?(\d+\.\d*|\.\d+)""" => Token["float"](float.toDouble)
 
-    case int @ "-?\\d+" => Token["int"](int.toInt)
+    case int: "-?\\d+" => Token["int"](int.toInt)
 
-    case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
+    case string: """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
   }
 
   object ASTPrinterParser extends Parser:
@@ -182,20 +183,20 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
   test("special functions, initializations") {
     withLazyReader("""
-      A = zeros(5);  # create 5x5 matrix filled with zeros
-      B = ones(7);   # create 7x7 matrix filled with ones
-      I = eye(10);   # create 10x10 matrix filled with ones on diagonal and zeros elsewhere
+       A = zeros(5);  # create 5x5 matrix filled with zeros
+       B = ones(7);   # create 7x7 matrix filled with ones
+       I = eye(10);   # create 10x10 matrix filled with ones on diagonal and zeros elsewhere
 
-      # initialize 3x3 matrix with specific values
-      E1 = [ [1, 2, 3],
-             [4, 5, 6],
-             [7, 8, 9] ] ;
+       # initialize 3x3 matrix with specific values
+       E1 = [ [1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 9] ] ;
 
-      A[1,3] = 0 ;
+       A[1,3] = 0 ;
 
-      x = 2;
-      y = 2.5;
-      """) { input =>
+       x = 2;
+       y = 2.5;
+       """) { input =>
       val (_, lexems) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexems)
 
@@ -258,22 +259,22 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
   test("assignment operators, binary operators, transposition") {
     withLazyReader("""
-    C = -A;     # assignemnt with unary expression
-    C = B' ;    # assignemnt with matrix transpose
-    C = A+B ;   # assignemnt with binary addition
-    C = A-B ;   # assignemnt with binary substraction
-    C = A*B ;   # assignemnt with binary multiplication
-    C = A/B ;   # assignemnt with binary division
-    C = A.+B ;  # add element-wise A to B
-    C = A.-B ;  # substract B from A
-    C = A.*B ;  # multiply element-wise A with B
-    C = A./B ;  # divide element-wise A by B
+     C = -A;     # assignemnt with unary expression
+     C = B' ;    # assignemnt with matrix transpose
+     C = A+B ;   # assignemnt with binary addition
+     C = A-B ;   # assignemnt with binary substraction
+     C = A*B ;   # assignemnt with binary multiplication
+     C = A/B ;   # assignemnt with binary division
+     C = A.+B ;  # add element-wise A to B
+     C = A.-B ;  # substract B from A
+     C = A.*B ;  # multiply element-wise A with B
+     C = A./B ;  # divide element-wise A by B
 
-    C += B ;  # add B to C
-    C -= B ;  # substract B from C
-    C *= A ;  # multiply A with C
-    C /= A ;  # divide A by C
-    """) { input =>
+     C += B ;  # add B to C
+     C -= B ;  # substract B from C
+     C *= A ;  # multiply A with C
+     C /= A ;  # divide A by C
+     """) { input =>
       val (_, lexemes) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexemes)
       val expected = ASTNode(
@@ -302,59 +303,57 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
   test("control flow instruction") {
     withLazyReader("""
-    N = 10;
-    M = 20;
+     N = 10;
+     M = 20;
 
-    if(N==10)
-        print("N==10");
-    else if(N!=10)
-        print("N!=10");
+     if(N==10)
+         print("N==10");
+     else if(N!=10)
+         print("N!=10");
 
+     if(N>5) {
+         print("N>5");
+     }
+     else if(N>=0) {
+         print("N>=0");
+     }
 
-    if(N>5) {
-        print("N>5");
-    }
-    else if(N>=0) {
-        print("N>=0");
-    }
+     if(N<10) {
+         print("N<10");
+     }
+     else if(N<=15)
+         print("N<=15");
 
-    if(N<10) {
-        print("N<10");
-    }
-    else if(N<=15)
-        print("N<=15");
+     k = 10;
+     while(k>0)
+         k = k - 1;
 
-    k = 10;
-    while(k>0)
-        k = k - 1;
+     while(k>0) {
+         if(k<5)
+             i = 1;
+         else if(k<10)
+             i = 2;
+         else
+             i = 3;
 
-    while(k>0) {
-        if(k<5)
-            i = 1;
-        else if(k<10)
-            i = 2;
-        else
-            i = 3;
+         k = k - 1;
+     }
 
-        k = k - 1;
-    }
+     for i = 1:N
+       for j = i:M
+         print(i, j);
 
-
-    for i = 1:N
-      for j = i:M
-        print(i, j);
-
-    for i = 1:N {
-        if(i<=N/16)
-            print(i);
-        else if(i<=N/8)
-            break;
-        else if(i<=N/4)
-            continue;
-        else if(i<=N/2)
-            return 0;
-    }
-    """) { input =>
+     for i = 1:N {
+         if(i<=N/16)
+             print(i);
+         else if(i<=N/8)
+             break;
+         else if(i<=N/4)
+             continue;
+         else if(i<=N/2)
+             return 0;
+     }
+     """) { input =>
       val (_, lexemes) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexemes)
       val expected = ASTNode(

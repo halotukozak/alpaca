@@ -70,12 +70,13 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
           val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
           val seq = param.asExprOf[Seq[Any]]
 
-          val replacements = (find = ctxSymbol, replace = ctx) ::
+          val replacements = (find = Ref(ctxSymbol), replace = ctx) ::
             binds.zipWithIndex
               .collect:
-                case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
+                case (Some(bind), idx) => ((bind, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
-                case ((bind, '[t]), idx) => Some((find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm))
+                case ((bind, '[t]), idx) =>
+                  Some((find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm.changeOwner(methSym)))
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 

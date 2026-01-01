@@ -4,6 +4,10 @@ import alpaca.internal.*
 import alpaca.internal.lexer.*
 
 import scala.annotation.compileTimeOnly
+import NamedTuple.AnyNamedTuple
+import java.util.jar.Attributes.Name
+import scala.collection.mutable
+import scala.util.NotGiven
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -61,7 +65,7 @@ object Token:
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): TokenDefinition[Name, ctx.type, String] = dummy
+  def apply[Name <: ValidNameLike](using ctx: LexerCtx): TokenDefinition[Name, ctx.type, String] = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -74,7 +78,7 @@ object Token:
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): TokenDefinition[Name, ctx.type, value.type] = dummy
+  def apply[Name <: ValidNameLike](value: Any)(using ctx: LexerCtx): TokenDefinition[Name, ctx.type, value.type] = dummy
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
 
@@ -176,7 +180,7 @@ object LexerCtx:
  * @tparam Ctx the global context type
  */
 
-type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, TokenDefinition[ValidName, Ctx, Any]]
+type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, TokenDefinition[ValidNameLike, Ctx, Any]]
 
 /**
  * Defines an opaque type `TokenDefinition` that represents a token used in a lexer.
@@ -189,7 +193,7 @@ type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, TokenDefinition[
  * The exact implementation details of the underlying type are abstracted away by using `Any`.
  * Opaque types provide type safety without exposing the underlying representation.
  */
-opaque type TokenDefinition[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
+opaque type TokenDefinition[+Name <: ValidNameLike, +Ctx <: LexerCtx, +Value] = Any
 
 /**
  * Represents a specific type of token definition that denotes an ignored token during the lexing process.
@@ -210,4 +214,4 @@ opaque type TokenDefinition[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
  * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
  * this type cannot be directly manipulated outside the context of its definition.
  */
-opaque type IgnoredTokenDefinition[+Ctx <: LexerCtx] <: TokenDefinition[ValidName, Ctx, Nothing] = Any
+opaque type IgnoredTokenDefinition[+Ctx <: LexerCtx] <: TokenDefinition[ValidNameLike, Ctx, Nothing] = Any
