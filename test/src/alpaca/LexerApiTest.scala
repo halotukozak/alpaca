@@ -9,12 +9,12 @@ import scala.annotation.nowarn
 @nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers:
   val Lexer = lexer {
+    case comment: "#.*" => Token.Ignored
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
     case "\\.\\/" => Token["dotDiv"]
     case "<=" => Token["lessEqual"]
-    case comment: "#.*" => Token.Ignored
     case ">=" => Token["greaterEqual"]
     case "!=" => Token["notEqual"]
     case "==" => Token["equal"]
