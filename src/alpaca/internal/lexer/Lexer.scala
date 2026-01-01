@@ -102,13 +102,23 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
 
-  def tokenSymbols(cls: Symbol) = definedTokens.map:
+  def definedTokenSymbols(cls: Symbol) = definedTokens.map:
     case '{ $token: DefinedToken[name, Ctx, value] } =>
       Symbol.newVal(
         parent = cls,
         name = ValidName.from[name],
         tpe = TypeRepr.of[DefinedToken[name, Ctx, value] & TokenRefn],
         flags = Flags.Synthetic,
+        privateWithin = Symbol.noSymbol,
+      )
+
+  def ignoredTokenSymbols(cls: Symbol) = ignoredTokens.map:
+    case '{ $token: IgnoredToken[name, Ctx] } =>
+      Symbol.newVal(
+        parent = cls,
+        name = ValidName.from[name],
+        tpe = TypeRepr.of[IgnoredToken[name, Ctx] & TokenRefn],
+        flags = Flags.Synthetic | Flags.Protected,
         privateWithin = Symbol.noSymbol,
       )
 
@@ -170,7 +180,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     Symbol.freshName("$anon"),
     List(TypeRepr.of[Tokenization[Ctx]]),
     cls =>
-      tokenSymbols(cls) ++ List(
+      definedTokenSymbols(cls) ++ ignoredTokenSymbols(cls) ++ List(
         fieldsSymbol(cls),
         lexemeRefinementSymbol(cls),
         compiledSymbol(cls),
@@ -181,7 +191,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   )
 
   val body =
-    val tokenVals = definedTokens.map:
+    val definedTokenVals = definedTokens.map:
       case '{ $token: DefinedToken[name, Ctx, value] } =>
         withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
           ValDef(
@@ -191,7 +201,17 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             }.asTerm.changeOwner(owner)),
           )
 
-    tokenVals ++ Vector(
+    val ignoredTokenVals = ignoredTokens.map:
+      case '{ $token: IgnoredToken[name, Ctx] } =>
+        withOverridingSymbol(parent = cls)(_.fieldMember(ValidName.from[name])): owner =>
+          ValDef(
+            owner,
+            Some('{
+              $token.asInstanceOf[IgnoredToken[name, Ctx] & TokenRefn]
+            }.asTerm.changeOwner(owner)),
+          )
+
+    definedTokenVals ++ ignoredTokenVals ++ Vector(
       TypeDef(lexemeRefinementSymbol(cls)),
       TypeDef(fieldsSymbol(cls)),
       withOverridingSymbol(parent = cls)(compiledSymbol): owner =>
@@ -235,7 +255,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                       '{ new annotation.switch }.asTerm.changeOwner(owner),
                     ),
                   ),
-                  tokenVals.map: valDef =>
+                  definedTokenVals.map: valDef =>
                     CaseDef(Literal(StringConstant(NameTransformer.encode(valDef.name))), None, Ref(valDef.symbol)),
                 ).changeOwner(owner)
             case _ => None
