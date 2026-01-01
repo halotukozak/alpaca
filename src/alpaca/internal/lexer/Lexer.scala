@@ -53,10 +53,11 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
-        case '{ type t <: ValidName; Token.apply[t]($value: String)(using $ctx) }
-            if value.asTerm.symbol == tree.symbol =>
-
-          compileNameAndPattern[t](tree).map:
+        case '{ type name <: ValidName; Token[name]($value: value)(using $ctx) } if tree match
+              case term: Term => TypeRepr.of[value] =:= term.tpe
+              case _ => false
+            =>
+          compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
 
