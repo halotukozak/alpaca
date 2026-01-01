@@ -14,7 +14,7 @@ object LexerRefinement:
     ${ derivedImpl[Ctx, m.MirroredElemLabels, m.MirroredElemTypes] }
 
   def derivedImpl[Ctx <: LexerCtx: Type, Labels <: Tuple: Type, Types <: Tuple: Type](using quotes: Quotes)
-    : Expr[LexerRefinement[Ctx]] = withDebugSettings:
+    : Expr[LexerRefinement[Ctx]] = withDebugSettings(DebugSettings.summonUnsafe):
     import quotes.reflect.*
     def extractAll(tup: Type[? <: Tuple]): List[TypeRepr] = tup match
       case '[h *: t] => TypeRepr.of[h] :: extractAll(Type.of[t])
