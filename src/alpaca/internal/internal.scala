@@ -81,7 +81,7 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
     case value => toExpr(value.asInstanceOf[T])
 
 inline private[alpaca] def withDebugSettings[T](debugSettings: DebugSettings)(inline block: DebugSettings ?=> T): T =
-  val future = Future.successful(block(using debugSettings))
+  val future = Future(block(using debugSettings))
   Await.result(future, debugSettings.timeout.seconds)
 
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
