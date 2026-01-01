@@ -81,13 +81,9 @@ abstract class Parser[Ctx <: ParserCtx](
    *
    * @tparam R the result type
    * @param lexems   the list of lexems to parse
-   * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](
-    lexems: List[Lexeme[?, ?]],
-  )(using debugSettings: DebugSettings,
-  ): (ctx: Ctx, result: R | Null) =
+  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -127,7 +123,7 @@ abstract class Parser[Ctx <: ParserCtx](
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty
 
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] =
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withDebugSettings(DebugSettings.summonUnsafe):
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner

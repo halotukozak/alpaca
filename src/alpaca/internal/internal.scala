@@ -2,7 +2,9 @@ package alpaca
 package internal
 
 import scala.NamedTuple.NamedTuple
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.{Await, Future}
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
@@ -78,43 +80,9 @@ private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
     case null => '{ null }
     case value => toExpr(value.asInstanceOf[T])
 
-// todo: it's temporary, remove when we have a proper timeout implementation
-inline private[internal] def withDebugSettings[T](inline block: DebugSettings ?=> T)(using Quotes): T =
-  import scala.concurrent.ExecutionContext.Implicits.global
-  import scala.concurrent.duration.*
-  import scala.concurrent.{Await, Future}
-
-  given DebugSettings = Expr.summon[DebugSettings].get.valueOrAbort
-
-  val future = Future(block)
-  Await.result(future, summon[DebugSettings].timeout.seconds)
-
-private[internal] given FromExpr[DebugSettings] with
-
-  def unapply(expr: Expr[DebugSettings])(using quotes: Quotes): Option[DebugSettings] =
-    import quotes.reflect.*
-
-    val extractValue: Expr[DebugSettings] => Option[DebugSettings] =
-      case '{ DebugSettings($enabled, $directory, $timeout, $verboseNames) } =>
-        for
-          en <- enabled.value
-          dir <- directory.value
-          to <- timeout.value
-          vn <- verboseNames.value
-        yield DebugSettings(en, dir, to, vn)
-      case other => None
-
-    extractValue(expr)
-      .orElse:
-        extractValue:
-          expr.asTerm.symbol.tree match
-            case ValDef(_, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
-            case DefDef(_, Nil, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
-            case x => report.errorAndAbort("DebugSettings must be a given val")
-
-private[internal] given ToExpr[DebugSettings] with
-  def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] =
-    '{ DebugSettings(${ Expr(x.enabled) }, ${ Expr(x.directory) }, ${ Expr(x.timeout) }, ${ Expr(x.verboseNames) }) }
+inline private[alpaca] def withDebugSettings[T](debugSettings: DebugSettings)(inline block: DebugSettings ?=> T): T =
+  val future = Future(block(using debugSettings))
+  Await.result(future, debugSettings.timeout.seconds)
 
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*

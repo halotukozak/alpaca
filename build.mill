@@ -42,7 +42,8 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Werror",
     // "-Wunused:all",
     "-experimental",
-    "-preview"
+    "-preview",
+    "-Xprint-suspension"
   )
 
   override def scalaDocOptions = Task {

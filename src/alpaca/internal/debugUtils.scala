@@ -238,9 +238,10 @@ extension (using quotes: Quotes)(e: Any)(using DebugSettings)
  */
 inline private[internal] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 
-private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
-  import quotes.reflect.*
-  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
+  withDebugSettings(DebugSettings.summonUnsafe):
+    import quotes.reflect.*
+    Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
 /**
  * Shows the raw AST structure of a code block and aborts compilation.
@@ -252,6 +253,7 @@ private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = wit
  */
 inline private[internal] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
 
-private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withDebugSettings:
-  import quotes.reflect.*
-  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] =
+  withDebugSettings(DebugSettings.summonUnsafe):
+    import quotes.reflect.*
+    Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

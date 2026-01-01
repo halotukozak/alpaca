@@ -23,7 +23,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = withDebugSettings:
+): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = withDebugSettings(DebugSettings.summonUnsafe):
   import quotes.reflect.*
   type ThisToken = Token[?, Ctx, ?]
   type TokenRefn = ThisToken { type LexemeTpe = LexemeRefn }
