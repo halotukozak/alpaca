@@ -4,7 +4,7 @@ package lexer
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.switch
-import scala.reflect.{NameTransformer, Typeable}
+import scala.reflect.NameTransformer
 import scala.util.matching.Regex
 
 //todo: private[alpaca]
@@ -42,8 +42,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, Unit]($tokenInfo, $ctxManipulation, _ => ()) }
 
-        case '{ type name <: ValidName; Token[name]($value: value)(using $ctx) }
-            if Option(tree).collect { case term: Term if TypeRepr.of[value] =:= term.tpe => }.isDefined =>
+        case '{ type name <: ValidName; Token[name]($value: value)(using $ctx) } if tree match
+              case term: Term => TypeRepr.of[value] =:= term.tpe
+              case _ => false
+            =>
           compileNameAndPattern[name](tree).map:
             case '{ $tokenInfo: TokenInfo[name] } =>
               '{ DefinedToken[name, Ctx, String]($tokenInfo, $ctxManipulation, _.lastRawMatched) }
