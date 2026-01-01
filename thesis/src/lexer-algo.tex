@@ -1,20 +1,20 @@
 \chapter{Algorytmy analizy leksykalnej}
-\label{ch:lexer-algorithmic}
+\label{ch:lexer-algo}
 
 
 \section{Teoretyczne podstawy}
-\label{sec:lexer-theory}
+\label{sec:lexer-algo-theory}
 
 Analizator leksykalny (lekser) stanowi fundamentalną fazę przetwarzania tekstu źródłowego, przekształcając sekwencję znaków w~ciąg jednostek leksykalnych (tokenów), które reprezentują niepodzielne elementy składniowe dla fazy analizy składniowej~\cite{cornell-lexing}.
 Klasyczna konstrukcja analizatora opiera się na~połączeniu teorii formalnych języków oraz teorii automatów skończonych~\cite{lexical-analysis-wiki}.
 
 \subsection{Opis języka tokenów}
-\label{subsec:lexer-theory-lang}
+\label{subsec:lexer-algo-lang}
 Każda klasa tokenów jest definiowana poprzez język regularny: zbiór słów akceptowanych przez wyrażenie regularne.
 Zbiór reguł tokenów stanowi sumę języków regularnych; ich unia~jest również językiem regularnym~\cite{jezyki-formalne-automaty}, co~umożliwia kompilację ich do~jednolitego automatu deterministycznego.
 
 \subsection{Automaty skończone}
-\label{subsec:lexer-theory-dfa}
+\label{subsec:lexer-algo-dfa}
 Wyrażenia regularne są transformowane do~postaci niedeterministycznej (NFA) poprzez konstrukcję Thompsona~\cite{arces2018thompson}.
 Następnie deterministyczna postać automatu (DFA) konstruowana jest poprzez algorytm usuwania niedeterminizmu (ang.~\emph{powerset construction}), polegający na~iteracyjnym łączeniu zbiorów stanów NFA\@.
 Opcjonalnie przeprowadza się minimalizację automatu poprzez usuwanie stanów równoważnych~\cite{jezyki-formalne-automaty}.
@@ -22,7 +22,7 @@ Opcjonalnie przeprowadza się minimalizację automatu poprzez usuwanie stanów r
 DFA przetwarza wejście znak po znaku, zachowując jednoznaczny stan aktywny oraz informując, czy aktualny prefiks odpowiada jednemu z~zdefiniowanych tokenów.
 
 \subsection{Strategia wyboru dopasowania}
-\label{subsec:lexer-theory-matching}
+\label{subsec:lexer-algo-matching}
 Lekser stosuje dwie komplementarne zasady determinujące zachowanie dla wieloznacznych sytuacji:
 
 \begin{itemize}
@@ -33,94 +33,94 @@ Lekser stosuje dwie komplementarne zasady determinujące zachowanie dla wielozna
 Kombinacja tych zasad gwarantuje deterministyczną oraz reproducywalną sekwencję tokenów bez~konieczności specjalnych mechanizmów rozstrzygania konfliktów.
 
 \subsection{Błędy leksykalne}
-\label{subsec:lexer-theory-errors}
+\label{subsec:lexer-algo-errors}
 W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, ogłaszany jest błąd leksykalny w~bieżącej pozycji wejścia.
 Mechanizm diagnostyczny przywołuje informacje o~pozycji znaku, co~znacząco ułatwia śledzenie źródła problemu w~tekście źródłowym.
 
 
 \section[Automaty DFA a wyrażenia regularne w systemie ALPACA]{Automaty DFA a wyrażenia regularne w~systemie ALPACA}
-\label{sec:dfa-vs-regex}
+\label{sec:lexer-algo-regex}
 
 \subsection{Tło: Tradycyjne podejście}
-\label{subsec:traditional-dfa-approach}
+\label{subsec:lexer-algo-trad}
 
 Narzędzia klasyczne do~budowy leksera (takie jak~Lex~\cite{lesk1975lex}) generują jawny, deterministyczny automat skończony (DFA) z~zestawu wyrażeń regularnych.
 Podejście to wymaga implementacji pełnego zestawu algorytmów: transformacja NFA$\to$DFA, minimalizacja, optymalizacja — każdy etap jest czasochłonny dla twórcy narzędzia.
 
 \subsection{Alternatywa: Wyrażenia regularne biblioteczne}
-\label{subsec:regex-alternative}
+\label{subsec:lexer-algo-alt}
 
 W~systemie ALPACA podejście tradycyjne zostało zastąpione mechanizmem wykorzystującym natywny silnik wyrażeń regularnych biblioteki standardowej Scali~\cite{scala-regex-api}.
 Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne o~nazwanych grupach, umożliwiając rozróżnienie, która reguła dopasowała się podczas każdego przebiegu.
 
 \subsection{Zalety podejścia opartego na wyrażeniach regularnych}
-\label{subsec:pattern-matching-pros}
+\label{subsec:lexer-algo-pros}
 \begin{itemize}
     \item Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
     \item Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
     \item Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
-    ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
+          ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
     \item Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
 \end{itemize}
 
 \subsection{Wady i ograniczenia}
-\label{subsec:pattern-matching-cons}
+\label{subsec:lexer-algo-cons}
 
 \begin{itemize}
     \item Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
     \item Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
-    W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
-    Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
+          W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
+          Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
 \end{itemize}
 
 \subsection{Syntetyzacja: Decyzja projektu ALPACA}
-\label{subsec:alpaca-design-choice}
+\label{subsec:lexer-algo-choice}
 
 Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
 Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA\@.
 
 
 \section[Praktyczna implementacja leksera w systemie ALPACA]{Praktyczna implementacja leksera w~systemie ALPACA}
-\label{sec:lexer-impl}
+\label{sec:lexer-algo-impl}
 
 Implementacja modułu \texttt{alpaca.lexer} łączy ergonomię języka specjalistycznego (DSL) z~kodem wykonywany w~czasie kompilacji, eliminując narzut parsowania wyrażeń regularnych w~czasie działania aplikacji.
 
 \subsection[Przebieg tokenizacji w ALPACA]{Przebieg tokenizacji w~ALPACA}
-\label{subsec:lexer-impl-flow}
+\label{subsec:lexer-algo-flow}
 
 Podczas kompilacji projektu wszystkie wzorce są łączone operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne z~nazwanymi grupami.
 Mechanizm ten umożliwia rozróżnienie, która z~reguł dopasowała się podczas każdego przebiegu wyszukiwania.
 Następnie pętla skanująca—podczas wykonania aplikacji iteracyjnie wywołuje to~wyrażenie na~kolejnych fragmentach wejścia, identyfikuje dopasowany token, akumuluje leksemy oraz przesuwa wskaźnik wejścia aż do~wyczerpania danych.
 
 \subsection{Obsługa reguł ignorowanych}
-\label{subsec:lexer-impl-ignored}
+\label{subsec:lexer-algo-ignored}
 
 System ALPACA umożliwia oznaczenie reguł jako ,,ignorowanych''.
 Takie reguły są wbudowywane we wspólny wzorzec, jednak ich dopasowania nie~generują tokenów wyjściowych.
 Ujednolicony przebieg pętli skanującej upraszcza kod: ignorowane tokeny różnią się od~normalnych wyłącznie akcją podejmowaną po~dopasowaniu (brak emisji leksemu, zamiast tego aktualizacja stanu wewnętrznego).
 
 \subsection[Stanowa analiza leksykalna i rozszerzenia kontekstu]{Stanowa analiza leksykalna i~rozszerzenia kontekstu}
-\label{subsec:lexer-impl-context}
+\label{subsec:lexer-algo-ctx}
 Możliwa jest stanowa analiza leksykalna poprzez utrzymywanie stanu maszyny stanów w~obiekcie kontekstu.
 System ALPACA wewnętrznie definiuje mechanizm \texttt{BetweenStages}, który jest wywoływany po~każdym rozpoznaniu leksemu i~umożliwia modyfikację stanu kontekstu.
 Domyślna implementacja rejestruje ostatni leksem oraz śledzi numer linii i~kolumny; użytkownik może jednak rozszerzyć tę~logikę o~własne zachowania, na~przykład weryfikację poprawności zagnieżdżenia nawiasów.
 
 \subsection{Diagnostyka błędów leksykalnych}
-\label{subsec:lexer-impl-errors}
+\label{subsec:lexer-algo-diag}
 Gdy algorytm skanowania nie~odnajduje prefiksu (brak przejścia w~automacie), lekser zgłasza błąd leksykalny.
 Mechanizm \texttt{BetweenStages} umożliwia zbieranie danych kontekstowych (numer linii, kolumny, ostatni prawidłowy leksem), które następnie wzbogacają raport diagnostyczny.
 To~podejście znacząco poprawia doświadczenie użytkownika podczas debugowania błędów składniowych.
 
 \subsection{Strumieniowe przetwarzanie wejścia}
-\label{subsec:lexer-impl-lazy-reader}
+\label{subsec:lexer-algo-lazy}
 W~celu unikania nadmiernego zużycia pamięci, lekser analizuje wejście w~sposób strumieniowy poprzez implementację interfejsu \texttt{CharSequence}.
 Klasa \texttt{LazyReader} realizuje tę~funkcjonalność: pobiera dane ze~źródła w~blokach o~rozmiarze 16~KB (ang.~\emph{chunks}) i~buforuje je lokalnie.
 Metoda \texttt{ensure} zapewnia, że~żądana pozycja jest~dostępna w~buforze, czytając kolejne porcje danych w~razie potrzeby.
 
-\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}},label={lst:lazy-reader-ensure-impl}]{listings/chapter4/lazy-reader-ensure-impl.scala}
+\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}},label={lst:lexer-algo-lazy}]{listings/lexer-algo/lexa-01-lazy-reader.scala}
 
 \subsection{Wczesna walidacja wzorców}
-\label{subsec:lexer-impl-regexchecker}
+\label{subsec:lexer-algo-val}
 
 Przed wygenerowaniem automatu skanującego, makro kompilacyjne uruchamia moduł \texttt{RegexChecker}, który analizuje wzorce pod~względem potencjalnych konfliktów.
 Mechanizm ten wykrywa dwa klasy problemów wynikających z~decyzji implementacyjnej o~wykorzystaniu kolejności definicji zamiast reguły najdłuższego dopasowania.
@@ -157,25 +157,25 @@ Algorytm przebiega w~następujących krokach:
 
 \begin{enumerate}
     \item \textbf{Rozszerzenie wzorców o~sufiksowe dopełnienie}:
-    Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
-    Wzorzec~$p'$ pokrywa prefiksy~$p$ wtedy i~tylko wtedy, gdy~$L(p) \subseteq L(p' \cdot \Sigma^*)$.
+          Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
+          Wzorzec~$p'$ pokrywa prefiksy~$p$ wtedy i~tylko wtedy, gdy~$L(p) \subseteq L(p' \cdot \Sigma^*)$.
 
     \item \textbf{Kompilacja wzorców}:
-    Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
+          Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
 
     \item \textbf{Weryfikacja par wzorców}:
-    Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
-    $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
-    co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
+          Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
+          $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
+          co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
 
     \item \textbf{Generacja komunikatów diagnostycznych}:
-    Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
-    \begin{verbatim}
+          Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
+          \begin{verbatim}
 Pattern <p_j> is shadowed by <p_i>
     \end{verbatim}
 \end{enumerate}
 
-\subsubsection{Integracja z~procesem kompilacji}
+\subsubsection[Integracja z procesem kompilacji]{Integracja z~procesem kompilacji}
 
 Moduł \texttt{RegexChecker} jest wywoływany w~fazie ekspansji makra \texttt{lexer}, przed~generacją kodu leksera.
 Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~obszernym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
