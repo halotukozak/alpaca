@@ -14,7 +14,7 @@ final class CopyableTest extends AnyFunSuite with Matchers:
   case class User(person: Person, address: Address, tags: List[String], opt: Option[Int], tuple: (Int, String))
     derives Copyable
 
-  case class Box[T](value: T) derives Copyable
+  case class Box[T](value: T)
 
   case class Defaults(a: Int = 1, b: String = "x") derives Copyable
 

@@ -14,7 +14,7 @@ private[internal] object logger:
     val task: Runnable = () =>
       cache.values.forEach: writer =>
         try writer.synchronized(writer.flush())
-        catch case e: Exception => ()
+        catch case _: Exception => ()
 
     scheduler.scheduleAtFixedRate(task, 0, 4, TimeUnit.SECONDS)
     sys.addShutdownHook(scheduler.shutdown())
@@ -34,11 +34,10 @@ private[internal] object logger:
   // noinspection AccessorLikeMethodIsUnit
   def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    val writer = writerCache.compute(
+    val writer = writerCache.computeIfAbsent(
       file,
-      (_, existing) =>
+      existing =>
         if file.getParent != null then Files.createDirectories(file.getParent)
-        if replace && existing != null then existing.synchronized(existing.close())
         new BufferedWriter(new FileWriter(file.toFile, !replace)),
     )
 
