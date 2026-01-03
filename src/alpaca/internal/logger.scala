@@ -2,7 +2,7 @@ package alpaca
 package internal
 
 import java.io.{BufferedWriter, FileWriter}
-import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 private[internal] object logger:
@@ -17,11 +17,12 @@ private[internal] object logger:
         catch case e: Exception => ()
 
     scheduler.scheduleAtFixedRate(task, 0, 4, TimeUnit.SECONDS)
+    sys.addShutdownHook(scheduler.shutdown())
 
   private def log(level: Level, msg: Shown)(using debugSettings: DebugSettings, pos: DebugPosition): Unit =
     debugSettings.logOut(level) match
       case Out.stdout => println(show"$level: $pos\t$msg")
-      case Out.file => toFile(s"${pos.file}.log", false)(s"at ${pos.line}\t$msg\n")
+      case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
       case Out.disabled => ()
 
   def trace(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.trace, msg)
@@ -30,15 +31,16 @@ private[internal] object logger:
   def warn(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.warn, msg)
   def error(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.error, msg)
 
+  // noinspection AccessorLikeMethodIsUnit
   def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    val writer = writerCache.computeIfAbsent(
+    val writer = writerCache.compute(
       file,
-      p =>
-        if p.getParent != null then Files.createDirectories(p.getParent)
-        new BufferedWriter(new FileWriter(p.toFile, true)),
+      (_, existing) =>
+        if file.getParent != null then Files.createDirectories(file.getParent)
+        if replace && existing != null then existing.synchronized(existing.close())
+        new BufferedWriter(new FileWriter(file.toFile, !replace)),
     )
-    if replace then Files.write(file, Array.empty[Byte], StandardOpenOption.TRUNCATE_EXISTING)
 
     writer.synchronized(writer.write(content))
 

@@ -1,10 +1,6 @@
 package alpaca
 package internal
 
-import java.io.{File, FileWriter}
-import java.nio.file.Path
-import scala.util.Using
-
 /**
  * An opaque type representing a source code position for debug messages.
  *
