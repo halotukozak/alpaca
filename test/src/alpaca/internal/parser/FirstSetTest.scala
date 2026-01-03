@@ -9,6 +9,8 @@ import org.scalatest.matchers.should.Matchers
 import Production.NonEmpty as NEP
 
 final class FirstSetTest extends AnyFunSuite:
+  given DebugSettings = DebugSettings.materialize
+
   test("FirstSet should correctly identify first sets for simple grammar") {
     val productions: List[Production] = List(
       NEP(NonTerminal("S"), NEL(NonTerminal("L"), Terminal("="), NonTerminal("R"))),

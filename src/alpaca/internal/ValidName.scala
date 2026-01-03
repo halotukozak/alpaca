@@ -31,5 +31,5 @@ object ValidName:
   def check(name: String)(using quotes: Quotes): Unit =
     import quotes.reflect.*
     name match
-      case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
+      case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")
       case _ =>

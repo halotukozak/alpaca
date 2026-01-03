@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import alpaca.internal.AlgorithmError
-
 /**
  * Represents an LR(1) item in the parser's state machine.
  *
@@ -25,15 +23,15 @@ private[parser] final case class Item(
   production match
     case Production.NonEmpty(_, rhs, name) =>
       if dotPosition < 0 || rhs.sizeIs < dotPosition then
-        throw AlgorithmError(s"dotPosition $dotPosition out of bounds for production $production")
+        throw AlgorithmError(show"dotPosition $dotPosition out of bounds for production $production")
     case _: Production.Empty =>
-      if dotPosition != 0 then throw AlgorithmError(s"dotPosition for empty production must be 0, got $dotPosition")
+      if dotPosition != 0 then throw AlgorithmError(show"dotPosition for empty production must be 0, got $dotPosition")
 
   /** The symbol immediately after the dot, or the lookahead if at the end. */
 
   lazy val nextSymbol: Symbol = production match
     case Production.NonEmpty(_, rhs, name) => rhs(dotPosition)
-    case _: Production.Empty => throw AlgorithmError(s"$this is the last item, has no next symbol")
+    case _: Production.Empty => throw AlgorithmError(show"$this is the last item, has no next symbol")
 
   /**
    * The item with the dot advanced by one position.
@@ -41,7 +39,7 @@ private[parser] final case class Item(
    * @throws AlgorithmError if this is already the last item
    */
   lazy val nextItem: Item =
-    if isLastItem then throw AlgorithmError(s"$this already is the last item, cannot create any next one")
+    if isLastItem then throw AlgorithmError(show"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
 
   /** Whether the dot is at the end of the production. */
