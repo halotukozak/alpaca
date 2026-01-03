@@ -35,7 +35,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ betweenStages }) }
+  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
