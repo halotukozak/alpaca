@@ -39,7 +39,7 @@ private[alpaca] object Empty:
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
-    logger.trace(show"found ${defaultParameters.size} default parameter")
+    logger.trace(show"found ${defaultParameters.size} default parameters")
 
     val parameters = constructor.paramSymss.collect:
       case params if !params.exists(_.isTypeParam) =>
@@ -49,7 +49,7 @@ private[alpaca] object Empty:
             defaultParameters(idx)
           case (param, idx) =>
             report.errorAndAbort(
-              s"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
+              show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
             )
 
     val value =
