@@ -45,81 +45,35 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
 
   // todo NameTransformer.decode once
   private val extractName: PartialFunction[Tree, String] =
-    case Select(This(_), name) => NameTransformer.decode(name)
+    case Select(_, name) => NameTransformer.decode(name)
     case Ident(name) => NameTransformer.decode(name)
     case Literal(StringConstant(name)) => NameTransformer.decode(name)
+    case TypeApply(
+          Select(Apply(extractName(Names.SelectDynamic), List(extractName(name))), Names.AsInstanceOf),
+          List(_),
+        ) =>
+      name
 
   private val extractBind: PartialFunction[Tree, Option[Bind]] =
     case bind: Bind => Some(bind)
     case Ident("_") => None
 
-  // todo: it should be compared with Symbol or sth
-  private val extractMethodName: PartialFunction[Tree, String] =
-    case Select(_, name) => name
-    case Ident(name) => name
-    case x => raiseShouldNeverBeCalled(x.toString)
-
   private val extractTerminalRef: EBNFExtractor =
     case skipTypedOrTest(
-          Unapply(
-            Select(
-              Select(_, name),
-              "unapply",
-            ),
-            Nil,
-            List(extractBind(bind)),
-          ),
+          Unapply(Select(extractName(name), Names.Unapply), Nil, List(extractBind(bind))),
         ) =>
       logger.trace(show"extracted terminal ref (1): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
     case skipTypedOrTest(
-          Unapply(
-            Select(
-              TypeApply(
-                Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
-                List(asInstanceOfType),
-              ),
-              "unapply",
-            ),
-            Nil,
-            List(extractBind(bind)),
-          ),
+          Unapply(Apply(extractName(Names.Unapply), List(extractName(name))), Nil, List(extractBind(bind))),
         ) =>
       logger.trace(show"extracted terminal ref (2): $name")
-      (symbol = Terminal(name), bind = bind, others = Nil)
-    case skipTypedOrTest(
-          Unapply(
-            Apply(
-              extractMethodName("unapply"),
-              List(
-                TypeApply(
-                  Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
-                  List(asInstanceOfType),
-                ),
-              ),
-            ),
-            Nil,
-            List(extractBind(bind)),
-          ),
-        ) =>
-      logger.trace(show"extracted terminal ref (3): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
 
   private val extractOptionalTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(
-            Select(
-              Apply(
-                extractMethodName("Option"),
-                List(
-                  TypeApply(
-                    Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
-                    List(asInstanceOfType),
-                  ),
-                ),
-              ),
-              "unapply",
-            ),
+            Select(Apply(extractName(Names.Option), List(extractName(name))), Names.Unapply),
             Nil,
             List(extractBind(bind)),
           ),
@@ -142,18 +96,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
   private val extractRepeatedTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(
-            Select(
-              Apply(
-                extractMethodName("List"),
-                List(
-                  TypeApply(
-                    Select(Apply(extractMethodName("selectDynamic"), List(extractName(name))), "$asInstanceOf$"),
-                    List(asInstanceOfType),
-                  ),
-                ),
-              ),
-              "unapply",
-            ),
+            Select(Apply(extractName(Names.List), List(extractName(name))), Names.Unapply),
             Nil,
             List(extractBind(bind)),
           ),
@@ -174,13 +117,15 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
   private val extractNonTerminalRef: EBNFExtractor =
-    case skipTypedOrTest(Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind)))) =>
+    case skipTypedOrTest(
+          Unapply(Select(extractName(name), Names.Unapply), Nil, List(extractBind(bind))),
+        ) =>
       logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
   private val extractOptionalNonTerminal: EBNFExtractor =
     case skipTypedOrTest(
-          Unapply(Select(Select(extractName(name), "Option"), "unapply"), Nil, List(extractBind(bind))),
+          Unapply(Select(Select(extractName(name), Names.Option), Names.Unapply), Nil, List(extractBind(bind))),
         ) =>
       logger.trace(show"extracted optional non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
@@ -197,7 +142,9 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
   private val extractRepeatedNonTerminal: EBNFExtractor =
-    case skipTypedOrTest(Unapply(Select(Select(extractName(name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
+    case skipTypedOrTest(
+          Unapply(Select(Select(extractName(name), Names.List), Names.Unapply), Nil, List(extractBind(bind))),
+        ) =>
       logger.trace(show"extracted repeated non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
       (
@@ -212,8 +159,14 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         ),
       )
 
-//noinspection ScalaWeakerAccess
 private object ParserExtractors:
+  private object Names:
+    final val SelectDynamic = "selectDynamic"
+    final val Unapply = "unapply"
+    final val List = "List"
+    final val Option = "Option"
+    final val AsInstanceOf = "$asInstanceOf$"
+
   val repeatedAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
     case x => raiseShouldNeverBeCalled[List[?]](x)

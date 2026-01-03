@@ -3,6 +3,7 @@ package internal
 package parser
 
 import scala.annotation.tailrec
+import NonEmptyList as NEL
 
 /**
  * An opaque type representing FIRST sets for grammar symbols.
@@ -38,14 +39,14 @@ private[parser] object FirstSet:
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production)(using DebugSettings): FirstSet =
     production.runtimeChecked match
-      case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
+      case Production.NonEmpty(lhs, NEL(head: Terminal, _), name) =>
         firstSet.updated(lhs, firstSet(lhs) + head)
 
-      case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal { type IsEmpty = false }, tail), name) =>
+      case Production.NonEmpty(lhs, NEL(head: NonTerminal { type IsEmpty = false }, tail), name) =>
         val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
         val production = tail match
-          case head :: next => Production.NonEmpty(lhs, NonEmptyList(head, next*))
+          case head :: next => Production.NonEmpty(lhs, NEL(head, next*))
           case Nil => Production.Empty(lhs)
 
         if firstSet(head).contains(Symbol.Empty)

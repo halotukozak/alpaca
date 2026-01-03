@@ -40,9 +40,7 @@ private[parser] object State:
       step: Symbol,
       productions: List[Production],
       firstSet: FirstSet,
-    )(using
-      Quotes,
-      DebugSettings,
+    )(using DebugSettings,
     ): State =
       logger.trace(show"computing next state for symbol $step")
       state.view

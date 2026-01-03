@@ -12,7 +12,7 @@ import mill.scalalib.publish.*
 import mill.contrib.scoverage.ScoverageModule
 import mill.util.VcsVersion
 
-object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
+object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule: 
   def scalaVersion = "3.8.0-RC4"
 
   def scoverageVersion = "2.5.2"
@@ -44,6 +44,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-experimental",
     "-preview",
     s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
+    "-Xmacro-settings:trace=file"
   )
 
   override def scalaDocOptions = Task {
