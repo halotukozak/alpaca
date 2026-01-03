@@ -25,7 +25,7 @@ private[parser] object ParseTable:
      * @return the parse action to take
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
-    def apply(state: Int, symbol: Symbol): ParseAction =
+    def apply(state: Int, symbol: Symbol)(using DebugSettings): ParseAction =
       try table((state, symbol))
       catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
 
@@ -63,9 +63,9 @@ private[parser] object ParseTable:
   )(using quotes: Quotes,
   )(using DebugSettings,
   ): ParseTable =
-    import quotes.reflect.report
-
+    logger.trace("building first set...")
     val firstSet = FirstSet(productions)
+    logger.trace("building states and parse table...")
     var currStateId = 0
     val states =
       mutable.ListBuffer(
@@ -84,6 +84,7 @@ private[parser] object ParseTable:
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
+              logger.trace(show"Conflict resolved: $action")
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
@@ -98,12 +99,13 @@ private[parser] object ParseTable:
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
+      logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 

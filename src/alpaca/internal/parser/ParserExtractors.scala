@@ -70,6 +70,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (1): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
     case skipTypedOrTest(
           Unapply(
@@ -84,6 +85,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (2): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
     case skipTypedOrTest(
           Unapply(
@@ -100,6 +102,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (3): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
 
   private val extractOptionalTerminal: EBNFExtractor =
@@ -121,6 +124,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted optional terminal: $name")
 
       val fresh = NonTerminal.fresh(name)
       (
@@ -154,6 +158,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted repeated terminal: $name")
 
       val fresh = NonTerminal.fresh(name)
       (
@@ -170,12 +175,14 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
 
   private val extractNonTerminalRef: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind)))) =>
+      logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
   private val extractOptionalNonTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(Select(Select(extractName(name), "Option"), "unapply"), Nil, List(extractBind(bind))),
         ) =>
+      logger.trace(show"extracted optional non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
@@ -191,6 +198,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
 
   private val extractRepeatedNonTerminal: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(Select(extractName(name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
+      logger.trace(show"extracted repeated non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
