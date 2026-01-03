@@ -11,7 +11,7 @@ import scala.util.Using
  * This type wraps a line number and a file name and is used to annotate debug output
  * with the location where a debug call was made.
  */
-opaque private[internal] type DebugPosition = (line: Int, file: String)
+opaque private[internal] type DebugPosition <: (line: Int, file: String) = (line: Int, file: String)
 
 private[internal] object DebugPosition:
 

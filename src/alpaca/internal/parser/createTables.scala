@@ -123,14 +123,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
     .tap: table =>
       // csv may be not the best format for this due to the commas
-      logger.toFile(show"$parserName/actionTable.dbg.csv")(table.toCsv)
+      logger.toFile(show"$parserName/actionTable.dbg.csv", true)(table.toCsv)
 
   logger.trace("Productions extracted, building conflict resolution table...")
 
   val productions = table
     .map(_.production)
     .tap: table =>
-      logger.toFile(show"$parserName/productions.dbg")(table.mkShow("\n"))
+      logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
 
   logger.trace("Productions extracted, building parse and action tables...")
 
@@ -193,7 +193,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
             case None => Some(Set(extractKey(after))),
   ).tap: table =>
     table.verifyNoConflicts()
-    logger.toFile(show"$parserName/conflictResolutions.dbg")(table)
+    logger.toFile(show"$parserName/conflictResolutions.dbg", true)(table)
 
   logger.trace("Conflict resolution table built, identifying root production...")
 
@@ -209,7 +209,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
       Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
       conflictResolutionTable,
     ).tap: parseTable =>
-      logger.toFile(s"$parserName/parseTable.dbg.csv")(parseTable.toCsv),
+      logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv),
   )
 
   val actionTable = Expr.ofList(
