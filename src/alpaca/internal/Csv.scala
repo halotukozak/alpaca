@@ -45,14 +45,14 @@ private[internal] object Csv:
      * @return a Csv representation of the named tuples
      */
 
-    inline def toCsv: Csv =
+    inline def toCsv(using DebugSettings): Csv =
       Csv(
         compiletime.constValueTuple[N].toShowableList,
         rows.map(_.toTuple.toShowableList),
       )
 
   extension [T <: Tuple](tuple: T)
-    inline private def toShowableList = compiletime
+    inline private def toShowableList(using DebugSettings) = compiletime
       .summonAll[Tuple.Map[T, Showable]]
       .zip(tuple)
       .toList

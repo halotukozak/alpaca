@@ -49,7 +49,7 @@ object Tables:
  * @return an expression containing the parse and action tables
  */
 private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
-  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withDebugSettings:
+  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withDebugSettings(DebugSettings.summonUnsafe):
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner
