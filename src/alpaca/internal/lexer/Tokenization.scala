@@ -4,7 +4,7 @@ package lexer
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.NamedTuple.NamedTuple
 
 /**
  * The result of compiling a lexer definition.
@@ -16,8 +16,7 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
  * @tparam Ctx the global context type
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using copy: Copyable[Ctx], // todo: unused
-  betweenStages: BetweenStages[Ctx],
+  using betweenStages: BetweenStages[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 

@@ -3,7 +3,6 @@ package internal
 
 import scala.NamedTuple.NamedTuple
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]

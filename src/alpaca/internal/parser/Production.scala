@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import scala.annotation.StaticAnnotation
-
 /**
  * Represents a grammar production rule.
  *
