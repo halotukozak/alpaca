@@ -14,7 +14,7 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using DebugSettings):
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -28,7 +28,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @return a list of TokenInfo expressions
    */
   def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
+    logger.trace("compiling name and pattern")
     @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
+      logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>

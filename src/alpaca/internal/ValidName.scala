@@ -13,8 +13,9 @@ type ValidName = String & Singleton
 
 object ValidName:
 
-  def from[Name <: ValidName: Type](using quotes: Quotes)(using DebugSettings): ValidName =
+  def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*
+    logger.trace(show"extracting ValidName from ${Type.of[Name]}")
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
       case x => raiseShouldNeverBeCalled(x.show)

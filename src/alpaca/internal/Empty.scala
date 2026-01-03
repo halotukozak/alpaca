@@ -24,10 +24,11 @@ private[alpaca] object Empty:
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] =
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withTimeout:
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
+    logger.trace(show"deriving Empty for $tpe")
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
@@ -37,14 +38,17 @@ private[alpaca] object Empty:
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
+    logger.trace(show"found ${defaultParameters.size} default parameter")
+
     val parameters = constructor.paramSymss.collect:
       case params if !params.exists(_.isTypeParam) =>
         params.zipWithIndex.map:
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
+            logger.trace(show"parameter $param has default value")
             defaultParameters(idx)
           case (param, idx) =>
             report.errorAndAbort(
-              s"Cannot derive Empty for ${Type.show[T]}: parameter ${param.name} does not have a default value",
+              s"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
             )
 
     val value =
