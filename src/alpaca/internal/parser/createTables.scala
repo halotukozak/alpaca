@@ -66,15 +66,13 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     case '{ rule(${ Varargs(cases) }*) } =>
       def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
-          val seqApplyMethod = param.select(TypeRepr.of[Seq[Any]].typeSymbol.methodMember("apply").head)
-          val seq = param.asExprOf[Seq[Any]]
-
           val replacements = (find = ctxSymbol, replace = ctx) ::
             binds.zipWithIndex
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
-                case ((bind, '[t]), idx) => Some((find = bind, replace = '{ $seq($idx).asInstanceOf[t] }.asTerm))
+                case ((bind, '[t]), idx) =>
+                  Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
@@ -88,12 +86,12 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
         .map(extractProductionName)
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
-          case (Lambda(_, Match(_, caseDefs)), name) =>
+          case (Lambda(_, Match(_, _)), _) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
-          case (other, name) =>
+          case (other, _) =>
             report.errorAndAbort(show"Unexpected production definition: $other")
         .unsafeFlatMap:
-          case (CaseDef(pattern, Some(_), rhs), name) =>
+          case (CaseDef(_, Some(_), _), _) =>
             throw new NotImplementedError("Guards are not supported yet")
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
@@ -104,7 +102,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
             ) :: others
 
           // TupleN, N > 1
-          case (CaseDef(skipTypedOrTest(p @ Unapply(_, _, patterns)), None, rhs), name) =>
+          case (CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
             val (symbols, binds, others) = patterns.map(extractEBNFAndAction).unzip3(using _.toTuple)
             (
               production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
@@ -140,19 +138,22 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
         case p if p.name != null => p.name -> p
       .toMap
 
+    logger.trace(show"productionsByName:\n${productionsByName.mkString("\n")}")
+
     val productionsByRhs = productions
       .collect: p =>
         p.rhs -> p
       .toMap
-    import scala.reflect.Selectable.reflectiveSelectable
+
+    logger.trace(show"productionsByRhs:\n${productionsByRhs.mkString("\n")}")
     {
-      case '{ ($selector: ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
+      case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
           .map[parser.Symbol.NonEmpty]:
-            case '{ type ruleType <: Rule[?]; $rule: ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
-            case '{ type name <: ValidName; $token: Token[name, ?, ?] } => Terminal(ValidName.from[name])
+            case '{ type ruleType <: Rule[?]; $_ : ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
+            case '{ type name <: ValidName; $_ : Token[name, ?, ?] } => Terminal(ValidName.from[name])
           .toList
 
         productionsByRhs.getOrElse(
@@ -177,7 +178,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
 
   def extractKey(expr: Expr[Production | Token[?, ?, ?]]): ConflictKey = expr match
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
-    case '{ $token: Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
+    case '{ $_ : Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
 
   logger.trace("Building conflict resolution table...")
 
