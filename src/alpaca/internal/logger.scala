@@ -2,19 +2,27 @@ package alpaca
 package internal
 
 import java.io.{BufferedWriter, FileWriter}
-import java.nio.file.{Files, Path}
-import java.util.concurrent.ConcurrentHashMap
+import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
 
 private[internal] object logger:
   private val writerCache = new ConcurrentHashMap[Path, BufferedWriter]().tap: cache =>
-    sys.addShutdownHook(cache.values().forEach(_.close()))
+    sys.addShutdownHook(cache.values.forEach(_.close()))
+
+    val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+    val task: Runnable = () =>
+      cache.values.forEach: writer =>
+        try writer.synchronized(writer.flush())
+        catch case e: Exception => ()
+
+    scheduler.scheduleAtFixedRate(task, 0, 4, TimeUnit.SECONDS)
 
   private def log(level: Level, msg: Shown)(using debugSettings: DebugSettings, pos: DebugPosition): Unit =
-    lazy val content = show"$level: $pos\t$msg"
     debugSettings.logOut(level) match
-      case Out.Stdout => println(content)
-      case Out.File => toFile("alpaca.log")(s"$content\n")
-      case Out.Disabled => ()
+      case Out.stdout => println(show"$level: $pos\t$msg")
+      case Out.file => toFile(s"${pos.file}.log", false)(s"at ${pos.line}\t$msg\n")
+      case Out.disabled => ()
 
   def trace(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.trace, msg)
   def debug(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.debug, msg)
@@ -22,7 +30,7 @@ private[internal] object logger:
   def warn(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.warn, msg)
   def error(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.error, msg)
 
-  def toFile(path: String)(content: Shown)(using debugSettings: DebugSettings): Unit =
+  def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     val writer = writerCache.computeIfAbsent(
       file,
@@ -30,6 +38,7 @@ private[internal] object logger:
         if p.getParent != null then Files.createDirectories(p.getParent)
         new BufferedWriter(new FileWriter(p.toFile, true)),
     )
+    if replace then Files.write(file, Array.empty[Byte], StandardOpenOption.TRUNCATE_EXISTING)
 
     writer.synchronized(writer.write(content))
 
@@ -37,8 +46,8 @@ private[internal] object logger:
     case trace, debug, info, warn, error
 
     lazy val default: Out = this match
-      case Level.trace | Level.debug | Level.info => Out.Disabled
-      case Level.warn | Level.error => Out.Stdout
+      case Level.trace | Level.debug | Level.info => Out.disabled
+      case Level.warn | Level.error => Out.stdout
 
   object Level:
     given Showable[Level] = Showable(_.toString)
@@ -63,20 +72,20 @@ private[internal] object logger:
           case _ => None
 
   enum Out:
-    case Stdout, File, Disabled
+    case stdout, file, disabled
 
   object Out:
     given Showable[Out] = Showable(_.toString)
 
     given ToExpr[Out]:
       def apply(x: Out)(using Quotes): Expr[Out] = x match
-        case Out.Stdout => '{ Out.Stdout }
-        case Out.File => '{ Out.File }
-        case Out.Disabled => '{ Out.Disabled }
+        case Out.stdout => '{ Out.stdout }
+        case Out.file => '{ Out.file }
+        case Out.disabled => '{ Out.disabled }
 
     given FromExpr[Out]:
       def unapply(x: Expr[Out])(using Quotes): Option[Out] = x match
-        case '{ Out.Stdout } => Some(Out.Stdout)
-        case '{ Out.File } => Some(Out.File)
-        case '{ Out.Disabled } => Some(Out.Disabled)
+        case '{ Out.stdout } => Some(Out.stdout)
+        case '{ Out.file } => Some(Out.file)
+        case '{ Out.disabled } => Some(Out.disabled)
         case _ => None
