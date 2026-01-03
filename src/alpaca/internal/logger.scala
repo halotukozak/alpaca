@@ -34,12 +34,19 @@ private[internal] object logger:
   // noinspection AccessorLikeMethodIsUnit
   def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    val writer = writerCache.computeIfAbsent(
-      file,
-      existing =>
-        if file.getParent != null then Files.createDirectories(file.getParent)
-        new BufferedWriter(new FileWriter(file.toFile, !replace)),
-    )
+    val writer =
+      def createWriter(p: Path) =
+        if p.getParent != null then Files.createDirectories(p.getParent)
+        new BufferedWriter(new FileWriter(p.toFile, !replace))
+
+      if replace then
+        writerCache.compute(
+          file,
+          (p, existing) =>
+            if existing != null then existing.synchronized(existing.close())
+            createWriter(p),
+        )
+      else writerCache.computeIfAbsent(file, p => createWriter(p))
 
     writer.synchronized(writer.write(content))
 
