@@ -63,7 +63,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
             throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           }
           val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
-            throw new AlgorithmError(s"$m matched but no token defined for it")
+            throw new AlgorithmError(s"${m.toString} matched but no token defined for it")
           }
           betweenStages(token, m, globalCtx)
           val lexem = List(token).collect:

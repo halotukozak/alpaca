@@ -84,6 +84,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
+    given DebugSettings = DebugSettings.materialize
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -150,7 +151,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
             logger.trace(show"Extracting production names from rule $name")
             extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
           case _ =>
-            report.error(s"Define resolutions as the last field of the parser.")
+            report.error("Define resolutions as the last field of the parser.")
             Nil
         .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
           case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])
