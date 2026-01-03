@@ -1,4 +1,5 @@
-package alpaca.internal
+package alpaca
+package internal
 
 /**
  * A type class for creating empty instances of types.
