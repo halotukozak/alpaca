@@ -216,10 +216,10 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx])
    * @param lexems the list of lexems to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse(lexems: List[Lexeme[?, ?]])(using debugSettings: DebugSettings): (
+  inline def parse(lexems: List[Lexeme[?, ?]]): (
     ctx: Ctx,
     result: (parser.root.type match
       case Rule[t] => t
     ) | Null,
-  ) = withDebugSettings(debugSettings):
+  ) = withTimeout(using DebugSettings.materialize):
     parser.unsafeParse(lexems)

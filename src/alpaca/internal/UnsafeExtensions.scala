@@ -14,9 +14,8 @@ inline private[alpaca] def raiseShouldNeverBeCalled[T: Default](elem: Any): T =
         case _ => Showable.fromToString
       .show(elem)(using debugSettings)
 
-  val debugPosition = compiletime.summonInline[DebugPosition].show(using debugSettings)
-
-  val message = show"This code should never be called: $shown at $debugPosition"
+  val position = compiletime.summonInline[DebugPosition].show(using debugSettings)
+  val message = show"This code should never be called: $shown at $position"
 
   compiletime.summonFrom:
     case quotes: Quotes => quotes.reflect.report.error(message)

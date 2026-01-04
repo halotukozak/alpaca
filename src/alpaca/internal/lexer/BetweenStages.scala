@@ -29,8 +29,9 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] =
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = withTimeout:
     import quotes.reflect.*
+    logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
       .of[Ctx]
@@ -42,13 +43,16 @@ private[alpaca] object BetweenStages:
       .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
       .map(_.asType)
 
+    logger.trace(show"found ${parents.size} parent context traits")
+
     val derivedBetweenStages = Expr.ofList {
       parents
         .map:
           case '[type ctx >: Ctx <: LexerCtx; ctx] =>
+            logger.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
-              .getOrElse(report.errorAndAbort(s"No BetweenStages instance found for ${Type.show[ctx]}"))
+              .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
     }
 
     '{ (token, m, ctx) =>
