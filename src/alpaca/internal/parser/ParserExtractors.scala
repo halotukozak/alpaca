@@ -18,9 +18,11 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q) {
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](
+  using val quotes: Q,
+)(using DebugSettings,
+):
   import quotes.reflect.*
-
   private type EBNFExtractor = PartialFunction[
     Tree,
     (
@@ -68,6 +70,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (1): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
     case skipTypedOrTest(
           Unapply(
@@ -82,6 +85,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (2): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
     case skipTypedOrTest(
           Unapply(
@@ -98,6 +102,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted terminal ref (3): $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
 
   private val extractOptionalTerminal: EBNFExtractor =
@@ -119,6 +124,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted optional terminal: $name")
 
       val fresh = NonTerminal.fresh(name)
       (
@@ -126,7 +132,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ noneAction }),
-          (production = Production.NonEmpty(fresh, NEL(Terminal(name))), action = '{ someAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(Terminal(name))),
+            action = '{ someAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
@@ -149,6 +158,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
             List(extractBind(bind)),
           ),
         ) =>
+      logger.trace(show"extracted repeated terminal: $name")
 
       val fresh = NonTerminal.fresh(name)
       (
@@ -156,52 +166,62 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
-          (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+            action = '{ repeatedAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
   private val extractNonTerminalRef: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(extractName(name), "unapply"), Nil, List(extractBind(bind)))) =>
+      logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
   private val extractOptionalNonTerminal: EBNFExtractor =
     case skipTypedOrTest(
           Unapply(Select(Select(extractName(name), "Option"), "unapply"), Nil, List(extractBind(bind))),
         ) =>
+      logger.trace(show"extracted optional non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ noneAction }),
-          (production = Production.NonEmpty(fresh, NEL(NonTerminal(name))), action = '{ someAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
+            action = '{ someAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
 
   private val extractRepeatedNonTerminal: EBNFExtractor =
     case skipTypedOrTest(Unapply(Select(Select(extractName(name), "List"), "unapply"), Nil, List(extractBind(bind)))) =>
+      logger.trace(show"extracted repeated non-terminal: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
         bind = bind,
         others = List(
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
-          (production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))), action = '{ repeatedAction }),
+          (
+            production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
+            action = '{ repeatedAction(using ${ Expr(summon[DebugSettings]) }) },
+          ),
         ),
       )
-}
 
 //noinspection ScalaWeakerAccess
-private object ParserExtractors {
-  val repeatedAction: Action[ParserCtx] =
+private object ParserExtractors:
+  val repeatedAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[List[?]](x)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
-  val someAction: Action[ParserCtx] =
+  val someAction: DebugSettings ?=> Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled(x)
+    case x => raiseShouldNeverBeCalled[Option[?]](x)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
-}

@@ -2,8 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import scala.NamedTuple.AnyNamedTuple
 import scala.deriving.Mirror
-import NamedTuple.AnyNamedTuple
 
 trait LexerRefinement[Ctx <: LexerCtx]:
   type Lexeme <: alpaca.internal.lexer.Lexeme[?, ?]
@@ -14,8 +14,10 @@ object LexerRefinement:
     ${ derivedImpl[Ctx, m.MirroredElemLabels, m.MirroredElemTypes] }
 
   def derivedImpl[Ctx <: LexerCtx: Type, Labels <: Tuple: Type, Types <: Tuple: Type](using quotes: Quotes)
-    : Expr[LexerRefinement[Ctx]] =
+    : Expr[LexerRefinement[Ctx]] = withTimeout:
     import quotes.reflect.*
+    logger.trace(show"deriving LexerRefinement for ${Type.of[Ctx]}")
+
     def extractAll(tup: Type[? <: Tuple]): List[TypeRepr] = tup match
       case '[h *: t] => TypeRepr.of[h] :: extractAll(Type.of[t])
       case '[EmptyTuple] => Nil
@@ -23,10 +25,14 @@ object LexerRefinement:
     val labels = extractAll(Type.of[Labels])
     val types = extractAll(Type.of[Types])
 
+    logger.trace(show"extracting ${labels.size} fields for Lexeme refinement")
+
     labels
       .zip(types)
       .unsafeFoldLeft(TypeRepr.of[Lexeme[?, ?]]):
-        case (acc, (ConstantType(StringConstant(label)), tpe)) => Refinement(acc, label, tpe)
+        case (acc, (ConstantType(StringConstant(label)), tpe)) =>
+          logger.trace(show"refining Lexeme with field $label: $tpe")
+          Refinement(acc, label, tpe)
       .asType
       .match
         case '[refinementTpe] =>

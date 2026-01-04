@@ -3,7 +3,6 @@ package internal
 package parser
 
 import alpaca.internal.lexer.Token
-
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
 
@@ -17,10 +16,10 @@ opaque private[parser] type ConflictKey = Production | String
 object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
-  given Showable[ConflictKey] =
+  given Showable[ConflictKey] = Showable:
     case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
     case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
-    case p: Production => show"Reduction(${p.name})"
+    case p: Production => show"Reduction(${p.name.nn})"
     case s: String => show"Shift($s)"
 
 /**
@@ -31,7 +30,7 @@ object ConflictKey:
  */
 opaque private[parser] type ConflictResolutionTable = Map[ConflictKey, Set[ConflictKey]]
 
-private[parser] object ConflictResolutionTable {
+private[parser] object ConflictResolutionTable:
 
   /**
    * Creates a ConflictResolutionTable from a map of resolutions.
@@ -48,17 +47,18 @@ private[parser] object ConflictResolutionTable {
      * Uses the precedence rules in the table to determine which action
      * should be preferred. Returns None if no resolution rule applies.
      *
-     * @param first the first parse action
+     * @param first  the first parse action
      * @param second the second parse action
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
      */
-    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
+    def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using DebugSettings): Option[ParseAction] =
+      logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
       def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
         case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
 
-      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] = {
+      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
         val to = extractProdOrName(second)
 
         @tailrec
@@ -71,12 +71,11 @@ private[parser] object ConflictResolutionTable {
             loop(tail ++ neighbors, visited + head)
 
         loop(List(extractProdOrName(first)), Set())
-      }
 
       winsOver(first, second) orElse winsOver(second, first)
-    }
 
-    def verifyNoConflicts(): Unit = {
+    def verifyNoConflicts()(using DebugSettings): Unit =
+      logger.trace("verifying conflict resolution table for cycles...")
       enum VisitState:
         case Unvisited, Visited, Processed
 
@@ -104,17 +103,16 @@ private[parser] object ConflictResolutionTable {
               loop(neighbors ::: List(Action.Leave(node)) ::: rest)
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
-    }
 
   /**
    * Showable instance for displaying conflict resolution tables.
    */
-  given Showable[ConflictResolutionTable] =
-    _.map: (k, v) =>
-      def show(x: ConflictKey): String = x match
-        case p: Production => show"$p"
-        case s: String => show"Token[$s]"
+  given Showable[ConflictResolutionTable] = Showable: table =>
+    table
+      .map: (k, v) =>
+        def show(x: ConflictKey): String = x match
+          case p: Production => show"$p"
+          case s: String => show"Token[$s]"
 
-      show"${show(k)} before ${v.map(show).mkShow(", ")}"
-    .mkShow("\n")
-}
+        show"${show(k)} before ${v.map(show).mkShow(", ")}"
+      .mkShow("\n")

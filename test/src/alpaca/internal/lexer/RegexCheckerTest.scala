@@ -1,10 +1,14 @@
-package alpaca.internal.lexer
+package alpaca
+package internal
+package lexer
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.LoneElement
 
-final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement {
+final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
+  given DebugSettings = DebugSettings.materialize
+
   test("checkPatterns should return None for non-overlapping patterns") {
     val patterns = List(
       "[a-zA-Z_][a-zA-Z0-9_]*",
@@ -70,4 +74,3 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement 
   test("checkPatterns should handle single pattern") {
     RegexChecker.checkPatterns(List("[a-zA-Z_][a-zA-Z0-9_]*")) shouldBe empty
   }
-}

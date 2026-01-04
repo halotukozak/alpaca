@@ -1,4 +1,6 @@
-package alpaca.internal.parser
+package alpaca
+package internal
+package parser
 
 import scala.collection.immutable.SortedSet
 
@@ -11,10 +13,10 @@ import scala.collection.immutable.SortedSet
  */
 opaque private[parser] type State <: SortedSet[Item] = SortedSet[Item]
 
-private[parser] object State {
+private[parser] object State:
   val empty: State = SortedSet.empty[Item](using Ordering.by(_.hashCode))
 
-  extension (state: State) {
+  extension (state: State)
 
     /**
      * Gets the set of symbols that can be shifted from this state.
@@ -34,11 +36,18 @@ private[parser] object State {
      * @param firstSet    the FIRST sets for lookahead computation
      * @return the new state
      */
-    def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet): State =
+    def nextState(
+      step: Symbol,
+      productions: List[Production],
+      firstSet: FirstSet,
+    )(using
+      Quotes,
+      DebugSettings,
+    ): State =
+      logger.trace(show"computing next state for symbol $step")
       state.view
         .filter(item => !item.isLastItem && item.nextSymbol == step)
         .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
-  }
 
   /**
    * Constructs a state closure from a single item.
@@ -52,7 +61,13 @@ private[parser] object State {
    * @param firstSet the FIRST sets for lookahead computation
    * @return the closed state
    */
-  def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet): State =
+  def fromItem(
+    state: State,
+    item: Item,
+    productions: List[Production],
+    firstSet: FirstSet,
+  )(using DebugSettings,
+  ): State =
     if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
       val lookAheads = item.nextTerminals(firstSet)
 
@@ -65,4 +80,3 @@ private[parser] object State {
           }
         }
     else state + item
-}

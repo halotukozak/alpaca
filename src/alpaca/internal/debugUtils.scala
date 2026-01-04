@@ -14,7 +14,7 @@ import scala.util.Try
  * @param symbol the symbol to inspect
  * @return a multi-line string with detailed symbol information
  */
-private[internal] def symbolInfo(
+private[alpaca] def symbolInfo(
   using quotes: Quotes,
 )(
   symbol: quotes.reflect.Symbol,
@@ -85,7 +85,7 @@ private[internal] def symbolInfo(
  * @param printer implicit printer for type representations
  * @return a multi-line string with detailed type information
  */
-private[internal] def typeReprInfo(
+private[alpaca] def typeReprInfo(
   using quotes: Quotes,
 )(
   tpe: quotes.reflect.TypeRepr,
@@ -122,15 +122,14 @@ private[internal] def typeReprInfo(
  * @param tree the tree to inspect
  * @return a multi-line string with tree structure and code
  */
-private[internal] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String = {
+private[alpaca] def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
   import quotes.reflect.*
-
   s"""
      |Structure ${Printer.TreeStructure.show(tree)}
      |ShortCode ${Printer.TreeShortCode.show(tree)}
      |""".stripMargin
-}
-private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Position): String =
+
+private[alpaca] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Position): String =
   s"""
      |start: ${pos.start},
      |end: ${pos.end},
@@ -140,39 +139,6 @@ private[internal] def positionInfo(using quotes: Quotes)(pos: quotes.reflect.Pos
      |endColumn: ${pos.endColumn},
      |sourceFile: ${pos.sourceFile},
      |""".stripMargin
-
-/**
- * An opaque type representing a source code position for debug messages.
- *
- * This type wraps a line number and is used to annotate debug output
- * with the location where a debug call was made.
- */
-opaque private[internal] type DebugPosition = Int
-
-private[internal] object DebugPosition {
-
-  /**
-   * Implicit instance that captures the current source line number.
-   *
-   * When used in a debug call, this automatically provides the line number
-   * where the call was made.śśś
-   */
-  inline given here: DebugPosition = ${ hereImpl }
-
-  private def hereImpl(using quotes: Quotes): Expr[DebugPosition] = {
-    import quotes.reflect.*
-    val pos = Position.ofMacroExpansion
-    Expr(pos.startLine + 1)
-  }
-
-  given ToExpr[DebugPosition] with
-    def apply(x: DebugPosition)(using quotes: Quotes): Expr[DebugPosition] =
-      ToExpr.IntToExpr(x)
-
-  given FromExpr[DebugPosition] with
-    def unapply(x: Expr[DebugPosition])(using Quotes): Option[DebugPosition] =
-      FromExpr.IntFromExpr.unapply(x)
-}
 
 extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
   /**
@@ -184,10 +150,9 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree (never actually returns due to abort)
    */
-  private[internal] def dbg(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.errorAndAbort(show"$tree at line $pos")
+  private[alpaca] def dbg(using pos: DebugPosition): tree.type =
+    quotes.reflect.report.errorAndAbort(show"$tree at $pos")
     tree
-  }
 
   /**
    * Prints the tree as an info message during compilation.
@@ -197,10 +162,9 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree unchanged
    */
-  private[internal] def info(using pos: DebugPosition): tree.type = {
-    quotes.reflect.report.info(show"$tree at line $pos")
+  private[alpaca] def info(using pos: DebugPosition): tree.type =
+    quotes.reflect.report.info(show"$tree at $pos")
     tree
-  }
 
 extension (using quotes: Quotes)(expr: Expr[?])
 
@@ -210,7 +174,7 @@ extension (using quotes: Quotes)(expr: Expr[?])
    * @param pos the source position of the debug call
    * @return the expression (never actually returns due to abort)
    */
-  private[internal] def dbg(using pos: DebugPosition): expr.type =
+  private[alpaca] def dbg(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
     expr.asTerm.dbg
     expr
@@ -221,7 +185,7 @@ extension (using quotes: Quotes)(expr: Expr[?])
    * @param pos the source position of the debug call
    * @return the expression unchanged
    */
-  private[internal] def soft(using pos: DebugPosition): expr.type =
+  private[alpaca] def soft(using pos: DebugPosition): expr.type =
     import quotes.reflect.*
     expr.asTerm.info
     expr
@@ -233,15 +197,16 @@ extension (using quotes: Quotes)(msg: String)
    * @param pos the source position of the debug call
    * @throws Nothing always aborts compilation
    */
-  private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"$msg at line $pos")
+  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
+    quotes.reflect.report.errorAndAbort(show"$msg at $pos")
 
   /**
    * Prints a debug message as an info during compilation.
    *
    * @param pos the source position of the debug call
    */
-  private[internal] def soft(using pos: DebugPosition): Unit = quotes.reflect.report.info(show"$msg at line $pos")
+  private[alpaca] def soft(using pos: DebugPosition): Unit =
+    quotes.reflect.report.info(show"$msg at $pos")
 
 extension (using quotes: Quotes)(e: Any)
   /**
@@ -250,8 +215,8 @@ extension (using quotes: Quotes)(e: Any)
    * @param pos the source position of the debug call
    * @throws Nothing always aborts compilation
    */
-  private[internal] def dbg(using pos: DebugPosition): Nothing =
-    quotes.reflect.report.errorAndAbort(show"${e.toString} at line $pos")
+  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
+    quotes.reflect.report.errorAndAbort(show"${e.toString} at $pos")
 
   /**
    * Prints any value's string representation as an info message.
@@ -259,8 +224,8 @@ extension (using quotes: Quotes)(e: Any)
    * @param pos the source position of the debug call
    * @return the value unchanged
    */
-  private[internal] def soft(using pos: DebugPosition): e.type =
-    quotes.reflect.report.info(show"${e.toString} at line $pos")
+  private[alpaca] def soft(using pos: DebugPosition): e.type =
+    quotes.reflect.report.info(show"${e.toString} at $pos")
     e
 
 /**
@@ -270,12 +235,12 @@ extension (using quotes: Quotes)(e: Any)
  * and aborts compilation. Useful for understanding what the compiler sees.
  *
  * @param body the code to inspect
- * @param pos implicit source position
  */
-inline private[internal] def showAst(inline body: Any)(using pos: DebugPosition) = ${ showAstImpl('{ body }, '{ pos }) }
-private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
+inline private[alpaca] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
+
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withTimeout:
   import quotes.reflect.*
-  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
+  Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
 /**
  * Shows the raw AST structure of a code block and aborts compilation.
@@ -284,10 +249,9 @@ private def showAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes:
  * and aborts compilation. Useful for deep debugging of macro code.
  *
  * @param body the code to inspect
- * @param pos implicit source position
  */
-inline private[internal] def showRawAst(inline body: Any)(using pos: DebugPosition) =
-  ${ showRawAstImpl('{ body }, '{ pos }) }
-private def showRawAstImpl(body: Expr[Any], pos: Expr[DebugPosition])(using quotes: Quotes): Expr[Unit] =
+inline private[alpaca] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
+
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withTimeout:
   import quotes.reflect.*
-  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg(using pos.valueOrAbort)
+  Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

@@ -37,7 +37,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
   }
 
-  object ASTPrinterParser extends Parser {
+  object ASTPrinterParser extends Parser:
     val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
       ASTNode("program", instructions)
     }
@@ -49,9 +49,9 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
     val Instruction: Rule[ASTNode] = rule(
       { case (Statement(statement), CTLexer.`;`(_)) => statement },
-      { case (CTLexer.`if`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
+      "bareIf" { case (CTLexer.`if`(_), CTLexer.`\\(`(_), Condition(cond), CTLexer.`\\)`(_), Block(block)) =>
         ASTNode("IF", scala.List(cond, block))
-      }: @name("bareIf"),
+      },
       {
         case (
               CTLexer.`if`(_),
@@ -108,24 +108,22 @@ final class CompilationTheoryTest extends AnyFunSuite:
       { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
         ASTNode(fname.value, args)
       },
-      { case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs)) }: @name("add"),
-      { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) }: @name("sub"),
-      { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) }: @name("mul"),
-      { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) }: @name("div"),
-      { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) => ASTNode(".+", scala.List(lhs, rhs)) }: @name(
-        "matrixAdd",
-      ),
-      { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) => ASTNode(".-", scala.List(lhs, rhs)) }: @name(
-        "matrixSub",
-      ),
-      { case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) => ASTNode(".*", scala.List(lhs, rhs)) }: @name(
-        "matrixMul",
-      ),
-      { case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs)) }: @name(
-        "matrixDiv",
-      ),
-      { case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs)) }: @name("uMinus"),
-      { case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs)) }: @name("transpose"),
+      "add" { case (Expression(lhs), CTLexer.`\\+`(_), Expression(rhs)) => ASTNode("+", scala.List(lhs, rhs)) },
+      "sub" { case (Expression(lhs), CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(lhs, rhs)) },
+      "mul" { case (Expression(lhs), CTLexer.`\\*`(_), Expression(rhs)) => ASTNode("*", scala.List(lhs, rhs)) },
+      "div" { case (Expression(lhs), CTLexer.`/`(_), Expression(rhs)) => ASTNode("/", scala.List(lhs, rhs)) },
+      "matrixAdd" { case (Expression(lhs), CTLexer.`\\.\\+`(_), Expression(rhs)) =>
+        ASTNode(".+", scala.List(lhs, rhs))
+      },
+      "matrixSub" { case (Expression(lhs), CTLexer.`\\.\\-`(_), Expression(rhs)) =>
+        ASTNode(".-", scala.List(lhs, rhs))
+      },
+      "matrixMul" { case (Expression(lhs), CTLexer.`\\.\\*`(_), Expression(rhs)) =>
+        ASTNode(".*", scala.List(lhs, rhs))
+      },
+      "matrixDiv" { case (Expression(lhs), CTLexer.`\\./`(_), Expression(rhs)) => ASTNode("./", scala.List(lhs, rhs)) },
+      "uMinus" { case (CTLexer.`-`(_), Expression(rhs)) => ASTNode("-", scala.List(rhs)) },
+      "transpose" { case (Expression(lhs), CTLexer.`'`(_)) => ASTNode("'", scala.List(lhs)) },
       { case CTLexer.int(i) => ASTNode(i.value.toString, Nil) },
       { case CTLexer.float(f) => ASTNode(f.value.toString, Nil) },
       { case CTLexer.string(s) => ASTNode(s.value, Nil) },
@@ -153,35 +151,34 @@ final class CompilationTheoryTest extends AnyFunSuite:
     )
 
     override val resolutions = Set(
-      P.ofName("bareIf").after(CTLexer.`else`),
+      production.bareIf.after(CTLexer.`else`),
       CTLexer.`'`.before(
-        P.ofName("uMinus"),
-        P.ofName("mul"),
-        P.ofName("div"),
-        P.ofName("matrixMul"),
-        P.ofName("matrixDiv"),
+        production.uMinus,
+        production.mul,
+        production.div,
+        production.matrixMul,
+        production.matrixDiv,
       ),
-      P.ofName("uMinus")
+      production.uMinus
         .before(
           CTLexer.`\\.\\*`,
           CTLexer.`\\./`,
           CTLexer.`\\*`,
           CTLexer.`/`,
         ),
-      P.ofName("mul").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      P.ofName("div").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      P.ofName("matrixMul").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      P.ofName("matrixDiv").before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      CTLexer.`\\*`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-      CTLexer.`/`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-      CTLexer.`\\.\\*`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-      CTLexer.`\\./`.before(P.ofName("add"), P.ofName("sub"), P.ofName("matrixAdd"), P.ofName("matrixSub")),
-      P.ofName("add").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      P.ofName("sub").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      P.ofName("matrixAdd").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      P.ofName("matrixSub").before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.mul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.div.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.matrixMul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      production.matrixDiv.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+      CTLexer.`\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`/`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`\\.\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      CTLexer.`\\./`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+      production.add.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.sub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.matrixAdd.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+      production.matrixSub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
     )
-  }
 
   test("special functions, initializations") {
     withLazyReader("""

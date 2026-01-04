@@ -4,7 +4,8 @@ package internal
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class ShowableTest extends AnyFunSuite with Matchers {
+final class ShowableTest extends AnyFunSuite with Matchers:
+  given DebugSettings = DebugSettings.materialize
 
   test("Showable should convert String to Shown") {
     val str = "Hello, World!"
@@ -22,7 +23,8 @@ final class ShowableTest extends AnyFunSuite with Matchers {
 
   test("Showable should convert custom case class to Shown") {
     case class Person(name: String, age: Int)
-    given Showable[Person] = person => s"${person.name} is ${person.age} years old."
+    given Showable[Person] = Showable: person =>
+      show"${person.name} is ${person.age} years old."
 
     val person = Person("Alice", 30)
     val shown: String = show"$person"
@@ -48,4 +50,3 @@ final class ShowableTest extends AnyFunSuite with Matchers {
        |val shown: String = show"$unsupported"
        |""".stripMargin shouldNot compile
   }
-}
