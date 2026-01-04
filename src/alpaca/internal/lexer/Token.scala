@@ -56,6 +56,8 @@ object TokenInfo:
    */
   private def nextRegexGroupName(): String = s"token${counter.getAndIncrement()}"
 
+  given Default[TokenInfo] = () => TokenInfo("", "", "")
+
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
