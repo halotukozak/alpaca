@@ -61,10 +61,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ DefinedToken[name, Ctx, Unit](${ Expr(tokenInfo) }, $ctxManipulation, _ => ()) })
 
-        case '{ type name <: ValidName; Token[name]($value: value)(using $ctx) } if tree match
-              case term: Term => TypeRepr.of[value] =:= term.tpe
-              case _ => false
-            =>
+        case '{ type name <: ValidName; Token[name]($value: String)(using $ctx) }
+            if value.asTerm.symbol == tree.symbol =>
           logger.trace("extractSimple(3)")
           compileNameAndPattern[name](tree).unsafeMap:
             case ('[type name <: ValidName; name], tokenInfo) =>
@@ -123,9 +121,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         parent = cls,
         name = name,
         tpe = expr.asTerm.tpe,
-        flags =
-          if expr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, Ctx, ?]] then Flags.Private | Flags.Synthetic
-          else Flags.Synthetic,
+        flags = Flags.Synthetic,
         privateWithin = Symbol.noSymbol,
       )
 
@@ -202,7 +198,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   logger.trace("creating tokenization class body")
   val body =
     logger.trace("creating defined token vals")
-    val tokenVals = definedTokens.map: (expr, name) =>
+    val tokenVals = tokens.map: (expr, name) =>
       withOverridingSymbol(parent = cls)(_.fieldMember(name)): owner =>
         ValDef(owner, Some(expr.asTerm.changeOwner(owner)))
 
