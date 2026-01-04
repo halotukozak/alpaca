@@ -15,8 +15,6 @@ import scala.annotation.tailrec
  * @tparam Ctx the global context type
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using copy: Copyable[Ctx], // todo: unused
-  betweenStages: BetweenStages[Ctx],
   using betweenStages: BetweenStages[Ctx],
   handleError: ErrorHandling[Ctx],
   empty: Empty[Ctx],

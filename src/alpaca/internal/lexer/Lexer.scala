@@ -19,7 +19,6 @@ private[alpaca] type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, 
 
 def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
-  copy: Expr[Copyable[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],

@@ -31,10 +31,8 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
-  copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
-): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } = ${
