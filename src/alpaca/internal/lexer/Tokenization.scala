@@ -2,9 +2,8 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.tailrec
-import scala.util.matching.Regex
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.annotation.tailrec
 
 /**
  * The result of compiling a lexer definition.
@@ -58,14 +57,20 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
         case 0 =>
           acc.reverse // todo: make it not reversed
         case _ =>
-          val m = compiled.findPrefixMatchOf(globalCtx.text) getOrElse {
-            // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-            throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
-          }
-          val token = tokens.find(token => m.group(token.info.regexGroupName) ne null) getOrElse {
-            throw new AlgorithmError(s"${m.toString} matched but no token defined for it")
-          }
-          betweenStages(token, m, globalCtx)
+          val matcher = compiled.matcher(globalCtx.text)
+
+          val token =
+            if matcher.lookingAt then
+              Iterator
+                .range(1, matcher.groupCount + 1)
+                .collectFirst:
+                  case i if matcher.start(i) != -1 => groupToTokenMap(i)
+                .getOrElse:
+                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+            else
+              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
+              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
+          betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
           loop(globalCtx)(lexem ::: acc)
@@ -74,8 +79,18 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     initialContext.text = input
     (initialContext, loop(initialContext)(Nil))
 
-  /** The compiled regex that matches all defined tokens. */
-  protected def compiled: Regex
+  /** The compiled pattern that matches all defined tokens. */
+  protected def compiled: java.util.regex.Pattern
+
+  private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] =
+    val matcher = compiled.matcher("")
+    val totalGroups = matcher.groupCount
+    val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
+
+    tokens.iterator.foreach: token =>
+      val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
+      if groupIndex != null then map(groupIndex) = token
+    map
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match

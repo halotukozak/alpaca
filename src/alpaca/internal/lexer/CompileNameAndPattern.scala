@@ -16,6 +16,7 @@ import scala.annotation.tailrec
  */
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
+
   /**
    * Compiles a pattern tree into token information.
    *

@@ -2,7 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.util.matching.Regex.Match
+import java.util.regex.Matcher
 
 /**
  * A hook for updating context between lexing stages.
@@ -14,7 +14,7 @@ import scala.util.matching.Regex.Match
  * @tparam Ctx the global context type
  */
 // todo: i do not like this name
-private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Match, Ctx) => Unit)
+private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
 
 private[alpaca] object BetweenStages:
 
