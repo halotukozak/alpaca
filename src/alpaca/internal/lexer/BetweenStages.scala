@@ -3,6 +3,7 @@ package internal
 package lexer
 
 import java.util.regex.Matcher
+import scala.annotation.implicitNotFound
 
 /**
  * A hook for updating context between lexing stages.
@@ -13,7 +14,7 @@ import java.util.regex.Matcher
  *
  * @tparam Ctx the global context type
  */
-// todo: i do not like this name
+@implicitNotFound("Define BetweenStages for ${Ctx} (or its subclasses)")
 private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
 
 private[alpaca] object BetweenStages:
