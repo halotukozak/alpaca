@@ -3,8 +3,10 @@ package internal
 package lexer
 
 import scala.NamedTuple.AnyNamedTuple
+import scala.annotation.implicitNotFound
 import scala.deriving.Mirror
 
+@implicitNotFound("Cannot derive LexerRefinement for ${Ctx}. Ensure it is a case class.")
 trait LexerRefinement[Ctx <: LexerCtx]:
   type Lexeme <: alpaca.internal.lexer.Lexeme[?, ?]
   final type Token = alpaca.internal.lexer.Token[?, ?, Ctx] { type LexemeTpe = Lexeme }
