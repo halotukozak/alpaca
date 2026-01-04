@@ -234,8 +234,3 @@ Created by [halotukozak](https://github.com/halotukozak) and [Corvette653](https
 ---
 
 Made with ❤️ and coffee
-/Corvette653)
-
----
-
-Made with ❤️ and coffee
