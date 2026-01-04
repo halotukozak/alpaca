@@ -84,6 +84,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
+    given DebugSettings = DebugSettings.materialize
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -123,11 +124,12 @@ abstract class Parser[Ctx <: ParserCtx](
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty
 
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withDebugSettings(DebugSettings.summonUnsafe):
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout:
   import quotes.reflect.*
-
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
+
+  logger.trace(show"Generating production selector for $parserSymbol")
 
   cachedProductions.getOrElseUpdate(
     parserTpe.asType, {
@@ -142,10 +144,14 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withDebugSe
 
       rules
         .unsafeFlatMap:
-          case ValDef(_, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]])
-          case DefDef(_, _, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+          case ValDef(name, _, Some(rhs)) =>
+            logger.trace(show"Extracting production names from rule $name")
+            extractName(rhs.asExprOf[Rule[?]])
+          case DefDef(name, _, _, Some(rhs)) =>
+            logger.trace(show"Extracting production names from rule $name")
+            extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
           case _ =>
-            report.error(s"Define resolutions as the last field of the parser.")
+            report.error("Define resolutions as the last field of the parser.")
             Nil
         .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
           case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])

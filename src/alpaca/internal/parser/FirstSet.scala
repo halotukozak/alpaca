@@ -14,7 +14,6 @@ import scala.annotation.tailrec
 opaque private[parser] type FirstSet = Map[NonTerminal, Set[Terminal]]
 
 private[parser] object FirstSet:
-
   /**
    * Computes the FIRST sets for all non-terminals in a grammar.
    *
@@ -24,34 +23,38 @@ private[parser] object FirstSet:
    * @param productions the grammar productions
    * @return the computed FIRST sets
    */
-  def apply(productions: List[Production]): FirstSet =
+  def apply(productions: List[Production])(using DebugSettings): FirstSet =
+    logger.trace("computing first set...")
     loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec
-  private def loop(productions: List[Production], firstSet: FirstSet): FirstSet =
+  private def loop(productions: List[Production], firstSet: FirstSet)(using DebugSettings): FirstSet =
     val newFirstSet = productions.foldLeft(firstSet)(addImports)
-    if firstSet == newFirstSet then newFirstSet else loop(productions, newFirstSet)
+    if firstSet == newFirstSet then
+      logger.trace("first set stabilized")
+      newFirstSet
+    else loop(productions, newFirstSet)
 
   @tailrec
-  private def addImports(firstSet: FirstSet, production: Production): FirstSet = production.runtimeChecked match
-    case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
-      firstSet.updated(lhs, firstSet(lhs) + head)
+  private def addImports(firstSet: FirstSet, production: Production)(using DebugSettings): FirstSet =
+    production.runtimeChecked match
+      case Production.NonEmpty(lhs, NonEmptyList(head: Terminal, tail), name) =>
+        firstSet.updated(lhs, firstSet(lhs) + head)
 
-    case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal { type IsEmpty = false }, tail), name) =>
-      val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
+      case Production.NonEmpty(lhs, NonEmptyList(head: NonTerminal { type IsEmpty = false }, tail), name) =>
+        val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
-      val production = tail match
-        case head :: next => Production.NonEmpty(lhs, NonEmptyList(head, next*))
-        case Nil => Production.Empty(lhs)
+        val production = tail match
+          case head :: next => Production.NonEmpty(lhs, NonEmptyList(head, next*))
+          case Nil => Production.Empty(lhs)
 
-      if firstSet(head).contains(Symbol.Empty)
-      then addImports(newFirstSet, production)
-      else newFirstSet
+        if firstSet(head).contains(Symbol.Empty)
+        then addImports(newFirstSet, production)
+        else newFirstSet
 
-    case Production.Empty(lhs, name) =>
-      firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+      case Production.Empty(lhs, name) =>
+        firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
 
-  /** Extension methods for FirstSet. */
   extension (firstSet: FirstSet)
 
     /**

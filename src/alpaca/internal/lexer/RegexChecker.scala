@@ -1,4 +1,6 @@
-package alpaca.internal.lexer
+package alpaca
+package internal
+package lexer
 
 import dregex.Regex
 
@@ -22,13 +24,14 @@ private[lexer] object RegexChecker:
    * @param patterns the regex patterns to check
    * @return a sequence of error messages describing any shadowing issues
    */
-  def checkPatterns(patterns: Seq[String]): Seq[String] = patterns match
+  def checkPatterns(patterns: Seq[String])(using DebugSettings): Seq[String] = patterns match
     case Nil => Nil
     case _ =>
+      logger.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
       for
         i <- patterns.indices
         j <- (i + 1) until regexes.size
         if regexes.get(j).isSubsetOf(regexes.get(i))
-      yield s"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
+      yield show"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"

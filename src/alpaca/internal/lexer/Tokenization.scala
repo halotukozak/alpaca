@@ -2,6 +2,7 @@ package alpaca
 package internal
 package lexer
 
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
 
 /**
@@ -66,8 +67,9 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
                   throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
-
+            else
+              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
+              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
