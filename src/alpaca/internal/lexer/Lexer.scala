@@ -6,7 +6,6 @@ import java.util.regex.Pattern
 import scala.NamedTuple.NamedTuple
 import scala.annotation.switch
 import scala.reflect.NameTransformer
-import scala.util.matching.Regex
 
 /**
  * Type alias for lexer rule definitions.

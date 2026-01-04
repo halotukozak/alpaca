@@ -2,10 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.util.matching.Regex
 
 /**
  * The result of compiling a lexer definition.
@@ -80,7 +77,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     initialContext.text = input
     (initialContext, loop(initialContext)(Nil))
 
-  /** The compiled matcher that matches all defined tokens. */
+  /** The compiled pattern that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
 
   private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] =
