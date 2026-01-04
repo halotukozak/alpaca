@@ -42,7 +42,8 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Werror",
     // "-Wunused:all",
     "-experimental",
-    "-preview"
+    "-preview",
+    s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
   )
 
   override def scalaDocOptions = Task {

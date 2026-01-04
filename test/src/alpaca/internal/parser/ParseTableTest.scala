@@ -10,7 +10,6 @@ import org.scalatest.LoneElement
 import scala.compiletime.testing.typeCheckErrors
 
 final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
-  given DebugSettings = DebugSettings(true, "debug/", 90, true)
 
   val CalcLexer = lexer {
     case "\\+" => Token["+"]
