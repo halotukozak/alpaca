@@ -47,10 +47,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(
-    input: CharSequence,
-  )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) =
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) =
     @tailrec def loop(
       globalCtx: Ctx,
     )(
