@@ -3,7 +3,6 @@ package internal
 
 import scala.NamedTuple.NamedTuple
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
@@ -98,6 +97,12 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
 
   def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
     val baseSymbol = symbol(parent)
-    val owner = baseSymbol.overridingSymbol(parent)
-    logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
+    val owner = baseSymbol.overridingSymbol(parent) match
+      case owner if owner.isNoSymbol =>
+        logger.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
+        baseSymbol
+      case owner =>
+        logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
+        owner
+
     body(using owner.asQuotes)(owner)

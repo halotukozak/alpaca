@@ -26,8 +26,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  */
 private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
 
-//todo: private[lexer]
-object TokenInfo:
+private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
 
   /**
