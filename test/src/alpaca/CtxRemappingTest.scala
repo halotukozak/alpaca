@@ -1,5 +1,6 @@
 package alpaca
 
+import alpaca.internal.lexer.ErrorHandling
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -17,20 +18,19 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
   }
 
   test("ctx manipulation influences error position after ignored token") {
-    val L2 = lexer {
-      case "A" => Token["A"]
+    final class CustomException(message: String) extends RuntimeException(message)
+
+    given ErrorHandling[LexerCtx.Default] = ctx => throw CustomException(s"Error at position ${ctx.position}")
+
+    val L = lexer {
+      case "a" => Token["a"]
       case "!" =>
         ctx.position += 5
         Token.Ignored
-      case x @ "\n+" =>
-        ctx.position += x.count(_ == '\n')
-        Token.Ignored
     }
 
-    // todo: https://github.com/halotukozak/alpaca/issues/51
-    // val ex = intercept[RuntimeException] {
-    //   L2.tokenize("A!?")
-    // }
-
-    // ex.getMessage should include("Unexpected character at position 7")
+    val exception = intercept[CustomException] {
+      L.tokenize("a!\na!a")
+    }
+    exception.getMessage should include("Error at position 8")
   }
