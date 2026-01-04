@@ -1,4 +1,6 @@
-package alpaca.internal.lexer
+package alpaca
+package internal
+package lexer
 
 import java.io.{Closeable, Reader}
 import java.nio.charset.{Charset, StandardCharsets}

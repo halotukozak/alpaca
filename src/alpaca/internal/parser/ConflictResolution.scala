@@ -3,7 +3,6 @@ package internal
 package parser
 
 import alpaca.internal.lexer.Token
-
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
 
@@ -53,7 +52,8 @@ private[parser] object ConflictResolutionTable:
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
      */
-    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] =
+    def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using DebugSettings): Option[ParseAction] =
+      logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
       def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
         case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
@@ -75,6 +75,7 @@ private[parser] object ConflictResolutionTable:
       winsOver(first, second) orElse winsOver(second, first)
 
     def verifyNoConflicts()(using DebugSettings): Unit =
+      logger.trace("verifying conflict resolution table for cycles...")
       enum VisitState:
         case Unvisited, Visited, Processed
 

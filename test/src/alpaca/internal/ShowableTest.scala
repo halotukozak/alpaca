@@ -5,6 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 final class ShowableTest extends AnyFunSuite with Matchers:
+  given DebugSettings = DebugSettings.materialize
 
   test("Showable should convert String to Shown") {
     val str = "Hello, World!"
