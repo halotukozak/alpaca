@@ -17,6 +17,9 @@ import scala.annotation.tailrec
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using copy: Copyable[Ctx], // todo: unused
   betweenStages: BetweenStages[Ctx],
+  using betweenStages: BetweenStages[Ctx],
+  handleError: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 
@@ -67,9 +70,8 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
                   throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else
-              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
+            else handleError(globalCtx)
+
           betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
