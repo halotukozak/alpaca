@@ -49,7 +49,7 @@ object Token:
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: LexerCtx): IgnoredTokenDefinition[ctx.type] = dummy
+  def Ignored(using ctx: LexerCtx): IgnoredToken[ctx.type] = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -61,7 +61,7 @@ object Token:
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](using ctx: LexerCtx): TokenDefinition[Name, ctx.type, String] = dummy
+  def apply[Name <: ValidName](using ctx: LexerCtx): Token[Name, ctx.type, String] = dummy
 
   /**
    * Creates a token with a custom value extractor.
@@ -74,7 +74,7 @@ object Token:
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): TokenDefinition[Name, ctx.type, value.type] = dummy
+  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
 
 transparent inline given ctx(using c: LexerCtx): c.type = c
 
@@ -176,10 +176,10 @@ object LexerCtx:
  * @tparam Ctx the global context type
  */
 
-type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, TokenDefinition[ValidName, Ctx, Any]]
+type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
 
 /**
- * Defines an opaque type `TokenDefinition` that represents a token used in a lexer.
+ * Defines an opaque type `Token` that represents a token used in a lexer.
  *
  * This type has three type parameters:
  * - `Name`: The type of the token's name, restricted to a subtype of `ValidName`.
@@ -189,7 +189,7 @@ type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, TokenDefinition[
  * The exact implementation details of the underlying type are abstracted away by using `Any`.
  * Opaque types provide type safety without exposing the underlying representation.
  */
-opaque type TokenDefinition[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
+opaque type Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
 
 /**
  * Represents a specific type of token definition that denotes an ignored token during the lexing process.
@@ -204,10 +204,10 @@ opaque type TokenDefinition[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
  * position, the last matched token, and the remaining input.
  *
  * The `ValidName` and `Nothing` type parameters are placeholder constraints inherited from
- * `TokenDefinition`, but `IgnoredTokenDefinition` does not provide its own additional constraints
+ * `Token`, but `IgnoredToken` does not provide its own additional constraints
  * or behavior beyond being excluded from normal processing.
  *
  * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
  * this type cannot be directly manipulated outside the context of its definition.
  */
-opaque type IgnoredTokenDefinition[+Ctx <: LexerCtx] <: TokenDefinition[ValidName, Ctx, Nothing] = Any
+opaque type IgnoredToken[+Ctx <: LexerCtx] <: Token[ValidName, Ctx, Nothing] = Any
