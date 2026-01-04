@@ -221,7 +221,7 @@ case "#.*" => Token.Ignored
 ## Documentation
 
 - 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
-- 🐛 [Debug Settings](debug-settings.html) - Configure compile-time debugging and logging
+- 🐛 [Debug Settings](https://halotukozak.github.io/alpaca/docs/_docs/debug-settings.html) - Configure compile-time debugging and logging
 
 ## Contributing
 
