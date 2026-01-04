@@ -2,7 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.NamedTuple.NamedTuple
 import scala.annotation.tailrec
 
 /**
