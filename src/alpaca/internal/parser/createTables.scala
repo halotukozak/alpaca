@@ -7,6 +7,8 @@ import NonEmptyList as NEL
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 
+import scala.reflect.NameTransformer
+
 /**
  * An opaque type containing the parse and action tables for the parser.
  *
@@ -53,6 +55,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
+
+  logger.trace(show"createTablesImpl for: $parserSymbol")
 
   val ctxSymbol = parserSymbol.methodMember("ctx").head
   val parserName = parserSymbol.name.stripSuffix("$")
@@ -133,28 +137,21 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
   logger.trace("Productions extracted, building parse and action tables...")
 
   val findProduction: Expr[Production] => Production =
-    val productionsByName = productions
-      .collect:
-        case p if p.name != null => p.name -> p
-      .toMap
-
-    logger.trace(show"productionsByName:\n${productionsByName.mkString("\n")}")
-
-    val productionsByRhs = productions
-      .collect: p =>
-        p.rhs -> p
-      .toMap
-
-    logger.trace(show"productionsByRhs:\n${productionsByRhs.mkString("\n")}")
+    val productionsByName = productions.collect { case p if p.name != null => p.name -> p }.toMap
+    val productionsByRhs = productions.collect(p => p.rhs -> p).toMap
     {
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
+        logger.trace(show"Looking for production with name '$name'")
         productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
+
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
           .map[parser.Symbol.NonEmpty]:
             case '{ type ruleType <: Rule[?]; $_ : ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
             case '{ type name <: ValidName; $_ : Token[name, ?, ?] } => Terminal(ValidName.from[name])
           .toList
+
+        logger.trace(show"Looking for production with RHS '${args.mkShow(", ")}'")
 
         productionsByRhs.getOrElse(
           NEL.unsafe(args),
