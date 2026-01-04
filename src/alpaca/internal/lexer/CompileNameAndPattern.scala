@@ -28,9 +28,9 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[(Type[? <: String], TokenInfo)] =
+  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
     logger.trace("compiling name and pattern")
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: String], TokenInfo)] =
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
       logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
@@ -62,6 +62,6 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
                 case Literal(StringConstant(str)) => str
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled[List[(Type[? <: String], TokenInfo)]](x.toString)
+        case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)

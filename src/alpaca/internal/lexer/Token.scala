@@ -41,11 +41,11 @@ object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[name.type], TokenInfo) =
+  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (
-      ConstantType(StringConstant(name)).asType.asInstanceOf[Type[name.type]],
+      ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
       TokenInfo(name, nextRegexGroupName(), pattern),
     )
 
