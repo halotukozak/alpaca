@@ -189,7 +189,8 @@ type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName,
  * The exact implementation details of the underlying type are abstracted away by using `Any`.
  * Opaque types provide type safety without exposing the underlying representation.
  */
-opaque type Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
+//todo: it's a scala bug, that it cannot be an opaque type
+trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value] 
 
 /**
  * Represents a specific type of token definition that denotes an ignored token during the lexing process.
@@ -210,4 +211,5 @@ opaque type Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value] = Any
  * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
  * this type cannot be directly manipulated outside the context of its definition.
  */
-opaque type IgnoredToken[+Ctx <: LexerCtx] <: Token[ValidName, Ctx, Nothing] = Any
+//todo: it's a scala bug, that it cannot be an opaque type
+trait IgnoredToken[+Ctx <: LexerCtx] extends Token[ValidName, Ctx, Nothing]
