@@ -3,9 +3,8 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.annotation.compileTimeOnly
-import scala.annotation.publicInBinary
+import scala.annotation.unchecked.uncheckedVariance as uv
 
 /**
  * Type alias for context manipulation functions.
@@ -139,3 +138,6 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   info: TokenInfo[Name],
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
+
+def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())

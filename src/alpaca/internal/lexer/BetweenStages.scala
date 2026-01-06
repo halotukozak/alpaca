@@ -15,7 +15,7 @@ import scala.annotation.implicitNotFound
  * @tparam Ctx the global context type
  */
 @implicitNotFound("Define BetweenStages for ${Ctx} (or its subclasses)")
-private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
+private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
 
 private[alpaca] object BetweenStages:
 

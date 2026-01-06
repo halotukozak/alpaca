@@ -119,19 +119,14 @@ object LexerCtx:
    * - Applies any context modifications
    */
   given BetweenStages[LexerCtx] =
-    case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-
       val ctxAsProduct = ctx.asInstanceOf[Product]
       val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
         ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
-    case (IgnoredToken(_, modifyCtx), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (IgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)
 
   given ErrorHandling[LexerCtx] = ctx =>

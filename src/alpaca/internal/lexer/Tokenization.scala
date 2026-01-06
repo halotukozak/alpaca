@@ -59,33 +59,39 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
         case _ =>
           val matcher = compiled.matcher(globalCtx.text)
 
-          val token =
-            if matcher.lookingAt then
-              Iterator
-                .range(1, matcher.groupCount + 1)
-                .collectFirst:
-                  case i if matcher.start(i) != -1 => groupToTokenMap(i)
-                .getOrElse:
-                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else
-              def createIgnored(matched: String) =
+          val (token, matched) = if matcher.lookingAt then
+            val matched = matcher.group(0)
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(matcher.end)
+            Iterator
+              .range(1, matcher.groupCount + 1)
+              .collectFirst:
+                case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
+              .getOrElse:
+                throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+          else
+            errorHandling(globalCtx) match
+              case Strategy.Throw(ex) =>
+                throw ex
+
+              case Strategy.IgnoreToken if matcher.hasMatch =>
+                val firstMatching = matcher.start
+                val matched = globalCtx.text.subSequence(0, firstMatching).toString
                 globalCtx.lastRawMatched = matched
-                IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), (_: Ctx) => ())
+                globalCtx.text = globalCtx.text.subSequence(firstMatching, globalCtx.text.length)
+                (RecoveredToken(matched), matched)
 
-              errorHandling(globalCtx) match
-                case Strategy.Throw(ex) =>
-                  throw ex
-                case Strategy.IgnoreChar =>
-                  createIgnored(globalCtx.text.charAt(0).toString)
-                case Strategy.IgnoreToken =>
-                  val firstMatching = matcher.start
-                  val matched = globalCtx.text.subSequence(0, firstMatching).toString
-                  createIgnored(matched)
-                case Strategy.Stop =>
-                  globalCtx.text = ""
-                  return loop(globalCtx)(acc)
+              case Strategy.IgnoreChar | Strategy.IgnoreToken =>
+                val matched = globalCtx.text.charAt(0).toString
+                globalCtx.lastRawMatched = matched
+                globalCtx.text = globalCtx.text.subSequence(1, globalCtx.text.length)
+                (RecoveredToken(matched), matched)
 
-          betweenStages(token, matcher, globalCtx)
+              case Strategy.Stop =>
+                globalCtx.text = ""
+                return loop(globalCtx)(acc)
+
+          betweenStages(token, matched, globalCtx)
           val lexem = List(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
           loop(globalCtx)(lexem ::: acc)
