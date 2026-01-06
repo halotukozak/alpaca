@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.NamedTuple.NamedTuple
+import scala.annotation.targetName
 
 /**
  * A type class for converting values to their string representation.
@@ -80,6 +81,11 @@ private[internal] object Showable:
     else short
 
   given [T] => (quotes: Quotes) => Showable[Type[T]] = Showable: tpe =>
+    import quotes.reflect.*
+    TypeRepr.of(using tpe).show
+
+  @targetName("given_Type_bounds")
+  given [T] => (quotes: Quotes) => Showable[Type[? <: T]] = Showable: tpe =>
     import quotes.reflect.*
     TypeRepr.of(using tpe).show
 
