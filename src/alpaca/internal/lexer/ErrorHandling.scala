@@ -34,9 +34,12 @@ trait ErrorHandling[-Ctx <: LexerCtx] extends (Ctx => ErrorHandling.Strategy)
 object ErrorHandling:
   enum Strategy:
     case Throw(ex: Exception)
+
     /** Skips the single current character that failed to match any token and continues. */
     case IgnoreChar
+
     /** Skips the entire sequence that failed to match and continues from the next successful match. If the match is not found, it skips the current character. */
     case IgnoreToken
+
     /** Gracefully stops tokenization at the current position, returning the lexemes collected so far. */
     case Stop
