@@ -56,7 +56,7 @@ private[lexer] object TokenInfo:
   private def nextRegexGroupName(): String = s"token${counter.getAndIncrement()}"
 
   given Default[TokenInfo] = () => TokenInfo("", "", "")
-  
+
   given Showable[TokenInfo] = Showable.fromToString
 
   given ToExpr[TokenInfo]:
