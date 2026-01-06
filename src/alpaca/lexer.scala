@@ -134,7 +134,8 @@ object LexerCtx:
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
-  given ErrorHandling[LexerCtx] = ctx => throw new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'")
+  given ErrorHandling[LexerCtx] = ctx =>
+    ErrorHandling.Strategy.Throw(new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'"))
 
   /**
    * An empty lexer context with no extra state tracking.
@@ -173,6 +174,7 @@ object LexerCtx:
 
   object Default:
     given ErrorHandling[Default] = ctx =>
-      throw new RuntimeException(
-        s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
-      )
+      ErrorHandling.Strategy.Throw:
+        new RuntimeException(
+          s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
+        )

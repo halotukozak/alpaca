@@ -20,7 +20,9 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
   test("ctx manipulation influences error position after ignored token") {
     final class CustomException(message: String) extends RuntimeException(message)
 
-    given ErrorHandling[LexerCtx.Default] = ctx => throw CustomException(s"Error at position ${ctx.position}")
+    given ErrorHandling[LexerCtx.Default] = ctx =>
+      ErrorHandling.Strategy.Throw:
+        CustomException(s"Error at position ${ctx.position}")
 
     val L = lexer {
       case "a" => Token["a"]

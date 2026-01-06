@@ -33,7 +33,6 @@ trait ErrorHandling[-Ctx <: LexerCtx] extends (Ctx => ErrorHandling.Strategy)
  */
 object ErrorHandling:
   enum Strategy:
-    /** Immediately halts tokenization and throws the provided exception. */
     case Throw(ex: Exception)
     /** Skips the single current character that failed to match any token and continues. */
     case IgnoreChar
