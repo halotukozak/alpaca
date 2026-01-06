@@ -16,7 +16,7 @@ Debug settings are configured using the Scala compiler's `-Xmacro-settings` flag
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `debugDirectory` | String | `null` | Directory path where debug output files will be written |
+| `debugDirectory` | String | `null` | **Absolute** directory path where debug output files will be written. For Mill, use `$moduleDir/debug`; for SBT, use an absolute path or `${baseDirectory.value}/debug` |
 | `compilationTimeout` | Duration | `90s` | Maximum time allowed for macro compilation before timeout |
 | `enableVerboseNames` | Boolean | `false` | Enable verbose naming in generated code for better debugging |
 
@@ -55,7 +55,7 @@ object myproject extends ScalaModule {
   )
   
   override def scalacOptions = Seq(
-    "-Xmacro-settings:debugDirectory=./debug",
+    s"-Xmacro-settings:debugDirectory=$moduleDir/debug",
     "-Xmacro-settings:enableVerboseNames=true",
     "-Xmacro-settings:compilationTimeout=120s",
     "-Xmacro-settings:trace=stdout",
@@ -68,9 +68,11 @@ object myproject extends ScalaModule {
 
 ```scala
 override def scalacOptions = Seq(
-  "-Xmacro-settings:debugDirectory=./debug,enableVerboseNames=true,trace=stdout"
+  s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true,trace=stdout"
 )
 ```
+
+**Note:** `debugDirectory` must be an absolute path. In Mill, use `$moduleDir` to reference the module directory.
 
 ### SBT
 
@@ -82,7 +84,7 @@ scalaVersion := "3.7.4"
 libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.2"
 
 scalacOptions ++= Seq(
-  "-Xmacro-settings:debugDirectory=./debug",
+  s"-Xmacro-settings:debugDirectory=${baseDirectory.value}/debug",
   "-Xmacro-settings:enableVerboseNames=true",
   "-Xmacro-settings:compilationTimeout=120s",
   "-Xmacro-settings:trace=stdout",
@@ -93,8 +95,10 @@ scalacOptions ++= Seq(
 Or combine them:
 
 ```sbt
-scalacOptions += "-Xmacro-settings:debugDirectory=./debug,enableVerboseNames=true,trace=stdout"
+scalacOptions += s"-Xmacro-settings:debugDirectory=${baseDirectory.value}/debug,enableVerboseNames=true,trace=stdout"
 ```
+
+**Note:** `debugDirectory` must be an absolute path. In SBT, use `${baseDirectory.value}` to reference the project directory.
 
 ### Scala CLI
 
@@ -104,7 +108,7 @@ Use the `--scala-opt` flag to pass debug settings:
 scala-cli run MyLexer.scala \
   --scala 3.7.4 \
   --dep "io.github.halotukozak::alpaca:0.0.2" \
-  --scala-opt "-Xmacro-settings:debugDirectory=./debug" \
+  --scala-opt "-Xmacro-settings:debugDirectory=/absolute/path/to/debug" \
   --scala-opt "-Xmacro-settings:enableVerboseNames=true"
 ```
 
@@ -113,13 +117,15 @@ Or add directives in your Scala file:
 ```scala
 //> using scala "3.7.4"
 //> using dep "io.github.halotukozak::alpaca:0.0.2"
-//> using options "-Xmacro-settings:debugDirectory=./debug"
+//> using options "-Xmacro-settings:debugDirectory=/absolute/path/to/debug"
 //> using options "-Xmacro-settings:enableVerboseNames=true"
 
 import alpaca.*
 
 // Your code here
 ```
+
+**Note:** `debugDirectory` must be an absolute path. Use an absolute path like `/Users/username/project/debug` or `/home/user/project/debug`.
 
 ## Example: Complete Debugging Setup
 
@@ -139,7 +145,7 @@ object myparser extends ScalaModule {
   
   override def scalacOptions = Seq(
     // Enable all debug features
-    "-Xmacro-settings:debugDirectory=./debug",
+    s"-Xmacro-settings:debugDirectory=$moduleDir/debug",
     "-Xmacro-settings:enableVerboseNames=true",
     "-Xmacro-settings:compilationTimeout=180s",
     
@@ -156,16 +162,20 @@ object myparser extends ScalaModule {
 ```
 
 This configuration:
-- Creates a `./debug` directory for output
+- Creates a `debug` directory in your module directory for output
 - Enables verbose names in generated code
 - Sets a 3-minute compilation timeout
 - Logs detailed trace/debug/info to files
 - Displays warnings and errors on the console
 
+**Finding log files:** When using `file` output mode, log files are created in the `debugDirectory` with names based on your source files (e.g., `MyLexer.scala.log`). The full path will be `$moduleDir/debug/MyLexer.scala.log` for Mill projects.
+
 ## Notes
 
+- **`debugDirectory` must be an absolute path.** Use build tool variables like `$moduleDir` (Mill) or `${baseDirectory.value}` (SBT) to construct the path
 - Debug settings only affect compile-time behavior; they have no impact on runtime performance
 - The debug directory is created automatically if it doesn't exist
 - Log files are buffered and flushed periodically (every 4 seconds)
 - All log files are closed automatically when the JVM shuts down
 - Debug output can be quite verbose; use file output for detailed logging
+- Log files are named after your source files (e.g., `MyLexer.scala.log`) and placed in the `debugDirectory`
