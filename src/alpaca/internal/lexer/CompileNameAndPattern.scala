@@ -27,40 +27,40 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
+  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
     logger.trace("compiling name and pattern")
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
       logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
-          TokenInfo.unsafe(regex, regex) :: Nil
+          TokenInfo(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
           alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
+            case Literal(StringConstant(str)) => TokenInfo(str, str)
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
           loop(tpe, tree)
         // case x : "regex" => Token.Ignored
         case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
-          TokenInfo.unsafe(str, str) :: Nil
+          TokenInfo(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
           alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
+            case Literal(StringConstant(str)) => TokenInfo(str, str)
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
-          TokenInfo.unsafe(name, regex) :: Nil
+          TokenInfo(name, regex) :: Nil
         // case x : ("regex" | "regex2") => Token["name"]
         case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
-          TokenInfo.unsafe(
+          TokenInfo(
             str,
             alternatives
               .unsafeMap:
                 case Literal(StringConstant(str)) => str
               .mkString("|"),
           ) :: Nil
-        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
+        case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
