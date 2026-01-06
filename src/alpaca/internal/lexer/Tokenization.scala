@@ -2,6 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.internal.lexer.ErrorHandling.Strategy
+
 import scala.NamedTuple.NamedTuple
 import scala.annotation.tailrec
 
@@ -16,7 +18,7 @@ import scala.annotation.tailrec
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
-  handleError: ErrorHandling[Ctx],
+  errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
@@ -65,7 +67,23 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
                   throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else handleError(globalCtx)
+            else
+              def createIgnored(matched: String) =
+                globalCtx.lastRawMatched = matched
+                IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), (_: Ctx) => ())
+
+              errorHandling(globalCtx) match
+                case Strategy.Throw(ex) =>
+                  throw ex
+                case Strategy.IgnoreChar =>
+                  createIgnored(globalCtx.text.charAt(0).toString)
+                case Strategy.IgnoreToken =>
+                  val firstMatching = matcher.start
+                  val matched = globalCtx.text.subSequence(0, firstMatching).toString
+                  createIgnored(matched)
+                case Strategy.Stop =>
+                  globalCtx.text = ""
+                  return loop(globalCtx)(acc)
 
           betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
