@@ -2,8 +2,9 @@ package alpaca
 package internal
 package lexer
 
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
+import scala.util.matching.Regex
+import scala.NamedTuple.NamedTuple
 
 /**
  * The result of compiling a lexer definition.
@@ -15,8 +16,7 @@ import scala.annotation.tailrec
  * @tparam Ctx the global context type
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using copy: Copyable[Ctx], // todo: unused
-  betweenStages: BetweenStages[Ctx],
+  using betweenStages: BetweenStages[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 

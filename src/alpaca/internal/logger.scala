@@ -14,7 +14,7 @@ private[internal] object logger:
     val task: Runnable = () =>
       cache.values.forEach: writer =>
         try writer.synchronized(writer.flush())
-        catch case e: Exception => ()
+        catch case _: Exception => ()
 
     scheduler.scheduleAtFixedRate(task, 0, 4, TimeUnit.SECONDS)
     sys.addShutdownHook(scheduler.shutdown())
