@@ -85,7 +85,7 @@ private[internal] given [T: ToExpr as toExpr] => ToExpr[T | Null]:
 
 private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
   def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
-    case '{ $n: Null } => Some(null)
+    case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 
 inline private[alpaca] def withTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =

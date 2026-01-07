@@ -4,7 +4,7 @@ import alpaca.internal.*
 import alpaca.internal.lexer.{Lexeme, Token}
 import alpaca.internal.parser.*
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, unused}
 import scala.deriving.Mirror
 
 type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
@@ -48,7 +48,7 @@ type ProductionDefinition[R] = PartialFunction[Tuple | Lexeme[?, ?], R]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](productions: ProductionDefinition[R]*): Rule[R] = dummy
+inline def rule[R](@unused productions: ProductionDefinition[R]*): Rule[R] = dummy
 
 extension (name: String)
   /**
@@ -101,7 +101,7 @@ trait Rule[R]:
    * @return Some(result) if the match succeeds
    */
   @compileTimeOnly(RuleOnly)
-  inline def unapply(x: Any): Option[R] = dummy
+  inline def unapply(@unused x: Any): Option[R] = dummy
 
   /**
    * Pattern matching extractor for lists of this rule.
@@ -155,7 +155,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -171,7 +171,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
 object Production:
 
@@ -185,7 +185,7 @@ object Production:
    * @return a production reference
    */
   @compileTimeOnly(ConflictResolutionOnly)
-  inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
+  inline def apply(@unused inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
 
 object ParserCtx:
 

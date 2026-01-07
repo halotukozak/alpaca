@@ -2,8 +2,7 @@ package alpaca
 package internal
 package parser
 
-import alpaca.internal.lexer.Token
-import scala.annotation.{compileTimeOnly, tailrec}
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**

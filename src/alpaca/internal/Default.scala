@@ -1,9 +1,7 @@
 package alpaca
 package internal
 
-import scala.collection.IterableFactory
 import scala.collection.Factory
-import scala.annotation.nowarn
 
 private[internal] trait Default[+T] extends (() => T):
   def transform[A](f: T => A): Default[A] = () => f(apply())

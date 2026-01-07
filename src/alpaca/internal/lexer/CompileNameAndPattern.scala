@@ -33,11 +33,11 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
       logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
-        case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
+        case (TermRef(_, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
           logger.trace(show"matched simple regex with bind $bind and regex $regex")
           TokenInfo(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
-        case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
+        case (TermRef(_, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
           logger.trace(
             show"matched alternative regex with bind $bind and alternatives ${alternatives.mkShow("[", ", ", "]")}",
           )

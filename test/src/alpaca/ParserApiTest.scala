@@ -5,7 +5,6 @@ import Production as P
 import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.internal.lexer.Lexeme
 import alpaca.internal.lexer.LexerRefinement
 
 import scala.deriving.Mirror
@@ -99,7 +98,6 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
   }
 
   test("api") {
-    type R = (Int, Option[Int], List[Int])
     object ApiParser extends Parser[CalcContext]:
       val Num = rule { case CalcLexer.NUMBER(n) => n.value }
 

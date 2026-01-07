@@ -3,7 +3,7 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, unused}
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -31,11 +31,10 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
-  copy: Copyable[Ctx],
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ copy }, '{ betweenStages }) }
+  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
