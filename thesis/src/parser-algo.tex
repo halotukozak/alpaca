@@ -43,12 +43,12 @@ W~parserach LL problemy wynikają typowo z~lewostronnej rekurencji i~wspólnych 
 W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~[translate:\texttt{if--then}] vs.~[translate:\texttt{if--then--else}]) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
 
 
-\section[Dobór klasy parsera w systemie ALPACA]{Dobór klasy parsera w~systemie ALPACA}\label{sec:parser-algo-lr1}
+\section[Dobór klasy parsera]{Dobór klasy parsera}\label{sec:parser-algo-lr1}
 
 System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR\@.
 Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania.
 
-\subsection[Zalety podejścia LR(1) w ALPACA]{Zalety podejścia LR(1) w~ALPACA}\label{subsec:parser-algo-lr1-pros}
+\subsection[Zalety podejścia LR(1)]{Zalety podejścia LR(1)}\label{subsec:parser-algo-lr1-pros}
 
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
@@ -81,11 +81,11 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 \end{itemize}
 
 
-\section[Konstrukcja tabel parsera LR(1) w ALPACA]{Konstrukcja tabel parsera LR(1) w~ALPACA}
+\section[Konstrukcja tabel parsera LR(1)]{Konstrukcja tabel parsera LR(1)}
 \label{sec:parser-algo-impl}
 
 Generowanie parsera LR(1) w~ALPACA stanowi sekwencję algorytmów realizowanych w~czasie kompilacji.
-Poniżej opisano, etap po~etapie, transformację deklaratywnej specyfikacji gramatyki w~deterministyczną tabelę akcji.
+W sekcji \ref{subsec:parser-algo-first} opisano, etap po~etapie, transformację deklaratywnej specyfikacji gramatyki w~deterministyczną tabelę akcji.
 
 \subsection{Wyznaczanie zbiorów FIRST}\label{subsec:parser-algo-first}
 

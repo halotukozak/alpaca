@@ -1,11 +1,11 @@
-// Podczas ekspansji makra:
-val oldCtxSymbol: Symbol = ... // Symbol parametru makra
-val newCtxRef: Term = Ref(newCtxSymbol) // Referencja do nowego symbolu
+// during macro expansion:
+val oldCtxSymbol: Symbol = ... // macro parameter symbol
+val newCtxRef: Term = Ref(newCtxSymbol) // reference to new symbol
 
 val replaceRefs = ReplaceRefs()
 val treeMap = replaceRefs((oldCtxSymbol, newCtxRef))
 
-// Transformacja ciała funkcji:
-val originalBody: Term = ... // Ciało funkcji odnoszące się do oldCtx
+// during function body transformation:
+val originalBody: Term = ... // function body that references oldCtx
 val transformedBody: Term = treeMap.transformTree(originalBody)(owner)
-// Wszystkie wystąpienia oldCtxSymbol są teraz zastąpione newCtxRef
+// all occurrences of oldCtxSymbol are now replaced with newCtxRef
