@@ -181,7 +181,7 @@
     \clearpage
 
     \begin{center}
-        {\bfseries Streszczenie}
+        {\bfseries Abstrakt}
     \end{center}
 
     \small
@@ -195,11 +195,11 @@
     Analiza leksykalna opiera się na wyrażeniach regularnych kompilowanych do deterministycznych automatów skończonych, zaś analiza składniowa implementuje algorytmy konstrukcji parserów LR(1) w całości na etapie kompilacji.
     Implementacja rozwiązuje krytyczne ograniczenia JVM poprzez techniki fragmentacji metod, umożliwiając kompilację złożonych gramatyk.
     Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i przepisywanie referencji między etapami kompilacji.
-    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, eliminując potrzebę specjalnego DSL.
+    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, eliminując potrzebę specjalnego DSL\@.
     Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
     Dodatkowe wkłady obejmują automatyczne rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji z komunikatami błędów zawierającymi praktyczne informacje.
-    Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie JSON. Wyniki wykazują wydajność konkurencyjną wobec konkurenyjncyh rozwiązań dla struktur iteracyjnych i utrzymaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
-    Implementacja wykazując poprawę użyteczności w porównaniu do wszystkich analizowanych alternatyw.
+    Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie JSON. Wyniki wykazują wydajność konkurencyjną wobec podobnych rozwiązań dla struktur iteracyjnych i utrzymaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
+    Implementacja wykazuje poprawę użyteczności w porównaniu do wszystkich analizowanych alternatyw.
     Badania skutecznie weryfikują hipotezę, że metaprogramowanie w czasie kompilacji osiąga wysoką wydajność, przy jednoczesnym zachowaniu użyteczności bibliotek i integracji z IDE. Praca ta demonstruje praktyczne aplikacje w edukacji kompilatorów i tworzeniu języków domenowych, z potencjalnym wpływem na sposób, w jaki nowoczesne narzędzia językowe równoważą wydajność, bezpieczeństwo typów i doświadczenie programisty.
     \vspace{1cm}
 
@@ -225,7 +225,7 @@
     Key technical contributions include declarative grammar specification integrated with Scala's pattern matching and type system, eliminating the need for a special DSL. Refined types provide statically-verified token field access with comprehensive IDE support, including autocomplete, type hints, and go-to-definition navigation.
     Additional contributions encompass automatic conflict resolution through precedence relations and compile-time grammar validation with error messages containing practical information.
     Empirical validation compares ALPACA against other solutions across arithmetic expressions and JSON parsing benchmarks.
-    Results demonstrate performance competitive with the other tools.
+    Results demonstrate competitive performance with the other tools.
     The solution demonstrating improved usability compared to all analyzed alternatives.
     The research successfully validates the hypothesis that compile-time metaprogramming achieves equivalent performance while preserving library-like usability and IDE integration.
     This work demonstrates practical applications in compiler education and domain-specific language development, with potential impact on how modern language tooling balances performance, type safety, and developer experience.
