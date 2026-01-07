@@ -2,21 +2,13 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.Token as TokenDef
+
 import java.util.regex.Pattern
 import scala.NamedTuple.NamedTuple
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
-/**
- * Type alias for lexer rule definitions.
- *
- * A lexer definition is a partial function that maps string patterns
- * (as regex literals) to token definitions.
- *
- * @tparam Ctx the global context type
- */
-private[alpaca] type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[?, Ctx, ?]]
-//todo: private[alpaca]
 def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
@@ -43,10 +35,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         (find = tree.symbol, replace = Select.unique(newCtx, "lastRawMatched")),
       )
 
-      def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]]): PartialFunction[
-        Expr[Token[ValidName, Ctx, Any]],
-        List[(TokenInfo, Expr[Token[?, Ctx, ?]])],
-      ] =
+      def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
+        : PartialFunction[Expr[TokenDef[ValidName, Ctx, Any]], List[(TokenInfo, Expr[Token[?, Ctx, ?]])]] =
         case '{ Token.Ignored(using $_) } =>
           logger.trace("extractSimple(1)")
           compileNameAndPattern[Nothing](tree).unsafeMap:
@@ -79,7 +69,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
       logger.trace("extracting tokens from body")
       val (infos, tokens) = extractSimple('{ _ => () })
-        .lift(body.asExprOf[Token[ValidName, Ctx, Any]])
+        .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
           body match
             case Block(statements, expr) =>
@@ -89,7 +79,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
                     Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
                   )(methSym)
 
-              extractSimple(ctxManipulation).lift(expr.asExprOf[Token[ValidName, Ctx, Any]])
+              extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[Token[?, Ctx, ?]])]](body))
         .unzip
 
