@@ -27,6 +27,6 @@ object PositionTracking:
    * when the context extends PositionTracking.
    */
   given BetweenStages[PositionTracking] = (_, matcher, ctx) =>
-    matcher.matched match
+    matcher.group(0) match
       case "\n" => ctx.position = 1
-      case matched => ctx.position += matched.nn.length
+      case matched: String => ctx.position += matched.length

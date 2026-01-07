@@ -22,4 +22,4 @@ object LineTracking:
    * This is automatically composed with other BetweenStages instances
    * when the context extends LineTracking.
    */
-  given BetweenStages[LineTracking] = (_, matcher, ctx) => if matcher.matched == "\n" then ctx.line += 1
+  given BetweenStages[LineTracking] = (_, matcher, ctx) => if matcher.group(0) == "\n" then ctx.line += 1

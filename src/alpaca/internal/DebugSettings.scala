@@ -2,7 +2,6 @@ package alpaca
 package internal
 
 import scala.concurrent.duration.{Duration, DurationInt}
-import scala.quoted.{Expr, Quotes, ToExpr}
 
 final case class DebugSettings(
   debugDirectory: String | Null,

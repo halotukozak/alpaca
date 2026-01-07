@@ -117,7 +117,7 @@ object LexerCtx:
    */
   given BetweenStages[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
-      ctx.lastRawMatched = m.matched.nn
+      ctx.lastRawMatched = m.group(0).nn
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
@@ -127,7 +127,7 @@ object LexerCtx:
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
     case (IgnoredToken(_, modifyCtx), m, ctx) =>
-      ctx.lastRawMatched = m.matched.nn
+      ctx.lastRawMatched = m.group(0).nn
       ctx.text = ctx.text.from(m.end)
       modifyCtx(ctx)
 
