@@ -1,10 +1,9 @@
-val MathLexer = lexer {
+val MathLexer = lexer:
   case "\\s+" => Token.Ignored
   case operator @ ("\\+" | "-" | "\\*" | "/" | "\\(" | "\\)") => Token[operator.type]
   case num @ "\\d+" => Token["num"](num.toInt)
-}
 
-object MathParser extends Parser {
+object MathParser extends Parser:
   val Expr: Rule[Int] = rule(
     { case (Expr(a), MathLexer.`\\*`(_), Expr(b)) => a * b }: @name("mul"),
     { case (Expr(a), MathLexer.`/`(_), Expr(b)) => a / b }: @name("div"),
@@ -13,7 +12,6 @@ object MathParser extends Parser {
     { case (MathLexer.`\\(`(_), Expr(a), MathLexer.`\\)`(_)) => a },
     { case MathLexer.num(n) => n.value },
   )
-
   // Parser entry point
   val root: Rule[Int] = rule { case Expr(v) => v }
 
@@ -28,4 +26,3 @@ object MathParser extends Parser {
     Production.ofName("plus").before(MathLexer.`\\+`, MathLexer.`-`),
     Production.ofName("minus").before(MathLexer.`\\+`, MathLexer.`-`),
   )
-}

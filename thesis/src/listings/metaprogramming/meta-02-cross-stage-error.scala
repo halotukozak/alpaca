@@ -1,4 +1,3 @@
-def unsafeQuote(using Quotes): Expr[Int] = {
+def unsafeQuote(using Quotes): Expr[Int] = 
   val localVar = 42
-  '{ localVar }  // BŁĄD: localVar nie istnieje w fazie wykonania!
-}
+  '{ localVar }  // error: access to value localVar from wrong staging level
