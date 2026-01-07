@@ -10,9 +10,9 @@
 \usepackage{multirow}
 \usepackage{grffile}
 \usepackage{indentfirst}
-\usepackage{caption}
 \usepackage{listings}
 \usepackage[ruled,linesnumbered,lined]{algorithm2e}
+\usepackage{caption}
 \usepackage[bookmarks=false]{hyperref}
 
 \usepackage{tabularx}
@@ -125,10 +125,19 @@
 
 % Definicje nowych rodzajów kolumn w tabeli
 \newcolumntype{C}{>{\centering\arraybackslash}m{0.15\linewidth}}
-\newcolumntype{L}{>{\centering\arraybackslash}m{0.15\linewidth}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}m{0.15\linewidth}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 
-\captionsetup[figure]{skip=5pt,position=bottom}
-\captionsetup[table]{skip=5pt,position=top}
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    labelsep=period,
+    skip=5pt
+}
+\captionsetup[figure]{position=bottom}
+\captionsetup[table]{position=bottom}
+\captionsetup[lstlisting]{position=bottom}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{Bartosz Buczek, Bartłomiej Kozak}
