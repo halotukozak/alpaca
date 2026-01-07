@@ -34,11 +34,11 @@ Kombinacja tych zasad gwarantuje deterministyczną oraz reproducywalną sekwencj
 
 \subsection{Błędy leksykalne}
 \label{subsec:lexer-algo-errors}
-W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, ogłaszany jest błąd leksykalny w~bieżącej pozycji wejścia.
+W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, zgłaszany jest błąd leksykalny w~bieżącej pozycji wejścia.
 Mechanizm diagnostyczny przywołuje informacje o~pozycji znaku, co~znacząco ułatwia śledzenie źródła problemu w~tekście źródłowym.
 
 
-\section[Automaty DFA a wyrażenia regularne w systemie ALPACA]{Automaty DFA a wyrażenia regularne w~systemie ALPACA}
+\section[Automaty DFA a wyrażenia regularne]{Automaty DFA a wyrażenia regularne}
 \label{sec:lexer-algo-regex}
 
 \subsection{Tło: Tradycyjne podejście}
@@ -73,19 +73,19 @@ Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce opera
           Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
 \end{itemize}
 
-\subsection{Syntetyzacja: Decyzja projektu ALPACA}
+\subsection{Decyzja}
 \label{subsec:lexer-algo-choice}
 
 Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
 Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA\@.
 
 
-\section[Praktyczna implementacja leksera w systemie ALPACA]{Praktyczna implementacja leksera w~systemie ALPACA}
+\section[Praktyczna implementacja leksera]{Praktyczna implementacja leksera}
 \label{sec:lexer-algo-impl}
 
 Implementacja modułu \texttt{alpaca.lexer} łączy ergonomię języka specjalistycznego (DSL) z~kodem wykonywany w~czasie kompilacji, eliminując narzut parsowania wyrażeń regularnych w~czasie działania aplikacji.
 
-\subsection[Przebieg tokenizacji w ALPACA]{Przebieg tokenizacji w~ALPACA}
+\subsection[Przebieg tokenizacji]{Przebieg tokenizacji}
 \label{subsec:lexer-algo-flow}
 
 Podczas kompilacji projektu wszystkie wzorce są łączone operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne z~nazwanymi grupami.

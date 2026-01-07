@@ -439,7 +439,7 @@ Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~warto�
 
 \subsubsection{Przykład użycia}
 
-\lstinputlisting[language=scala,caption={Użycie Empty[T]},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
+\lstinputlisting[language=scala,caption={Użycie mechanizmu Empty[T]},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
 
 \subsubsection[Alternatywy i ich ograniczenia]{Alternatywy i~ich ograniczenia}
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego.
@@ -482,7 +482,7 @@ Klasa~\verb|ReplaceRefs| implementuje metodę~\verb|transformTree|, która:
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
 
 \subsubsection{Przykład użycia}
-Poniższy fragment ilustruje zastąpienie referencji do~parametru makra~\verb|oldCtx| nowym symbolem~\verb|newCtx| w~ciele wygenerowanej metody:
+Fragment~\ref{lst:impl-utils-refs-use} ilustruje zastąpienie referencji do~parametru makra~\verb|oldCtx| nowym symbolem~\verb|newCtx| w~ciele wygenerowanej metody:
 
 \lstinputlisting[language=scala,caption={Użycie ReplaceRefs w~kontekście ekspansji makra},label={lst:impl-utils-refs-use}]{listings/implementation/utils-04-replacerefs-usage.scala}
 
