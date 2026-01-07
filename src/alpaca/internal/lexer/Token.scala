@@ -24,7 +24,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String)
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
