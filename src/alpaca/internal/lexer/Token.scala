@@ -3,8 +3,8 @@ package internal
 package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance as uv
+import scala.annotation.{compileTimeOnly, unused}
 
 /**
  * Type alias for context manipulation functions.
@@ -57,6 +57,8 @@ private[lexer] object TokenInfo:
 
   given Default[TokenInfo] = () => TokenInfo("", "", "")
 
+  given Showable[TokenInfo] = Showable.fromToString
+
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
@@ -101,7 +103,7 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
 
   @compileTimeOnly(RuleOnly)
-  inline def unapply(x: Any): Option[LexemeTpe] = dummy
+  inline def unapply(@unused x: Any): Option[LexemeTpe] = dummy
   @compileTimeOnly(RuleOnly)
   inline def List: PartialFunction[Any, List[LexemeTpe]] = dummy
   @compileTimeOnly(RuleOnly)
