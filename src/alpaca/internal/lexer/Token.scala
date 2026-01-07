@@ -57,6 +57,8 @@ private[lexer] object TokenInfo:
 
   given Default[TokenInfo] = () => TokenInfo("", "", "")
 
+  given Showable[TokenInfo] = Showable.fromToString
+
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
