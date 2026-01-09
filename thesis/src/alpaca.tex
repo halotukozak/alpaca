@@ -185,11 +185,11 @@
     \end{center}
 
     \small
-    Analizatory leksykalne i składniowe stanowią fundamentalne komponenty procesu kompilacji, realizując fazy transformacji ciągu znaków wejściowych na strumień tokenów oraz weryfikacji zgodności strukturalnej z gramatykami.
-    Istniejące narzędzia do konstruowania tych analizatorów wykazują istotne ograniczenia w zastosowaniu do nowoczesnych języków programowania i zintegrowanych środowisk deweloperskich.
-    Tradycyjne generatory kodu takie jak Lex/Yacc i ANTLR wymagają zewnętrznych etapów budowania i znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i SLY cechują się słabą wydajnością i ograniczonym bezpieczeństwem typów.
-    Kombinatory parserów oferują elastyczność, ale wprowadzają narzut wykonania zmniejszający wydajność w porównaniu do podejść generacyjnych.
-    Niniejsza praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) – narzędzie opracowane w Scali 3, które łączy wydajność generatorów kodu z użytecznością bibliotek poprzez możliwości metaprogramowania w czasie kompilacji dostępne w tym języku.
+    Analizatory leksykalne i składniowe stanowią fundamentalne komponenty procesu kompilacji, realizując fazy transformacji ciągu znaków wejściowych na strumień tokenów oraz weryfikacji zgodności strukturalnej z gramatyką.
+    Istniejące narzędzia do konstruowania tych analizatorów wykazują istotne ograniczenia w kontekście nowoczesnych języków programowania oraz funkcji oferowanych przez zintegrowane środowiska deweloperskie.
+    Popularne generatory kodu takie jak Lex/Yacc i ANTLR wymagają zewnętrznych etapów budowania i znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i SLY cechują się słabą wydajnością i ograniczonym bezpieczeństwem typów.
+    Kombinatory parserów oferują elastyczność w opisie i modyfikacji składni języka, jednak często wiążą się z dodatkowym narzutem wykonania zmniejszającym wydajność w porównaniu do podejść generacyjnych.
+    Niniejsza praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) – narzędzie opracowane w Scali 3, które korzystając z możliwości metaprogramowania w czasie kompilacji, łączy wydajność generatorów kodu z użytecznością bibliotek.
     Teza badawcza postuluje, że wykorzystanie makr Scali 3, mechanizmu cytatów i wstawek oraz typów rafinowanych umożliwia konstrukcję lekserów i parserów o trzech kluczowych właściwościach.
     Po pierwsze, zapewniają one wydajność parsowania porównywalną z innymi narzędziami.
     Po drugie, oferują interfejs programistyczny niezależny od zewnętrznych języków domenowych i w pełni zintegrowany z systemem typów Scali.
@@ -201,13 +201,13 @@
     Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, eliminując potrzebę specjalnego DSL\@.
     Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
     Dodatkowe mechanizmy obejmują automatyczne rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji z komunikatami błędów zawierającymi praktyczne informacje.
-    Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie plików w formacie JSON. Wyniki wykazują wydajność konkurencyjną wobec podobnych rozwiązań dla struktur iteracyjnych i utrzymaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
+    Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie plików w formacie JSON. Wyniki wykazują wydajność konkurencyjną wobec podobnych rozwiązań dla struktur iteracyjnych i utrzymywaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
     Implementacja oferuje poprawę użyteczności w porównaniu do wszystkich analizowanych alternatyw.
     Badania skutecznie weryfikują hipotezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność, przy jednoczesnym zachowaniu użyteczności bibliotek i integracji z IDE.
-    Praca ta demonstruje praktyczne wykorzystanie w edukacji teorii kompilacji i tworzeniu języków domenowych, z potencjalnym wpływem na sposób, w jaki nowoczesne narzędzia językowe równoważą wydajność, bezpieczeństwo typów i doświadczenie programisty.
+    Praca ta może zostać z powodzeniem wykorzystana w edukacji teorii kompilacji i tworzeniu języków domenowych, z potencjalnym wpływem na sposób, w jaki nowoczesne narzędzia językowe równoważą wydajność, bezpieczeństwo typów i doświadczenie programisty.
     \vspace{1cm}
 
-    {\bfseries Słowa kluczowe:} metaprogramowanie, Scala 3, makra, analizator leksykalny, parser składniowy, parser LR(1), quote-splice, typy rafinowane, generowanie kodu, TASTy refleksja, bezpieczeństwo typów, optymalizacja kompilacji, integracja IDE, gramatyki bezkontekstowe.
+    {\bfseries Słowa kluczowe:} metaprogramowanie, Scala 3, makra, analizator leksykalny, parser składniowy, parser LR(1), quote-splice, typy rafinowane, generowanie kodu, refleksja TASTy, bezpieczeństwo typów, optymalizacja kompilacji, integracja IDE, gramatyki bezkontekstowe.
 
     \newpage
 
@@ -218,7 +218,7 @@
     \small
     Lexical and syntactic analyzers are fundamental components in compiler construction, implementing phases that transform character sequences into token streams and verify structural conformance to grammars.
     Existing tools for constructing these analyzers exhibit significant limitations when applied to modern programming languages and integrated development environments.
-    Traditional code generators like Lex/Yacc and ANTLR require external build steps and domain-specific language learning, while interpreted libraries such as PLY and SLY suffer from poor performance and limited type safety.
+    Traditional code generators like Lex/Yacc and ANTLR require external build steps and learning domain-specific language, while interpreted libraries such as PLY and SLY suffer from poor performance and limited type safety.
     Parser combinator libraries offer flexibility but introduce runtime overhead that diminishes performance compared to code generation approaches.
     This thesis presents ALPACA (Another Lexer Parser And Compiler Alpaca), a tool developed in Scala 3 that synthesizes the performance benefits of code generators with the usability of libraries through Scala 3's compile-time metaprogramming capabilities.
     The research thesis posits that utilizing Scala 3 macros, quote-splice mechanisms, and refined types enables construction of lexers and parsers with three key properties.
