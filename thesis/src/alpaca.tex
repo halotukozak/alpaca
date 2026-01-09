@@ -198,12 +198,12 @@
     Analiza leksykalna opiera się na wyrażeniach regularnych, zaś analiza składniowa implementuje algorytmy konstrukcji parserów LR(1).
     Implementacja rozwiązuje krytyczne ograniczenia JVM poprzez techniki fragmentacji metod, umożliwiając kompilację złożonych gramatyk.
     Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i przepisywanie referencji między etapami kompilacji.
-    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, eliminując potrzebę specjalnego DSL\@.
+    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, co stanowi implementację wewnętrznego języka domenowego (ang\. DSL) opartego na skadni języka.
     Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
     Dodatkowe mechanizmy obejmują automatyczne rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji z komunikatami błędów zawierającymi praktyczne informacje.
     Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie plików w formacie JSON. Wyniki wykazują wydajność konkurencyjną wobec podobnych rozwiązań dla struktur iteracyjnych i utrzymywaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
     Implementacja oferuje poprawę użyteczności w porównaniu do wszystkich analizowanych alternatyw.
-    Badania skutecznie weryfikują hipotezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność, przy jednoczesnym zachowaniu użyteczności bibliotek i integracji z IDE.
+    Badania skutecznie weryfikują hipotezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność, przy jednoczesnym zachowaniu użyteczności bibliotek i integracji z IDE\@.
     Praca ta może zostać z powodzeniem wykorzystana w edukacji teorii kompilacji i tworzeniu języków domenowych, z potencjalnym wpływem na sposób, w jaki nowoczesne narzędzia językowe równoważą wydajność, bezpieczeństwo typów i doświadczenie programisty.
     \vspace{1cm}
 
@@ -217,9 +217,9 @@
 
     \small
     Lexical and syntactic analyzers are fundamental components in compiler construction, implementing phases that transform character sequences into token streams and verify structural conformance to grammars.
-    Existing tools for constructing these analyzers exhibit significant limitations when applied to modern programming languages and integrated development environments.
-    Traditional code generators like Lex/Yacc and ANTLR require external build steps and learning domain-specific language, while interpreted libraries such as PLY and SLY suffer from poor performance and limited type safety.
-    Parser combinator libraries offer flexibility but introduce runtime overhead that diminishes performance compared to code generation approaches.
+    Existing tools for constructing these analyzers exhibit significant limitations in the context of modern programming languages and features offered by integrated development environments.
+    Popular code generators like Lex/Yacc and ANTLR require external build steps and knowledge of domain-specific languages, while interpreted libraries such as PLY and SLY suffer from poor performance and limited type safety.
+    Parser combinator libraries offer flexibility in describing and modifying language syntax but often introduce runtime overhead that diminishes performance compared to code generation approaches.
     This thesis presents ALPACA (Another Lexer Parser And Compiler Alpaca), a tool developed in Scala 3 that synthesizes the performance benefits of code generators with the usability of libraries through Scala 3's compile-time metaprogramming capabilities.
     The research thesis posits that utilizing Scala 3 macros, quote-splice mechanisms, and refined types enables construction of lexers and parsers with three key properties.
     Firstly, parsing performance comparable to other tools.
@@ -229,15 +229,14 @@
     Lexical analysis leverages regular expressions, while syntactic analysis implements LR(1) parser construction algorithms entirely at compile-time.
     The implementation addresses critical JVM constraints through method fragmentation techniques, enabling compilation of complex grammars.
     Semantic actions maintain type safety through AST transformation and cross-stage reference rewriting.
-    Key technical contributions include declarative grammar specification integrated with Scala's pattern matching and type system, eliminating the need for a special DSL.
-    Refined types provide statically-verified token field access with comprehensive IDE support, including autocomplete, type hints, and go-to-definition navigation.
-    Additional contributions encompass automatic conflict resolution through precedence relations and compile-time grammar validation with error messages containing practical information.
-    Empirical validation compares ALPACA against other solutions across arithmetic expressions and JSON parsing benchmarks.
-    Results demonstrate competitive performance with the other tools.
-    The solution offers improved usability compared to all analyzed alternatives.
-    The research successfully validates the hypothesis that compile-time metaprogramming can achieve equivalent performance while preserving library-like usability and IDE integration.
-    This work demonstrates practical applications in compiler education and domain-specific language development, with potential impact on how modern language tooling balances performance, type safety, and developer experience.
-
+    Key technical contributions include declarative grammar specification integrated with Scala's pattern matching and type system, which implements an internal Domain-Specific Language based on the language's syntax.
+    Refined types provide statically verified token field access with comprehensive IDE support, including autocomplete, type hints, and go-to-definition navigation.
+    Additional mechanisms include automatic conflict resolution through precedence relations and compile-time grammar validation with error messages containing practical information.
+    Empirical validation compares the solution against other tools using performance tests that encompass arithmetic expressions and JSON file parsing.
+    Results demonstrate competitive performance with other solutions for iterative structures and maintain stable performance under deep nesting where competing tools exhibit limitations.
+    The implementation demonstrates improved usability compared to all analyzed alternatives.
+    The research successfully validates the hypothesis that compile-time metaprogramming can achieve high performance while preserving library-like usability and IDE integration.
+    This work can be successfully applied in compiler education and domain-specific language development, with a potential impact on how modern language tooling balances performance, type safety, and developer experience.
     \vspace{1cm}
     {\bfseries Keywords:} metaprogramming, Scala 3, macros, lexical analyzer, LR(1) parser, quote-splice mechanisms, refined types, code generation, TASTy reflection, type safety, compilation optimization, IDE integration, context-free grammars.
 
