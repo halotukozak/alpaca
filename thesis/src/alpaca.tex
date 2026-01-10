@@ -204,7 +204,7 @@
     System wspiera także rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji.
     Ograniczenia precedencji modelowane są jako graf skierowany weryfikowany pod kątem acykliczności metodą DFS z kolorowaniem węzłów; wykryte cykle raportowane są jako niejednoznaczności specyfikacji.
     Reprezentacja grafowa umożliwia ponadto wnioskowanie o relacjach przechodnich, co pozwala na automatyczne rozwiązywanie konfliktów wynikających z pośrednich zależności precedencji.
-    Walidacja empiryczna porównuje bibliotekę ALPACA z alternatywnymi narzędziami w testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych oraz plikó w formacie JSON.
+    Walidacja empiryczna porównuje bibliotekę ALPACA z alternatywnymi narzędziami w testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych oraz plików w formacie JSON.
     Wyniki wskazują na konkurencyjną wydajność dla struktur iteracyjnych, jednocześnie identyfikując wrażliwość na obciążenia zdominowane przez tokeny ignorowane.
     W obecnej implementacji białe znaki przetwarzane są analogicznie do tokenów właściwych, co prowadzi do degradacji wydajności w przypadkach patologicznych, takich jak głęboko wcięte struktury JSON z dużą liczbą spacji przy niewielkiej ilości treści semantycznej.
     Ograniczenie to wskazano jako kluczowy kierunek dalszych optymalizacji.
