@@ -250,7 +250,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     New(TypeTree.of[Tokenization[Ctx]])
       .select(tokenizationConstructor)
       .appliedToType(TypeRepr.of[Ctx])
-      .appliedToArgs(List(betweenStages.asTerm, errorHandling.asTerm)) :: Nil
+      .appliedToArgs(List(betweenStages.asTerm, errorHandling.asTerm, empty.asTerm)) :: Nil
 
   logger.trace("creating tokenization class definition")
   val clsDef = ClassDef(cls, parents, body)

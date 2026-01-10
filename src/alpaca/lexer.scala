@@ -24,6 +24,7 @@ import scala.annotation.{compileTimeOnly, unused}
  * @param rules the lexer rules as a partial function
  * @param betweenStages implicit BetweenStages for context updates
  * @param errorHandling implicit ErrorHandling for custom error recovery
+ * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
  */
 transparent inline def lexer[Ctx <: LexerCtx](
@@ -34,8 +35,9 @@ transparent inline def lexer[Ctx <: LexerCtx](
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
   errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }, '{ errorHandling }) }
+  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }, '{ errorHandling }, '{ empty }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:

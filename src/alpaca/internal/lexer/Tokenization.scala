@@ -20,6 +20,7 @@ import scala.util.matching.Regex
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
   errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 
@@ -78,13 +79,13 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
                 val firstMatching = matcher.start
                 val matched = globalCtx.text.subSequence(0, firstMatching).toString
                 globalCtx.lastRawMatched = matched
-                globalCtx.text = globalCtx.text.subSequence(firstMatching, globalCtx.text.length)
+                globalCtx.text = globalCtx.text.from(firstMatching)
                 (RecoveredToken(matched), matched)
 
               case Strategy.IgnoreChar | Strategy.IgnoreToken =>
                 val matched = globalCtx.text.charAt(0).toString
                 globalCtx.lastRawMatched = matched
-                globalCtx.text = globalCtx.text.subSequence(1, globalCtx.text.length)
+                globalCtx.text = globalCtx.text.from(1)
                 (RecoveredToken(matched), matched)
 
               case Strategy.Stop =>
