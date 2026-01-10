@@ -3,7 +3,7 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, unused}
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -22,8 +22,8 @@ import scala.annotation.compileTimeOnly
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
  * @param rules the lexer rules as a partial function
- * @param copy implicit Copyable instance for the context
  * @param betweenStages implicit BetweenStages for context updates
+ * @param errorHandling implicit ErrorHandling for custom error recovery
  * @return a Tokenization instance that can tokenize input strings
  */
 transparent inline def lexer[Ctx <: LexerCtx](
@@ -34,10 +34,8 @@ transparent inline def lexer[Ctx <: LexerCtx](
   betweenStages: BetweenStages[Ctx],
   lexerRefinement: LexerRefinement[Ctx],
   errorHandling: ErrorHandling[Ctx],
-  empty: Empty[Ctx],
-): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } = ${
-  lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }, '{ errorHandling }, '{ empty })
-}
+): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
+  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }, '{ errorHandling }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
@@ -51,7 +49,7 @@ object Token:
    * @return a token that will be ignored
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
-  def Ignored(using ctx: LexerCtx): Token[?, ctx.type, Nothing] = dummy
+  def Ignored(using ctx: LexerCtx): IgnoredToken[ctx.type] = dummy
 
   /**
    * Creates a token that captures the matched string.
@@ -173,3 +171,50 @@ object LexerCtx:
         new RuntimeException(
           s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
         )
+
+/**
+ * Type alias for lexer rule definitions.
+ *
+ * A lexer definition is a partial function that maps string patterns
+ * (as regex literals) to token definitions.
+ *
+ * @tparam Ctx the global context type
+ */
+
+type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
+
+/**
+ * Defines an opaque type `Token` that represents a token used in a lexer.
+ *
+ * This type has three type parameters:
+ * - `Name`: The type of the token's name, restricted to a subtype of `ValidName`.
+ * - `Ctx`: The type of the lexer context, restricted to a subtype of `LexerCtx`.
+ * - `Value`: The type of the token's value.
+ *
+ * The exact implementation details of the underlying type are abstracted away by using `Any`.
+ * Opaque types provide type safety without exposing the underlying representation.
+ */
+//todo: it's a scala bug, that it cannot be an opaque type
+trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]
+
+/**
+ * Represents a specific type of token definition that denotes an ignored token during the lexing process.
+ *
+ * Ignored tokens typically refer to tokens that are matched and processed by the lexer but are
+ * excluded from the final parsed token stream. Examples of ignored tokens include whitespace,
+ * comments, or any other tokens that are syntactically meaningful but do not contribute to
+ * the structured representation of the input source.
+ *
+ * This opaque type is parameterized by a context type `Ctx`, which must be a subtype of `LexerCtx`.
+ * The `LexerCtx` trait serves as a base for maintaining global lexing state, such as the current
+ * position, the last matched token, and the remaining input.
+ *
+ * The `ValidName` and `Nothing` type parameters are placeholder constraints inherited from
+ * `Token`, but `IgnoredToken` does not provide its own additional constraints
+ * or behavior beyond being excluded from normal processing.
+ *
+ * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
+ * this type cannot be directly manipulated outside the context of its definition.
+ */
+//todo: it's a scala bug, that it cannot be an opaque type
+trait IgnoredToken[+Ctx <: LexerCtx] extends Token[ValidName, Ctx, Nothing]

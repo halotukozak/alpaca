@@ -2,7 +2,6 @@ package alpaca
 package internal.lexer
 
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
 import java.io.StringReader
 import scala.util.Using

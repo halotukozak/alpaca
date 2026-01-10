@@ -6,6 +6,7 @@ import alpaca.internal.lexer.ErrorHandling.Strategy
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.tailrec
+import scala.util.matching.Regex
 
 /**
  * The result of compiling a lexer definition.
@@ -19,7 +20,6 @@ import scala.annotation.tailrec
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
   errorHandling: ErrorHandling[Ctx],
-  empty: Empty[Ctx],
 ) extends Selectable:
   type LexemeRefinement <: Lexeme[?, ?]
 

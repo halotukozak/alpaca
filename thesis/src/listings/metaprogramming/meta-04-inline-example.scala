@@ -1,5 +1,5 @@
-inline def max(x: Int, y: Int): Int = if x > y then x else y
+inline def max(x: Int, y: Int): Int = inline if x > y then x else y
 
-// Wywołanie: max(3, 5)
-// Rozwinie się do: if 3 > 5 then 3 else 5
-// Po optymalizacji kompilatora: 5
+// usage: max(3, 5)
+// will be expanded to: if 3 > 5 then 3 else 5
+// after constant folding: 5

@@ -50,7 +50,7 @@ private[alpaca] object Empty:
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             logger.trace(show"parameter $param has default value")
             defaultParameters(idx)
-          case (param, idx) =>
+          case (param, _) =>
             report.errorAndAbort(
               show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
             )

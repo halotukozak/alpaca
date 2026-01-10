@@ -2,7 +2,6 @@ package alpaca
 package internal
 package lexer
 
-import scala.NamedTuple.AnyNamedTuple
 import scala.annotation.implicitNotFound
 import scala.deriving.Mirror
 

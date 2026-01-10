@@ -10,9 +10,9 @@
 \usepackage{multirow}
 \usepackage{grffile}
 \usepackage{indentfirst}
-\usepackage{caption}
 \usepackage{listings}
 \usepackage[ruled,linesnumbered,lined]{algorithm2e}
+\usepackage{caption}
 \usepackage[bookmarks=false]{hyperref}
 
 \usepackage{tabularx}
@@ -125,10 +125,19 @@
 
 % Definicje nowych rodzajów kolumn w tabeli
 \newcolumntype{C}{>{\centering\arraybackslash}m{0.15\linewidth}}
-\newcolumntype{L}{>{\centering\arraybackslash}m{0.15\linewidth}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}m{0.15\linewidth}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 
-\captionsetup[figure]{skip=5pt,position=bottom}
-\captionsetup[table]{skip=5pt,position=top}
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    labelsep=period,
+    skip=5pt
+}
+\captionsetup[figure]{position=bottom}
+\captionsetup[table]{position=bottom}
+\captionsetup[lstlisting]{position=bottom}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \author{Bartosz Buczek, Bartłomiej Kozak}
@@ -147,28 +156,111 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
-\maketitle
+    \maketitle
 
-\tableofcontents
+    \thispagestyle{empty}
 
-\include{introduction}
+    \vspace*{\fill}
 
-\include{metaprogramming}
+    \begin{center}
+        \large
+        \textit{I do see the beauty in the rules, the invisible code of chaos\\
+        hiding behind the menacing face of order.}
 
-\include{implementation}
+        \vspace{0.5cm}
 
-\include{lexer-algo}
+        \normalsize
+        --- Elliot Alderson, \textit{Mr. Robot (episode eps2.0\_unm4sk-pt1.tc)}
+    \end{center}
 
-\include{parser-algo}
+    \vspace*{\fill}
 
-\include{comparison}
+    \clearpage
+    \thispagestyle{empty}
+    \vspace*{\fill}
+    \clearpage
 
-\include{organization}
+    \begin{center}
+        {\bfseries Abstrakt}
+    \end{center}
 
-\printbibliography
-\listoffigures
-\listoftables
+    \small
+    Analizatory leksykalne i składniowe stanowią fundamentalne komponenty procesu kompilacji, realizując fazy transformacji ciągu znaków wejściowych na strumień tokenów oraz weryfikacji zgodności strukturalnej z gramatyką.
+    Istniejące narzędzia do konstruowania tych analizatorów wykazują istotne ograniczenia w kontekście nowoczesnych języków programowania oraz funkcji oferowanych przez zintegrowane środowiska deweloperskie.
+    Popularne generatory kodu takie jak Lex/Yacc i ANTLR wymagają zewnętrznych etapów budowania i znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i SLY cechują się słabą wydajnością i ograniczonym bezpieczeństwem typów.
+    Kombinatory parserów oferują elastyczność w opisie i modyfikacji składni języka, jednak często wiążą się z dodatkowym narzutem wykonania zmniejszającym wydajność w porównaniu do podejść generacyjnych.
+    Niniejsza praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) – narzędzie opracowane w Scali 3, które korzystając z możliwości metaprogramowania w czasie kompilacji, łączy wydajność generatorów kodu z użytecznością bibliotek.
+    Teza badawcza postuluje, że wykorzystanie makr Scali 3, mechanizmu cytatów i wstawek oraz typów rafinowanych umożliwia konstrukcję lekserów i parserów o trzech kluczowych właściwościach.
+    Po pierwsze, zapewniają one wydajność parsowania porównywalną z innymi narzędziami.
+    Po drugie, oferują interfejs programistyczny niezależny od zewnętrznych języków domenowych i w pełni zintegrowany z systemem typów Scali.
+    Po trzecie, dostarczają diagnostykę błędów w czasie kompilacji.
+    Metodologia wykorzystuje API refleksji TASTy do programatycznego generowania klas anonimowych implementujących logikę tokenizacji i parsowania w trakcie kompilacji.
+    Analiza leksykalna opiera się na wyrażeniach regularnych, zaś analiza składniowa implementuje algorytmy konstrukcji parserów LR(1).
+    Implementacja rozwiązuje krytyczne ograniczenia JVM poprzez techniki fragmentacji metod, umożliwiając kompilację złożonych gramatyk.
+    Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i przepisywanie referencji między etapami kompilacji.
+    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, co stanowi implementację wewnętrznego języka domenowego (ang\. DSL) opartego na skadni języka.
+    Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
+    Dodatkowe mechanizmy obejmują automatyczne rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji z komunikatami błędów zawierającymi praktyczne informacje.
+    Walidacja empiryczna porównuje rozwiązanie z innymi narzędziami za pomocą testów wydajnościowych, które obejmują wyrażenia arytmetyczne oraz parsowanie plików w formacie JSON. Wyniki wykazują wydajność konkurencyjną wobec podobnych rozwiązań dla struktur iteracyjnych i utrzymywaniu stabilnej wydajności przy głębokim zagnieżdżeniu.
+    Implementacja oferuje poprawę użyteczności w porównaniu do wszystkich analizowanych alternatyw.
+    Badania skutecznie weryfikują hipotezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność, przy jednoczesnym zachowaniu użyteczności bibliotek i integracji z IDE\@.
+    Praca ta może zostać z powodzeniem wykorzystana w edukacji teorii kompilacji i tworzeniu języków domenowych, z potencjalnym wpływem na sposób, w jaki nowoczesne narzędzia językowe równoważą wydajność, bezpieczeństwo typów i doświadczenie programisty.
+    \vspace{1cm}
+
+    {\bfseries Słowa kluczowe:} metaprogramowanie, Scala 3, makra, analizator leksykalny, parser składniowy, parser LR(1), quote-splice, typy rafinowane, generowanie kodu, refleksja TASTy, bezpieczeństwo typów, optymalizacja kompilacji, integracja IDE, gramatyki bezkontekstowe.
+
+    \newpage
+
+    \begin{center}
+        {\bfseries Abstract}
+    \end{center}
+
+    \small
+    Lexical and syntactic analyzers are fundamental components of the compilation process, transforming input character sequences into token streams and verifying structural conformance to a grammar.
+    Existing tools for constructing these analyzers face significant limitations regarding modern programming languages and the features offered by Integrated Development Environments (IDEs).
+    Popular code generators, such as Lex/Yacc and ANTLR, require external build steps and familiarity with external domain-specific languages (DSLs), while interpreted libraries like PLY and SLY are characterized by poor performance and limited type safety.
+    Conversely, parser combinators offer flexibility in grammar specification but often introduce runtime overhead that degrades performance compared to generative approaches.
+    This thesis introduces ALPACA (Another Lexer Parser And Compiler Alpaca), a library developed in Scala 3 that bridges the gap between the performance of code generators and the usability of libraries by leveraging compile-time metaprogramming.
+    The research posits that utilizing Scala 3 macros, the quote-and-splice mechanism, and refined types enables the construction of lexers and parsers with three key properties.
+    First, parsing performance comparable to specialized generative tools.
+    Second, a programming interface decoupled from external DSLs and fully integrated with the Scala type system.
+    Finally, comprehensive compile-time error diagnostics.
+    The methodology employs the TASTy reflection API to programmatically generate anonymous classes implementing tokenization and parsing logic during compilation.
+    Lexical analysis is based on regular expressions, while syntactic analysis implements LR(1) parser construction algorithms at compile-time.
+    The implementation addresses critical JVM constraints through method fragmentation techniques, enabling the compilation of complex grammars.
+    Semantic actions maintain type safety through AST transformations and cross-stage reference rewriting.
+    Key technical contributions include a declarative grammar specification integrated with Scala’s pattern matching and type system, effectively implementing an internal DSL\@.
+    Refined types provide statically verified access to token fields with full IDE support, including autocomplete, type hints, and go-to-definition navigation.
+    Additionally, the library provides automatic conflict resolution via precedence relations and compile-time grammar validation with actionable error messages.
+    Empirical validation compares ALPACA against existing tools through benchmarks involving arithmetic expressions and JSON parsing.
+    The results demonstrate performance competitive with state-of-the-art solutions for iterative structures and superior stability under deep nesting, where other tools often exhibit performance degradation.
+    The implementation offers enhanced usability across all analyzed alternatives.
+    This research successfully validates the hypothesis that compile-time metaprogramming can achieve high performance while preserving library-like usability and deep IDE integration.
+    \vspace{1cm}
+    {\bfseries Keywords:} metaprogramming, Scala 3, macros, lexical analyzer, LR(1) parser, quote-splice mechanisms, refined types, code generation, TASTy reflection, type safety, compilation optimization, IDE integration, context-free grammars.
+
+    \clearpage
+
+    \tableofcontents
+
+    \include{introduction}
+
+    \include{metaprogramming}
+
+    \include{implementation}
+
+    \include{lexer-algo}
+
+    \include{parser-algo}
+
+    \include{comparison}
+
+    \include{organization}
+
+    \printbibliography[heading=bibintoc]
+    \listoffigures
+    \listoftables
 % \listofalgorithmes
-\lstlistoflistings
+    \lstlistoflistings
 
 \end{document}
