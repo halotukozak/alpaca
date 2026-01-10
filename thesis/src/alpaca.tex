@@ -195,18 +195,20 @@
     Po drugie, oferują interfejs programistyczny niezależny od zewnętrznych języków domenowych i w pełni zintegrowany z systemem typów Scali.
     Po trzecie, dostarczają diagnostykę błędów w czasie kompilacji.
     Metodologia wykorzystuje API refleksji TASTy do programatycznego generowania klas anonimowych implementujących logikę tokenizacji i parsowania w trakcie kompilacji.
-    Specyfikacja analizy leksykalnej opiera się na wyrażeniach regularnych, co wykorzystuje powszechnie znany formalizm, ograniczając próg wejścia i wspierając praktyczną adopcję narzędzia.
+    Specyfikacja analizy leksykalnej opiera się na wyrażeniach regularnych, co wykorzystuje powszechnie znany mechanizm, ograniczając próg wejścia i wspierając praktyczną adopcję narzędzia.
     Analiza składniowa implementuje algorytmy konstrukcji parserów LR(1) poprzez wykorzystanie automatu ze stosem, którego struktura stanowa jest generowana z użyciem funkcji closure i goto do wyznaczania zbiorów elementów LR(1) oraz przejść między stanami automatu.
     Implementacja rozwiązuje krytyczne ograniczenia JVM poprzez techniki fragmentacji metod, umożliwiając kompilację złożonych gramatyk.
     Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i przepisywanie referencji między etapami kompilacji.
+    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, co stanowi implementację wewnętrznego języka domenowego (ang\. DSL) opartego na skadni języka.
+    Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
     System wspiera także rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji.
     Ograniczenia precedencji modelowane są jako graf skierowany weryfikowany pod kątem acykliczności metodą DFS z kolorowaniem węzłów; wykryte cykle raportowane są jako niejednoznaczności specyfikacji.
-    Reprezentacja grafowa umożliwia ponadto wnioskowanie o relacjach przechodnich, co pozwala automatycznie rozwiązywać konflikty wynikające z pośrednich zależności precedencji.
-    Ocena porównuje bibliotekę ALPACA z alternatywnymi narzędziami w testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych oraz plików JSON.
+    Reprezentacja grafowa umożliwia ponadto wnioskowanie o relacjach przechodnich, co pozwala na automatyczne rozwiązywanie konfliktów wynikających z pośrednich zależności precedencji.
+    Walidacja empiryczna porównuje bibliotekę ALPACA z alternatywnymi narzędziami w testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych oraz plikó w formacie JSON.
     Wyniki wskazują na konkurencyjną wydajność dla struktur iteracyjnych, jednocześnie identyfikując wrażliwość na obciążenia zdominowane przez tokeny ignorowane.
     W obecnej implementacji białe znaki przetwarzane są analogicznie do tokenów właściwych, co prowadzi do degradacji wydajności w przypadkach patologicznych, takich jak głęboko wcięte struktury JSON z dużą liczbą spacji przy niewielkiej ilości treści semantycznej.
     Ograniczenie to wskazano jako kluczowy kierunek dalszych optymalizacji.
-    Całościowo wyniki wspierają tezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność przy jednoczesnym zwiększeniu użyteczności i integracji z IDE.
+    Całościowo wyniki wspierają tezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność przy jednoczesnym zwiększeniu użyteczności i integracji z IDE\@.
     \vspace{1cm}
 
     {\bfseries Słowa kluczowe:} metaprogramowanie, Scala 3, makra, analizator leksykalny, parser składniowy, parser LR(1), quote-splice, typy rafinowane, generowanie kodu, refleksja TASTy, bezpieczeństwo typów, optymalizacja kompilacji, integracja IDE, gramatyki bezkontekstowe.
@@ -228,10 +230,12 @@
     Second, a programming interface decoupled from external DSLs and fully integrated with the Scala type system.
     Finally, comprehensive compile-time error diagnostics.
     The methodology employs the TASTy reflection API to programmatically generate anonymous classes implementing tokenization and parsing logic during compilation.
-    Lexical specifications are expressed using regular expressions, leveraging a widely adopted formalism to reduce the learning burden and improve practical adoption.
+    Lexical specifications are expressed using regular expressions, leveraging a widely adopted mechanism to reduce the learning burden and improve practical adoption.
     Syntactic analysis implements LR(1) parser construction algorithms by employing a pushdown automaton whose state structure is generated using the closure and goto functions to compute LR(1) item sets and transitions between automaton states.
     The implementation addresses critical JVM constraints through method fragmentation techniques, enabling the compilation of complex grammars.
     Semantic actions maintain type safety through AST transformations and cross-stage reference rewriting.
+    Key technical contributions include a declarative grammar specification integrated with Scala’s pattern matching and type system, effectively implementing an internal DSL\@.
+    Refined types provide statically verified access to token fields with full IDE support, including autocomplete, type hints, and go-to-definition navigation.
     The system additionally supports precedence-based conflict resolution and compile-time grammar validation.
     Precedence constraints are modeled as a directed graph validated for acyclicity using depth-first search with node coloring; cycles are reported as specification ambiguities.
     The graph representation further enables transitive inference, allowing automatic resolution of conflicts implied by indirect precedence paths.
