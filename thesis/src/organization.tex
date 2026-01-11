@@ -625,30 +625,38 @@ Zastosowanie tego mechanizmu pozwoliło na~zrealizowanie kompletnego parsera wyr
 
 Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczególne moduły systemu.
 
-\subsubsection{Testy modułu leksera}
-
-\begin{itemize}
-    \item Testowanie definicji tokenów (nazwy, wzorce, wartości domyślne).
-    \item Testowanie ignorowanych reguł leksykalnych.
-    \item Testowanie wykrywania konfliktów nazw tokenów (błędy kompilacji).
-    \item Testowanie obsługi niepoprawnych wyrażeń regularnych.
-\end{itemize}
-
-\subsubsection{Testy modułu parsera}
-
-\begin{itemize}
-    \item Testowanie ekstrakcji produkcji z~definicji.
-    \item Testowanie algorytmów LR(1) (\emph{closure}, \emph{goto}, obliczanie zbiorów \emph{FIRST}).
-    \item Testowanie rozwiązywania konfliktów typu \emph{shift--reduce}.
-    \item Testowanie akcji semantycznych z~różnymi typami kontekstu.
-\end{itemize}
-
-\subsubsection{Testy infrastruktury}
-
-\begin{itemize}
-    \item Testowanie klas typów (\verb|Empty[T]|, \verb|Copyable[T]|).
-    \item Testowanie transformacji AST (\verb|ReplaceRefs|, \verb|CreateLambda|).
-\end{itemize}
+\begin{table}[ht]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|X|}
+        \hline
+        \textbf{Moduł / Komponent} & \textbf{Zakres testów jednostkowych} \\
+        \hline
+        Lekser &
+        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
+            \item Testowanie definicji tokenów (nazwy, wzorce, wartości domyślne).
+            \item Testowanie ignorowanych reguł leksykalnych.
+            \item Testowanie wykrywania konfliktów nazw tokenów (błędy kompilacji).
+            \item Testowanie obsługi niepoprawnych wyrażeń regularnych.
+        \end{itemize} \\
+        \hline
+        Parser &
+        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
+            \item Testowanie ekstrakcji produkcji z~definicji.
+            \item Testowanie algorytmów LR(1) (\emph{closure}, \emph{goto}, obliczanie zbiorów \emph{FIRST}).
+            \item Testowanie rozwiązywania konfliktów typu \emph{shift--reduce}.
+            \item Testowanie akcji semantycznych z~różnymi typami kontekstu.
+        \end{itemize} \\
+        \hline
+        Infrastruktura &
+        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
+            \item Testowanie klas typów (\verb|Empty[T]|, \verb|Copyable[T]|).
+            \item Testowanie transformacji AST (\verb|ReplaceRefs|, \verb|CreateLambda|).
+        \end{itemize} \\
+        \hline
+    \end{tabularx}
+    \caption{Zakres testów jednostkowych dla głównych komponentów systemu}
+    \label{tab:org-unit-tests}
+\end{table}
 
 \subsection{Testowanie integracyjne}
 \label{subsec:org-int-tests}

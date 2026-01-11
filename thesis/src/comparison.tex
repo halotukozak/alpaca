@@ -23,14 +23,28 @@ Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architektu
 
 Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach:
 
-\begin{itemize}
-    \item Procesor: Apple M4 Pro, 14 rdzeni
-    \item Pamięć RAM: 48 GB
-    \item System operacyjny: macOS Sequoia 15.6
-    \item JVM: OpenJDK 21.0.8
-    \item Python: 3.13.5
-    \item Scala: 3.8.0-RC1
-\end{itemize}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Parametr} & \textbf{Wartość} \\
+        \hline
+        Procesor & Apple M4 Pro, 14 rdzeni \\
+        \hline
+        Pamięć RAM & 48 GB \\
+        \hline
+        System operacyjny & macOS Sequoia 15.6 \\
+        \hline
+        JVM & OpenJDK 21.0.8 \\
+        \hline
+        Python & 3.13.5 \\
+        \hline
+        Scala & 3.8.0-RC1 \\
+        \hline
+    \end{tabular}
+    \caption{Parametry środowiska wykorzystanego do przeprowadzenia testów wydajnościowych.}
+    \label{tab:comp-env}
+\end{table}
 
 Przed każdym pomiarem wykonywano fazę rozgrzewki (ang.~\emph{warmup}) składającą się z~trzech iteracji, co~pozwalało na~optymalizację kodu przez kompilator JIT~\cite{lindholm2014java} oraz stabilizację pamięci podręcznej procesora.
 Każdy test był powtarzany 10~razy, a~wyniki uśredniano w~celu redukcji wpływu losowych wahań wydajności.
