@@ -269,14 +269,14 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 
 Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \textit{ALPACA}.
 
-\textbf{Zalety systemu:}
+Zalety systemu:
 \begin{enumerate}
     \item Faza parsowania systemu \textit{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \textit{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
 \end{enumerate}
 
-\textbf{Obszary wymagające optymalizacji:}
+\paragraph{Obszary wymagające optymalizacji:}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
 
 
