@@ -43,7 +43,7 @@ Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji czę�
 
 \lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:impl-lexer-cases}]{listings/implementation/lexer-03-extract-case.scala}
 
-Fragment ten wykorzystuje dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
+Fragment \ref{lst:impl-lexer-cases} wykorzystuje dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \verb|Lambda(\_, Match(\_, cases))| odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \verb|Match| zawiera listę przypadków \verb|CaseDef|.
 
 \subsubsection[Transformacja i adaptacja referencji]{Transformacja i~adaptacja referencji}\label{subsubsec:impl-lexer-refs}
@@ -156,7 +156,7 @@ Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji\ci
 Dostęp do tokenów realizowany jest jako bezpośrednie odwołanie do pola klasy, które w~kodzie bajtowym JVM~\cite{lindholm2014java} reprezentowane jest przez instrukcję \verb|getfield| o~złożoności czasowej~O(1).
 Teoretycznie eliminuje to narzut związany z~operacjami dynamicznymi, choć pełna weryfikacja empiryczna tego założenia wykracza poza zakres niniejszej pracy.
 
-Alternatywne podejście oparte na strukturze mapującej (np.\ \verb|Map[String, Token]|) wymagałoby:
+Alternatywne podejście oparte na strukturze mapy wymagałoby:
 \begin{itemize}
     \item Obliczenia funkcji haszującej dla klucza
     \item Przeszukiwania tablicy haszującej
@@ -201,7 +201,7 @@ Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przecho
 
 \lstinputlisting[language=scala,caption={Podejście oparte na mapowaniu dynamicznym},label={lst:impl-lexer-dynamic}]{listings/implementation/lexer-12-dynamic-mapping.scala}
 
-\textbf{Wady tego podejścia:}
+Wady tego podejścia:
 \begin{itemize}
     \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
     \item Utrata informacji o~typach: zwracany typ to egzystencjalny \verb|Token[?, ?, ?]|
@@ -215,7 +215,7 @@ Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
 
 \lstinputlisting[language=scala,caption={Podejście oparte na jawnej definicji klasy},label={lst:impl-lexer-explicit}]{listings/implementation/lexer-13-explicit-lexer.scala}
 
-\textbf{Wady tego podejścia:}
+Wady tego podejścia:
 \begin{itemize}
     \item Wysoki poziom redundancji kodu (\textit{boilerplate})
     \item Konieczność ręcznej kompilacji wyrażeń regularnych
