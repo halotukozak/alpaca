@@ -52,9 +52,10 @@ final class ErrorHandlingStrategyTest extends AnyFunSuite with Matchers:
 
     val L = lexer:
       case "a" => Token["A"]
+      case "b" => Token["B"]
 
-    val (ctx, res) = L.tokenize("aa...aa..a")
-    res.map(_.name) shouldBe List("A", "A", "A", "A", "A")
+    val (ctx, res) = L.tokenize("aa...bb..a")
+    res.map(_.name) shouldBe List("A", "A", "B", "B", "A")
     ignoredTokens shouldBe 2
   }
 
