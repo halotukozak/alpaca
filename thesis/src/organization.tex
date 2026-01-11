@@ -8,9 +8,6 @@ Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędz
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
 \label{sec:org-project}
 
-\subsection{Typ projektu}
-\label{subsec:org-type}
-
 Projekt \textit{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy elementy badań teoretycznych z~praktyczną implementacją.
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
 W~dalszych etapach realizacji specyfikacja była doprecyzowywana w~sposób iteracyjny, na~podstawie wyników eksperymentów oraz analizy ograniczeń technicznych.
@@ -151,7 +148,7 @@ Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{
 
 \begin{table}[h]
     \centering
-    \begin{tabularx}{\textwidth}{|l|X|c|c|}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.2cm}|X|c|c|}
         \hline
         \textbf{Kamień milowy}           & \textbf{Opis}                                                                                   & \textbf{Termin}         & \textbf{Postęp} \\
         \hline
@@ -375,7 +372,7 @@ Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:org-commits} ilustruje dyna
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/Commits}
+    \includegraphics[width=0.9\textwidth]{figures/Commits}
     \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA}
     \label{fig:org-commits}
 \end{figure}
@@ -384,7 +381,7 @@ Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:org-commits} ilustruje dyna
 \section[Główne wyzwania i~ich rozwiązania]{Główne problemy i~ich rozwiązania}
 \label{sec:org-problems}
 
-\subsection{Problem 1: Limit rozmiaru metody JVM}
+\subsection{Limit rozmiaru metody JVM}
 \label{subsec:prob-jvm-limit}
 
 \subsubsection{Problem}
@@ -407,7 +404,7 @@ Ze względu na niewielki rozmiar metod pomocniczych kompilator JIT może je skut
 
 Każda metoda pomocnicza zawiera jedynie kilka instrukcji, dzięki czemu pozostaje poniżej limitu rozmiaru metody w~JVM. System jest obecnie w~stanie obsługiwać gramatyki z~setkami stanów LR(1) bez naruszenia ograniczeń platformy.
 
-\subsection{Problem 2: Transmisja referencji między etapami kompilacji}
+\subsection{Transmisja referencji między etapami kompilacji}
 \label{subsec:prob-refs}
 
 \subsubsection{Problem}
@@ -437,7 +434,7 @@ Klasa \verb|ReplaceRefs| rozszerza \verb|TreeMap| z~API refleksji TASTy, co umo�
 
 Akcje semantyczne prawidłowo odwołują się do~kontekstu parsera oraz zmiennych otaczających, bez generowania błędów typowania.
 
-\subsection[Problem 3: Typy rafinowane a wsparcie IDE]{Problem 3: Typy rafinowane a~wsparcie IDE}
+\subsection[Typy rafinowane a wsparcie IDE]{Typy rafinowane a~wsparcie IDE}
 \label{subsec:prob-refinement-ide}
 
 \subsubsection{Problem}
@@ -471,7 +468,7 @@ Zaimplementowano system typów rafinowanych, w~którym:
 
 Osiągnięto pełną integrację z~IDE (Metals), obejmującą autouzupełnianie, podpowiedzi typów oraz wczesne zgłaszanie błędów typów.
 
-\subsection{Problem 4: Wydajność kompilacji makr}
+\subsection{Wydajność kompilacji makr}
 \label{subsec:prob-compile-perf}
 
 \subsubsection{Problem}
@@ -495,7 +492,7 @@ Obliczenia wykonywane na~reprezentacji AST w~makrze generują dodatkowy narzut.
 
 Czas kompilacji złożonych gramatyk utrzymuje się poniżej 10~sekund (w~zależności od~rozmiaru gramatyki), co jest akceptowalne z~perspektywy użytkownika biblioteki.
 
-\subsection[Problem 5: Testowanie makr i metaprogramowania]{Problem 5: Testowanie makr i~metaprogramowania}
+\subsection[Testowanie makr i metaprogramowania]{Testowanie makr i~metaprogramowania}
 \label{subsec:prob-meta-testing}
 
 \subsubsection{Problem}
@@ -517,7 +514,7 @@ Tradycyjne frameworki testowe (np.~munit, ScalaTest) operują na~kodzie uruchami
 
 Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę wygenerowanego kodu.
 
-\subsection[Problem 6: Błędy w kolejności definicji tokenów]{Problem 6: Błędy w~kolejności definicji tokenów}
+\subsection[Błędy w kolejności definicji tokenów]{Błędy w~kolejności definicji tokenów}
 \label{subsec:prob-regex-order}
 
 \subsubsection{Problem}
@@ -567,7 +564,7 @@ Korekta wymaga zmiany kolejności definicji tokenów (np.~umieszczenie \verb|<=|
 
 Wczesna detekcja konfliktów wzorców okazała się~istotna przy~implementacji przykładowych parserów (parser wyrażeń arytmetycznych, parser~JSON).
 
-\subsection{Problem 7: Konflikty precedencji operatorów}
+\subsection{Konflikty precedencji operatorów}
 \label{subsec:prob-lr-conflicts}
 
 \subsubsection{Problem}
