@@ -315,7 +315,7 @@ Problem manifestował się podczas próby wyrażenia tabeli parsowania jako lite
 
 Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \verb|Method too large|\cite{method-too-large}.
 
-\textbf{Rozwiązanie:} Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji metod}.
+Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji metod}.
 Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
 
 \lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:impl-parser-fragment}]{listings/implementation/parser-06-fragment.scala}
@@ -330,7 +330,7 @@ W tym podejściu:
 
 Zastosowana technika fragmentacji skutecznie eliminuje problem przekroczenia limitu rozmiaru metody.
 Każda metoda pomocnicza zawiera jedynie kilka instrukcji bajtowych (typowo 5--10 w~zależności od złożoności wpisu tabeli), co~gwarantuje zgodność ze~specyfikacją JVM~\cite{lindholm2014java}.
-Dodatkowo kompilator JIT może efektywnie zoptymalizować te~metody poprzez \textbf{inlining}, eliminując narzut wywołań funkcji w~czasie wykonania.
+Dodatkowo kompilator JIT może efektywnie zoptymalizować te~metody poprzez \emph{inlining}, eliminując narzut wywołań funkcji w~czasie wykonania.
 
 Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany przez makra musi respektować wszystkie ograniczenia platformy docelowej, które normalnie są niewidoczne dla programistów piszących kod ręcznie.
 
@@ -345,7 +345,7 @@ Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
 \end{itemize}
 
 Problem polega na tym, że te referencje muszą zostać przepisane podczas przenoszenia kodu akcji z miejsca definicji do tabeli akcji.
-Funkcja \verb|createAction| realizuje tę transformację:
+Funkcja \verb|createAction| realizuje tę transformację.
 
 \lstinputlisting[language=scala,caption={Tworzenie akcji semantycznej z zachowaniem referencji},label={lst:impl-parser-action}]{listings/implementation/parser-07-create-action.scala}
 
