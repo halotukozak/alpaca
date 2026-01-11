@@ -15,9 +15,9 @@ Gramatyka bezkontekstowa (CFG) definiowana jest poprzez nieterminale, terminale 
 Wśród klas parserów wyróżnia się~dwie główne:
 
 \begin{itemize}
-    \item \textbf{LL(k)} (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
+    \item LL(k) (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
           Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
-    \item \textbf{LR(k)} (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
+    \item LR(k) (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
           Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
 \end{itemize}
 
@@ -40,7 +40,7 @@ W~parserach LL analogiczną rolę spełnia tabela predykcji (nieterminal~$\times
 Konflikty \textit{shift/reduce} i~\textit{reduce/reduce} pojawiają się, gdy tabela parsera byłaby niedeterministyczna (wielokrotny wpis dla tej samej pary stan-prefiks wejścia).
 Rozwiązania tradycyjne obejmują zmianę gramatyki lub~zwiększenie prefiksu wejścia~\cite{illinois-parsing-conflicts}.
 W~parserach LL problemy wynikają typowo z~lewostronnej rekurencji i~wspólnych prefiksów (wymagająca lewostronnej faktoryzacji).
-W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~[translate:\texttt{if--then}] vs.~[translate:\texttt{if--then--else}]) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
+W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~\texttt{if-then} vs.~\texttt{if-then-else}) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
 
 
 \section[Dobór klasy parsera]{Dobór klasy parsera}\label{sec:parser-algo-lr1}
