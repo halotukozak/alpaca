@@ -99,10 +99,11 @@ System refleksji TASTy definiuje następującą hierarchię typów:
     \item \textbf{TypeRepr} --- reprezentacje typów (niezależne od~drzewa)
 \end{itemize}
 
-\lstinputlisting[language=Scala,caption={Przykład użycia refleksji TASTy: inspekcja struktury klasy przypadku za pomocą refleksji TASTy.},label={lst:meta-tasty}]{listings/metaprogramming/meta-07-tasty-reflection.scala}
+\newpage
 
 Makro \verb|inspectFields| wykorzystuje refleksję TASTy do~ekstrakcji nazw pól klasy przypadku w~czasie kompilacji, co pozwala na~generowanie kodu specyficznego dla struktury typu bez ręcznej specyfikacji.
 
+\lstinputlisting[language=Scala,caption={Przykład użycia refleksji TASTy: inspekcja struktury klasy przypadku za pomocą refleksji TASTy.},label={lst:meta-tasty}]{listings/metaprogramming/meta-07-tasty-reflection.scala}
 
 \section[Porównanie z innymi systemami metaprogramowania]{Porównanie z~innymi systemami metaprogramowania}\label{sec:meta-comparison}
 

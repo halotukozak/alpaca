@@ -73,6 +73,8 @@ Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej gł�
 Dane rekurencyjne charakteryzują się głębokim zagnieżdżeniem struktur składniowych, co~stanowi wyzwanie dla parserów ze~względu na~wykorzystanie stosu wywołań.
 Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów.
 
+\newpage
+
 \lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych.},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
 
 Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty.
@@ -101,6 +103,8 @@ FastParse realizuje leksykalizację i~parsowanie w~jednym przebiegu, dlatego dla
 W~celu zapewnienia porównywalności wyników, dla każdego narzędzia zaimplementowano funkcjonalnie równoważne parsery wyrażeń arytmetycznych oraz formatu JSON\@.
 Wszystkie implementacje realizują bezpośrednią ewaluację (obliczenie wartości wyrażenia) zamiast konstrukcji drzewa AST, co~eliminuje różnice wydajnościowe wynikające ze~strategii alokacji pamięci.
 
+\newpage
+
 \subsection[Implementacja w ALPACA]{Implementacja w~ALPACA}
 \label{subsec:comp-impl-alpaca}
 
@@ -108,12 +112,15 @@ Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratyw
 
 \lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA.},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
 
+\newpage
 \subsection[Implementacja w SLY]{Implementacja w~SLY}
 \label{subsec:comp-impl-sly}
 
 Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod.
 
 \lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY.},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
+
+\newpage
 
 \subsection[Implementacja w FastParse]{Implementacja w~FastParse}
 \label{subsec:comp-impl-fastparse}
@@ -279,7 +286,7 @@ Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosk�
 \subsubsection{Obszary wymagające optymalizacji}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
 
-
+\newpage
 \section{Porównanie interfejsów programistycznych}
 \label{sec:comp-api}
 

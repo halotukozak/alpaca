@@ -23,6 +23,8 @@ System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu w
 Definicja \verb|LexerDefinition| reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w~idiomatycznej składni Scali.
 
+\newpage
+
 Metoda \verb|lexer| definiuje główny interfejs systemu.
 
 \lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer.},label={lst:impl-lexer-entry}]{listings/implementation/lexer-02-entrypoint.scala}
@@ -416,6 +418,8 @@ Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => 
 Derywacja instancji~\verb|Empty[T]| wykorzystuje mechanizm~\verb|Mirror.ProductOf[T]| wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
 Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~wartości domyślnych, weryfikując przy~tym ich dostępność.
 
+\newpage
+
 \lstinputlisting[language=scala,caption={Użycie mechanizmu Empty\lbrack T\rbrack.},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
 
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego. ~\verb|Empty[T]| eliminuje te problemy poprzez derywację w~czasie kompilacji, zachowując bezpieczeństwo typów oraz zerowy narzut wykonania.
@@ -472,6 +476,8 @@ Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahu
     \item konstrukcję węzła~\verb|Lambda| w~AST z~odpowiednimi typami parametrów i~zwracanym,
     \item weryfikację typowania wyniku.
 \end{enumerate}
+
+\newpage
 
 Mechanizm ten jest analogiczny do~konstrukcji~\verb|Lambda| w~systemie refleksji TASTy~\cite{scala3-guides-reflection}, ale oferuje wyższy poziom abstrakcji poprzez automatyczne zarządzanie symbolami i~kontekstem właściciela.
 
