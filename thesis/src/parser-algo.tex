@@ -66,7 +66,7 @@ Zalety podejścia LR(1):
 
 \end{itemize}
 
-\noindent Koszty i ograniczenia
+\noindent Koszty i ograniczenia:
 
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
@@ -90,9 +90,9 @@ Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~o
 Algorytm iteruje po~wszystkich produkcjach, dodając:
 
 \begin{itemize}
-    \item Pierwszy terminal z~prawej strony produkcji.
-    \item W~przypadku nieterminala---wszystkie terminale ze~zbioru \texttt{FIRST} tego nieterminala (z~wyjątkiem symbolu pustego $\varepsilon$). Jeśli nieterminal może generować $\varepsilon$, algorytm kontynuuje do~kolejnych symboli produkcji.
-    \item Symbol $\varepsilon$ dla~produkcji mogących generować pusty ciąg.
+    \item pierwszy terminal z~prawej strony produkcji,
+    \item w~przypadku nieterminala---wszystkie terminale ze~zbioru \texttt{FIRST} tego nieterminala (z~wyjątkiem symbolu pustego $\varepsilon$); jeśli nieterminal może generować $\varepsilon$, algorytm kontynuuje do~kolejnych symboli produkcji,
+    \item symbol $\varepsilon$ dla~produkcji mogących generować pusty ciąg.
 \end{itemize}
 
 Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} przestają~się~zmieniać).
@@ -162,17 +162,17 @@ Te~reguły są~przechowywane w~tabeli rozwiązywania konfliktów (ang.~\emph{con
 Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$:
 
 \begin{enumerate}
-    \item Sprawdź, czy~$a_1$ poprzedza $a_2$
-    \item Jeśli~nie, sprawdź czy $a_2$ poprzedza $a_1$
-    \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym
+    \item Sprawdź, czy~$a_1$ poprzedza $a_2$.
+    \item Jeśli~nie, sprawdź czy $a_2$ poprzedza $a_1$.
+    \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym.
 \end{enumerate}
 
 \noindent W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający:
 \begin{itemize}
-    \item Opis konfliktu (shift/reduce lub~reduce/reduce)
-    \item Symbol wywołujący konflikt
-    \item Ścieżkę w~gramatyce prowadzącą do~konfliktu
-    \item Sugestię użycia mechanizmu \texttt{before}/\texttt{after}
+    \item opis konfliktu (shift/reduce lub~reduce/reduce),
+    \item symbol wywołujący konflikt,
+    \item ścieżkę w~gramatyce prowadzącą do~konfliktu,
+    \item sugesitę użycia mechanizmu \texttt{before}/\texttt{after}.
 \end{itemize}
 
 \subsubsection{Przechodniość przez rozwinięcie grafu relacji}
