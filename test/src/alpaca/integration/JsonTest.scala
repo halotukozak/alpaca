@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class JsonTest extends AnyFunSuite:
   test("e2e json test") {
-    val JsonLexer = lexer {
+    val JsonLexer = lexer:
       // ignoring whitespaces
       case "\\s+" => Token.Ignored
 
@@ -24,10 +24,10 @@ final class JsonTest extends AnyFunSuite:
       // numbers and strings
       case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
       case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
-    }
 
     object JsonParser extends Parser:
-      val root: Rule[Any] = rule { case Value(value) => value }
+      val root: Rule[Any] = rule:
+        case Value(value) => value
 
       val Value: Rule[Any] = rule(
         { case JsonLexer.Null(n) => n.value },
@@ -48,9 +48,8 @@ final class JsonTest extends AnyFunSuite:
         { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
       )
 
-      val ObjectMember: Rule[(String, Any)] = rule { case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) =>
-        (s.value, v)
-      }
+      val ObjectMember: Rule[(String, Any)] = rule:
+        case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) => (s.value, v)
 
       val Array: Rule[List[Any]] = rule(
         { case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil },
@@ -62,11 +61,10 @@ final class JsonTest extends AnyFunSuite:
         { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
       )
 
-    withLazyReader("true") { input =>
+    withLazyReader("true"): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
       assert(result == true)
-    }
 
     withLazyReader("""
       {
@@ -82,7 +80,7 @@ final class JsonTest extends AnyFunSuite:
         "scores": [95.5, 88.0, 76.5],
         "nullValue": null
       }
-      """) { input =>
+      """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 
@@ -101,7 +99,6 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
-    }
 
     withLazyReader("""
       [
@@ -118,7 +115,7 @@ final class JsonTest extends AnyFunSuite:
           "name": "Charlie"
         }
       ]
-      """) { input =>
+      """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 
@@ -129,7 +126,6 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
-    }
 
     withLazyReader("""
       {
@@ -145,7 +141,7 @@ final class JsonTest extends AnyFunSuite:
           }
         }
       }
-      """) { input =>
+      """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonParser.parse(lexemes)
 
@@ -164,5 +160,4 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
-    }
   }
