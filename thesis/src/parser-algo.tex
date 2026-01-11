@@ -188,8 +188,7 @@ Algorytm śledzi odwiedzone węzły, aby~uniknąć zapętlenia podczas przeszuki
 Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~$\emph{mnożenie} \prec \emph{dodawanie}$, gdzie~$\prec$ oznacza wyższy priorytet), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
 Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.
 
-\paragraph{Przykład}
-Dla~gramatyki wyrażeń arytmetycznych z~reguł:
+\textbf{Przykład:} Dla~gramatyki wyrażeń arytmetycznych z~reguł:
 \begin{align*}
     \texttt{pow} & \prec \texttt{mul} \\
     \texttt{mul} & \prec \texttt{add}
