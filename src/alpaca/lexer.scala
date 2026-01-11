@@ -3,7 +3,7 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.{compileTimeOnly, unused}
+import scala.annotation.compileTimeOnly
 
 /**
  * Creates a lexer from a DSL-based definition.

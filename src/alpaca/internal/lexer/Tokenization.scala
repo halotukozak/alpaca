@@ -6,7 +6,6 @@ import alpaca.internal.lexer.ErrorHandling.Strategy
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.tailrec
-import scala.util.matching.Regex
 
 /**
  * The result of compiling a lexer definition.
@@ -75,7 +74,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
               case Strategy.Throw(ex) =>
                 throw ex
 
-              case Strategy.IgnoreToken if matcher.hasMatch =>
+              case Strategy.IgnoreToken if matcher.find =>
                 val firstMatching = matcher.start
                 val matched = globalCtx.text.subSequence(0, firstMatching).toString
                 globalCtx.lastRawMatched = matched
