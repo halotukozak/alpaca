@@ -415,7 +415,7 @@ Klasa typu~\verb|Empty[T]| rozwiązuje ten problem poprzez automatyczną derywac
 Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\emph{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 \lstinputlisting[language=scala,caption={Definicja klasy typu Empty\lbrack T\rbrack.},label={lst:impl-19-utils-empty}]{listings/implementation/lexer-08-empty.scala}
 
-Derywacja instancji~\verb|Empty[T]| wykorzystuje mechanizm~\verb|Mirror.ProductOf[T]| wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
+Derywacja instancji~\verb|Empty[T]| wykorzystuje mechanizm~\verb|Mirror| wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
 Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~wartości domyślnych, weryfikując przy~tym ich dostępność.
 
 \newpage
