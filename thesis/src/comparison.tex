@@ -84,7 +84,7 @@ Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekt
 
 Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów (linii lub obiektów w~przypadku JSON).
 
-Dla każdego rozmiaru mierzono następujące metryki:
+\noindent Dla każdego rozmiaru mierzono następujące metryki:
 
 \begin{itemize}
     \item Czas leksykalizacji (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
@@ -267,16 +267,16 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 \subsection{Wnioski}
 \label{subsec:comp-conclusions}
 
-Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.
+Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.\\
 
-Zalety systemu:
+\noindent Zalety systemu:
 \begin{itemize}
     \item Faza parsowania systemu \emph{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \emph{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
 \end{itemize}
 
-\paragraph{Obszary wymagające optymalizacji:}
+\subsubsection{Obszary wymagające optymalizacji}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
 
 
@@ -288,7 +288,7 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
 
 \begin{table}[ht]
     \centering
-    \begin{tabularx}{\textwidth}{L|YYY}
+    \begin{tabularx}{\textwidth}{X|C|C|C}
         \toprule
         \textbf{Kryterium}               & \textbf{ALPACA} & \textbf{SLY} & \textbf{FastParse} \\
         \midrule

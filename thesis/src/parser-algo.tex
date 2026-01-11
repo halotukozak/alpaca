@@ -87,7 +87,7 @@ W sekcji \ref{subsec:parser-algo-first} opisano, etap po~etapie, transformację 
 Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{aho1974lr}.
 \texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N\@.
 
-Algorytm iteruje po~wszystkich produkcjach, dodając:
+\noindent Algorytm iteruje po~wszystkich produkcjach, dodając:
 
 \begin{itemize}
     \item pierwszy terminal z~prawej strony produkcji,
@@ -158,7 +158,7 @@ ALPACA implementuje system deklaratywnej precedencji oparty na~relacjach pierwsz
 Użytkownik definiuje zbiór reguł precedencji, z~których każda wskazuje, że~dana produkcja lub~token ma~pierwszeństwo nad~inną produkcją lub~tokenem.
 Te~reguły są~przechowywane w~tabeli rozwiązywania konfliktów (ang.~\emph{conflict resolution table})---strukturze mapującej każdy klucz (produkcja lub~nazwa tokenu) na~zbiór kluczy, nad~którymi ma~on~pierwszeństwo.
 
-\paragraph{Algorytm rozstrzygania konfliktu}
+\subsubsection{Algorytm rozstrzygania konfliktu}
 Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$:
 
 \begin{enumerate}
@@ -216,7 +216,7 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
 
 \lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
 
-Kluczowe właściwości
+\noindent Kluczowe właściwości
 \begin{itemize}
     \item Jeśli~algorytm zakończy się bez komunikatu o błędzie, graf jest~acykliczny (DAG)
     \item Każdy cykl zostanie wykryty

@@ -525,7 +525,7 @@ Notacja jest składniowo poprawna, lecz prowadzi do~błędów w~fazie parsowania
 
 Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:lexer-algo-regex}).
 
-Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
+\noindent Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
 
 \begin{itemize}
     \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera.
@@ -584,9 +584,9 @@ pow before mul
 mul before add
 \end{verbatim}
 
-Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
+\noindent Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
 
-System automatycznie:
+\noindent System automatycznie:
 
 \begin{itemize}
     \item wyprowadza przechodniość: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|,
@@ -679,7 +679,7 @@ następnie operatory unarny plus i~minus, potem mnożenie i~operatory pochodne (
 a~wreszcie dodawanie i~odejmowanie jako~operatory o~najniższym priorytecie. Ta~hierarchia jest jawnie zdeklarowana
 w~zbiorze rozwiązań konfliktów (ang. \emph{resolutions}), zapewniając poprawną interpretację wyrażeń.
 
-System weryfikowany był na~trzech poziomach złożoności:
+\noindent System weryfikowany był na~trzech poziomach złożoności:
 
 \begin{itemize}
     \item Test podstawowy --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
@@ -715,7 +715,7 @@ natomiast `ArrayElements` obsługuje listy elementów oddzielane przecinkami.
 Rekurencja lewostronna w~regułach `ObjectMembers` i~ArrayElements` pozwala na~parsowanie dowolnie długich struktur,
 zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 
-System weryfikowany był na~czterech poziomach złożoności:
+\noindent System weryfikowany był na~czterech poziomach złożoności:
 
 \begin{itemize}
     \item Test primitywnych wartości --- proste wyrażenie \verb|true| zwracające wartość logiczną;

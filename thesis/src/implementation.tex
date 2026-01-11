@@ -85,7 +85,7 @@ Proces ten wykorzystuje API refleksji TASTy\cite{scala3-reflection} do dynamiczn
 
 Anonimowa klasa implementująca \verb|Tokenization[Ctx]| jest tworzona poprzez wywołanie \verb|Symbol.newClass|:
 
-Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
+\noindent Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
 \begin{itemize}
     \item \verb|Symbol.spliceOwner| --- właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
     \item \verb|Symbol.freshName(``\$anon'')| --- generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
@@ -93,7 +93,7 @@ Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
     \item \verb|decls| --- funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
-Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
+\noindent Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
 
 \begin{itemize}
     \item dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|.
@@ -151,7 +151,7 @@ Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji\ci
 Dostęp do tokenów realizowany jest jako bezpośrednie odwołanie do pola klasy, które w~kodzie bajtowym JVM~\cite{lindholm2014java} reprezentowane jest przez instrukcję \verb|getfield| o~złożoności czasowej~O(1).
 Teoretycznie eliminuje to narzut związany z~operacjami dynamicznymi, choć pełna weryfikacja empiryczna tego założenia wykracza poza zakres niniejszej pracy.
 
-Alternatywne podejście oparte na strukturze mapy wymagałoby:
+\noindent Alternatywne podejście oparte na strukturze mapy wymagałoby:
 \begin{enumerate}
     \item obliczenia funkcji haszującej dla klucza,
     \item przeszukiwania tablicy haszującej,
@@ -239,7 +239,7 @@ Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 Implementacja generatora parserów w~systemie~\emph{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
 Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
-Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
+\noindent Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
 \begin{itemize}
     \item konstrukcja tabel LR(1) w~czasie kompilacji z wykorzystaniem makr,
     \item integracja z systemem typów Scali w akcjach semantycznych,
@@ -387,7 +387,7 @@ Implementacja \verb|ToExpr[ParseTable]| jest szczególnie interesująca, gdyż m
 Implementacja systemu~\emph{ALPACA} wykorzystuje zaawansowane mechanizmy metaprogramowania Scali~3, w~tym refleksję TASTy~\cite{scala3-reflection}, derywację typów~\cite{scala3-derivation} oraz transformację drzew składni abstrakcyjnej (AST)~\cite{scala3-guides-reflection}.
 Realizacja tych mechanizmów wymaga zestawu narzędzi pomocniczych abstrahujących typowe wzorce operacji na~typach i~drzewach.
 
-Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
+\noindent Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
 \begin{itemize}
     \item \verb|Empty[T]| — generyczna konstrukcja wartości domyślnych dla typów produktowych,
     \item \verb|ReplaceRefs| — transformacja drzew AST poprzez podstawianie symboli,
@@ -422,7 +422,7 @@ Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~warto�
 
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego. ~\verb|Empty[T]| eliminuje te problemy poprzez derywację w~czasie kompilacji, zachowując bezpieczeństwo typów oraz zerowy narzut wykonania.
 
-Mechanizm derywacji wymaga, aby:
+\noindent Mechanizm derywacji wymaga, aby:
 \begin{itemize}
     \item typ~\verb|T| był typem produktowym (klasa przypadku lub krotka),
     \item wszystkie parametry konstruktora miały wartości domyślne,

@@ -22,7 +22,7 @@ Wstawki, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generują
 
 \lstinputlisting[language=Scala,caption={Prosty przykład ilustrujący podstawowe wykorzystanie cytatów i~wstawek w~makrach},label={lst:meta-quotes}]{listings/metaprogramming/meta-01-quotes-example.scala}
 
-W~przykładzie \ref{lst:meta-quotes}:
+\noindent W~przykładzie \ref{lst:meta-quotes}:
 \begin{itemize}
     \item \verb|'x| tworzy cytat (ang.~\emph{quote}) z~wyrażenia \verb|x|, opóźniając jego wykonanie,
     \item \verb|'{...}| tworzy blok kodu jako dane, które będzie wstawione w~miejscu wywołania makra,
@@ -89,7 +89,7 @@ TASTy (ang.~\emph{Typed Abstract Syntax Trees}) jest binarnym formatem serializa
 API refleksji dostarcza szczegółowy widok na strukturę kodu, włączając typy, symbole oraz pozycje w~kodzie źródłowym.
 Jest dostępne poprzez obiekt \verb|reflect| zdefiniowany w~typie \verb|Quotes|, który jest przekazywany kontekstualnie do makr~\cite{scala3-reflection,scala3-guides-reflection}.
 
-\paragraph{Hierarchia klas refleksji TASTy}
+\subsubsection{Hierarchia klas refleksji TASTy}
 System refleksji TASTy definiuje następującą hierarchię typów:
 
 \begin{itemize}
