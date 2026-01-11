@@ -1,14 +1,14 @@
 \chapter{Organizacja pracy}
 \label{ch:org}
 
-Rozdział przedstawia metodykę realizacji projektu dyplomowego \textit{ALPACA}, jego charakter, podział obowiązków pomiędzy~członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
+Rozdział przedstawia metodykę realizacji projektu dyplomowego \emph{ALPACA}, jego charakter, podział obowiązków pomiędzy~członkami zespołu, organizację prac oraz zastosowane techniki inżynierskie.
 Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędzia wspierające współpracę zespołową oraz strategię walidacji implementacji.
 
 
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
 \label{sec:org-project}
 
-Projekt \textit{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy elementy badań teoretycznych z~praktyczną implementacją.
+Projekt \emph{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy elementy badań teoretycznych z~praktyczną implementacją.
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
 W~dalszych etapach realizacji specyfikacja była doprecyzowywana w~sposób iteracyjny, na~podstawie wyników eksperymentów oraz analizy ograniczeń technicznych.
 
@@ -26,7 +26,7 @@ Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rola
 
 \paragraph[Bartosz Buczek (dalej: BB)]{Bartosz~Buczek (dalej: BB)} był odpowiedzialny przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
 
-\paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \textit{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
+\paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \emph{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
 
 \subsection{Podział prac na główne zadania}
 \label{subsec:org-tasks}
@@ -64,7 +64,7 @@ Zakres:
     \item Generacja tabel parsowania (tabela akcji, tabela \verb|goto|).\ (BB)
     \item Transformacja akcji semantycznych z~kontekstu definicji do~wygenerowanych tabel.\ (BK)
     \item Obsługa ograniczeń JVM (fragmentacja metod, limit rozmiaru).\ (BK)
-    \item Deklaratywne rozwiązywanie konfliktów \textit{shift--reduce} i~\textit{reduce--reduce}.\ (BB, BK)
+    \item Deklaratywne rozwiązywanie konfliktów \emph{shift--reduce} i~\emph{reduce--reduce}.\ (BB, BK)
     \item Obsługa kontekstu w~parserze.\ (BB, BK)
     \item Diagnostyka błędów składniowych.\ (BB, BK)
 \end{itemize}
@@ -107,7 +107,7 @@ Zakres:
 
 Pomimo wyraźnego podziału obowiązków, współpraca między członkami zespołu miała charakter ścisły i~ciągły.
 Każdy pull request do~repozytorium był poddawany przeglądowi kodu przez drugiego członka zespołu przed włączeniem zmian do~głównej gałęzi.
-Zadania rejestrowano w~postaci zgłoszeń \textit{GitHub Issues} i~organizowano na~tablicy Kanban\cite{alpaca-project}, a~kamienie milowe wraz z~terminami realizacji definiowano i~monitorowano z~wykorzystaniem mechanizmu GitHub Milestones\cite{alpaca-milestones}.
+Zadania rejestrowano w~postaci zgłoszeń \emph{GitHub Issues} i~organizowano na~tablicy Kanban\cite{alpaca-project}, a~kamienie milowe wraz z~terminami realizacji definiowano i~monitorowano z~wykorzystaniem mechanizmu GitHub Milestones\cite{alpaca-milestones}.
 Wspólnie projektowano interfejsy między modułami (między innymi interfejs \verb|Token| oraz parametryzację \verb|Ctx|) oraz rozwiązywano problemy techniczne wymagające wiedzy o~różnych komponentach systemu.
 Prace prowadzono z~wykorzystaniem systemu kontroli wersji Git.
 
@@ -138,10 +138,10 @@ Komunikacja zespołu opierała się na~kilku komplementarnych kanałach:
 
 \subsubsection{Ustalanie kamieni milowych}
 
-Podział prac na etapy został sformalizowany poprzez zdefiniowanie pięciu kamieni milowych (ang. \textit{milestones}), każdego powiązanego z~wyraźnym terminem i~katalogiem zadań.
+Podział prac na etapy został sformalizowany poprzez zdefiniowanie pięciu kamieni milowych (ang. \emph{milestones}), każdego powiązanego z~wyraźnym terminem i~katalogiem zadań.
 Kamienie milowe pozwoliły zespołowi na~śledzenie postępów, priorytetyzowanie prac oraz szybkie identyfikowanie zagrożeń dla harmonogramu.
 
-Każdy kamień milowy zawierał listę zgłoszeń (ang. \textit{issues}) reprezentujących konkretne zadania (implementacja funkcji, dokumentacja, testy).
+Każdy kamień milowy zawierał listę zgłoszeń (ang. \emph{issues}) reprezentujących konkretne zadania (implementacja funkcji, dokumentacja, testy).
 Postęp mierzono poprzez stosunek zamkniętych zgłoszeń do~całkowitej liczby planowanych zadań, co umożliwiało szybką ocenę stanu rzeczywistego realizacji w~stosunku do~pierwotnego planu.
 
 Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{tab:org-milestones}.
@@ -163,7 +163,7 @@ Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{
         \textbf{Thesis}                  & Finalizacja rozprawy dyplomowej (pisanie rozdziałów, bibliografia, ostateczna redakcja)         & 15 grudnia 2025         & 12/13           \\
         \hline
     \end{tabularx}
-    \caption{Kamienie milowe projektu \textit{ALPACA} i~postęp ich realizacji}
+    \caption{Kamienie milowe projektu \emph{ALPACA} i~postęp ich realizacji}
     \label{tab:org-milestones}
 \end{table}
 
@@ -258,17 +258,17 @@ Wykorzystywano narzędzia wspomagające refaktoryzację (m.in.\ Scalafix).
 \subsubsection[Code Review i Pair Programming]{Code Review i~Pair Programming}
 
 Każdy Pull Request był recenzowany przez drugiego członka zespołu przed połączeniem z~głównym branchem.
-W~przypadku zagadnień o~szczególnie złożonym charakterze zastosowano sesje wspólnego programowania (ang. \textit{Pair Programming}).
+W~przypadku zagadnień o~szczególnie złożonym charakterze zastosowano sesje wspólnego programowania (ang. \emph{Pair Programming}).
 Spotkania poświęcone przeglądom kodu odbywały się 2--3 razy w~tygodniu, zwykle przez 30--60~minut.
 
 \subsubsection[Zgłoszenia i planowanie]{Zgłoszenia i~planowanie}
-Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne zgłoszenia (ang. \textit{issues}) do~realizacji.
-Backlog utrzymywano w~postaci zgłoszeń \textit{GitHub Issues}.
+Podczas cyklicznych spotkań omawiano priorytety oraz wybierano kolejne zgłoszenia (ang. \emph{issues}) do~realizacji.
+Backlog utrzymywano w~postaci zgłoszeń \emph{GitHub Issues}.
 
 \subsection{Praktyki specyficzne dla metaprogramowania}
 \label{subsec:org-meta-practices}
 
-\subsubsection{Obliczenia wieloetapowe (ang. \textit{Staged Computation})}
+\subsubsection{Obliczenia wieloetapowe (ang. \emph{Staged Computation})}
 
 Świadomie rozróżniano obliczenia wykonywane na~etapie kompilacji i~na~etapie wykonania.
 Maksymalizowano zakres obliczeń przeniesionych do~etapu kompilacji (m.in.\ generacja tabel LR(1), kompilacja wyrażeń regularnych).
@@ -278,7 +278,7 @@ Minimalizowano nakład obliczeń w~fazie wykonania, co pozwoliło uzyskać wysok
 
 Walidowano gramatyki już na~etapie kompilacji (m.in.\ wykrywanie konfliktów LR, niepoprawnej składni).
 Walidowano wyrażenia regularne w~definicjach leksera.
-Stosowano zasadę szybkiego zwrotu błędu (ang. \textit{fail-fast}) --- preferowano odrzucanie niepoprawnych danych na~etapie kompilacji zamiast zgłaszania błędów dopiero w~czasie wykonania.
+Stosowano zasadę szybkiego zwrotu błędu (ang. \emph{fail-fast}) --- preferowano odrzucanie niepoprawnych danych na~etapie kompilacji zamiast zgłaszania błędów dopiero w~czasie wykonania.
 
 \subsection{Praktyki DevOps}
 \label{subsec:org-devops}
@@ -286,7 +286,7 @@ Stosowano zasadę szybkiego zwrotu błędu (ang. \textit{fail-fast}) --- prefero
 \subsubsection{Continuous Integration}
 
 GitHub Actions automatyzowało kompilację, uruchamianie testów oraz weryfikację formatowania kodu przy każdym wypchnięciu zmian.
-Zastosowano reguły ochrony gałęzi (ang. \textit{branch protection rules}), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~głównym branchem.
+Zastosowano reguły ochrony gałęzi (ang. \emph{branch protection rules}), wymagające pozytywnego wyniku wszystkich testów przed połączeniem zmian z~głównym branchem.
 
 \subsubsection{Zarządzanie artefaktami (Artifact Management)}
 
@@ -390,12 +390,12 @@ Przy naiwnej implementacji generowanie dużych tabel parsowania LR(1) prowadził
 
 \subsubsection{Przyczyna}
 
-Każdy wpis tabeli parsowania (para: stan, symbol terminalny $\rightarrow$ akcja \textit{shift}/\textit{reduce}) wymagał wygenerowania kilku instrukcji.
+Każdy wpis tabeli parsowania (para: stan, symbol terminalny $\rightarrow$ akcja \emph{shift}/\emph{reduce}) wymagał wygenerowania kilku instrukcji.
 Dla złożonych gramatyk z~tysiącami wpisów rozmiar wygenerowanej metody przekraczał dopuszczalny limit.
 
 \subsubsection{Rozwiązanie}
 
-Zastosowano podejście polegające na~fragmentacji metod (\textit{method fragmentation})~\cite{method-too-large}.
+Zastosowano podejście polegające na~fragmentacji metod (\emph{method fragmentation})~\cite{method-too-large}.
 Zamiast generować pojedynczą metodę zawierającą całą tabelę parsowania, generowanych jest wiele metod pomocniczych, z~których każda odpowiada za dodanie ograniczonej liczby wpisów do~struktury budującej tabelę.
 Metoda główna sekwencyjnie wywołuje metody pomocnicze, a~następnie zwraca wynikową tabelę.
 Ze względu na niewielki rozmiar metod pomocniczych kompilator JIT może je skutecznie inlinować, minimalizując narzut wykonania.
@@ -419,7 +419,7 @@ Bezpośrednie kopiowanie referencji prowadziło do~błędów typu „symbol not 
 
 \subsubsection{Rozwiązanie}
 
-Zaimplementowano klasę \verb|ReplaceRefs| realizującą transformację AST poprzez zmianę przypisania symboli (ang.~\textit{re-owning}). Transformacja przebiega według następujących kroków:
+Zaimplementowano klasę \verb|ReplaceRefs| realizującą transformację AST poprzez zmianę przypisania symboli (ang.~\emph{re-owning}). Transformacja przebiega według następujących kroków:
 
 \begin{enumerate}
     \item Analiza AST kodu akcji semantycznej.
@@ -440,7 +440,7 @@ Akcje semantyczne prawidłowo odwołują się do~kontekstu parsera oraz zmiennyc
 \subsubsection{Problem}
 
 W wersji pozbawionej typów rafinowanych interfejs API nie dostarczał środowisku IDE informacji o~dostępnych tokenach.
-Funkcje autouzupełniania, podpowiedzi typów oraz mechanizmy \textit{go-to-definition} działały w~sposób ograniczony.
+Funkcje autouzupełniania, podpowiedzi typów oraz mechanizmy \emph{go-to-definition} działały w~sposób ograniczony.
 
 \subsubsection{Przyczyna}
 
@@ -477,14 +477,14 @@ Dla złożonych gramatyk generacja tabel LR(1) w~makrze była czasochłonna, co 
 
 \subsubsection{Przyczyna}
 
-Algorytmy \textit{Closure} i~\textit{Goto} dla LR(1) wymagają wielu iteracji oraz porównań zbiorów stanów.
+Algorytmy \emph{Closure} i~\emph{Goto} dla LR(1) wymagają wielu iteracji oraz porównań zbiorów stanów.
 Obliczenia wykonywane na~reprezentacji AST w~makrze generują dodatkowy narzut.
 
 \subsubsection{Rozwiązanie}
 
 \begin{itemize}
     \item Zoptymalizowano algorytmy LR(1), zastępując naiwne pętle bardziej efektywnymi strukturami danych (np.~buforami modyfikowalnymi zamiast list).
-    \item Wprowadzono buforowanie wyników pośrednich (m.in.\ zbiorów \textit{FIRST}).
+    \item Wprowadzono buforowanie wyników pośrednich (m.in.\ zbiorów \emph{FIRST}).
     \item Zastosowano leniwą ewaluację --- niektóre stany LR(1) generowane są wyłącznie wtedy, gdy są rzeczywiście osiągalne.
 \end{itemize}
 
@@ -648,8 +648,8 @@ Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczeg
 
 \begin{itemize}
     \item Testowanie ekstrakcji produkcji z~definicji.
-    \item Testowanie algorytmów LR(1) (\textit{closure}, \textit{goto}, obliczanie zbiorów \textit{FIRST}).
-    \item Testowanie rozwiązywania konfliktów typu \textit{shift--reduce}.
+    \item Testowanie algorytmów LR(1) (\emph{closure}, \emph{goto}, obliczanie zbiorów \emph{FIRST}).
+    \item Testowanie rozwiązywania konfliktów typu \emph{shift--reduce}.
     \item Testowanie akcji semantycznych z~różnymi typami kontekstu.
 \end{itemize}
 
@@ -680,7 +680,7 @@ i~całkowite (w~tym notację wykładniczą) oraz~funkcje matematyczne jako~słow
 Parser definiuje kompleksowy zbiór reguł precedencji, gdzie potęgowanie ma~najwyższy priorytet,
 następnie operatory unarny plus i~minus, potem mnożenie i~operatory pochodne (modulo, dzielenie całkowite),
 a~wreszcie dodawanie i~odejmowanie jako~operatory o~najniższym priorytecie. Ta~hierarchia jest jawnie zdeklarowana
-w~zbiorze rozwiązań konfliktów (ang. \textit{resolutions}), zapewniając poprawną interpretację wyrażeń.
+w~zbiorze rozwiązań konfliktów (ang. \emph{resolutions}), zapewniając poprawną interpretację wyrażeń.
 
 System weryfikowany był na~trzech poziomach złożoności:
 
@@ -743,12 +743,12 @@ oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności struktur
 \subsection{Benchmarki wydajności}
 \label{subsec:org-benchmarks}
 
-Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \textit{ALPACA} z~innymi podejściami.
+Przeprowadzono benchmarki porównujące wydajność wygenerowanego parsera \emph{ALPACA} z~innymi podejściami.
 
 Testy wydajnościowe obejmowały dwa rodzaje gramatyk (wyrażenia arytmetyczne oraz format JSON), dla~których przygotowano zarówno dane o~strukturze iteracyjnej (płaskiej), jak~i~rekurencyjnej (głęboko zagnieżdżonej).
 Pomiary wykonano dla różnych rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów.
 
-System \textit{ALPACA} porównano z~biblioteką SLY (Python) reprezentującą podejście oparte na~refleksji oraz~z~FastParse (Scala) reprezentującą kombinatory parserów.
+System \emph{ALPACA} porównano z~biblioteką SLY (Python) reprezentującą podejście oparte na~refleksji oraz~z~FastParse (Scala) reprezentującą kombinatory parserów.
 Dla każdego narzędzia mierzono czas leksykalizacji, czas parsowania oraz całkowity czas przetwarzania.
 
 Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza porównawcza przedstawione są~w~rozdziale~\ref{ch:comp}.

@@ -26,7 +26,7 @@ DFA przetwarza wejście znak po znaku, zachowując jednoznaczny stan aktywny ora
 Lekser stosuje dwie komplementarne zasady determinujące zachowanie dla wieloznacznych sytuacji:
 
 \begin{itemize}
-    \item Dopóki DFA ma ścieżkę przejść, znak jest konsumowany; token jest emitowany dopiero po~ostatnim stanie akceptującym widzianym na tej ścieżce (najdłuższe dopasowanie, ang. \textit{maximal munch}).
+    \item Dopóki DFA ma ścieżkę przejść, znak jest konsumowany; token jest emitowany dopiero po~ostatnim stanie akceptującym widzianym na tej ścieżce (najdłuższe dopasowanie, ang. \emph{maximal munch}).
     \item Gdy kilka reguł akceptuje prefiks o~tej samej długości, wybierana jest reguła o najwyższym priorytecie (często określanym kolejnością definicji).
 \end{itemize}
 
@@ -179,4 +179,4 @@ Pattern <p_j> is shadowed by <p_i>
 
 Moduł \texttt{RegexChecker} jest wywoływany w~fazie ekspansji makra \texttt{lexer}, przed~generacją kodu leksera.
 Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~obszernym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
-Podejście to jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.
+Podejście to jest zgodne z~zasadą \emph{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.

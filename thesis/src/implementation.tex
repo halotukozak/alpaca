@@ -58,7 +58,7 @@ Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi ref
 
 \lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:impl-lexer-refs}]{listings/implementation/lexer-04-replace-refs-with-new-ctx.scala}
 
-Transformacja realizuje proces przepisania właściciela (\textit{re-owning}) symboli w~AST, polegający na modyfikacji referencji kontekstowych w~celu dostosowania ich do nowego zakresu leksykalnego~\cite{scala3-guides-reflection}.
+Transformacja realizuje proces przepisania właściciela (\emph{re-owning}) symboli w~AST, polegający na modyfikacji referencji kontekstowych w~celu dostosowania ich do nowego zakresu leksykalnego~\cite{scala3-guides-reflection}.
 Klasa \verb|ReplaceRefs| udostępnia \verb|TreeMap|, który podczas przejścia po AST podmienia referencje do wskazanych symboli na~podane termy\cite{scala3-guides-reflection}.
 
 \subsection[Ekstrakcja i kompilacja wzorców]{Ekstrakcja i~kompilacja wzorców}\label{subsec:impl-lexer-patterns}
@@ -118,7 +118,7 @@ Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora.
 
 \subsection{Typy rafinowane (refinement types)}\label{subsec:impl-lexer-refinement}
 
-Typy rafinowane (\textit{refinement types}) stanowią mechanizm systemu typów Scali umożliwiający dodanie informacji o~strukturze typu w~czasie kompilacji~\cite{scala3-selectable}.
+Typy rafinowane (\emph{refinement types}) stanowią mechanizm systemu typów Scali umożliwiający dodanie informacji o~strukturze typu w~czasie kompilacji~\cite{scala3-selectable}.
 W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie informacji o~polach tokenów bezpośrednio do typu zwracanego przez makro.
 
 \subsubsection{Proces rafinowania typu}\label{subsubsec:impl-lexer-refining}
@@ -133,7 +133,7 @@ Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu 
 
 \subsubsection{Wynikowy typ}\label{subsubsec:impl-lexer-result-type}
 
-Wynikowy typ ma formę typu przecięcia (ang.~\textit{intersection type}):
+Wynikowy typ ma formę typu przecięcia (ang.~\emph{intersection type}):
 
 \lstinputlisting[language=scala,caption={Wynikowy typ leksera},label={lst:impl-lexer-type}]{listings/implementation/lexer-15-result-type.scala}
 
@@ -183,7 +183,7 @@ Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska d
 \begin{itemize}
     \item Automatycznego uzupełniania nazw tokenów
     \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
-    \item Nawigacji do definicji przez mechanizm \textit{go-to-definition}
+    \item Nawigacji do definicji przez mechanizm \emph{go-to-definition}
     \item Wykrywania błędów składniowych przed kompilacją
 \end{itemize}
 
@@ -192,7 +192,7 @@ Te funkcjonalności są niemożliwe do realizacji w~przypadku dostępu przez str
 \subsubsection{Statyczna detekcja konfliktów wzorców}\label{subsubsec:impl-conflicts}
 
 Makro przeprowadza analizę wszystkich wzorców w~czasie kompilacji, wykrywając potencjalne konflikty nakładających się wyrażeń regularnych.
-Mechanizm ten zapewnia, że błędy konfiguracji są wykrywane na etapie kompilacji, a~nie w~czasie wykonania programu, co jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania.
+Mechanizm ten zapewnia, że błędy konfiguracji są wykrywane na etapie kompilacji, a~nie w~czasie wykonania programu, co jest zgodne z~zasadą \emph{fail-fast} w~inżynierii oprogramowania.
 
 \subsubsection[Typowanie strukturalne z gwarancjami nominalnymi]{Typowanie strukturalne z~gwarancjami nominalnymi}\label{subsubsec:impl-structural}
 
@@ -223,7 +223,7 @@ Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
 
 Wady tego podejścia:
 \begin{itemize}
-    \item Wysoki poziom redundancji kodu (\textit{boilerplate})
+    \item Wysoki poziom redundancji kodu (\emph{boilerplate})
     \item Konieczność ręcznej kompilacji wyrażeń regularnych
     \item Podatność na błędy synchronizacji między definicjami tokenów a~wyrażeniem regularnym
     \item Brak mechanizmu DSL ułatwiającego definicję reguł
@@ -235,7 +235,7 @@ Wady tego podejścia:
 
 System wykorzystuje pomocniczą klasę \verb|RegexChecker| do walidacji wzorców:
 Mechanizm ten sprawdza poprawność składni wyrażeń regularnych już w~czasie kompilacji i~raportuje błędy z~dokładną lokalizacją wzorca.
-Metoda \verb|report.errorAndAbort| przerywa kompilację i~wyświetla komunikat o~błędzie, eliminując konieczność detekcji błędów w~czasie wykonania, co jest zgodne z~zasadą wczesnej walidacji (\textit{fail-fast})~\cite{scala3-reference-macros,scala3-guides-macros}.
+Metoda \verb|report.errorAndAbort| przerywa kompilację i~wyświetla komunikat o~błędzie, eliminując konieczność detekcji błędów w~czasie wykonania, co jest zgodne z~zasadą wczesnej walidacji (\emph{fail-fast})~\cite{scala3-reference-macros,scala3-guides-macros}.
 
 \subsubsection{Obsługa nieobsługiwanych konstrukcji}\label{subsubsec:impl-unsupported}
 
@@ -248,7 +248,7 @@ Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 
 \subsection{Wprowadzenie do generatora parserów}\label{subsec:impl-parser-intro}
 
-Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
+Implementacja generatora parserów w~systemie~\emph{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
 Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
 \newpage
@@ -306,7 +306,7 @@ Funkcja \verb|extractEBNF| dokonuje transformacji wzorców dopasowania na produk
 % \lstinputlisting[language=scala,caption={Ekstrakcja produkcji gramatycznych z wzorców},label={lst:impl-parser-ebnf}]{listings/implementation/parser-04-extract-ebnf.scala}
 
 Kluczowym wyzwaniem jest zachowanie poprawności referencji do symboli przy przenoszeniu kodu akcji semantycznej z kontekstu definicji reguły do wygenerowanej tabeli akcji.
-Wymaga to zastosowania techniki \textit{re-owning} symboli, realizowanej przez klasę \verb|ReplaceRefs|.
+Wymaga to zastosowania techniki \emph{re-owning} symboli, realizowanej przez klasę \verb|ReplaceRefs|.
 
 \subsection{Trudne problemy rozwiązane w implementacji}\label{subsec:impl-problems}
 
@@ -322,7 +322,7 @@ Problem manifestował się podczas próby wyrażenia tabeli parsowania jako lite
 
 Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \verb|Method too large|\cite{method-too-large}.
 
-Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji metod}.
+Problem został rozwiązany poprzez zastosowanie techniki \emph{fragmentacji metod}.
 Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
 
 \lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:impl-parser-fragment}]{listings/implementation/parser-06-fragment.scala}
@@ -405,7 +405,7 @@ Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
 
 \section{Narzędzia pomocnicze}\label{sec:utils}
 
-Implementacja systemu~\textit{ALPACA} wykorzystuje zaawansowane mechanizmy metaprogramowania Scali~3, w~tym refleksję TASTy~\cite{scala3-reflection}, derywację typów~\cite{scala3-derivation} oraz transformację drzew składni abstrakcyjnej (AST)~\cite{scala3-guides-reflection}.
+Implementacja systemu~\emph{ALPACA} wykorzystuje zaawansowane mechanizmy metaprogramowania Scali~3, w~tym refleksję TASTy~\cite{scala3-reflection}, derywację typów~\cite{scala3-derivation} oraz transformację drzew składni abstrakcyjnej (AST)~\cite{scala3-guides-reflection}.
 Realizacja tych mechanizmów wymaga zestawu narzędzi pomocniczych abstrahujących typowe wzorce operacji na~typach i~drzewach.
 
 Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
@@ -413,15 +413,15 @@ Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
     \item \verb|Empty[T]| — generyczna konstrukcja wartości domyślnych dla typów produktowych,
     \item \verb|ReplaceRefs| — transformacja drzew AST poprzez podstawianie symboli,
     \item \verb|CreateLambda| — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
-    \item \verb|Copyable[T]| — generyczna funkcja kopiowania dla klas przypadku (\textit{case classes}).
+    \item \verb|Copyable[T]| — generyczna funkcja kopiowania dla klas przypadku (\emph{case classes}).
 \end{itemize}
 
-Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\textit{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.
+Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\emph{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.
 
 \subsection{Empty[T] — konstrukcja wartości domyślnych}\label{subsec:impl-utils-empty}
 
-Klasa typu~\verb|Empty[T]| stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\textit{product types})~\cite{pierce2002}.
-W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają klasom przypadku (\textit{case classes}) oraz krotkom (\textit{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
+Klasa typu~\verb|Empty[T]| stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\emph{product types})~\cite{pierce2002}.
+W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają klasom przypadku (\emph{case classes}) oraz krotkom (\emph{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
 
 \subsubsection{Motywacja}
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba utworzenia instancji typu~\verb|T| bez znajomości jego konkretnej struktury.
@@ -438,7 +438,7 @@ Klasa typu~\verb|Empty[T]| rozwiązuje ten problem poprzez automatyczną derywac
 
 \lstinputlisting[language=scala,caption={Definicja klasy typu Empty\lbrack T\rbrack},label={lst:impl-19-utils-empty}]{listings/implementation/lexer-08-empty.scala}
 
-Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\textit{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
+Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\emph{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 
 \subsubsection{Mechanizm derywacji}
 Derywacja instancji~\verb|Empty[T]| wykorzystuje mechanizm~\verb|Mirror.ProductOf[T]| wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
@@ -466,12 +466,12 @@ Naruszenie tych warunków prowadzi do~błędu kompilacji z~komunikatem wskazują
 \subsection[ReplaceRefs — transformacja symboli w AST]{ReplaceRefs — transformacja symboli w~AST}\label{subsec:impl-utils-replacerefs}
 
 Klasa~\verb|ReplaceRefs| rozszerza~\verb|TreeMap| — abstrakcyjną klasę bazową dla transformacji drzew składni abstrakcyjnej w~systemie refleksji TASTy~\cite{scala3-guides-reflection}.
-Klasa~\verb|TreeMap| definiuje wzorzec projektowy odwiedzającego (\textit{visitor pattern})~\cite{gamma1994} dla typowanego AST Scali~3, umożliwiając rekurencyjne przetwarzanie węzłów drzewa z~zachowaniem bezpieczeństwa typów.
+Klasa~\verb|TreeMap| definiuje wzorzec projektowy odwiedzającego (\emph{visitor pattern})~\cite{gamma1994} dla typowanego AST Scali~3, umożliwiając rekurencyjne przetwarzanie węzłów drzewa z~zachowaniem bezpieczeństwa typów.
 
 \subsubsection{Motywacja}
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba adaptacji fragmentów kodu z~jednego kontekstu leksykalnego do~innego.
 Przykładem jest sytuacja, w~której kod oryginalnie odnoszący się do~parametru makra~\verb|ctx| musi zostać przepisany tak, aby odnosił się do~parametru metody w~wygenerowanej klasie~\verb|newCtx|.
-Proces ten, znany jako \textit{re-owning}~\cite{scala3-guides-reflection}, wymaga systematycznej zamiany wszystkich referencji do~starego symbolu nowymi referencjami.
+Proces ten, znany jako \emph{re-owning}~\cite{scala3-guides-reflection}, wymaga systematycznej zamiany wszystkich referencji do~starego symbolu nowymi referencjami.
 
 \subsubsection{Definicja}
 
@@ -483,7 +483,7 @@ Klasa~\verb|ReplaceRefs| implementuje metodę~\verb|transformTree|, która:
     \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
     \item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
     \item zastępuje te referencje odpowiednimi termami zastępczymi,
-    \item zachowuje strukturę typów oraz kontekst właściciela symbolu (\textit{owner}).
+    \item zachowuje strukturę typów oraz kontekst właściciela symbolu (\emph{owner}).
 \end{enumerate}
 
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
@@ -525,8 +525,8 @@ Mechanizm ten jest analogiczny do~konstrukcji~\verb|Lambda| w~systemie refleksji
 
 \subsection{Copyable[T] — generyczna funkcja kopiowania}\label{subsec:impl-utils-copyable}
 
-Klasa typu~\verb|Copyable[T]| definiuje operację kopiowania (\textit{shallow copy}) dla typów produktowych.
-W~systemie~\textit{ALPACA} kopiowanie jest wykorzystywane do~tworzenia nowych instancji kontekstu parsera z~modyfikowanymi polami (np.~aktualizacja numeru wiersza po~napotkaniu znaku nowej linii), bez konieczności ręcznej rekonstrukcji całej struktury.
+Klasa typu~\verb|Copyable[T]| definiuje operację kopiowania (\emph{shallow copy}) dla typów produktowych.
+W~systemie~\emph{ALPACA} kopiowanie jest wykorzystywane do~tworzenia nowych instancji kontekstu parsera z~modyfikowanymi polami (np.~aktualizacja numeru wiersza po~napotkaniu znaku nowej linii), bez konieczności ręcznej rekonstrukcji całej struktury.
 
 \subsubsection{Motywacja}
 Klasy przypadku w~Scali oferują automatycznie generowaną metodę~\verb|copy|, która umożliwia tworzenie zmodyfikowanych kopii instancji.
@@ -548,7 +548,7 @@ Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie w
 \lstinputlisting[language=scala,caption={Użycie Copyable\lbrack T\rbrack},label={lst:impl-26-utils-copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
 
 \subsubsection{Uwaga techniczna}
-Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\textit{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
+Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\emph{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
 Dla kontekstów parsera, które zawierają głównie typy wartościowe oraz niemodyfikowalne struktury, ograniczenie to~nie stanowi problemu.
 
 \subsubsection{Analiza wydajności}
@@ -556,12 +556,12 @@ Teoretycznie, operacja kopiowania realizowana przez~\verb|Copyable[T]| powinna b
 W~praktyce~\verb|Copyable[T]| eliminuje narzut związany z~refleksją strukturalną, który występowałby przy dostępie do~\verb|copy| w~kontekście generycznym.
 
 Empiryczna weryfikacja tego założenia wykracza poza zakres niniejszej pracy.
-W~kontekście systemu~\textit{ALPACA} korzyść z~unifikacji interfejsu (klasa typu) przewyższa potencjalne różnice wydajnościowe, które są pomijalnie małe dla operacji kopiowania struktur o~niewielkim rozmiarze (kilka pól).
+W~kontekście systemu~\emph{ALPACA} korzyść z~unifikacji interfejsu (klasa typu) przewyższa potencjalne różnice wydajnościowe, które są pomijalnie małe dla operacji kopiowania struktur o~niewielkim rozmiarze (kilka pól).
 
 \subsection[Porównanie z istniejącymi bibliotekami]{Porównanie z~istniejącymi bibliotekami}\label{subsec:impl-comparison}
 
 Ekosystem Scali oferuje biblioteki dedykowane programowaniu generycznemu, takie jak Shapeless~\cite{shapeless} i~Magnolia~\cite{magnolia}, które realizują derywację klas typów dla typów produktowych i~sumarycznych.
-Wybór własnej implementacji narzędzi~\verb|Empty[T]| i~\verb|Copyable[T]| w~systemie~\textit{ALPACA} wynikał z~następujących przesłanek:
+Wybór własnej implementacji narzędzi~\verb|Empty[T]| i~\verb|Copyable[T]| w~systemie~\emph{ALPACA} wynikał z~następujących przesłanek:
 
 \subsubsection{Minimalizacja zależności}
 Biblioteki takie jak Shapeless wprowadzają znaczące zależności oraz wydłużają czas kompilacji ze~względu na~złożone mechanizmy derywacji oparte na~typach zależnych.
@@ -573,4 +573,4 @@ Własna implementacja oparta na~\verb|Mirror| jest prostsza, bardziej czytelna o
 
 \subsubsection{Kontrola nad komunikatami błędów}
 Biblioteki generyczne generują często nieczytelne komunikaty błędów związane z~wewnętrznymi abstrakcjami.
-Własna implementacja pozwala dostosować komunikaty błędów do~kontekstu systemu~\textit{ALPACA}.
+Własna implementacja pozwala dostosować komunikaty błędów do~kontekstu systemu~\emph{ALPACA}.

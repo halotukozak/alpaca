@@ -5,7 +5,7 @@
 \section{Wprowadzenie do badań porównawczych}
 \label{sec:comp-intro}
 
-Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\textit{ALPACA} z~reprezentatywnymi rozwiązaniami istniejącymi na~rynku.
+Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\emph{ALPACA} z~reprezentatywnymi rozwiązaniami istniejącymi na~rynku.
 W~tym celu przeprowadzono serię testów wydajnościowych (ang.~\emph{benchmarks}), których metodologia, wyniki oraz interpretacja zostaną przedstawione w~niniejszym rozdziale.
 
 Wybór narzędzi porównawczych wynikał z~analizy przeprowadzonej w~sekcji~\ref{sec:intro-review}.
@@ -95,7 +95,7 @@ Wszystkie implementacje realizują bezpośrednią ewaluację (obliczenie wartoś
 \subsection[Implementacja w ALPACA]{Implementacja w~ALPACA}
 \label{subsec:comp-impl-alpaca}
 
-Parser wyrażeń arytmetycznych w~systemie~\textit{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców:
+Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców:
 
 \lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
 
@@ -156,7 +156,7 @@ Tabela~\ref{tab:comp-res-recur-math} przedstawia wyniki dla wyrażeń arytmetycz
         100                               & 3,55~ms                              & 1,70~ms                           & 4,96~ms            & 1,79~ms  & 7,27~ms   & 9,25~ms   & 3,10~ms                    \\
         500                               & 27,70~ms                             & 7,81~ms                           & 29,92~ms           & 10,45~ms & 35,30~ms  & 46,85~ms  & 4,56~ms                    \\
         1000                              & 63,79~ms                             & 12,94~ms                          & 80,08~ms           & 20,22~ms & 72,95~ms  & 96,95~ms  & 7,29~ms                    \\
-        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & \textit{Stack\-Over\-flow} \\
+        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & \emph{Stack\-Over\-flow} \\
         \bottomrule
     \end{tabularx}
     \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne)}
@@ -210,9 +210,9 @@ Tabela~\ref{tab:comp-res-recur-json} przedstawia wyniki dla formatu JSON o~struk
     \label{tab:comp-res-recur-json}
 \end{table}
 
-Dla przypadku 2000~elementów system~\textit{ALPACA} nie zakończył pomiaru w~akceptowalnym czasie (oznaczono jako~---).
+Dla przypadku 2000~elementów system~\emph{ALPACA} nie zakończył pomiaru w~akceptowalnym czasie (oznaczono jako~---).
 
-Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\textit{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
+Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\emph{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
 Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dalszej analizy i~optymalizacji (sekcja~\ref{subsec:comp-conclusions}).
 
 
@@ -227,12 +227,12 @@ Analiza wyników ujawnia zróżnicowaną charakterystykę wydajnościową poszcz
 \subsubsection{Faza leksykalizacji}
 
 Lekser biblioteki SLY wykazuje stabilną i~przewidywalną wydajność, charakteryzującą się liniową złożonością względem rozmiaru danych wejściowych.
-Lekser systemu~\textit{ALPACA} osiąga porównywalną wydajność dla danych iteracyjnych, jednak wykazuje znaczący spadek wydajności dla danych rekurencyjnych JSON\@.
+Lekser systemu~\emph{ALPACA} osiąga porównywalną wydajność dla danych iteracyjnych, jednak wykazuje znaczący spadek wydajności dla danych rekurencyjnych JSON\@.
 
 Przyczyną tego zachowania jest sposób obsługi białych znaków w~obu systemach.
 W~danych testowych JSON każdy poziom zagnieżdżenia dodaje dwie spacje wcięcia.
 Dla testu \texttt{recursive\_json\_2000} najbardziej zagnieżdżony obiekt jest wcięty za~pomocą 4000~spacji.
-System~\textit{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny token typu \verb|Ignored|, co~wymaga dopasowania wzorca wyrażenia regularnego dla każdej spacji.
+System~\emph{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny token typu \verb|Ignored|, co~wymaga dopasowania wzorca wyrażenia regularnego dla każdej spacji.
 
 Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym:
 
@@ -243,7 +243,7 @@ Optymalizacja mechanizmu ignorowania znaków stanowi kierunek przyszłych prac o
 
 \subsubsection{Faza parsowania}
 
-Faza parsowania systemu~\textit{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę SLY dla wszystkich testowanych scenariuszy.
+Faza parsowania systemu~\emph{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę SLY dla wszystkich testowanych scenariuszy.
 Różnica ta wynika z~różnic architektonicznych:
 
 \begin{itemize}
@@ -267,11 +267,11 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 \subsection{Wnioski}
 \label{subsec:comp-conclusions}
 
-Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \textit{ALPACA}.
+Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.
 
 Zalety systemu:
 \begin{itemize}
-    \item Faza parsowania systemu \textit{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \textit{SLY} we wszystkich analizowanych scenariuszach testowych.
+    \item Faza parsowania systemu \emph{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \emph{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
 \end{itemize}
@@ -312,7 +312,7 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
 \subsection{Bezpieczeństwo typów}
 \label{subsec:comp-api-types}
 
-System~\textit{ALPACA} oferuje pełne bezpieczeństwo typów na~poziomie kompilacji dzięki wykorzystaniu typów rafinowanych (sekcja~\ref{subsec:impl-lexer-refinement}).
+System~\emph{ALPACA} oferuje pełne bezpieczeństwo typów na~poziomie kompilacji dzięki wykorzystaniu typów rafinowanych (sekcja~\ref{subsec:impl-lexer-refinement}).
 Każdy token i~wynik parsowania posiada precyzyjny typ znany kompilatorowi, co~umożliwia wykrywanie błędów przed uruchomieniem programu.
 
 W~przeciwieństwie do~tego, biblioteka SLY wykorzystuje dynamiczne typowanie Pythona, co~oznacza, że~błędy typów są wykrywane dopiero w~czasie wykonania.
@@ -323,12 +323,12 @@ Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błą
 \subsection[Integracja ze środowiskiem IDE]{Integracja ze~środowiskiem IDE}
 \label{subsec:comp-api-ide}
 
-System~\textit{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami IDE dla języka Scala (IntelliJ IDEA, Metals) bez konieczności instalacji dedykowanych wtyczek.
+System~\emph{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami IDE dla języka Scala (IntelliJ IDEA, Metals) bez konieczności instalacji dedykowanych wtyczek.
 Funkcjonalności takie jak:
 
 \begin{itemize}
     \item automatyczne uzupełnianie nazw tokenów,
-    \item nawigacja do~definicji (\textit{go-to-definition}),
+    \item nawigacja do~definicji (\emph{go-to-definition}),
     \item prezentacja typów przy najechaniu kursorem,
     \item wykrywanie błędów w~czasie rzeczywistym
 \end{itemize}
@@ -361,7 +361,7 @@ Przeprowadzona analiza porównawcza pozwala na~weryfikację tezy postawionej w~r
 W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}:
 
 \begin{itemize}
-    \item Faza parsowania systemu~\textit{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.
+    \item Faza parsowania systemu~\emph{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.
           Moduł leksykalizacji wymaga dalszej optymalizacji dla niektórych wzorców wyrażeń regularnych.
 
     \item Interfejs API oparty na~dopasowaniu wzorców Scali oferuje naturalne wyrażenie reguł gramatycznych przy zachowaniu pełnego bezpieczeństwa typów i~integracji z~IDE\@.
@@ -372,7 +372,7 @@ W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesi
 \subsection{Kierunki dalszych prac}
 \label{subsec:comp-future}
 
-Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\textit{ALPACA}:
+Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\emph{ALPACA}:
 
 \begin{itemize}
     \item Wprowadzenie dedykowanego mechanizmu pomijania białych znaków, analogicznego do~rozwiązania stosowanego w~bibliotece SLY, który eliminowałby narzut tokenizacji dla sekwencji spacji i~tabulatorów,
