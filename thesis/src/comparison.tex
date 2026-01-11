@@ -21,7 +21,7 @@ Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architektu
 \subsection{Środowisko testowe}
 \label{subsec:comp-env}
 
-Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach:
+Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach.
 
 \begin{table}[ht]
     \centering
@@ -53,17 +53,17 @@ Każdy test był powtarzany 10~razy, a~wyniki uśredniano w~celu redukcji wpływ
 \label{subsec:comp-data}
 
 Testy wydajnościowe przeprowadzono na~dwóch rodzajach gramatyk: prostej gramatyce wyrażeń arytmetycznych oraz gramatyce formatu JSON\@.
-Dla każdej gramatyki przygotowano dwa typy danych wejściowych różniące się strukturą:
+Dla każdej gramatyki przygotowano dwa typy danych wejściowych różniące się strukturą.
 
 \subsubsection{Dane iteracyjne}
 \label{subsubsec:comp-data-iter}
 
 Dane iteracyjne charakteryzują się płaską strukturą składniową bez głębokiego zagnieżdżenia.
-Dla wyrażeń arytmetycznych przyjęto formę ciągu operacji:
+Dla wyrażeń arytmetycznych przyjęto formę ciągu operacji.
 
 \lstinputlisting[language=terminal,caption={Struktura iteracyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-iter-math}]{listings/comparison/iterative-math-structure.txt}
 
-Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej głębokości zagnieżdżenia:
+Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej głębokości zagnieżdżenia.
 
 \lstinputlisting[language=json,caption={Struktura iteracyjnych danych testowych dla JSON},label={lst:comp-iter-json}]{listings/comparison/iterative-json-structure.json}
 
@@ -71,11 +71,11 @@ Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej gł�
 \label{subsubsec:comp-data-recur}
 
 Dane rekurencyjne charakteryzują się głębokim zagnieżdżeniem struktur składniowych, co~stanowi wyzwanie dla parserów ze~względu na~wykorzystanie stosu wywołań.
-Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów:
+Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów.
 
 \lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
 
-Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty:
+Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty.
 
 \lstinputlisting[language=json,caption={Struktura rekurencyjnych danych testowych dla JSON},label={lst:comp-recur-json}]{listings/comparison/recursive-json-structure.json}
 
@@ -84,7 +84,7 @@ Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekt
 
 Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów (linii lub obiektów w~przypadku JSON).
 
-Dla każdego rozmiaru mierzono następujące metryki:
+Dla każdego rozmiaru mierzono następujące metryki.
 
 \begin{itemize}
     \item Czas leksykalizacji (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
@@ -104,21 +104,21 @@ Wszystkie implementacje realizują bezpośrednią ewaluację (obliczenie wartoś
 \subsection[Implementacja w ALPACA]{Implementacja w~ALPACA}
 \label{subsec:comp-impl-alpaca}
 
-Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców:
+Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców.
 
 \lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
 
 \subsection[Implementacja w SLY]{Implementacja w~SLY}
 \label{subsec:comp-impl-sly}
 
-Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod:
+Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod.
 
 \lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
 
 \subsection[Implementacja w FastParse]{Implementacja w~FastParse}
 \label{subsec:comp-impl-fastparse}
 
-FastParse realizuje parsowanie poprzez kompozycję funkcji parserowych:
+FastParse realizuje parsowanie poprzez kompozycję funkcji parserowych.
 
 \lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~bibliotece FastParse},label={lst:comp-fastparse-math}]{listings/comparison/fastparse-math-parser.scala}
 
@@ -229,7 +229,7 @@ Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dal
 \subsection{Porównanie faz przetwarzania}
 \label{subsec:comp-phases}
 
-Analiza wyników ujawnia zróżnicowaną charakterystykę wydajnościową poszczególnych faz przetwarzania:
+Analiza wyników ujawnia zróżnicowaną charakterystykę wydajnościową poszczególnych faz przetwarzania.
 
 \subsubsection{Faza leksykalizacji}
 
@@ -241,7 +241,7 @@ W~danych testowych JSON każdy poziom zagnieżdżenia dodaje dwie spacje wcięci
 Dla testu \texttt{recursive\_json\_2000} najbardziej zagnieżdżony obiekt jest wcięty za~pomocą 4000~spacji.
 System~\emph{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny token typu \verb|Ignored|, co~wymaga dopasowania wzorca wyrażenia regularnego dla każdej spacji.
 
-Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym:
+Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym.
 
 \lstinputlisting[language=python,caption={Mechanizm pomijania białych znaków w~bibliotece SLY},label={lst:comp-sly-ignore}]{listings/comparison/sly-ignore-mechanism.py}
 
@@ -269,7 +269,7 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 
 Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.
 
-Zalety systemu:
+Zalety systemu są następujące.
 \begin{itemize}
     \item Faza parsowania systemu \emph{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \emph{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
@@ -316,7 +316,7 @@ System~\emph{ALPACA} oferuje pełne bezpieczeństwo typów na~poziomie kompilacj
 Każdy token i~wynik parsowania posiada precyzyjny typ znany kompilatorowi, co~umożliwia wykrywanie błędów przed uruchomieniem programu.
 
 W~przeciwieństwie do~tego, biblioteka SLY wykorzystuje dynamiczne typowanie Pythona, co~oznacza, że~błędy typów są wykrywane dopiero w~czasie wykonania.
-Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błąd typowania w~akcji semantycznej zostanie wykryty dopiero podczas parsowania konkretnego wejścia:
+Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błąd typowania w~akcji semantycznej zostanie wykryty dopiero podczas parsowania konkretnego wejścia.
 
 \lstinputlisting[language=python,caption={Błąd typowania wykrywany dopiero w~czasie wykonania (SLY)},label={lst:comp-sly-type-error}]{listings/comparison/sly-type-error.py}
 
@@ -327,14 +327,14 @@ System~\emph{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami I
 Funkcjonalności takie jak: automatyczne uzupełnianie nazw tokenów, nawigacja do~definicji (\emph{go-to-definition}), prezentacja typów przy najechaniu kursorem oraz wykrywanie błędów w~czasie rzeczywistym są dostępne natywnie dzięki wykorzystaniu systemu typów Scali.
 
 Biblioteka SLY, ze~względu na~wykorzystanie refleksji i~niestandardowych konwencji (nazwy metod jako produkcje, dekoratory~\verb|@_()|), oferuje ograniczone wsparcie IDE\@.
-Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}:
+Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}.
 
 \lstinputlisting[language=terminal,caption={Wynik analizy statycznej mypy dla parsera SLY},label={lst:comp-mypy}]{listings/comparison/mypy-math-parser-analysis.txt}
 
 Większość zgłoszonych błędów wynika z~dynamicznego charakteru biblioteki SLY: tokeny są definiowane jako zmienne klasowe bez jawnej deklaracji typu, a~dekorator~\verb|@_()| nie jest rozpoznawany przez analizator statyczny.
 Ponadto konwencja definiowania wielu metod o~tej samej nazwie (\verb|expr|) dla alternatywnych produkcji jest traktowana jako błąd redefinicji.
 
-Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code, gdzie widoczne są ostrzeżenia generowane przez wbudowany analizator statyczny:
+Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code, gdzie widoczne są ostrzeżenia generowane przez wbudowany analizator statyczny.
 
 \begin{figure}[ht]
     \centering
@@ -349,7 +349,7 @@ Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code,
 \label{sec:comp-summary-sec}
 
 Przeprowadzona analiza porównawcza pozwala na~weryfikację tezy postawionej w~rozdziale~\ref{ch:intro}.
-W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}:
+W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}, można sformułować następujące wnioski:
 
 \begin{itemize}
     \item Faza parsowania systemu~\emph{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.

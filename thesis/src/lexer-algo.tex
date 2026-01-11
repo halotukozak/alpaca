@@ -45,7 +45,7 @@ Mechanizm diagnostyczny przywołuje informacje o~pozycji znaku, co~znacząco uł
 \label{subsec:lexer-algo-trad}
 
 Narzędzia klasyczne do~budowy leksera (takie jak~Lex~\cite{lesk1975lex}) generują jawny, deterministyczny automat skończony (DFA) z~zestawu wyrażeń regularnych.
-Podejście to wymaga implementacji pełnego zestawu algorytmów: transformacja NFA$\to$DFA, minimalizacja, optymalizacja — każdy etap jest czasochłonny dla twórcy narzędzia.
+Podejście to wymaga implementacji pełnego zestawu algorytmów: transformacja NFA$\to$DFA, minimalizacja, optymalizacja --- każdy etap jest czasochłonny dla twórcy narzędzia.
 
 \subsection{Alternatywa: Wyrażenia regularne biblioteczne}
 \label{subsec:lexer-algo-alt}
@@ -72,7 +72,7 @@ Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania 
 \subsection{Decyzja}
 \label{subsec:lexer-algo-choice}
 
-Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
+Rozważania przedstawione w~sekcjach~\ref{subsec:lexer-algo-pros} i~\ref{subsec:lexer-algo-cons} doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
 Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA\@.
 
 
@@ -86,7 +86,7 @@ Implementacja modułu \texttt{alpaca.lexer} łączy ergonomię języka specjalis
 
 Podczas kompilacji projektu wszystkie wzorce są łączone operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne z~nazwanymi grupami.
 Mechanizm ten umożliwia rozróżnienie, która z~reguł dopasowała się podczas każdego przebiegu wyszukiwania.
-Następnie pętla skanująca—podczas wykonania aplikacji iteracyjnie wywołuje to~wyrażenie na~kolejnych fragmentach wejścia, identyfikuje dopasowany token, akumuluje leksemy oraz przesuwa wskaźnik wejścia aż do~wyczerpania danych.
+Następnie pętla skanująca --- podczas wykonania aplikacji iteracyjnie wywołuje to~wyrażenie na~kolejnych fragmentach wejścia, identyfikuje dopasowany token, akumuluje leksemy oraz przesuwa wskaźnik wejścia aż do~wyczerpania danych.
 
 \subsection{Obsługa reguł ignorowanych}
 \label{subsec:lexer-algo-ignored}
@@ -149,7 +149,7 @@ Lekser dopasuje znak~\texttt{<} jako token \texttt{LT}, pozostawiając znak~\tex
 
 Algorytm walidacji wykorzystuje bibliotekę \texttt{dregex}~\cite{dregex}, która implementuje działania na językach regularnych i~umożliwia sprawdzanie relacji zawierania między wyrażeniami regularnymi.
 
-Algorytm przebiega w~następujących krokach:
+Algorytm przebiega w~następujących krokach.
 
 \begin{enumerate}
     \item Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
@@ -161,10 +161,7 @@ Algorytm przebiega w~następujących krokach:
           $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
           co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
 
-    \item Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
-          \begin{verbatim}
-Pattern <p_j> is shadowed by <p_i>
-    \end{verbatim}
+    \item Dla~każdej pary naruszającej warunek algorytm generuje komunikat \texttt{Pattern p\_j is shadowed by p\_i}
 \end{enumerate}
 
 \subsubsection[Integracja z procesem kompilacji]{Integracja z~procesem kompilacji}

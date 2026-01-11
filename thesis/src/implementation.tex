@@ -16,7 +16,7 @@ Wykorzystuje przy tym pełne spektrum możliwości refleksji TASTy~\cite{scala3-
 
 \subsection{Interfejs użytkownika}\label{subsec:impl-lexer-api}
 
-System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiający deklaratywne wyrażenie reguł tokenizacji:
+System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu wzorców, umożliwiająci deklaratywne wyrażenie reguł tokenizacji.
 
 \lstinputlisting[language=scala,caption={Definicja typu LexerDefinition},label={lst:impl-lexer-def}]{listings/implementation/lexer-01-definition.scala}
 
@@ -39,7 +39,7 @@ Parametr \verb|using Quotes| dostarcza dostępu do API refleksji TASTy~\cite{stu
 
 \subsubsection{Dekonstrukcja funkcji częściowej}\label{subsubsec:impl-lexer-partial-func}
 
-Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji częściowej:
+Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji częściowej.
 
 \lstinputlisting[language=scala,caption={Dekonstrukcja funkcji częściowej (dopasowanie AST do CaseDef)},label={lst:impl-lexer-cases}]{listings/implementation/lexer-03-extract-case.scala}
 
@@ -50,7 +50,7 @@ Struktura \verb|Lambda(\_, Match(\_, cases))| odpowiada wewnętrznej reprezentac
 
 \subsubsection{Klasa replacerefs}\label{subsubsec:impl-lexer-replacerefs}
 
-Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami:
+Kluczową techniką jest zastąpienie referencji do starego kontekstu nowymi referencjami.
 
 \lstinputlisting[language=scala,caption={Zastąpienie referencji starego kontekstu nowymi (ReplaceRefs)},label={lst:impl-lexer-refs}]{listings/implementation/lexer-04-replace-refs-with-new-ctx.scala}
 
@@ -61,7 +61,7 @@ Klasa \verb|ReplaceRefs| udostępnia \verb|TreeMap|, który podczas przejścia p
 
 \subsubsection{Funkcja extractSimple}\label{subsubsec:impl-lexer-extractsimple}
 
-Funkcja \verb|extractSimple| implementuje logikę dopasowania różnych typów definicji tokenów:
+Funkcja \verb|extractSimple| implementuje logikę dopasowania różnych typów definicji tokenów.
 
 \lstinputlisting[language=scala,caption={Funkcja extractSimple: dopasowywanie definicji tokenów},label={lst:impl-lexer-extract}]{listings/implementation/lexer-05-extract-simple.scala}
 
@@ -83,9 +83,9 @@ Implementacja wykorzystuje rekurencyjne przetwarzanie drzewa AST z zastosowaniem
 Kluczowym mechanizmem implementacyjnym makra \verb|lexer| jest programatyczna konstrukcja klasy anonimowej w~czasie kompilacji\cite{stucki2021multistage}.
 Proces ten wykorzystuje API refleksji TASTy\cite{scala3-reflection} do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM\@.
 
-Anonimowa klasa implementująca \verb|Tokenization[Ctx]| jest tworzona poprzez wywołanie \verb|Symbol.newClass|:
+Anonimowa klasa implementująca \verb|Tokenization[Ctx]| jest tworzona poprzez wywołanie \verb|Symbol.newClass|.
 
-Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
+Metoda \verb|Symbol.newClass| przyjmuje następujące parametry.
 \begin{itemize}
     \item \verb|Symbol.spliceOwner| --- właściciel nowego symbolu w~hierarchii definiowania, zapewniający poprawną widoczność w~zakresie leksykalnym
     \item \verb|Symbol.freshName(``\$anon'')| --- generowanie unikalnej nazwy klasy zgodnie z~konwencją kompilatora Scali dla klas anonimowych
@@ -93,7 +93,7 @@ Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
     \item \verb|decls| --- funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
-Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
+Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej.
 
 \begin{itemize}
     \item dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|.
@@ -113,7 +113,7 @@ W~kontekście implementacji leksera typy rafinowane pozwalają na dodanie inform
 
 \subsubsection{Proces rafinowania typu}\label{subsubsec:impl-lexer-refining}
 
-Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego\cite{scala3-guides-reflection}:
+Typ wynikowy jest konstruowany poprzez iteracyjne rafinowanie typu bazowego\cite{scala3-guides-reflection}.
 
 
 \lstinputlisting[language=scala,caption={Rafinowanie typu wynikowego o~pola tokenów},label={lst:impl-lexer-refine}]{listings/implementation/lexer-06-refinements.scala}
@@ -123,7 +123,7 @@ Operacja ta jest wykonywana w~czasie kompilacji i~nie generuje dodatkowego kodu 
 
 \subsubsection{Wynikowy typ}\label{subsubsec:impl-lexer-result-type}
 
-Wynikowy typ ma formę typu przecięcia (ang.~\emph{intersection type}):
+Wynikowy typ ma formę typu przecięcia (ang.~\emph{intersection type}).
 
 \lstinputlisting[language=scala,caption={Wynikowy typ leksera},label={lst:impl-lexer-type}]{listings/implementation/lexer-15-result-type.scala}
 
@@ -134,7 +134,7 @@ Standardowa implementacja tego mechanizmu, opisana w~dokumentacji~\cite{scala3-s
 W~prezentowanym rozwiązaniu narzut ten jest eliminowany poprzez precyzyjne typowanie strukturalne.
 Aby mechanizm \verb|Selectable| działał poprawnie ze strukturalnymi typami i~nie wymagał refleksji, klasa generowana przez makro musi implementować \verb|type Fields <: NamedTuple.AnyNamedTuple|\cite{scala3-computed-field-names}.
 
-W~naszym podejściu makro generuje definicję \verb|type Fields| zawierającą wszystkie zdefiniowane tokeny i~ich typy, dzięki czemu:
+W~naszym podejściu makro generuje definicję \verb|type Fields| zawierającą wszystkie zdefiniowane tokeny i~ich typy, dzięki czemu udaje się uzyskać następujące rezultaty:
 \begin{itemize}
     \item IDE i~kompilator dysponują informacją o~dostępnych polach i~ich typach (pełne uzupełnianie i~sprawdzanie typów),
     \item wywołanie \verb|c.NAZWA| jest bezpieczne typowo mimo mechanizmu dynamicznego wyboru nazwy.
@@ -151,7 +151,7 @@ Wszystkie definicje tokenów są rozwiązywane statycznie w~czasie kompilacji\ci
 Dostęp do tokenów realizowany jest jako bezpośrednie odwołanie do pola klasy, które w~kodzie bajtowym JVM~\cite{lindholm2014java} reprezentowane jest przez instrukcję \verb|getfield| o~złożoności czasowej~O(1).
 Teoretycznie eliminuje to narzut związany z~operacjami dynamicznymi, choć pełna weryfikacja empiryczna tego założenia wykracza poza zakres niniejszej pracy.
 
-Alternatywne podejście oparte na strukturze mapy wymagałoby:
+Alternatywne podejście oparte na strukturze mapy wymagałoby następujących elementów.
 \begin{enumerate}
     \item obliczenia funkcji haszującej dla klucza,
     \item przeszukiwania tablicy haszującej,
@@ -167,7 +167,7 @@ System typów weryfikuje poprawność wszystkich operacji w~czasie kompilacji, e
 
 \subsubsection[Integracja z narzędziami deweloperskimi]{Integracja z~narzędziami deweloperskimi}\label{subsubsec:impl-tools}
 
-Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do:
+Ponieważ tokeny są reprezentowane jako rzeczywiste pola w~typie, środowiska deweloperskie (IDE) mogą wykorzystać informacje typu do realizacji następujących funkcjonalności.
 \begin{itemize}
     \item Automatycznego uzupełniania nazw tokenów
     \item Prezentacji pełnych sygnatur typów przy najechaniu kursorem
@@ -191,11 +191,11 @@ Każde pole w~typie rafinowanym ma precyzyjny typ nominalny, podczas gdy dostęp
 
 \subsubsection{Podejście oparte na mapowaniu dynamicznym}\label{subsubsec:impl-dynamic}
 
-Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przechowywania tokenów:
+Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przechowywania tokenów.
 
 \lstinputlisting[language=scala,caption={Podejście oparte na mapowaniu dynamicznym},label={lst:impl-lexer-dynamic}]{listings/implementation/lexer-12-dynamic-mapping.scala}
 
-\noindent Wady tego podejścia:
+\noindent Do wad tego podejścia należą następujące aspekty.
 \begin{itemize}
     \item Brak bezpieczeństwa typów: błędne nazwy tokenów wykrywane są dopiero w~czasie wykonania
     \item Utrata informacji o~typach: zwracany typ to egzystencjalny \verb|Token[?, ?, ?]|
@@ -205,11 +205,11 @@ Alternatywne podejście mogłoby wykorzystywać strukturę mapującą do przecho
 
 \subsubsection{Podejście oparte na jawnej definicji klasy}\label{subsubsec:impl-explicit}
 
-Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
+Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika.
 
 \lstinputlisting[language=scala,caption={Podejście oparte na jawnej definicji klasy},label={lst:impl-lexer-explicit}]{listings/implementation/lexer-13-explicit-lexer.scala}
 
-\noindent Wady tego podejścia:
+\noindent Główne wady tego podejścia są następujące.
 \begin{itemize}
     \item Wysoki poziom redundancji kodu (\emph{boilerplate})
     \item Konieczność ręcznej kompilacji wyrażeń regularnych
@@ -221,13 +221,13 @@ Innym rozwiązaniem byłoby jawne definiowanie klasy leksera przez użytkownika:
 
 \subsubsection{Walidacja wzorców regularnych}\label{subsubsec:impl-regex-val}
 
-System wykorzystuje pomocniczą klasę \verb|RegexChecker| do walidacji wzorców:
+System wykorzystuje pomocniczą klasę \verb|RegexChecker| do walidacji wzorców.
 Mechanizm ten sprawdza poprawność składni wyrażeń regularnych już w~czasie kompilacji i~raportuje błędy z~dokładną lokalizacją wzorca.
 Metoda \verb|report.errorAndAbort| przerywa kompilację i~wyświetla komunikat o~błędzie, eliminując konieczność detekcji błędów w~czasie wykonania, co jest zgodne z~zasadą wczesnej walidacji (\emph{fail-fast})~\cite{scala3-reference-macros,scala3-guides-macros}.
 
 \subsubsection{Obsługa nieobsługiwanych konstrukcji}\label{subsubsec:impl-unsupported}
 
-Kod jawnie sygnalizuje nieobsługiwane przypadki:
+Kod jawnie sygnalizuje nieobsługiwane przypadki.
 Obsługiwane są wyłącznie jasno zdefiniowane formy wzorców; w~przypadku napotkania innej konstrukcji kompilacja jest przerywana z~komunikatem zawierającym szczegóły AST, co upraszcza diagnostykę i~utrzymuje zasadę fail-fast.
 Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić nieobsługiwane konstrukcje niż milcząco generować niepoprawny kod.
 
@@ -239,7 +239,7 @@ Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 Implementacja generatora parserów w~systemie~\emph{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
 Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
-Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
+Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to następujące problemy.
 \begin{itemize}
     \item konstrukcja tabel LR(1) w~czasie kompilacji z wykorzystaniem makr,
     \item integracja z systemem typów Scali w akcjach semantycznych,
@@ -254,7 +254,7 @@ W~szczególności ograniczenie rozmiaru metod JVM ilustruje istotny aspekt prakt
 
 \subsubsection{Definicja parsera}\label{subsubsec:impl-parser-def}
 
-Użytkownik definiuje parser poprzez dziedziczenie po klasie bazowej \verb|Parser[Ctx]|:
+Użytkownik definiuje parser poprzez dziedziczenie po klasie bazowej \verb|Parser[Ctx]|.
 
 \lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:impl-parser-base}]{listings/implementation/parser-01-base.scala}
 
@@ -263,7 +263,7 @@ Parametr kontekstualny \verb|tables: Tables[Ctx]| jest automatycznie generowany 
 
 \subsubsection{Definicja reguł gramatycznych}\label{subsubsec:impl-parser-rules}
 
-Reguły gramatyczne definiowane są jako wartości typu \verb|Rule[R]|, gdzie \verb|R| określa typ wyniku redukcji:
+Reguły gramatyczne definiowane są jako wartości typu \verb|Rule[R]|, gdzie \verb|R| określa typ wyniku redukcji.
 
 \lstinputlisting[language=scala,caption={Przykład definicji reguł parsera},label={lst:impl-parser-rules},linerange={21-25}]{listings/implementation/parser-02-rules.scala}
 
@@ -273,7 +273,7 @@ Na przykład wzorzec \verb|\{ case (Expr(a), CalcLexer.PLUS(\_), Expr(b)) => a +
 
 \subsection{Generacja tabel parsowania w czasie kompilacji}\label{subsec:impl-parser-tables}
 
-Centralnym elementem systemu jest makro \verb|createTablesImpl|, które analizuje definicję parsera i generuje tabele w~czasie kompilacji. Wykonuje ono następujące kroki:
+Centralnym elementem systemu jest makro \verb|createTablesImpl|, które analizuje definicję parsera i generuje tabele w~czasie kompilacji. Wykonuje ono następujące kroki.
 \begin{enumerate}
     \item ekstrakcję wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy,
     \item transformację wzorców dopasowania na produkcje gramatyczne,
@@ -282,7 +282,7 @@ Centralnym elementem systemu jest makro \verb|createTablesImpl|, które analizuj
     \item walidację gramatyki i rozwiązywanie konfliktów.
 \end{enumerate}
 
-Funkcja \verb|extractEBNF| dokonuje transformacji wzorców dopasowania na produkcje gramatyczne:
+Funkcja \verb|extractEBNF| dokonuje transformacji wzorców dopasowania na produkcje gramatyczne.
 
 % \lstinputlisting[language=scala,caption={Ekstrakcja produkcji gramatycznych z wzorców},label={lst:impl-parser-ebnf}]{listings/implementation/parser-04-extract-ebnf.scala}
 
@@ -297,17 +297,17 @@ Jednym z kluczowych wyzwań technicznych napotkanych podczas implementacji było
 Zgodnie ze specyfikacją JVM\cite{lindholm2014java}, rozmiar kodu bajtowego pojedynczej metody nie może przekroczyć 65536~bajtów (64~KB).
 Dla złożonych gramatyk z dużą liczbą stanów i produkcji, wygenerowane tabele parsowania mogą zawierać tysiące wpisów, co przy naiwnej implementacji prowadziło do przekroczenia tego limitu.
 
-Problem manifestował się podczas próby wyrażenia tabeli parsowania jako literału mapowego w kodzie:
+Problem manifestował się podczas próby wyrażenia tabeli parsowania jako literału mapowego w kodzie.
 
 \lstinputlisting[language=scala,caption={Naiwna implementacja prowadząca do przekroczenia limitu},label={lst:impl-parser-naive}]{listings/implementation/parser-05-naive.scala}
 
 Takie podejście generuje pojedynczą, dużą metodę zawierającą wszystkie wpisy tabeli, co dla gramatyk o~rozmiarze produkcyjnym skutkuje błędem kompilacji \verb|Method too large|\cite{method-too-large}.
 
 Problem został rozwiązany poprzez zastosowanie techniki \emph{fragmentacji metod}.
-Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
+Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej.
 
 \lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:impl-parser-fragment}]{listings/implementation/parser-06-fragment.scala}
-W tym podejściu:
+W tym podejściu realizowane są następujące kroki.
 \begin{enumerate}
     \item Tworzymy builder mapy jako zmienną lokalną (\verb|Map.newBuilder|).
     \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \verb|avoidTooLargeMethod()|.
@@ -324,7 +324,7 @@ Rozwiązanie to ilustruje ważną lekcję w metaprogramowaniu: kod generowany pr
 \subsubsection{Zachowanie bezpieczeństwa typów w akcjach semantycznych}\label{subsubsec:impl-action-safety}
 
 Kolejnym istotnym wyzwaniem jest zapewnienie bezpieczeństwa typów w akcjach semantycznych podczas transformacji kodu z kontekstu makra do wygenerowanych tabel.
-Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do:
+Akcje semantyczne definiowane przez użytkownika mogą odwoływać się do następujących elementów.
 \begin{itemize}
     \item kontekstu parsera (\verb|ctx|),
     \item wartości z dopasowanych symboli gramatycznych,
@@ -336,7 +336,7 @@ Funkcja \verb|createAction| realizuje tę transformację.
 
 \lstinputlisting[language=scala,caption={Tworzenie akcji semantycznej z zachowaniem referencji},label={lst:impl-parser-action}]{listings/implementation/parser-07-create-action.scala}
 
-\noindent Kluczowe aspekty implementacji:
+\noindent Kluczowe aspekty implementacji obejmują następujące punkty.
 \begin{enumerate}
     \item Akcja jest transformowana w funkcję przyjmującą kontekst (\verb|ctx|) oraz listę dzieci w drzewie parsowania (\verb|param|).
     \item Referencje do~kontekstu parsera są zastępowane parametrem funkcji.
@@ -347,13 +347,13 @@ System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki i
 
 \subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:impl-gram-conflicts}
 
-Parser LR może napotkać konflikty typu shift-reduce lub reduce-reduce podczas konstrukcji tabel parsowania.
-System ALPACA oferuje deklaratywny mechanizm rozwiązywania takich konfliktów poprzez relacje precedencji:
+Parser LR może napotkać konflikty typu shift--reduce lub reduce--reduce podczas konstrukcji tabel parsowania.
+System ALPACA oferuje deklaratywny mechanizm rozwiązywania takich konfliktów poprzez relacje precedencji.
 
 \lstinputlisting[language=scala,caption={Deklaracja rozwiązań konfliktów},label={lst:impl-parser-conflicts}]{listings/implementation/parser-08-conflicts.scala}
 
 
-Implementacja wykorzystuje klasę \verb|ConflictResolutionTable|, która podczas konstrukcji tabeli parsowania:
+Implementacja wykorzystuje klasę \verb|ConflictResolutionTable|, która podczas konstrukcji tabeli parsowania wykonuje następujące czynności.
 \begin{enumerate}
     \item Wykrywa konflikty między akcjami dla danego stanu i symbolu
     \item Analizuje zdefiniowane przez użytkownika relacje precedencji
@@ -369,11 +369,11 @@ To podejście umożliwia wyrażenie precedencji i łączności operatorów w spo
 System wymaga konwersji struktur danych w~czasie kompilacji (wartości) na kod (wyrażenia \verb|Expr[T]|).
 Realizowane jest to poprzez implementację instancji \verb|ToExpr| dla typów \verb|ParseTable| i \verb|ActionTable|.
 
-Implementacja \verb|ToExpr[ParseTable]| jest szczególnie interesująca, gdyż musi radzić sobie z~potencjalnie dużymi tabelami (patrz~\ref{subsubsec:impl-jvm-limit}):
+Implementacja \verb|ToExpr[ParseTable]| jest szczególnie interesująca, gdyż musi radzić sobie z~potencjalnie dużymi tabelami (patrz~\ref{subsubsec:impl-jvm-limit}).
 
 \lstinputlisting[language=scala,caption={Implementacja ToExpr dla ParseTable},label={lst:impl-parser-toexpr}]{listings/implementation/parser-09-toexpr.scala}
 
-\noindent Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
+\noindent Ta implementacja demonstruje zaawansowane techniki metaprogramowania.
 \begin{enumerate}
     \item Tworzenie nowych symboli (\verb|Symbol.newVal|) reprezentujących zmienne w generowanym kodzie.
     \item Konstrukcja definicji wartości (\verb|ValDef|) z przypisaniem początkowym.
@@ -387,23 +387,23 @@ Implementacja \verb|ToExpr[ParseTable]| jest szczególnie interesująca, gdyż m
 Implementacja systemu~\emph{ALPACA} wykorzystuje zaawansowane mechanizmy metaprogramowania Scali~3, w~tym refleksję TASTy~\cite{scala3-reflection}, derywację typów~\cite{scala3-derivation} oraz transformację drzew składni abstrakcyjnej (AST)~\cite{scala3-guides-reflection}.
 Realizacja tych mechanizmów wymaga zestawu narzędzi pomocniczych abstrahujących typowe wzorce operacji na~typach i~drzewach.
 
-Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne:
+Niniejsza sekcja przedstawia cztery kluczowe komponenty infrastrukturalne.
 \begin{itemize}
-    \item \verb|Empty[T]| — generyczna konstrukcja wartości domyślnych dla typów produktowych,
-    \item \verb|ReplaceRefs| — transformacja drzew AST poprzez podstawianie symboli,
-    \item \verb|CreateLambda| — programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
-    \item \verb|Copyable[T]| — generyczna funkcja kopiowania dla klas przypadku (\emph{case classes}).
+    \item \verb|Empty[T]| --- generyczna konstrukcja wartości domyślnych dla typów produktowych,
+    \item \verb|ReplaceRefs| --- transformacja drzew AST poprzez podstawianie symboli,
+    \item \verb|CreateLambda| --- programatyczna konstrukcja wyrażeń funkcyjnych w~czasie kompilacji,
+    \item \verb|Copyable[T]| --- generyczna funkcja kopiowania dla klas przypadku (\emph{case classes}).
 \end{itemize}
 
 Narzędzia te realizują wzorce projektowe typowe dla systemów opartych na~makrach kompilacyjnych~\cite{burmako2013}, eliminując powtarzalny kod (\emph{boilerplate}) oraz zapewniając bezpieczeństwo typów na~poziomie kompilacji.
 
-\subsection{Empty[T] — konstrukcja wartości domyślnych}\label{subsec:impl-utils-empty}
+\subsection{Empty[T] --- konstrukcja wartości domyślnych}\label{subsec:impl-utils-empty}
 
 Klasa typu~\verb|Empty[T]| stanowi abstrakcję nad mechanizmem konstrukcji wartości domyślnych dla typów produktowych (ang.~\emph{product types})~\cite{pierce2002}.
 W~systemie typów Scali~\cite{odersky2004overview} typy produktowe odpowiadają klasom przypadku (\emph{case classes}) oraz krotkom (\emph{tuples}), będącym reprezentacją iloczynów kartezjańskich typów składowych.
 
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba utworzenia instancji typu~\verb|T| bez znajomości jego konkretnej struktury.
-Standardowe podejście wymagałoby:
+Standardowe podejście wymagałoby podjęcia następujących działań.
 \begin{itemize}
     \item ręcznej specyfikacji wartości wszystkich pól,
     \item naruszenia abstrakcji poprzez dostęp do wewnętrznej struktury typu,
@@ -422,7 +422,7 @@ Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~warto�
 
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego. ~\verb|Empty[T]| eliminuje te problemy poprzez derywację w~czasie kompilacji, zachowując bezpieczeństwo typów oraz zerowy narzut wykonania.
 
-Mechanizm derywacji wymaga, aby:
+Mechanizm derywacji wymaga spełnienia następujących warunków.
 \begin{itemize}
     \item typ~\verb|T| był typem produktowym (klasa przypadku lub krotka),
     \item wszystkie parametry konstruktora miały wartości domyślne,
@@ -431,9 +431,9 @@ Mechanizm derywacji wymaga, aby:
 
 Naruszenie tych warunków prowadzi do~błędu kompilacji z~komunikatem wskazującym brakujące wartości domyślne.
 
-\subsection[ReplaceRefs — transformacja symboli w AST]{ReplaceRefs — transformacja symboli w~AST}\label{subsec:impl-utils-replacerefs}
+\subsection[ReplaceRefs --- transformacja symboli w AST]{ReplaceRefs --- transformacja symboli w~AST}\label{subsec:impl-utils-replacerefs}
 
-Klasa~\verb|ReplaceRefs| rozszerza~\verb|TreeMap| — abstrakcyjną klasę bazową dla transformacji drzew składni abstrakcyjnej w~systemie refleksji TASTy~\cite{scala3-guides-reflection}.
+Klasa~\verb|ReplaceRefs| rozszerza~\verb|TreeMap| --- abstrakcyjną klasę bazową dla transformacji drzew składni abstrakcyjnej w~systemie refleksji TASTy~\cite{scala3-guides-reflection}.
 Klasa~\verb|TreeMap| definiuje wzorzec projektowy odwiedzającego (\emph{visitor pattern})~\cite{gamma1994} dla typowanego AST Scali~3, umożliwiając rekurencyjne przetwarzanie węzłów drzewa z~zachowaniem bezpieczeństwa typów.
 
 Podczas ekspansji makr kompilacyjnych często zachodzi potrzeba adaptacji fragmentów kodu z~jednego kontekstu leksykalnego do~innego.
@@ -441,7 +441,7 @@ Przykładem jest sytuacja, w~której kod oryginalnie odnoszący się do~parametr
 Proces ten, znany jako \emph{re-owning}~\cite{scala3-guides-reflection}, wymaga systematycznej zamiany wszystkich referencji do~starego symbolu nowymi referencjami.
 
 \lstinputlisting[language=scala,caption={Definicja klasy ReplaceRefs rozszerzającej TreeMap},label={lst:impl-utils-refs}]{listings/implementation/utils-03-replacerefs.scala}
-\noindent Klasa~\verb|ReplaceRefs| implementuje metodę~\verb|transformTree|, która:
+\noindent Klasa~\verb|ReplaceRefs| implementuje metodę~\verb|transformTree|, która realizuje następujące zadania.
 \begin{enumerate}
     \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
     \item identyfikuje referencje do~symboli wymienionych w~mapie podstawień,
@@ -451,13 +451,13 @@ Proces ten, znany jako \emph{re-owning}~\cite{scala3-guides-reflection}, wymaga 
 
 Transformacja jest realizowana w~sposób strukturalnie rekurencyjny, co~gwarantuje kompletność zamiany oraz zachowanie poprawności typowania.
 
-Fragment~\ref{lst:impl-utils-refs-use} ilustruje zastąpienie referencji do~parametru makra~\verb|oldCtx| nowym symbolem~\verb|newCtx| w~ciele wygenerowanej metody:
+Fragment~\ref{lst:impl-utils-refs-use} ilustruje zastąpienie referencji do~parametru makra~\verb|oldCtx| nowym symbolem~\verb|newCtx| w~ciele wygenerowanej metody.
 
 \lstinputlisting[language=scala,caption={Użycie ReplaceRefs w~kontekście ekspansji makra},label={lst:impl-utils-refs-use}]{listings/implementation/utils-04-replacerefs-usage.scala}
 
 W~rezultacie kod oryginalnie odnoszący się do~\verb|oldCtx.field| jest transformowany do~\verb|newCtx.field|, co~umożliwia prawidłowe działanie wygenerowanego kodu w~nowym kontekście leksykalnym.
 
-\subsection{CreateLambda — programatyczna konstrukcja wyrażeń funkcyjnych}\label{subsec:impl-utils-createlambda}
+\subsection{CreateLambda --- programatyczna konstrukcja wyrażeń funkcyjnych}\label{subsec:impl-utils-createlambda}
 
 Klasa~\verb|CreateLambda| umożliwia programatyczną konstrukcję wyrażeń funkcyjnych (lambda) w~czasie kompilacji.
 W~kontekście makr kompilacyjnych bezpośrednie użycie składni lambda języka Scala jest niemożliwe, ponieważ makro operuje na~reprezentacjach AST, a nie na~kodzie źródłowym~\cite{scala3-guides-macros}.
@@ -467,7 +467,7 @@ Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahu
 
 \lstinputlisting[language=scala,caption={Definicja klasy CreateLambda do~programatycznej konstrukcji wyrażeń lambda},label={lst:impl-utils-lambda}]{listings/implementation/utils-05-createlambda.scala}
 
-\noindent Klasa~\verb|CreateLambda| implementuje algorytm konstrukcji wyrażeń lambda poprzez:
+\noindent Klasa~\verb|CreateLambda| implementuje algorytm konstrukcji wyrażeń lambda poprzez następujące kroki.
 \begin{enumerate}
     \item utworzenie świeżego symbolu dla każdego parametru funkcji,
     \item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,
@@ -479,7 +479,7 @@ Mechanizm ten jest analogiczny do~konstrukcji~\verb|Lambda| w~systemie refleksji
 
 \lstinputlisting[language=scala,caption={Użycie CreateLambda do~konstrukcji wyrażenia funkcyjnego},label={lst:impl-utils-lambda-use}]{listings/implementation/utils-06-createlambda-usage.scala}
 
-\subsection{Copyable[T] — generyczna funkcja kopiowania}\label{subsec:impl-utils-copyable}
+\subsection{Copyable[T] --- generyczna funkcja kopiowania}\label{subsec:impl-utils-copyable}
 
 Klasa typu~\verb|Copyable[T]| definiuje operację kopiowania (\emph{shallow copy}) dla typów produktowych.
 W~systemie~\emph{ALPACA} kopiowanie jest wykorzystywane do~tworzenia nowych instancji kontekstu parsera z~modyfikowanymi polami (np.~aktualizacja numeru wiersza po~napotkaniu znaku nowej linii), bez konieczności ręcznej rekonstrukcji całej struktury.
@@ -497,7 +497,7 @@ Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie w
 
 \lstinputlisting[language=scala,caption={Użycie Copyable\lbrack T\rbrack},label={lst:impl-26-utils-copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
 
-Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\emph{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
+Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\emph{shallow copy}) --- pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
 Dla kontekstów parsera, które zawierają głównie typy wartościowe oraz niemodyfikowalne struktury, ograniczenie to~nie stanowi problemu.
 
 \subsubsection{Analiza wydajności}
@@ -510,7 +510,7 @@ W~kontekście systemu~\emph{ALPACA} korzyść z~unifikacji interfejsu (klasa typ
 \subsection[Porównanie z istniejącymi bibliotekami]{Porównanie z~istniejącymi bibliotekami}\label{subsec:impl-comparison}
 
 Ekosystem Scali oferuje biblioteki dedykowane programowaniu generycznemu, takie jak Shapeless~\cite{shapeless} i~Magnolia~\cite{magnolia}, które realizują derywację klas typów dla typów produktowych i~sumarycznych.
-Wybór własnej implementacji narzędzi~\verb|Empty[T]| i~\verb|Copyable[T]| w~systemie~\emph{ALPACA} wynikał z~następujących przesłanek:
+Wybór własnej implementacji narzędzi~\verb|Empty[T]| i~\verb|Copyable[T]| w~systemie~\emph{ALPACA} wynikał z~następujących przesłanek.
 
 \subsubsection{Minimalizacja zależności}
 Biblioteki takie jak Shapeless wprowadzają znaczące zależności oraz wydłużają czas kompilacji ze~względu na~złożone mechanizmy derywacji oparte na~typach zależnych.

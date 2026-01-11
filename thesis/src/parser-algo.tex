@@ -47,7 +47,7 @@ W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu pro
 System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR\@.
 Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania. \\
 
-\noindent Zalety podejścia LR(1):
+\noindent Zalety podejścia LR(1) są następujące:
 
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
@@ -66,7 +66,7 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 
 \end{itemize}
 
-\noindent Koszty i ograniczenia:
+\noindent Koszty i ograniczenia obejmują następujące aspekty:
 
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
@@ -87,7 +87,7 @@ W sekcji \ref{subsec:parser-algo-first} opisano, etap po~etapie, transformację 
 Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{aho1974lr}.
 \texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N\@.
 
-Algorytm iteruje po~wszystkich produkcjach, dodając:
+Algorytm iteruje po~wszystkich produkcjach, dodając następujące elementy.
 
 \begin{itemize}
     \item pierwszy terminal z~prawej strony produkcji,
@@ -101,7 +101,7 @@ Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} prze
 
 \subsection{Budowa automatów LR(1)}
 \label{subsec:parser-algo-lr1-gen}
-Stan początkowy to~domknięcie elementu \texttt{S'~→~•~root,~\$}, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
+Stan początkowy to~domknięcie elementu \verb|S' → • root, $|, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
 Kolejne stany konstruowane są~klasycznym schematem \emph{closure}/\emph{goto}~\cite{agh-lr1-parsers} i~deduplikowane, aby~otrzymać deterministyczny automat LR(1).
 
 \subsubsection{Funkcja closure}\label{subsubsec:parser-algo-closure}
@@ -131,12 +131,12 @@ Konstrukcja automatu LR(1) rozpoczyna się~od~stanu początkowego i~iteracyjnie 
 Proces można podzielić na~cztery główne etapy:
 
 \begin{enumerate}
-    \item Domknięcie elementu \texttt{S'~→~•~root,~\$} tworzy stan~0 (stan początkowy automatu).
+    \item Domknięcie elementu \verb|S' → • root, $| tworzy stan~0 (stan początkowy automatu).
     \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce.
           Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}.
           Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \emph{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\emph{shift} wskazuje na~nowy stan.
     \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \emph{reduce} dla~swoich prefiksów wejścia.
-          Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \emph{accept} dla~symbolu \texttt{\$}.
+          Specjalny element \verb|S' → root •, $| generuje akcję \emph{accept} dla~symbolu \verb|$|.
     \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów.
           Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
 \end{enumerate}
@@ -159,7 +159,7 @@ Użytkownik definiuje zbiór reguł precedencji, z~których każda wskazuje, że
 Te~reguły są~przechowywane w~tabeli rozwiązywania konfliktów (ang.~\emph{conflict resolution table})---strukturze mapującej każdy klucz (produkcja lub~nazwa tokenu) na~zbiór kluczy, nad~którymi ma~on~pierwszeństwo.
 
 \paragraph{Algorytm rozstrzygania konfliktu}
-Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$:
+Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$, realizowane są następujące kroki.
 
 \begin{enumerate}
     \item Sprawdź, czy~$a_1$ poprzedza $a_2$.
@@ -167,7 +167,7 @@ Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a
     \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym.
 \end{enumerate}
 
-\noindent W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający:
+\noindent W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający następujące informacje.
 \begin{itemize}
     \item opis konfliktu (shift/reduce lub~reduce/reduce),
     \item symbol wywołujący konflikt,
@@ -186,9 +186,9 @@ Jeśli~w~trakcie przeszukiwania odnajdzie ścieżkę między akcjami, oznacza to
 Algorytm śledzi odwiedzone węzły, aby~uniknąć zapętlenia podczas przeszukiwania.
 
 Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~$\emph{mnożenie} \prec \emph{dodawanie}$, gdzie~$\prec$ oznacza wyższy priorytet), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
-Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.
+Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.\\
 
-\textbf{Przykład:} Dla~gramatyki wyrażeń arytmetycznych z~reguł:
+\noindent\textbf{Przykład:} Dla~gramatyki wyrażeń arytmetycznych z~reguł:
 \begin{align*}
     \texttt{pow} & \prec \texttt{mul} \\
     \texttt{mul} & \prec \texttt{add}
@@ -224,7 +224,7 @@ Kluczowe właściwości
 \end{itemize}
 
 Jeśli~algorytm napotka węzeł w~stanie \texttt{Visited} podczas eksploracji, oznacza to~wykrycie cyklu.
-Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawierającm:
+Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawierającym następujące elementy:
 \begin{itemize}
     \item Węzeł gdzie~wykryto cykl
     \item Ścieżkę prowadzącą do~cyklu

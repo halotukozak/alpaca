@@ -69,9 +69,9 @@ Zakres:
 Artefakty:
 
 \begin{itemize}
-    \item Moduł \texttt{alpaca.parser}
-    \item Klasy: \texttt{Parser[Ctx]}, \texttt{Rule[R]}, \texttt{ParseTable}, \texttt{ActionTable}
-    \item Makra: \texttt{createTables}
+    \item Moduł \verb|alpaca.parser|
+    \item Klasy: \verb|Parser[Ctx]|, \verb|Rule[R]|, \verb|ParseTable|, \verb|ActionTable|
+    \item Makra: \verb|createTables|
 \end{itemize}
 
 \subsubsection[Infrastruktura i narzędzia pomocnicze]{Infrastruktura i~narzędzia pomocnicze}
@@ -233,7 +233,7 @@ Projektowanie przebiegało iteracyjnie, zgodnie z~następującym schematem:
     \item Integracja --- łączenie poszczególnych komponentów w~spójny system.
 \end{enumerate}
 
-\subsubsection{Test-Driven Development (TDD) — częściowe zastosowanie}
+\subsubsection{Test-Driven Development (TDD) --- częściowe zastosowanie}
 
 Dla modułów o~jasno zdefiniowanych specyfikacjach (np.\ funkcji \verb|computeFirstSet|) testy przygotowywano przed implementacją, zgodnie z~podejściem Test-Driven Development.
 Dla komponentów o~charakterze eksploracyjnym (np.\ mechanizmów generacji klas w~makrach) testy opracowywano po~ustabilizowaniu implementacji.
@@ -511,7 +511,7 @@ Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę 
 
 Topologia definiowania tokenów może prowadzić do~błędów leksykalnych, jeśli krótsze wzorce zostały umieszczone przed dłuższymi wariantami zawierającymi je~jako prefiks.
 
-Przykładowo, użytkownik może zdefiniować operatory porównania w~naturalnej kolejności:
+\textbf{Przykład:} użytkownik może zdefiniować operatory porównania w~naturalnej kolejności:
 \begin{verbatim}
 LT = <
 LE = <=
@@ -596,13 +596,13 @@ System automatycznie:
 
 Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:
 
-\begin{verbatim}
+\begin{lstlisting}[caption={Przykładowy komunikat o cycklu.},label={lst:parser-algo-verify-error}]
 Inconsistent conflict resolution detected:
 Reduction(sub) before Shift(*) before Reduction(sub)
 There are elements being both before and after Reduction(sub)
 at the same time.
 Consider revising the before/after rules to eliminate cycles
-\end{verbatim}
+\end{lstlisting}
 
 Komunikat wskazuje dokładne położenie sprzeczności, umożliwiając szybką korektę.
 
