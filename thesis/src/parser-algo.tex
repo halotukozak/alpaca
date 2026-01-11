@@ -12,32 +12,31 @@ Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pus
 \subsection[Gramatyki bezkontekstowe i klasy parserów]{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:parser-algo-classes}
 
 Gramatyka bezkontekstowa (CFG) definiowana jest poprzez nieterminale, terminale (tokeny), symbol startowy oraz zbiór produkcji.
-Wśród klas parserów wyróżnia się~dwie główne:
+Wśród klas parserów wyróżnia się~dwie główne.
 
-\begin{itemize}
-    \item LL(k) (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
-          Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
-    \item LR(k) (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
-          Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
-\end{itemize}
+LL(k) (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
+Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
+
+LR(k) (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
+Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
 
 \subsection[Modelowanie automatu z stosem]{Modelowanie automatu z ~stosem}
 \label{subsec:parser-algo-pda}
 
 Parser można sformalizować jako deterministyczny automat ze~stosem (PDA): stan określa aktualną pozycję w~tabelach parsera, stos przechowuje nieterminale i~stany pośrednie, a~wejście dostarcza sekwencję tokenów.
-Przejścia realizują dwie operacje: \textit{shift} (przesunięcie tokenu na~stos) oraz \textit{reduce} (zastąpienie prawej strony produkcji nieterminalem i~przejście do~nowego stanu).
+Przejścia realizują dwie operacje: \emph{shift} (przesunięcie tokenu na~stos) oraz \emph{reduce} (zastąpienie prawej strony produkcji nieterminalem i~przejście do~nowego stanu).
 
 \subsection{Tabele sterujące}
 \label{subsec:parser-algo-tables}
 
 Parsery tabelowe (LL i~LR) charakteryzują się~stałą złożonością czasową na~każdy token~\cite{knuth1965lr}.
-Tabela akcji parsera LR mapuje parę (stan, prefiks wejścia) na~akcję: \textit{shift}, \textit{reduce}, \textit{accept}, lub~\textit{error}.
+Tabela akcji parsera LR mapuje parę (stan, prefiks wejścia) na~akcję: \emph{shift}, \emph{reduce}, \emph{accept}, lub~\emph{error}.
 Tabela \texttt{goto} określa przejścia po~redukcjach do~nowych stanów.
 W~parserach LL analogiczną rolę spełnia tabela predykcji (nieterminal~$\times$~prefiks~wejścia~$\to$~produkcja)~\cite{ll-parser-wiki}.
 
 \subsection{Rozstrzyganie konfliktów}
 \label{subsec:parser-algo-conflicts}
-Konflikty \textit{shift/reduce} i~\textit{reduce/reduce} pojawiają się, gdy tabela parsera byłaby niedeterministyczna (wielokrotny wpis dla tej samej pary stan-prefiks wejścia).
+Konflikty \emph{shift/reduce} i~\emph{reduce/reduce} pojawiają się, gdy tabela parsera byłaby niedeterministyczna (wielokrotny wpis dla tej samej pary stan-prefiks wejścia).
 Rozwiązania tradycyjne obejmują zmianę gramatyki lub~zwiększenie prefiksu wejścia~\cite{illinois-parsing-conflicts}.
 W~parserach LL problemy wynikają typowo z~lewostronnej rekurencji i~wspólnych prefiksów (wymagająca lewostronnej faktoryzacji).
 W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu produkcji (np.~\texttt{if-then} vs.~\texttt{if-then-else}) oraz z~niejednoznaczności wyrażeń arytmetycznych~\cite{ll-parser-wiki}.
@@ -46,39 +45,33 @@ W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu pro
 \section[Dobór klasy parsera]{Dobór klasy parsera}\label{sec:parser-algo-lr1}
 
 System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR\@.
-Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania.
+Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania. \\
 
-\subsection[Zalety podejścia LR(1)]{Zalety podejścia LR(1)}\label{subsec:parser-algo-lr1-pros}
+\noindent Zalety podejścia LR(1) są następujące:
 
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
           Specyfikacja pozostaje zbliżona do~naturalnej formy języka.
-    
+
     \item Pełny zbiór prefiksów wejścia eliminuje konflikty typowe dla~SLR i~LALR wynikające z~nadmiernie szerokich zbiorów \texttt{FOLLOW}.
           W~rezultacie specyfikacja wymaga mniej manualnych deklaracji rozwiązywania konfliktów.
-    
+
     \item Stany LR(1) jawnie wskazują, jaki token był oczekiwany w~danym miejscu.
           Informacja ta umożliwia generowanie precyzyjnych komunikatów błędów składniowych z~kontekstem.
 
-    \item Każdy krok parsera to pojedynczy dostęp do~tabeli akcji (operacja \textit{shift}/\textit{reduce}), gwarantując liniową złożoność czasową względem długości wejścia.
+    \item Każdy krok parsera to pojedynczy dostęp do~tabeli akcji (operacja \emph{shift}/\emph{reduce}), gwarantując liniową złożoność czasową względem długości wejścia.
 
     \item Każda redukcja LR(1) jednoznacznie odpowiada konkretnej produkcji i~ma~dostęp do~wszystkich terminali ją tworzących.
           Akcje semantyczne mogą zatem bezpośrednio konstruować węzły drzewa składni abstrakcyjnej.
 
 \end{itemize}
 
-\newpage
-
-\subsection[Koszty i ograniczenia]{Koszty i~ograniczenia}
-\label{subsec:parser-algo-lr1-costs}
+\noindent Koszty i ograniczenia obejmują następujące aspekty:
 
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
-
     \item Obliczanie zbiorów domknięcia (ang.~\emph{closure}) i~przejść (ang.~\emph{goto}) dla~LR(1) wymaga więcej obliczeń niż~w~uproszczonych wariantach, wpływając na~czas kompilacji oraz rozmiar generatora~\cite{szeruda2023parsers}.
-
-    \item Parser jest deterministyczny na~poziomie składniowym, lecz~wciąż muszą zostać rozwiązane niejednoznaczności (np.~\emph{dangling else}]) poprzez jawne reguły precedencji operatorów.
-
+    \item Parser jest deterministyczny na~poziomie składniowym, lecz~wciąż muszą zostać rozwiązane niejednoznaczności (np.~\emph{dangling else}) poprzez jawne reguły precedencji operatorów.
     \item Choć klasa jest szeroka, nadal istnieją konstrukcje wymagające przekształceń w~celu dopasowania do~ograniczeń LR(1).
 \end{itemize}
 
@@ -94,42 +87,42 @@ W sekcji \ref{subsec:parser-algo-first} opisano, etap po~etapie, transformację 
 Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~osiągnięcia punktu stałego)~\cite{aho1974lr}.
 \texttt{FirstSet}[N] zawiera wszystkie możliwe terminale, które mogą pojawić się na~początku wyprowadzenia z~nieterminala N\@.
 
-Algorytm iteruje po~wszystkich produkcjach, dodając:
+\noindent Algorytm iteruje po~wszystkich produkcjach, dodając:
 
 \begin{itemize}
-    \item Pierwszy terminal z~prawej strony produkcji.
-    \item W~przypadku nieterminala---wszystkie terminale ze~zbioru \texttt{FIRST} tego nieterminala (z~wyjątkiem symbolu pustego $\varepsilon$). Jeśli nieterminal może generować $\varepsilon$, algorytm kontynuuje do~kolejnych symboli produkcji.
-    \item Symbol $\varepsilon$ dla~produkcji mogących generować pusty ciąg.
+    \item pierwszy terminal z~prawej strony produkcji,
+    \item w~przypadku nieterminala---wszystkie terminale ze~zbioru \texttt{FIRST} tego nieterminala (z~wyjątkiem symbolu pustego $\varepsilon$); jeśli nieterminal może generować $\varepsilon$, algorytm kontynuuje do~kolejnych symboli produkcji,
+    \item symbol $\varepsilon$ dla~produkcji mogących generować pusty ciąg.
 \end{itemize}
 
 Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} przestają~się~zmieniać).
 
-\lstinputlisting[language=scala,caption={Implementacja metody obliczającej zbiory FIRST},label={lst:parser-algo-first}]{listings/parser-algo/para-01-first-sets.scala}
+\lstinputlisting[language=scala,caption={Implementacja metody obliczającej zbiory FIRST.},label={lst:parser-algo-first}]{listings/parser-algo/para-01-first-sets.scala}
 
 \subsection{Budowa automatów LR(1)}
 \label{subsec:parser-algo-lr1-gen}
-Stan początkowy to~domknięcie elementu \texttt{S'~→~•~root,~\$}, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
-Kolejne stany konstruowane są~klasycznym schematem \textit{closure}/\textit{goto}~\cite{agh-lr1-parsers} i~deduplikowane, aby~otrzymać deterministyczny automat LR(1).
+Stan początkowy to~domknięcie elementu \verb|S' → • root, $|, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
+Kolejne stany konstruowane są~klasycznym schematem \emph{closure}/\emph{goto}~\cite{agh-lr1-parsers} i~deduplikowane, aby~otrzymać deterministyczny automat LR(1).
 
-\subsubsection{Funkcja \texttt{closure}}\label{subsubsec:parser-algo-closure}
+\subsubsection{Funkcja closure}\label{subsubsec:parser-algo-closure}
 
-Dla~elementu zawierającego nieterminal po~kropce (\textit{A}~$\to$~$\alpha$~$\bullet$~\textit{B}~$\beta$~,~\textit{a}), funkcja ~\texttt{closure} realizuje następujące kroki:
+Dla~elementu zawierającego nieterminal po~kropce (\emph{A}~$\to$~$\alpha$~$\bullet$~\emph{B}~$\beta$~,~\emph{a}), funkcja ~\texttt{closure} realizuje następujące kroki:
 
-\begin{itemize}
-    \item Oblicza zbiór możliwych prefiksów wejścia: \(FIRST(\beta \, a) = FIRST(\beta)\) bez~$\varepsilon$, a~jeśli~$\varepsilon~\in~FIRST(\beta)$, dodaje także~\textit{a}.
-    \item Dla~każdego prefiksu wejścia~\(x\) dodaje elementy \textit{B}~$\to$~$\bullet$~$\gamma$~,~\textit{x} dla~wszystkich produkcji \textit{B}~$\to$~$\gamma$.
+\begin{enumerate}
+    \item Oblicza zbiór możliwych prefiksów wejścia: \(FIRST(\beta \, a) = FIRST(\beta)\) bez~$\varepsilon$, a~jeśli~$\varepsilon~\in~FIRST(\beta)$, dodaje także~\emph{a}.
+    \item Dla~każdego prefiksu wejścia~\(x\) dodaje elementy \emph{B}~$\to$~$\bullet$~$\gamma$~,~\emph{x} dla~wszystkich produkcji \emph{B}~$\to$~$\gamma$.
     \item Rekurencyjnie domyka nowo dodane elementy, kontynuując proces, dopóki nie~zostaną dodane nowe produkcje (punkt stały domknięcia).
-\end{itemize}
+\end{enumerate}
 
 W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali, które mogą pojawić się~w~tej pozycji.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}},label={lst:parser-algo-closure}]{listings/parser-algo/para-02-lr1-closure.scala}
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}.},label={lst:parser-algo-closure}]{listings/parser-algo/para-02-lr1-closure.scala}
 
-\subsubsection{Funkcja \texttt{goto}}
+\subsubsection{Funkcja goto}
 \label{subsubsec:parser-algo-goto}
 Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesunięcie kropki we~wszystkich elementach zawierających ten symbol, a~następnie stosuje \texttt{closure} do~wyniku, korzystając z~wcześniej obliczonych zbiorów \texttt{FIRST}.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}},label={lst:parser-algo-goto}]{listings/parser-algo/lr1-goto.scala}
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}.},label={lst:parser-algo-goto}]{listings/parser-algo/lr1-goto.scala}
 
 \subsubsection{Główny algorytm budowy LR(1)}
 \label{subsubsec:parser-algo-main}
@@ -137,25 +130,25 @@ Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesun
 Konstrukcja automatu LR(1) rozpoczyna się~od~stanu początkowego i~iteracyjnie dodaje nowe stany, dopóki wszystkie możliwe przejścia nie~zostaną odkryte.
 Proces można podzielić na~cztery główne etapy:
 
-\begin{itemize}
-    \item Domknięcie elementu \texttt{S'~→~•~root,~\$} tworzy stan~0 (stan początkowy automatu).
+\begin{enumerate}
+    \item Domknięcie elementu \verb|S' → • root, $| tworzy stan~0 (stan początkowy automatu).
     \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce.
           Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}.
-          Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \textit{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\textit{shift} wskazuje na~nowy stan.
-    \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \textit{reduce} dla~swoich prefiksów wejścia.
-          Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \textit{accept} dla~symbolu \texttt{\$}.
+          Jeśli~stan docelowy już~istnieje, do~tabeli akcji dodawana jest~akcja \emph{shift} do~jego ID; w~przeciwnym razie stan otrzymuje nowe ID, zostaje dodany do~listy stanów, a~\emph{shift} wskazuje na~nowy stan.
+    \item Elementy z~kropką na~końcu produkcji (produkcja całkowicie rozpoznana) dodają akcje \emph{reduce} dla~swoich prefiksów wejścia.
+          Specjalny element \verb|S' → root •, $| generuje akcję \emph{accept} dla~symbolu \verb|$|.
     \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów.
           Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
-\end{itemize}
+\end{enumerate}
 
-\lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1)},label={lst:parser-algo-build}]{listings/parser-algo/lr1-build.scala}
+\lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1).},label={lst:parser-algo-build}]{listings/parser-algo/lr1-build.scala}
 
 Stany są~przechowywane w~posortowanych zbiorach strukturalnych, dzięki czemu są~porównywane na~podstawie zawartości (nie~referencji), co~umożliwia naturalną deduplikację.
 
 \subsection{Rozwiązywanie konfliktów parsera}
 \label{subsec:parser-algo-conflict-res}
 
-Podczas konstrukcji tabel parsera LR(1) mogą wystąpić sytuacje, w~których dla~tej samej pary (stan, symbol) istnieje więcej niż~jedna możliwa akcja---konflikty \textit{shift/reduce} lub~\textit{reduce/reduce}.
+Podczas konstrukcji tabel parsera LR(1) mogą wystąpić sytuacje, w~których dla~tej samej pary (stan, symbol) istnieje więcej niż~jedna możliwa akcja---konflikty \emph{shift/reduce} lub~\emph{reduce/reduce}.
 W~takich przypadkach parser musi posiadać mechanizm rozstrzygania, która akcja ma~pierwszeństwo.
 
 \subsubsection{Podstawowy mechanizm precedencji}
@@ -165,21 +158,21 @@ ALPACA implementuje system deklaratywnej precedencji oparty na~relacjach pierwsz
 Użytkownik definiuje zbiór reguł precedencji, z~których każda wskazuje, że~dana produkcja lub~token ma~pierwszeństwo nad~inną produkcją lub~tokenem.
 Te~reguły są~przechowywane w~tabeli rozwiązywania konfliktów (ang.~\emph{conflict resolution table})---strukturze mapującej każdy klucz (produkcja lub~nazwa tokenu) na~zbiór kluczy, nad~którymi ma~on~pierwszeństwo.
 
-\paragraph{Algorytm rozstrzygania konfliktu}
-Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$:
+\subsubsection{Algorytm rozstrzygania konfliktu}
+Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a_1$ i~$a_2$, realizowane są następujące kroki.
 
 \begin{enumerate}
-    \item Sprawdź, czy~$a_1$ poprzedza $a_2$
-    \item Jeśli~nie, sprawdź czy $a_2$ poprzedza $a_1$
-    \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym
+    \item Sprawdź, czy~$a_1$ poprzedza $a_2$.
+    \item Jeśli~nie, sprawdź czy $a_2$ poprzedza $a_1$.
+    \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym.
 \end{enumerate}
 
-W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający:
+\noindent W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający następujące informacje.
 \begin{itemize}
-    \item Opis konfliktu (shift/reduce lub~reduce/reduce)
-    \item Symbol wywołujący konflikt
-    \item Ścieżkę w~gramatyce prowadzącą do~konfliktu
-    \item Sugestię użycia mechanizmu \texttt{before}/\texttt{after}
+    \item opis konfliktu (shift/reduce lub~reduce/reduce),
+    \item symbol wywołujący konflikt,
+    \item ścieżkę w~gramatyce prowadzącą do~konfliktu,
+    \item sugesitę użycia mechanizmu \texttt{before}/\texttt{after}.
 \end{itemize}
 
 \subsubsection{Przechodniość przez rozwinięcie grafu relacji}
@@ -192,11 +185,10 @@ Gdy~parser próbuje rozstrzygnąć konflikt między~akcjami $a_1$ i~$a_2$, syste
 Jeśli~w~trakcie przeszukiwania odnajdzie ścieżkę między akcjami, oznacza to, że istnieje~(bezpośrednia lub~przechodnia) precedencja między nimi.
 Algorytm śledzi odwiedzone węzły, aby~uniknąć zapętlenia podczas przeszukiwania.
 
-Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~$\textit{mnożenie} \prec \textit{dodawanie}$, gdzie~$\prec$ oznacza wyższy priorytet), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
-Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.
+Dzięki temu rozwiązaniu użytkownik może zadeklarować jedynie podstawowe reguły precedencji (np.~$\emph{mnożenie} \prec \emph{dodawanie}$, gdzie~$\prec$ oznacza wyższy priorytet), a~system automatycznie wyprowadzi wszystkie implikacje przechodnie.
+Podejście to drastycznie redukuje liczbę deklaracji wymaganych od~użytkownika, zachowując przy~tym pełną kontrolę nad~rozwiązywaniem konfliktów.\\
 
-\paragraph{Przykład}
-Dla~gramatyki wyrażeń arytmetycznych z~reguł:
+\noindent\textbf{Przykład:} Dla~gramatyki wyrażeń arytmetycznych z~reguł:
 \begin{align*}
     \texttt{pow} & \prec \texttt{mul} \\
     \texttt{mul} & \prec \texttt{add}
@@ -205,13 +197,13 @@ system automatycznie wyprowadza~$\texttt{pow} \prec \texttt{add}$ poprzez ście�
 
 Dzięki temu użytkownik definiuje jedynie~$n-1$ reguł dla~$n$~poziomów precedencji (zamiast~$\binom{n}{2}$ reguł bez~przechodniości).
 
-\lstinputlisting[language=scala,caption={Implementacja rozwiązywania konfliktów z~przechodniością},label={lst:parser-algo-conflicts},escapeinside={(*@}{@*)}]{listings/parser-algo/conflict-resolution-get.scala}
+\lstinputlisting[language=scala,caption={Implementacja rozwiązywania konfliktów z~przechodniością.},label={lst:parser-algo-conflicts},escapeinside={(*@}{@*)}]{listings/parser-algo/conflict-resolution-get.scala}
 
 \subsubsection{Weryfikacja acykliczności w czasie kompilacji}
 \label{subsubsec:parser-algo-acyclic}
 
 Istotnym wymogiem poprawności systemu precedencji jest brak cykli w~grafie relacji.
-Obecność cyklu oznaczałaby niespójność, w~której produkcja~\textit{A} miałaby pierwszeństwo nad~\textit{B}, \textit{B}~nad~\textit{C}, a~jednocześnie \textit{C}~nad~\textit{A}---sytuację nie~do~rozstrzygnięcia.
+Obecność cyklu oznaczałaby niespójność, w~której produkcja~\emph{A} miałaby pierwszeństwo nad~\emph{B}, \emph{B}~nad~\emph{C}, a~jednocześnie \emph{C}~nad~\emph{A}---sytuację nie~do~rozstrzygnięcia.
 
 ALPACA weryfikuje acykliczność grafu precedencji w~czasie kompilacji za~pomocą algorytmu DFS z~kolorowaniem węzłów~\cite{bender2002acyclicity}.
 Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
@@ -222,9 +214,9 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
     \item \texttt{Processed} --- węzeł całkowicie przetworzony, wszystkie jego następniki zostały sprawdzone
 \end{itemize}
 
-\lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
+\lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji.},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
 
-\paragraph{Kluczowe właściwości}
+\noindent Kluczowe właściwości
 \begin{itemize}
     \item Jeśli~algorytm zakończy się bez komunikatu o błędzie, graf jest~acykliczny (DAG)
     \item Każdy cykl zostanie wykryty
@@ -232,7 +224,7 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
 \end{itemize}
 
 Jeśli~algorytm napotka węzeł w~stanie \texttt{Visited} podczas eksploracji, oznacza to~wykrycie cyklu.
-Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawierającm:
+Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawierającym następujące elementy:
 \begin{itemize}
     \item Węzeł gdzie~wykryto cykl
     \item Ścieżkę prowadzącą do~cyklu
@@ -240,14 +232,13 @@ Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawiera
     \item Sugestię rewizji reguł \texttt{before}/\texttt{after}
 \end{itemize}
 
-Przykładowy komunikat:
-\begin{verbatim}
+\begin{lstlisting}[caption={Przykładowy komunikat o~konfliktach.},label={lst:parser-algo-verify-error}]
 Inconsistent conflict resolution detected:
 Reduction(sub) before Shift(*) before Reduction(sub)
 There are elements being both before and after Reduction(sub)
 at the same time.
 Consider revising the before/after rules to eliminate cycles
-\end{verbatim}
+\end{lstlisting}
 
 Weryfikacja ta~zapewnia, że~wszelkie błędy w~deklaracjach precedencji są~wykrywane na~etapie kompilacji gramatyki, eliminując możliwość nieokreślonego zachowania parsera w~czasie wykonania.
-Jest~to kluczowy element zasady \textit{fail-fast}, która maksymalizuje bezpieczeństwo i~przewidywalność systemu.
+Jest~to kluczowy element zasady \emph{fail-fast}, która maksymalizuje bezpieczeństwo i~przewidywalność systemu.

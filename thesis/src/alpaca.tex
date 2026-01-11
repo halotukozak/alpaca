@@ -19,6 +19,10 @@
 \usepackage{array}
 \usepackage[table]{xcolor}
 
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=0.2em, parsep=0pt,topsep=0.5em}
+\setlist[enumerate]{itemsep=0.2em, parsep=0pt,topsep=0.5em}
+
 \hypersetup{colorlinks,
     linkcolor=blue,
     citecolor=blue,
@@ -96,8 +100,8 @@
     tabsize=2,
     rulecolor=\color{black!30},
     title=\lstname,
-    breaklines=true,
-    breakatwhitespace=true,
+    breaklines=false,
+    breakatwhitespace=false,
     framextopmargin=2pt,
     framexbottommargin=2pt,
     extendedchars=false,
@@ -109,7 +113,7 @@
     showspaces=false,
     showstringspaces=false,
     showtabs=false,
-    tabsize=2
+    tabsize=2,
 }
 
 \SetAlgorithmName{\LangAlgorithm}{\LangAlgorithmRef}{\LangListOfAlgorithms}
@@ -163,13 +167,13 @@
 
     \begin{center}
         \large
-        \textit{I do see the beauty in the rules, the invisible code of chaos\\
+        \emph{I do see the beauty in the rules, the invisible code of chaos\\
         hiding behind the menacing face of order.}
 
         \vspace{0.5cm}
 
         \normalsize
-        --- Elliot Alderson, \textit{Mr. Robot (episode eps2.0\_unm4sk-pt1.tc)}
+        --- Elliot Alderson, \emph{Mr. Robot (episode eps2.0\_unm4sk-pt1.tc)}
     \end{center}
 
     \vspace*{\fill}
@@ -188,7 +192,7 @@
     Istniejące narzędzia do konstruowania tych analizatorów wykazują ograniczenia w kontekście nowoczesnych języków programowania oraz narzędzi deweloperskich.
     Popularne generatory kodu takie jak Lex/Yacc i ANTLR wymagają zewnętrznych etapów budowania i znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i SLY cechują się słabą wydajnością i ograniczonym bezpieczeństwem typów.
     Kombinatory parserów oferują elastyczność w opisie i modyfikacji składni języka, jednak często wiążą się z dodatkowym narzutem wykonania zmniejszającym wydajność w porównaniu do podejść generacyjnych.
-    Praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) – narzędzie opracowane w Scali 3, które korzystając z możliwości metaprogramowania w czasie kompilacji, łączy wydajność generatorów kodu z użytecznością bibliotek.
+    Praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) --- narzędzie opracowane w Scali 3, które korzystając z możliwości metaprogramowania w czasie kompilacji, łączy wydajność generatorów kodu z użytecznością bibliotek.
     Teza badawcza postuluje, że wykorzystanie makr Scali 3, mechanizmu cytatów i wstawek oraz typów rafinowanych umożliwia konstrukcję lekserów i parserów o trzech właściwościach.
     Po pierwsze, zapewniają one wydajność zbliżoną do innych narzędzi.
     Po drugie, oferują interfejs programistyczny niezależny od zewnętrznych języków domenowych i w pełni zintegrowany z systemem typów Scali.
@@ -263,9 +267,9 @@
 
     \include{parser-algo}
 
-    \include{comparison}
-
     \include{organization}
+
+    \include{comparison}
 
     \printbibliography[heading=bibintoc]
     \listoffigures

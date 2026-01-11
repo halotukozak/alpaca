@@ -5,16 +5,11 @@
 \section{Wprowadzenie do badań porównawczych}
 \label{sec:comp-intro}
 
-Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\textit{ALPACA} z~reprezentatywnymi rozwiązaniami istniejącymi na~rynku.
+Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\emph{ALPACA} z~reprezentatywnymi rozwiązaniami istniejącymi na~rynku.
 W~tym celu przeprowadzono serię testów wydajnościowych (ang.~\emph{benchmarks}), których metodologia, wyniki oraz interpretacja zostaną przedstawione w~niniejszym rozdziale.
 
 Wybór narzędzi porównawczych wynikał z~analizy przeprowadzonej w~sekcji~\ref{sec:intro-review}.
-Jako rozwiązania reprezentatywne dla głównych kategorii wybrano:
-
-\begin{itemize}
-    \item \textbf{SLY}~\cite{sly} --- bibliotekę dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek w językach interpretowanych),
-    \item \textbf{FastParse}~\cite{fastparse-docs} --- bibliotekę kombinatorów parserów dla Scali, reprezentującą nowoczesne podejście do~budowy parserów w~językach statycznie typowanych (kategoria kombinatorów parserów).
-\end{itemize}
+Jako rozwiązania reprezentatywne dla głównych kategorii wybrano: SLY~\cite{sly} --- bibliotekę dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek w językach interpretowanych) oraz FastParse~\cite{fastparse-docs} --- bibliotekę kombinatorów parserów dla Scali, reprezentującą nowoczesne podejście do~budowy parserów w~językach statycznie typowanych (kategoria kombinatorów parserów).
 
 Wybór tych narzędzi uzasadniony jest ich reprezentatywnością dla różnych paradygmatów konstrukcji parserów oraz dostępnością dokumentacji i~aktywnym wsparciem społeczności.
 Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architekturze (zewnętrzny krok generacji vs.~metaprogramowanie w~czasie kompilacji), które utrudniają bezpośrednie porównanie wydajności.
@@ -26,16 +21,30 @@ Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architektu
 \subsection{Środowisko testowe}
 \label{subsec:comp-env}
 
-Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach:
+Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach.
 
-\begin{itemize}
-    \item \textbf{Procesor:} Apple M4 Pro, 14 rdzeni
-    \item \textbf{Pamięć RAM:} 48 GB
-    \item \textbf{System operacyjny:} macOS Sequoia 15.6
-    \item \textbf{JVM:} OpenJDK 21.0.8
-    \item \textbf{Python:} 3.13.5
-    \item \textbf{Scala:} 3.8.0-RC1
-\end{itemize}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Parametr} & \textbf{Wartość} \\
+        \hline
+        Procesor & Apple M4 Pro, 14 rdzeni \\
+        \hline
+        Pamięć RAM & 48 GB \\
+        \hline
+        System operacyjny & macOS Sequoia 15.6 \\
+        \hline
+        JVM & OpenJDK 21.0.8 \\
+        \hline
+        Python & 3.13.5 \\
+        \hline
+        Scala & 3.8.0-RC1 \\
+        \hline
+    \end{tabular}
+    \caption{Parametry środowiska wykorzystanego do przeprowadzenia testów wydajnościowych.}
+    \label{tab:comp-env}
+\end{table}
 
 Przed każdym pomiarem wykonywano fazę rozgrzewki (ang.~\emph{warmup}) składającą się z~trzech iteracji, co~pozwalało na~optymalizację kodu przez kompilator JIT~\cite{lindholm2014java} oraz stabilizację pamięci podręcznej procesora.
 Każdy test był powtarzany 10~razy, a~wyniki uśredniano w~celu redukcji wpływu losowych wahań wydajności.
@@ -44,44 +53,46 @@ Każdy test był powtarzany 10~razy, a~wyniki uśredniano w~celu redukcji wpływ
 \label{subsec:comp-data}
 
 Testy wydajnościowe przeprowadzono na~dwóch rodzajach gramatyk: prostej gramatyce wyrażeń arytmetycznych oraz gramatyce formatu JSON\@.
-Dla każdej gramatyki przygotowano dwa typy danych wejściowych różniące się strukturą:
+Dla każdej gramatyki przygotowano dwa typy danych wejściowych różniące się strukturą.
 
 \subsubsection{Dane iteracyjne}
 \label{subsubsec:comp-data-iter}
 
 Dane iteracyjne charakteryzują się płaską strukturą składniową bez głębokiego zagnieżdżenia.
-Dla wyrażeń arytmetycznych przyjęto formę ciągu operacji:
+Dla wyrażeń arytmetycznych przyjęto formę ciągu operacji.
 
-\lstinputlisting[language=terminal,caption={Struktura iteracyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-iter-math}]{listings/comparison/iterative-math-structure.txt}
+\lstinputlisting[language=terminal,caption={Struktura iteracyjnych danych testowych dla wyrażeń arytmetycznych.},label={lst:comp-iter-math}]{listings/comparison/iterative-math-structure.txt}
 
-Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej głębokości zagnieżdżenia:
+Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej głębokości zagnieżdżenia.
 
-\lstinputlisting[language=json,caption={Struktura iteracyjnych danych testowych dla JSON},label={lst:comp-iter-json}]{listings/comparison/iterative-json-structure.json}
+\lstinputlisting[language=json,caption={Struktura iteracyjnych danych testowych dla JSON.},label={lst:comp-iter-json}]{listings/comparison/iterative-json-structure.json}
 
 \subsubsection{Dane rekurencyjne}
 \label{subsubsec:comp-data-recur}
 
 Dane rekurencyjne charakteryzują się głębokim zagnieżdżeniem struktur składniowych, co~stanowi wyzwanie dla parserów ze~względu na~wykorzystanie stosu wywołań.
-Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów:
+Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów.
 
-\lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
+\newpage
 
-Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty:
+\lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych.},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
 
-\lstinputlisting[language=json,caption={Struktura rekurencyjnych danych testowych dla JSON},label={lst:comp-recur-json}]{listings/comparison/recursive-json-structure.json}
+Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty.
+
+\lstinputlisting[language=json,caption={Struktura rekurencyjnych danych testowych dla JSON.},label={lst:comp-recur-json}]{listings/comparison/recursive-json-structure.json}
 
 \subsection{Scenariusze testowe}
 \label{subsec:comp-scenarios}
 
 Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów (linii lub obiektów w~przypadku JSON).
 
-Dla każdego rozmiaru mierzono następujące metryki:
+\noindent Dla każdego rozmiaru mierzono następujące metryki:
 
-\begin{enumerate}
-    \item \textbf{Czas leksykalizacji} (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
-    \item \textbf{Czas parsowania} (ang.~\emph{parse time}) --- czas analizy składniowej strumienia tokenów,
-    \item \textbf{Całkowity czas przetwarzania} (ang.~\emph{full parse time}) --- łączny czas leksykalizacji i~parsowania.
-\end{enumerate}
+\begin{itemize}
+    \item Czas leksykalizacji (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
+    \item Czas parsowania (ang.~\emph{parse time}) --- czas analizy składniowej strumienia tokenów,
+    \item Całkowity czas przetwarzania (ang.~\emph{full parse time}) --- łączny czas leksykalizacji i~parsowania.
+\end{itemize}
 
 FastParse realizuje leksykalizację i~parsowanie w~jednym przebiegu, dlatego dla tej biblioteki mierzono wyłącznie całkowity czas przetwarzania.
 
@@ -92,26 +103,31 @@ FastParse realizuje leksykalizację i~parsowanie w~jednym przebiegu, dlatego dla
 W~celu zapewnienia porównywalności wyników, dla każdego narzędzia zaimplementowano funkcjonalnie równoważne parsery wyrażeń arytmetycznych oraz formatu JSON\@.
 Wszystkie implementacje realizują bezpośrednią ewaluację (obliczenie wartości wyrażenia) zamiast konstrukcji drzewa AST, co~eliminuje różnice wydajnościowe wynikające ze~strategii alokacji pamięci.
 
+\newpage
+
 \subsection[Implementacja w ALPACA]{Implementacja w~ALPACA}
 \label{subsec:comp-impl-alpaca}
 
-Parser wyrażeń arytmetycznych w~systemie~\textit{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców:
+Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców.
 
-\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
+\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA.},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
 
+\newpage
 \subsection[Implementacja w SLY]{Implementacja w~SLY}
 \label{subsec:comp-impl-sly}
 
-Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod:
+Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod.
 
-\lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
+\lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY.},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
+
+\newpage
 
 \subsection[Implementacja w FastParse]{Implementacja w~FastParse}
 \label{subsec:comp-impl-fastparse}
 
-FastParse realizuje parsowanie poprzez kompozycję funkcji parserowych:
+FastParse realizuje parsowanie poprzez kompozycję funkcji parserowych.
 
-\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~bibliotece FastParse},label={lst:comp-fastparse-math}]{listings/comparison/fastparse-math-parser.scala}
+\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~bibliotece FastParse.},label={lst:comp-fastparse-math}]{listings/comparison/fastparse-math-parser.scala}
 
 Charakterystyczną cechą FastParse jest brak wydzielonej fazy leksykalizacji --- tokenizacja i~parsowanie są realizowane w~jednym przebiegu poprzez kompozycję parserów elementarnych.
 
@@ -137,7 +153,7 @@ Tabela~\ref{tab:comp-res-iter-math} przedstawia wyniki testów wydajnościowych 
         2000                              & 166,89~ms                            & 21,22~ms                          & 188,56~ms          & 30,61~ms & 124,52~ms & 156,70~ms & 7,73~ms  \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne)}
+    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne).}
     \label{tab:comp-res-iter-math}
 \end{table}
 
@@ -156,10 +172,10 @@ Tabela~\ref{tab:comp-res-recur-math} przedstawia wyniki dla wyrażeń arytmetycz
         100                               & 3,55~ms                              & 1,70~ms                           & 4,96~ms            & 1,79~ms  & 7,27~ms   & 9,25~ms   & 3,10~ms                    \\
         500                               & 27,70~ms                             & 7,81~ms                           & 29,92~ms           & 10,45~ms & 35,30~ms  & 46,85~ms  & 4,56~ms                    \\
         1000                              & 63,79~ms                             & 12,94~ms                          & 80,08~ms           & 20,22~ms & 72,95~ms  & 96,95~ms  & 7,29~ms                    \\
-        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & \textit{Stack\-Over\-flow} \\
+        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & $\dagger$ \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne)}
+    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne). $\dagger$ oznacza błąd przepełnienia stosu (\emph{StackOverflowError}).}
     \label{tab:comp-res-recur-math}
 \end{table}
 
@@ -184,7 +200,7 @@ Tabela~\ref{tab:comp-res-iter-json} przedstawia wyniki dla formatu JSON o~strukt
         2000                              & 1,72~s                               & 117,50~ms                         & 1,58~s             & 151,88~ms & 374,71~ms & 550,08~ms & 16,58~ms \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne)}
+    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne).}
     \label{tab:comp-res-iter-json}
 \end{table}
 
@@ -203,16 +219,14 @@ Tabela~\ref{tab:comp-res-recur-json} przedstawia wyniki dla formatu JSON o~struk
         100                               & 44,96~ms                             & 4,33~ms                           & 49,44~ms           & 20,33~ms  & 17,77~ms  & 39,81~ms  & 3,47~ms   \\
         500                               & 2,99~s                               & 18,09~ms                          & 3,02~s             & 358,04~ms & 95,21~ms  & 459,70~ms & 15,19~ms  \\
         1000                              & 23,55~s                              & 37,51~ms                          & 23,52~s            & 1,36~s    & 189,58~ms & 1,58~s    & 86,38~ms  \\
-        2000                              & ---                                  & ---                               & ---                & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
+        2000                              & \textsuperscript{*}                  & \textsuperscript{*}               & \textsuperscript{*} & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne)}
+    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne).\\\textsuperscript{*} oznacza, że system nie zakończył pomiaru w~akceptowalnym czasie.}
     \label{tab:comp-res-recur-json}
 \end{table}
 
-Dla przypadku 2000~elementów system~\textit{ALPACA} nie zakończył pomiaru w~akceptowalnym czasie (oznaczono jako~---).
-
-Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\textit{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
+Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\emph{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
 Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dalszej analizy i~optymalizacji (sekcja~\ref{subsec:comp-conclusions}).
 
 
@@ -222,64 +236,57 @@ Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dal
 \subsection{Porównanie faz przetwarzania}
 \label{subsec:comp-phases}
 
-Analiza wyników ujawnia zróżnicowaną charakterystykę wydajnościową poszczególnych faz przetwarzania:
+Analiza wyników ujawnia zróżnicowaną charakterystykę wydajnościową poszczególnych faz przetwarzania.
 
 \subsubsection{Faza leksykalizacji}
 
 Lekser biblioteki SLY wykazuje stabilną i~przewidywalną wydajność, charakteryzującą się liniową złożonością względem rozmiaru danych wejściowych.
-Lekser systemu~\textit{ALPACA} osiąga porównywalną wydajność dla danych iteracyjnych, jednak wykazuje znaczący spadek wydajności dla danych rekurencyjnych JSON\@.
+Lekser systemu~\emph{ALPACA} osiąga porównywalną wydajność dla danych iteracyjnych, jednak wykazuje znaczący spadek wydajności dla danych rekurencyjnych JSON\@.
 
 Przyczyną tego zachowania jest sposób obsługi białych znaków w~obu systemach.
 W~danych testowych JSON każdy poziom zagnieżdżenia dodaje dwie spacje wcięcia.
 Dla testu \texttt{recursive\_json\_2000} najbardziej zagnieżdżony obiekt jest wcięty za~pomocą 4000~spacji.
-System~\textit{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny token typu \verb|Ignored|, co~wymaga dopasowania wzorca wyrażenia regularnego dla każdej spacji.
+System~\emph{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny token typu \verb|Ignored|, co~wymaga dopasowania wzorca wyrażenia regularnego dla każdej spacji.
 
-Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym:
+Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym.
 
-\lstinputlisting[language=python,caption={Mechanizm pomijania białych znaków w~bibliotece SLY},label={lst:comp-sly-ignore}]{listings/comparison/sly-ignore-mechanism.py}
+\lstinputlisting[language=python,caption={Mechanizm pomijania białych znaków w~bibliotece SLY.},label={lst:comp-sly-ignore}]{listings/comparison/sly-ignore-mechanism.py}
 
 To podejście eliminuje narzut związany z~dopasowaniem wyrażeń regularnych dla białych znaków, co~tłumaczy znaczącą przewagę wydajnościową SLY w~fazie leksykalizacji dla danych o~dużym stopniu zagnieżdżenia.
 Optymalizacja mechanizmu ignorowania znaków stanowi kierunek przyszłych prac opisanych w~sekcji~\ref{subsec:comp-future}.
 
 \subsubsection{Faza parsowania}
 
-Faza parsowania systemu~\textit{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę SLY dla wszystkich testowanych scenariuszy.
-Różnica ta wynika z~różnic architektonicznych:
-
-\begin{itemize}
-    \item \textbf{ALPACA} wykorzystuje tabele parsowania LR(1) generowane w~czasie kompilacji, co~eliminuje narzut interpretacji w~czasie wykonania,
-    \item \textbf{SLY} interpretuje reguły gramatyczne w~czasie wykonania z~wykorzystaniem refleksji Pythona, co~wprowadza znaczący narzut.
-\end{itemize}
+Faza parsowania systemu~\emph{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę \emph{SLY} dla wszystkich testowanych scenariuszy.
+Różnica ta wynika z~różnic architektonicznych.
+System~\emph{ALPACA} wykorzystuje tabele parsowania LR(1) generowane w~czasie kompilacji, co~eliminuje narzut interpretacji w~czasie wykonania.
+Z~kolei biblioteka~\emph{SLY} interpretuje reguły gramatyczne w~czasie wykonania z~wykorzystaniem refleksji Pythona, co~wprowadza znaczący narzut.
 
 \subsection{Zachowanie przy głębokim zagnieżdżeniu}
 \label{subsec:comp-nesting}
 
-Testy z~danymi rekurencyjnymi ujawniły istotne różnice w~obsłudze głęboko zagnieżdżonych struktur:
-
-\begin{enumerate}
-    \item \textbf{FastParse} --- przepełnienie stosu dla głębokości zagnieżdżenia przekraczającej 1000--2000~poziomów, co~jest konsekwencją rekursywnej natury kombinatorów parserów,
-    \item \textbf{ALPACA} --- stabilne działanie parsera niezależnie od~głębokości zagnieżdżenia dzięki wykorzystaniu automatu ze~stosem zamiast rekurencji,
-    \item \textbf{SLY} --- stabilne działanie dla wszystkich testowanych głębokości, analogicznie do~ALPACA\@.
-\end{enumerate}
-
+Testy z~danymi rekurencyjnymi ujawniły istotne różnice w~obsłudze głęboko zagnieżdżonych struktur.
+Biblioteka \emph{FastParse} wykazuje przepełnienie stosu dla głębokości zagnieżdżenia przekraczającej 1000--2000~poziomów, co~jest konsekwencją rekursywnej natury kombinatorów parserów.
+System \emph{ALPACA} charakteryzuje się stabilnym działaniem parsera niezależnie od~głębokości zagnieżdżenia dzięki wykorzystaniu automatu ze~stosem zamiast rekurencji.
+Biblioteka \emph{SLY} również wykazuje stabilne działanie dla wszystkich testowanych głębokości, analogicznie do~systemu \emph{ALPACA}.
 Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~scenariuszach wymagających obsługi głęboko zagnieżdżonych struktur.
 
 \subsection{Wnioski}
 \label{subsec:comp-conclusions}
 
-Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \textit{ALPACA}.
+Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.\\
 
-Zalety systemu:
-\begin{enumerate}
-    \item Faza parsowania systemu \textit{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \textit{SLY} we wszystkich analizowanych scenariuszach testowych.
+\noindent Zalety systemu:
+\begin{itemize}
+    \item Faza parsowania systemu \emph{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \emph{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
-\end{enumerate}
+\end{itemize}
 
-\paragraph{Obszary wymagające optymalizacji:}
+\subsubsection{Obszary wymagające optymalizacji}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
 
-
+\newpage
 \section{Porównanie interfejsów programistycznych}
 \label{sec:comp-api}
 
@@ -288,7 +295,7 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
 
 \begin{table}[ht]
     \centering
-    \begin{tabularx}{\textwidth}{L|YYY}
+    \begin{tabularx}{\textwidth}{X|C|C|C}
         \toprule
         \textbf{Kryterium}               & \textbf{ALPACA} & \textbf{SLY} & \textbf{FastParse} \\
         \midrule
@@ -305,50 +312,41 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
         Diagnostyka błędów               & dobra           & średnia      & dobra              \\
         \bottomrule
     \end{tabularx}
-    \caption{Podsumowanie analizy porównawczej (* wymaga optymalizacji mechanizmu ignorowania białych znaków)}
+    \caption{Podsumowanie analizy porównawczej (* wymaga optymalizacji mechanizmu ignorowania białych znaków).}
     \label{tab:comp-summary}
 \end{table}
 
 \subsection{Bezpieczeństwo typów}
 \label{subsec:comp-api-types}
 
-System~\textit{ALPACA} oferuje pełne bezpieczeństwo typów na~poziomie kompilacji dzięki wykorzystaniu typów rafinowanych (sekcja~\ref{subsec:impl-lexer-refinement}).
+System~\emph{ALPACA} oferuje pełne bezpieczeństwo typów na~poziomie kompilacji dzięki wykorzystaniu typów rafinowanych (sekcja~\ref{subsec:impl-lexer-refinement}).
 Każdy token i~wynik parsowania posiada precyzyjny typ znany kompilatorowi, co~umożliwia wykrywanie błędów przed uruchomieniem programu.
 
 W~przeciwieństwie do~tego, biblioteka SLY wykorzystuje dynamiczne typowanie Pythona, co~oznacza, że~błędy typów są wykrywane dopiero w~czasie wykonania.
-Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błąd typowania w~akcji semantycznej zostanie wykryty dopiero podczas parsowania konkretnego wejścia:
+Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błąd typowania w~akcji semantycznej zostanie wykryty dopiero podczas parsowania konkretnego wejścia.
 
-\lstinputlisting[language=python,caption={Błąd typowania wykrywany dopiero w~czasie wykonania (SLY)},label={lst:comp-sly-type-error}]{listings/comparison/sly-type-error.py}
+\lstinputlisting[language=python,caption={Błąd typowania wykrywany dopiero w~czasie wykonania (SLY).},label={lst:comp-sly-type-error}]{listings/comparison/sly-type-error.py}
 
 \subsection[Integracja ze środowiskiem IDE]{Integracja ze~środowiskiem IDE}
 \label{subsec:comp-api-ide}
 
-System~\textit{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami IDE dla języka Scala (IntelliJ IDEA, Metals) bez konieczności instalacji dedykowanych wtyczek.
-Funkcjonalności takie jak:
-
-\begin{itemize}
-    \item automatyczne uzupełnianie nazw tokenów,
-    \item nawigacja do~definicji (\textit{go-to-definition}),
-    \item prezentacja typów przy najechaniu kursorem,
-    \item wykrywanie błędów w~czasie rzeczywistym
-\end{itemize}
-
-są dostępne natywnie dzięki wykorzystaniu systemu typów Scali.
+System~\emph{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami IDE dla języka Scala (IntelliJ IDEA, Metals) bez konieczności instalacji dedykowanych wtyczek.
+Funkcjonalności takie jak: automatyczne uzupełnianie nazw tokenów, nawigacja do~definicji (\emph{go-to-definition}), prezentacja typów przy najechaniu kursorem oraz wykrywanie błędów w~czasie rzeczywistym są dostępne natywnie dzięki wykorzystaniu systemu typów Scali.
 
 Biblioteka SLY, ze~względu na~wykorzystanie refleksji i~niestandardowych konwencji (nazwy metod jako produkcje, dekoratory~\verb|@_()|), oferuje ograniczone wsparcie IDE\@.
-Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}:
+Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}.
 
-\lstinputlisting[language=terminal,caption={Wynik analizy statycznej mypy dla parsera SLY},label={lst:comp-mypy}]{listings/comparison/mypy-math-parser-analysis.txt}
+\lstinputlisting[language=terminal,caption={Wynik analizy statycznej mypy dla parsera SLY.},label={lst:comp-mypy}]{listings/comparison/mypy-math-parser-analysis.txt}
 
 Większość zgłoszonych błędów wynika z~dynamicznego charakteru biblioteki SLY: tokeny są definiowane jako zmienne klasowe bez jawnej deklaracji typu, a~dekorator~\verb|@_()| nie jest rozpoznawany przez analizator statyczny.
 Ponadto konwencja definiowania wielu metod o~tej samej nazwie (\verb|expr|) dla alternatywnych produkcji jest traktowana jako błąd redefinicji.
 
-Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code, gdzie widoczne są ostrzeżenia generowane przez wbudowany analizator statyczny:
+Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code, gdzie widoczne są ostrzeżenia generowane przez wbudowany analizator statyczny.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/SlyMathParserInIDE}
-    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku VS Code}
+    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku VS Code.}
     \label{fig:comp-sly-ide}
 \end{figure}
 
@@ -358,26 +356,26 @@ Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code,
 \label{sec:comp-summary-sec}
 
 Przeprowadzona analiza porównawcza pozwala na~weryfikację tezy postawionej w~rozdziale~\ref{ch:intro}.
-W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}:
+W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}, można sformułować następujące wnioski:
 
-\begin{enumerate}
-    \item Faza parsowania systemu~\textit{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.
+\begin{itemize}
+    \item Faza parsowania systemu~\emph{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.
           Moduł leksykalizacji wymaga dalszej optymalizacji dla niektórych wzorców wyrażeń regularnych.
 
     \item Interfejs API oparty na~dopasowaniu wzorców Scali oferuje naturalne wyrażenie reguł gramatycznych przy zachowaniu pełnego bezpieczeństwa typów i~integracji z~IDE\@.
 
     \item System generuje komunikaty błędów zawierające kontekst syntaktyczny.
-\end{enumerate}
+\end{itemize}
 
 \subsection{Kierunki dalszych prac}
 \label{subsec:comp-future}
 
-Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\textit{ALPACA}:
+Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\emph{ALPACA}:
 
-\begin{enumerate}
-    \item Wprowadzenie dedykowanego mechanizmu pomijania białych znaków, analogicznego do~rozwiązania stosowanego w~bibliotece SLY, który eliminowałby narzut tokenizacji dla sekwencji spacji i~tabulatorów,
+\begin{itemize}
+    \item Wprowadzenie dedykowanego mechanizmu pomijania białych znaków, analogicznego do~rozwiązania stosowanego w~bibliotece SLY, który eliminowałby narzut tokenizacji dla sekwencji spacji i~tabuladorów.
 
-    \item Implementacja algorytmu LALR(1) w~celu redukcji rozmiaru tabel parsowania dla dużych gramatyk,
+    \item Implementacja algorytmu LALR(1) w~celu redukcji rozmiaru tabel parsowania dla dużych gramatyk.
 
     \item Przeprowadzenie testów na~większej liczbie gramatyk reprezentujących rzeczywiste języki programowania (np.~podzbiór Scali, SQL).
-\end{enumerate}
+\end{itemize}
