@@ -115,7 +115,7 @@ Prace prowadzono z~wykorzystaniem systemu kontroli wersji Git.
 \subsection{Komunikacja zespołowa}
 \label{subsec:org-comm}
 
-\subsubsection{Spotkania regularne}
+\subsubsection{Regularne spotkania}
 
 \begin{itemize}
     \item Spotkania zespołu odbywały się w~interwałach 2--3-dniowych, głównie w~formie asynchronicznej z~wykorzystaniem komunikatorów.
@@ -157,7 +157,7 @@ Strukturę kamieni milowych oraz postępy realizacji przedstawiono w~tabel~\ref{
         \textbf{Thesis}                  & Finalizacja rozprawy dyplomowej (pisanie rozdziałów, bibliografia, ostateczna redakcja)         & 15 grudnia 2025         & 12/13           \\
         \hline
     \end{tabularx}
-    \caption{Kamienie milowe projektu \emph{ALPACA} i~postęp ich realizacji}
+    \caption{Kamienie milowe projektu \emph{ALPACA} i~postęp ich realizacji.}
     \label{tab:org-milestones}
 \end{table}
 
@@ -326,7 +326,7 @@ Tabela~\ref{tab:org-timeline} prezentuje podział prac na~etapy wraz z~kluczowym
         Tydzień 26--27 & 6--15 grudnia                 & Finalizacja rozprawy dyplomowej, ostateczne poprawki              \\
         \hline
     \end{tabularx}
-    \caption{Szczegółowa oś czasu projektu ALPACA z~liczbą zmian (commitów) w~poszczególnych etapach}
+    \caption{Szczegółowa oś czasu projektu ALPACA z~liczbą zmian (commitów) w~poszczególnych etapach.}
     \label{tab:org-timeline}
 \end{table}
 
@@ -363,7 +363,7 @@ Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:org-commits} ilustruje dyna
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/Commits}
-    \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA}
+    \caption{Rozkład commitów w~tygodniach realizacji projektu ALPACA.}
     \label{fig:org-commits}
 \end{figure}
 
@@ -450,7 +450,7 @@ Zaimplementowano system typów rafinowanych, w~którym:
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/IDESupport}
-    \caption{Wsparcie IDE dzięki typom rafinowanym w~projekcie ALPACA}
+    \caption{Wsparcie IDE dzięki typom rafinowanym w~projekcie ALPACA.}
     \label{fig:org-ide-support}
 \end{figure}
 
@@ -525,7 +525,7 @@ Notacja jest składniowo poprawna, lecz prowadzi do~błędów w~fazie parsowania
 
 Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwencyjnie według porządku definicji, bez~zastosowania heurystyki maksymalnego dopasowania (zob.~rozdział~\ref{sec:lexer-algo-regex}).
 
-Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
+\noindent Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
 
 \begin{itemize}
     \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera.
@@ -542,7 +542,7 @@ W~przypadku wykrycia nieprawidłowości użytkownik otrzymuje komunikat błędu 
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/PatternShadowing}
-    \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów}
+    \caption{Przykład komunikatu o wykryciu konfliktu w~kolejności definicji tokenów.}
     \label{fig:org-regex-error}
 \end{figure}
 
@@ -584,9 +584,9 @@ pow before mul
 mul before add
 \end{verbatim}
 
-Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
+\noindent Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy priorytet niż~operator~\texttt{Y}.
 
-System automatycznie:
+\noindent System automatycznie:
 
 \begin{itemize}
     \item wyprowadza przechodniość: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|,
@@ -653,7 +653,7 @@ Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczeg
         \end{itemize} \\
         \hline
     \end{tabularx}
-    \caption{Zakres testów jednostkowych dla głównych komponentów systemu}
+    \caption{Zakres testów jednostkowych dla głównych komponentów systemu.}
     \label{tab:org-unit-tests}
 \end{table}
 
@@ -679,7 +679,7 @@ następnie operatory unarny plus i~minus, potem mnożenie i~operatory pochodne (
 a~wreszcie dodawanie i~odejmowanie jako~operatory o~najniższym priorytecie. Ta~hierarchia jest jawnie zdeklarowana
 w~zbiorze rozwiązań konfliktów (ang. \emph{resolutions}), zapewniając poprawną interpretację wyrażeń.
 
-System weryfikowany był na~trzech poziomach złożoności:
+\noindent System weryfikowany był na~trzech poziomach złożoności:
 
 \begin{itemize}
     \item Test podstawowy --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
@@ -715,7 +715,7 @@ natomiast `ArrayElements` obsługuje listy elementów oddzielane przecinkami.
 Rekurencja lewostronna w~regułach `ObjectMembers` i~ArrayElements` pozwala na~parsowanie dowolnie długich struktur,
 zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 
-System weryfikowany był na~czterech poziomach złożoności:
+\noindent System weryfikowany był na~czterech poziomach złożoności:
 
 \begin{itemize}
     \item Test primitywnych wartości --- proste wyrażenie \verb|true| zwracające wartość logiczną;

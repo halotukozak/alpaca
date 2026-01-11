@@ -81,7 +81,7 @@ Ponieważ \emph{Lex} i~\emph{Yacc} zostały zaprojektowane do współpracy z~ję
 Rozszerzanie tych narzędzi o~dodatkowe, specyficzne funkcjonalności jest skomplikowane, co ogranicza ich elastyczność.
 Brak wsparcia dla współczesnych środowisk programistycznych (IDE) dodatkowo obniża komfort użytkowania w~porównaniu z~nowoczesnymi alternatywami.
 
-\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc},label={lst:review-ruby}]{listings/introduction/intro-01-ruby-parser.y}
+\lstinputlisting[language=c,caption={Fragment definicji parsera Ruby z~wykorzystaniem technologii Yacc.},label={lst:review-ruby}]{listings/introduction/intro-01-ruby-parser.y}
 
 \subsubsection{ANTLR}
 \label{subsubsec:review-antlr}
@@ -132,15 +132,15 @@ Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii),
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
 \begin{minipage}{\linewidth}
-\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:review-python}]{listings/introduction/intro-02-sly-parser.py}
+\lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY.},label={lst:review-python}]{listings/introduction/intro-02-sly-parser.py}
 \end{minipage}
 
 Komunikaty błędów w~bibliotece \emph{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:review-sly-err}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:review-sly-out}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
 
-\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:review-sly-err}]{listings/introduction/intro-03-not-working-sly.py}
+\lstinputlisting[language=Python,caption={Fragment niedziałającego kodu w~Pythonie, wykorzystujący bibliotekę SLY.},label={lst:review-sly-err}]{listings/introduction/intro-03-not-working-sly.py}
 
-\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \emph{SLY}},label={lst:review-sly-out}]{listings/introduction/intro-04-not-working-result}
+\lstinputlisting[language=terminal,caption={Przykładowy komunikat błędu w~bibliotece \emph{SLY}.},label={lst:review-sly-out}]{listings/introduction/intro-04-not-working-result}
 
 \subsection{Kombinatory parserów}
 \label{subsec:review-combinators}
@@ -197,7 +197,7 @@ Tabela~\ref{tab:review-comparison} zestawia główne cechy analizowanych narzęd
 Widoczny jest kompromis między wydajnością a~użytecznością: generatory kodu (Lex/Yacc, ANTLR) osiągają wysoką wydajność, ale wymagają dodatkowego kroku kompilacji i~nauki DSL\@.
 Biblioteki kombinatorów (FastParse, parboiled2) oferują interfejs zintegrowany z~językiem bazowym, ale kosztem spadku wydajności związanej z~interpretacją reguł w~czasie wykonania.
 
-Żadne z~analizowanych rozwiązań nie łączy jednocześnie:
+\noindent Żadne z~analizowanych rozwiązań nie łączy jednocześnie:
 \begin{itemize}
     \item wysokiej wydajności (generacja kodu w~czasie kompilacji),
     \item interfejsu API zintegrowanego z~systemem typów języka,
@@ -262,7 +262,7 @@ Luka ta stanowi motywację dla projektu~\emph{ALPACA}, który wykorzystuje makra
         Generowanie kodu        & nie                                       & nie                  & nie                & tak                  \\
         \bottomrule
     \end{tabularx}
-    \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych}
+    \caption{Porównanie wybranych narzędzi do generowania analizatorów leksykalnych i~składniowych.}
     \label{tab:review-comparison}
 \end{table}
 

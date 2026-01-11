@@ -61,11 +61,11 @@ Dla każdej gramatyki przygotowano dwa typy danych wejściowych różniące się
 Dane iteracyjne charakteryzują się płaską strukturą składniową bez głębokiego zagnieżdżenia.
 Dla wyrażeń arytmetycznych przyjęto formę ciągu operacji.
 
-\lstinputlisting[language=terminal,caption={Struktura iteracyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-iter-math}]{listings/comparison/iterative-math-structure.txt}
+\lstinputlisting[language=terminal,caption={Struktura iteracyjnych danych testowych dla wyrażeń arytmetycznych.},label={lst:comp-iter-math}]{listings/comparison/iterative-math-structure.txt}
 
 Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej głębokości zagnieżdżenia.
 
-\lstinputlisting[language=json,caption={Struktura iteracyjnych danych testowych dla JSON},label={lst:comp-iter-json}]{listings/comparison/iterative-json-structure.json}
+\lstinputlisting[language=json,caption={Struktura iteracyjnych danych testowych dla JSON.},label={lst:comp-iter-json}]{listings/comparison/iterative-json-structure.json}
 
 \subsubsection{Dane rekurencyjne}
 \label{subsubsec:comp-data-recur}
@@ -73,18 +73,18 @@ Dla formatu JSON dane iteracyjne reprezentują tablicę obiektów o~stałej gł�
 Dane rekurencyjne charakteryzują się głębokim zagnieżdżeniem struktur składniowych, co~stanowi wyzwanie dla parserów ze~względu na~wykorzystanie stosu wywołań.
 Dla wyrażeń arytmetycznych przyjęto formę zagnieżdżonych nawiasów.
 
-\lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
+\lstinputlisting[language=terminal,caption={Struktura rekurencyjnych danych testowych dla wyrażeń arytmetycznych.},label={lst:comp-recur-math}]{listings/comparison/recursive-math-structure.txt}
 
 Dla formatu JSON dane rekurencyjne reprezentują głęboko zagnieżdżone obiekty.
 
-\lstinputlisting[language=json,caption={Struktura rekurencyjnych danych testowych dla JSON},label={lst:comp-recur-json}]{listings/comparison/recursive-json-structure.json}
+\lstinputlisting[language=json,caption={Struktura rekurencyjnych danych testowych dla JSON.},label={lst:comp-recur-json}]{listings/comparison/recursive-json-structure.json}
 
 \subsection{Scenariusze testowe}
 \label{subsec:comp-scenarios}
 
 Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2000~elementów (linii lub obiektów w~przypadku JSON).
 
-Dla każdego rozmiaru mierzono następujące metryki.
+\noindent Dla każdego rozmiaru mierzono następujące metryki:
 
 \begin{itemize}
     \item Czas leksykalizacji (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
@@ -106,21 +106,21 @@ Wszystkie implementacje realizują bezpośrednią ewaluację (obliczenie wartoś
 
 Parser wyrażeń arytmetycznych w~systemie~\emph{ALPACA} wykorzystuje deklaratywny interfejs DSL oparty na~dopasowaniu wzorców.
 
-\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
+\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~systemie ALPACA.},label={lst:comp-alpaca-math},escapeinside={(*@}{@*)}]{listings/comparison/alpaca-math-parser.scala}
 
 \subsection[Implementacja w SLY]{Implementacja w~SLY}
 \label{subsec:comp-impl-sly}
 
 Odpowiadająca implementacja w~bibliotece SLY wykorzystuje dekoratory i~refleksję nazw metod.
 
-\lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
+\lstinputlisting[language=python,caption={Parser wyrażeń arytmetycznych w~bibliotece SLY.},label={lst:comp-sly-math}]{listings/comparison/sly-math-parser.py}
 
 \subsection[Implementacja w FastParse]{Implementacja w~FastParse}
 \label{subsec:comp-impl-fastparse}
 
 FastParse realizuje parsowanie poprzez kompozycję funkcji parserowych.
 
-\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~bibliotece FastParse},label={lst:comp-fastparse-math}]{listings/comparison/fastparse-math-parser.scala}
+\lstinputlisting[language=scala,caption={Parser wyrażeń arytmetycznych w~bibliotece FastParse.},label={lst:comp-fastparse-math}]{listings/comparison/fastparse-math-parser.scala}
 
 Charakterystyczną cechą FastParse jest brak wydzielonej fazy leksykalizacji --- tokenizacja i~parsowanie są realizowane w~jednym przebiegu poprzez kompozycję parserów elementarnych.
 
@@ -146,7 +146,7 @@ Tabela~\ref{tab:comp-res-iter-math} przedstawia wyniki testów wydajnościowych 
         2000                              & 166,89~ms                            & 21,22~ms                          & 188,56~ms          & 30,61~ms & 124,52~ms & 156,70~ms & 7,73~ms  \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne)}
+    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne).}
     \label{tab:comp-res-iter-math}
 \end{table}
 
@@ -168,7 +168,7 @@ Tabela~\ref{tab:comp-res-recur-math} przedstawia wyniki dla wyrażeń arytmetycz
         2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & $\dagger$ \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne). $\dagger$ oznacza błąd przepełnienia stosu (\emph{StackOverflowError})}
+    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne). $\dagger$ oznacza błąd przepełnienia stosu (\emph{StackOverflowError}).}
     \label{tab:comp-res-recur-math}
 \end{table}
 
@@ -193,7 +193,7 @@ Tabela~\ref{tab:comp-res-iter-json} przedstawia wyniki dla formatu JSON o~strukt
         2000                              & 1,72~s                               & 117,50~ms                         & 1,58~s             & 151,88~ms & 374,71~ms & 550,08~ms & 16,58~ms \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne)}
+    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne).}
     \label{tab:comp-res-iter-json}
 \end{table}
 
@@ -215,7 +215,7 @@ Tabela~\ref{tab:comp-res-recur-json} przedstawia wyniki dla formatu JSON o~struk
         2000                              & \textsuperscript{*}                  & \textsuperscript{*}               & \textsuperscript{*} & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne).\\\textsuperscript{*} oznacza, że system nie zakończył pomiaru w~akceptowalnym czasie}
+    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne).\\\textsuperscript{*} oznacza, że system nie zakończył pomiaru w~akceptowalnym czasie.}
     \label{tab:comp-res-recur-json}
 \end{table}
 
@@ -243,7 +243,7 @@ System~\emph{ALPACA} tokenizuje każdą sekwencję białych znaków jako osobny 
 
 Biblioteka SLY stosuje odmienne podejście --- pomijanie ignorowanych znaków realizowane jest prostym warunkiem iteracyjnym.
 
-\lstinputlisting[language=python,caption={Mechanizm pomijania białych znaków w~bibliotece SLY},label={lst:comp-sly-ignore}]{listings/comparison/sly-ignore-mechanism.py}
+\lstinputlisting[language=python,caption={Mechanizm pomijania białych znaków w~bibliotece SLY.},label={lst:comp-sly-ignore}]{listings/comparison/sly-ignore-mechanism.py}
 
 To podejście eliminuje narzut związany z~dopasowaniem wyrażeń regularnych dla białych znaków, co~tłumaczy znaczącą przewagę wydajnościową SLY w~fazie leksykalizacji dla danych o~dużym stopniu zagnieżdżenia.
 Optymalizacja mechanizmu ignorowania znaków stanowi kierunek przyszłych prac opisanych w~sekcji~\ref{subsec:comp-future}.
@@ -267,16 +267,16 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 \subsection{Wnioski}
 \label{subsec:comp-conclusions}
 
-Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.
+Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \emph{ALPACA}.\\
 
-Zalety systemu są następujące.
+\noindent Zalety systemu:
 \begin{itemize}
     \item Faza parsowania systemu \emph{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \emph{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
 \end{itemize}
 
-\paragraph{Obszary wymagające optymalizacji:}
+\subsubsection{Obszary wymagające optymalizacji}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
 
 
@@ -288,7 +288,7 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
 
 \begin{table}[ht]
     \centering
-    \begin{tabularx}{\textwidth}{L|YYY}
+    \begin{tabularx}{\textwidth}{X|C|C|C}
         \toprule
         \textbf{Kryterium}               & \textbf{ALPACA} & \textbf{SLY} & \textbf{FastParse} \\
         \midrule
@@ -305,7 +305,7 @@ Tabela~\ref{tab:comp-summary} zestawia kluczowe aspekty interfejsów porównywan
         Diagnostyka błędów               & dobra           & średnia      & dobra              \\
         \bottomrule
     \end{tabularx}
-    \caption{Podsumowanie analizy porównawczej (* wymaga optymalizacji mechanizmu ignorowania białych znaków)}
+    \caption{Podsumowanie analizy porównawczej (* wymaga optymalizacji mechanizmu ignorowania białych znaków).}
     \label{tab:comp-summary}
 \end{table}
 
@@ -318,7 +318,7 @@ Każdy token i~wynik parsowania posiada precyzyjny typ znany kompilatorowi, co~u
 W~przeciwieństwie do~tego, biblioteka SLY wykorzystuje dynamiczne typowanie Pythona, co~oznacza, że~błędy typów są wykrywane dopiero w~czasie wykonania.
 Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błąd typowania w~akcji semantycznej zostanie wykryty dopiero podczas parsowania konkretnego wejścia.
 
-\lstinputlisting[language=python,caption={Błąd typowania wykrywany dopiero w~czasie wykonania (SLY)},label={lst:comp-sly-type-error}]{listings/comparison/sly-type-error.py}
+\lstinputlisting[language=python,caption={Błąd typowania wykrywany dopiero w~czasie wykonania (SLY).},label={lst:comp-sly-type-error}]{listings/comparison/sly-type-error.py}
 
 \subsection[Integracja ze środowiskiem IDE]{Integracja ze~środowiskiem IDE}
 \label{subsec:comp-api-ide}
@@ -329,7 +329,7 @@ Funkcjonalności takie jak: automatyczne uzupełnianie nazw tokenów, nawigacja 
 Biblioteka SLY, ze~względu na~wykorzystanie refleksji i~niestandardowych konwencji (nazwy metod jako produkcje, dekoratory~\verb|@_()|), oferuje ograniczone wsparcie IDE\@.
 Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}.
 
-\lstinputlisting[language=terminal,caption={Wynik analizy statycznej mypy dla parsera SLY},label={lst:comp-mypy}]{listings/comparison/mypy-math-parser-analysis.txt}
+\lstinputlisting[language=terminal,caption={Wynik analizy statycznej mypy dla parsera SLY.},label={lst:comp-mypy}]{listings/comparison/mypy-math-parser-analysis.txt}
 
 Większość zgłoszonych błędów wynika z~dynamicznego charakteru biblioteki SLY: tokeny są definiowane jako zmienne klasowe bez jawnej deklaracji typu, a~dekorator~\verb|@_()| nie jest rozpoznawany przez analizator statyczny.
 Ponadto konwencja definiowania wielu metod o~tej samej nazwie (\verb|expr|) dla alternatywnych produkcji jest traktowana jako błąd redefinicji.
@@ -339,7 +339,7 @@ Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code,
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/SlyMathParserInIDE}
-    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku VS Code}
+    \caption{Ostrzeżenia IDE dla poprawnego kodu parsera SLY w~środowisku VS Code.}
     \label{fig:comp-sly-ide}
 \end{figure}
 
