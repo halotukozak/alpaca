@@ -262,7 +262,7 @@ W~szczególności ograniczenie rozmiaru metod JVM ilustruje istotny aspekt prakt
 
 Użytkownik definiuje parser poprzez dziedziczenie po klasie bazowej \verb|Parser[Ctx]|:
 
-\lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:impl-parser-base},linerange={19-24}]{listings/implementation/parser-01-base.scala}
+\lstinputlisting[language=scala,caption={Klasa bazowa Parser},label={lst:impl-parser-base}]{listings/implementation/parser-01-base.scala}
 
 Typ parametryczny \verb|Ctx| reprezentuje globalny kontekst parsera, umożliwiający przechowywanie stanu między akcjami semantycznymi (np.\ tablicę symboli).
 Parametr kontekstualny \verb|tables: Tables[Ctx]| jest automatycznie generowany przez makro i zawiera tabele parsowania oraz akcji semantycznych.
@@ -429,7 +429,7 @@ Klasa typu~\verb|Empty[T]| rozwiązuje ten problem poprzez automatyczną derywac
 
 \subsubsection{Definicja}
 
-\lstinputlisting[language=scala,caption={Definicja klasy typu Empty[T]},label={lst:impl-19-utils-empty}]{listings/implementation/lexer-08-empty.scala}
+\lstinputlisting[language=scala,caption={Definicja klasy typu Empty\lbrack T\rbrack},label={lst:impl-19-utils-empty}]{listings/implementation/lexer-08-empty.scala}
 
 Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\textit{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
 
@@ -439,7 +439,7 @@ Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~warto�
 
 \subsubsection{Przykład użycia}
 
-\lstinputlisting[language=scala,caption={Użycie mechanizmu Empty[T]},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
+\lstinputlisting[language=scala,caption={Użycie mechanizmu Empty\lbrack T\rbrack},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
 
 \subsubsection[Alternatywy i ich ograniczenia]{Alternatywy i~ich ograniczenia}
 Bez mechanizmu~\verb|Empty[T]| konstrukcja wartości domyślnej w~kontekście generycznym wymagałaby od użytkownika jawnego podania domyślnych wartości dla każdego typu~\verb|T|, co~wyeliminowałoby zalety programowania generycznego.
@@ -528,7 +528,7 @@ Klasa typu~\verb|Copyable[T]| rozwiązuje ten problem poprzez derywację funkcji
 
 \subsubsection{Definicja}
 
-\lstinputlisting[language=scala,caption={Definicja klasy typu Copyable[T]},label={lst:impl-25-utils-copyable}]{listings/implementation/lexer-10-copyable.scala}
+\lstinputlisting[language=scala,caption={Definicja klasy typu Copyable\lbrack T\rbrack},label={lst:impl-25-utils-copyable}]{listings/implementation/lexer-10-copyable.scala}
 
 Anotacja~\verb|@implicitNotFound| dostarcza czytelny komunikat o błędzie w~przypadku próby użycia~\verb|Copyable[T]| dla typu niebędącego klasą przypadku.
 
@@ -538,7 +538,7 @@ Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie w
 
 \subsubsection{Przykład użycia}
 
-\lstinputlisting[language=scala,caption={Użycie Copyable[T]},label={lst:impl-26-utils-copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
+\lstinputlisting[language=scala,caption={Użycie Copyable\lbrack T\rbrack},label={lst:impl-26-utils-copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
 
 \subsubsection{Uwaga techniczna}
 Operacja kopiowania realizowana przez~\verb|Copyable[T]| jest kopią płytką (\textit{shallow copy}) — pola będące referencjami do~obiektów wskazują na~te same instancje w~oryginalnej i~skopiowanej strukturze.
