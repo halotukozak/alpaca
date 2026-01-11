@@ -77,11 +77,11 @@ Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2
 
 Dla każdego rozmiaru mierzono następujące metryki:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Czas leksykalizacji} (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
     \item \textbf{Czas parsowania} (ang.~\emph{parse time}) --- czas analizy składniowej strumienia tokenów,
     \item \textbf{Całkowity czas przetwarzania} (ang.~\emph{full parse time}) --- łączny czas leksykalizacji i~parsowania.
-\end{enumerate}
+\end{itemize}
 
 FastParse realizuje leksykalizację i~parsowanie w~jednym przebiegu, dlatego dla tej biblioteki mierzono wyłącznie całkowity czas przetwarzania.
 
@@ -256,11 +256,11 @@ Różnica ta wynika z~różnic architektonicznych:
 
 Testy z~danymi rekurencyjnymi ujawniły istotne różnice w~obsłudze głęboko zagnieżdżonych struktur:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{FastParse} --- przepełnienie stosu dla głębokości zagnieżdżenia przekraczającej 1000--2000~poziomów, co~jest konsekwencją rekursywnej natury kombinatorów parserów,
     \item \textbf{ALPACA} --- stabilne działanie parsera niezależnie od~głębokości zagnieżdżenia dzięki wykorzystaniu automatu ze~stosem zamiast rekurencji,
     \item \textbf{SLY} --- stabilne działanie dla wszystkich testowanych głębokości, analogicznie do~ALPACA\@.
-\end{enumerate}
+\end{itemize}
 
 Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~scenariuszach wymagających obsługi głęboko zagnieżdżonych struktur.
 
@@ -270,11 +270,11 @@ Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~sc
 Przeprowadzone eksperymenty pozwalają na sformułowanie następujących wniosków dotyczących wydajności systemu \textit{ALPACA}.
 
 Zalety systemu:
-\begin{enumerate}
+\begin{itemize}
     \item Faza parsowania systemu \textit{ALPACA} charakteryzuje się stabilną i przewidywalną wydajnością, przewyższającą bibliotekę \textit{SLY} we wszystkich analizowanych scenariuszach testowych.
     \item Zastosowanie parsera klasy LR(1) eliminuje ograniczenia wynikające z rozmiaru stosu wywołań, umożliwiając poprawne przetwarzanie struktur o dowolnej głębokości zagnieżdżenia.
     \item Liniowa złożoność czasowa procesu parsowania względem liczby tokenów zapewnia deterministyczne i przewidywalne czasy przetwarzania danych wejściowych.
-\end{enumerate}
+\end{itemize}
 
 \paragraph{Obszary wymagające optymalizacji:}
 Mechanizm obsługi znaków ignorowanych wykazuje obniżoną wydajność w przypadku danych wejściowych charakteryzujących się dużym stopniem wcięcia. Wynika to z faktu, że każda sekwencja znaków białych jest tokenizowana jako osobna jednostka, co prowadzi do zwiększonego narzutu obliczeniowego.
@@ -360,24 +360,24 @@ Rysunek~\ref{fig:comp-sly-ide} przedstawia widok kodu SLY w~środowisku VS Code,
 Przeprowadzona analiza porównawcza pozwala na~weryfikację tezy postawionej w~rozdziale~\ref{ch:intro}.
 W~odniesieniu do~pytań badawczych sformułowanych w~sekcji~\ref{sec:intro-thesis}:
 
-\begin{enumerate}
+\begin{itemize}
     \item Faza parsowania systemu~\textit{ALPACA} osiąga wydajność porównywalną z~FastParse i~znacząco przewyższa bibliotekę SLY\@.
           Moduł leksykalizacji wymaga dalszej optymalizacji dla niektórych wzorców wyrażeń regularnych.
 
     \item Interfejs API oparty na~dopasowaniu wzorców Scali oferuje naturalne wyrażenie reguł gramatycznych przy zachowaniu pełnego bezpieczeństwa typów i~integracji z~IDE\@.
 
     \item System generuje komunikaty błędów zawierające kontekst syntaktyczny.
-\end{enumerate}
+\end{itemize}
 
 \subsection{Kierunki dalszych prac}
 \label{subsec:comp-future}
 
 Na~podstawie przeprowadzonych badań zidentyfikowano następujące kierunki dalszego rozwoju systemu~\textit{ALPACA}:
 
-\begin{enumerate}
+\begin{itemize}
     \item Wprowadzenie dedykowanego mechanizmu pomijania białych znaków, analogicznego do~rozwiązania stosowanego w~bibliotece SLY, który eliminowałby narzut tokenizacji dla sekwencji spacji i~tabulatorów,
 
     \item Implementacja algorytmu LALR(1) w~celu redukcji rozmiaru tabel parsowania dla dużych gramatyk,
 
     \item Przeprowadzenie testów na~większej liczbie gramatyk reprezentujących rzeczywiste języki programowania (np.~podzbiór Scali, SQL).
-\end{enumerate}
+\end{itemize}

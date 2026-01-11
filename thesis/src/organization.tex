@@ -450,12 +450,12 @@ System typów musiał dysponować informacją o~polach dostępnych w~wartości z
 
 Zaimplementowano system typów rafinowanych, w~którym:
 
-\begin{enumerate}
+\begin{itemize}
     \item Każdy token reprezentowany jest jako pole w~typie rafinowanym.
     \item Typ rafinowany udostępnia \verb|type Fields| definiujący \verb|NamedTuple| ze wszystkimi tokenami.
     \item Środowisko IDE ma dostęp do~pełnych informacji typów i~może oferować wsparcie w~postaci autouzupełniania oraz podpowiedzi.
     \item Dostęp do~pola tokena (np.~\verb|c.NUMBER|) jest statycznie typowany i~bezpieczny.
-\end{enumerate}
+\end{itemize}
 
 \begin{figure}[!htbp]
     \centering
@@ -482,11 +482,11 @@ Obliczenia wykonywane na~reprezentacji AST w~makrze generują dodatkowy narzut.
 
 \subsubsection{Rozwiązanie}
 
-\begin{enumerate}
+\begin{itemize}
     \item Zoptymalizowano algorytmy LR(1), zastępując naiwne pętle bardziej efektywnymi strukturami danych (np.~buforami modyfikowalnymi zamiast list).
     \item Wprowadzono buforowanie wyników pośrednich (m.in.\ zbiorów \textit{FIRST}).
     \item Zastosowano leniwą ewaluację --- niektóre stany LR(1) generowane są wyłącznie wtedy, gdy są rzeczywiście osiągalne.
-\end{enumerate}
+\end{itemize}
 
 \subsubsection{Rezultat}
 
@@ -505,12 +505,12 @@ Tradycyjne frameworki testowe (np.~munit, ScalaTest) operują na~kodzie uruchami
 
 \subsubsection{Rozwiązanie}
 
-\begin{enumerate}
+\begin{itemize}
     \item Zdefiniowano testy pozytywne, sprawdzające, czy poprawne dane wejściowe generują kod, który się kompiluje i~działa zgodnie z~oczekiwaniami.
     \item Przygotowano testy negatywne, sprawdzające, czy błędne definicje są odrzucane z~czytelnymi komunikatami błędów.
     \item Zaimplementowano testy wydajnościowe (benchmarki) dla wybranych przypadków (parser wyrażeń arytmetycznych, parser formatu JSON).
     \item Opracowano testy integracyjne typu end-to-end, obejmujące pełen przepływ (lekser + parser).
-\end{enumerate}
+\end{itemize}
 
 Każdy test makra weryfikuje zarówno poprawność kompilacji, jak i~semantykę wygenerowanego kodu.
 
@@ -599,11 +599,11 @@ Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy prioryte
 
 System automatycznie:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Wyprowadza przechodniość}: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
     \item \textbf{Rozwiązuje wszystkie konflikty}: Używając grafu relacji pierwszeństwa
     \item \textbf{Weryfikuje spójność}: Sprawdza czy~nie~ma~cykli w~relacjach
-\end{enumerate}
+\end{itemize}
 
 Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:
 
@@ -684,7 +684,7 @@ w~zbiorze rozwiązań konfliktów (ang. \textit{resolutions}), zapewniając popr
 
 System weryfikowany był na~trzech poziomach złożoności:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Test podstawowy} --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
 
     \item \textbf{Test złożoności średniej} --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
@@ -694,7 +694,7 @@ System weryfikowany był na~trzech poziomach złożoności:
     \item \textbf{Test zaawansowany} --- wyrażenie zawierające funkcje trygonometryczne,
           operatory potęgowania i~dzielenia całkowitego, takie jak~\verb|sin(pi/6) + cos(pi/3) + (2 ** 3 ** 2) / (3 + 1) + ...|,
           demonstrujące prawidłową obsługę złożonych operacji i~funkcji matematycznych.
-\end{enumerate}
+\end{itemize}
 
 Wszystkie testy przechodzą pomyślnie, co~świadczy o~poprawności implementacji leksera, parsera,
 zarządzania priorytetami operatorów oraz~akcji semantycznych w~kontekście wyrażeń o~dużej złożoności strukturalnej.
@@ -720,7 +720,7 @@ zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 
 System weryfikowany był na~czterech poziomach złożoności:
 
-\begin{enumerate}
+\begin{itemize}
     \item \textbf{Test primitywnych wartości} --- proste wyrażenie \verb|true| zwracające wartość logiczną;
 
     \item \textbf{Test struktur zagnieżdżonych} --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
@@ -733,7 +733,7 @@ System weryfikowany był na~czterech poziomach złożoności:
     \item \textbf{Test rzeczywistej złożoności} --- struktura naśladująca rzeczywisty format konfiguracyjny
           (menu z~zagnieżdżonymi polami popup i~listami elementów menu z~akcjami),
           zawierająca trzy poziomy zagnieżdżenia i~mieszaniny obiektów oraz~tablic.
-\end{enumerate}
+\end{itemize}
 
 Wszystkie testy przechodzą pomyślnie, potwierdzając poprawność implementacji leksera w~obsłudze białych znaków i~znaków specjalnych,
 prawidłowość parsowania struktur rekurencyjnych, prawidłową transformację danych przez~akcje semantyczne

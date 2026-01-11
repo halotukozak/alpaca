@@ -103,13 +103,13 @@ Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
 
 Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
 
-\begin{enumerate}
+\begin{itemize}
     \item dla każdego zdefiniowanego tokena tworzony jest symbol pola typu \verb|DefinedToken[Name, Ctx, Value]|.
     \item \verb|Type alias Fields| --- typ pomocniczy w~formie \verb|NamedTuple| ułatwiający strukturalny dostęp do tokenów.
     \item \verb|Pole compiled| --- wartość typu \verb|Regex| zawierająca skompilowane wyrażenie regularne dla wszystkich tokenów.
     \item \verb|Pole tokens| --- lista wszystkich zdefiniowanych tokenów (włączając ignorowane).
     \item \verb|Pole byName| --- czyli mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie.
-\end{enumerate}
+\end{itemize}
 
 \subsubsection{Materializacja klasy}\label{subsubsec:impl-lexer-materialization}
 
@@ -327,12 +327,12 @@ Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w 
 
 \lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:impl-parser-fragment}]{listings/implementation/parser-06-fragment.scala}
 W tym podejściu:
-\begin{itemize}
+\begin{enumerate}
     \item Tworzymy builder mapy jako zmienną lokalną (\verb|Map.newBuilder|)
     \item Każde dodanie wpisu do buildera jest opakowane w osobną metodę \verb|avoidTooLargeMethod()|
     \item Metody te są wywoływane sekwencyjnie jako lista wyrażeń w bloku
     \item Końcowy wynik jest uzyskiwany przez wywołanie \verb|builder.result()|
-\end{itemize}
+\end{enumerate}
 
 Zastosowana technika fragmentacji skutecznie eliminuje problem przekroczenia limitu rozmiaru metody.
 Każda metoda pomocnicza zawiera jedynie kilka instrukcji bajtowych (typowo 5--10 w~zależności od złożoności wpisu tabeli), co~gwarantuje zgodność ze~specyfikacją JVM~\cite{lindholm2014java}.
@@ -360,8 +360,9 @@ Kluczowe aspekty implementacji:
     \item Akcja jest transformowana w funkcję przyjmującą kontekst (\verb|ctx|) oraz listę dzieci w drzewie parsowania (\verb|param|)
     \item Referencje do~kontekstu parsera są zastępowane parametrem funkcji
     \item Wartości z dopasowanych symboli są ekstrahowane z listy dzieci poprzez indeksowanie
-    \item System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 \end{enumerate}
+
+System typów zapewnia, że ekstrakcje są bezpieczne względem typów dzięki informacji z wzorca dopasowania
 
 \subsubsection{Rozwiązywanie konfliktów gramatycznych}\label{subsubsec:impl-gram-conflicts}
 
@@ -394,12 +395,12 @@ Implementacja \verb|ToExpr[ParseTable]| jest szczególnie interesująca, gdyż m
 \lstinputlisting[language=scala,caption={Implementacja ToExpr dla ParseTable},label={lst:impl-parser-toexpr}]{listings/implementation/parser-09-toexpr.scala}
 
 Ta implementacja demonstruje zaawansowane techniki metaprogramowania:
-\begin{itemize}
+\begin{enumerate}
     \item Tworzenie nowych symboli (\verb|Symbol.newVal|) reprezentujących zmienne w generowanym kodzie
     \item Konstrukcja definicji wartości (\verb|ValDef|) z przypisaniem początkowym
     \item Generacja listy wyrażeń manipulujących builderem
     \item Składanie wszystkiego w blok kodu (\verb|Block|) z finalnym wynikiem
-\end{itemize}
+\end{enumerate}
 
 
 \section{Narzędzia pomocnicze}\label{sec:utils}

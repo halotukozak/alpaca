@@ -115,11 +115,11 @@ Kolejne stany konstruowane są~klasycznym schematem \textit{closure}/\textit{got
 
 Dla~elementu zawierającego nieterminal po~kropce (\textit{A}~$\to$~$\alpha$~$\bullet$~\textit{B}~$\beta$~,~\textit{a}), funkcja ~\texttt{closure} realizuje następujące kroki:
 
-\begin{itemize}
+\begin{enumerate}
     \item Oblicza zbiór możliwych prefiksów wejścia: \(FIRST(\beta \, a) = FIRST(\beta)\) bez~$\varepsilon$, a~jeśli~$\varepsilon~\in~FIRST(\beta)$, dodaje także~\textit{a}.
     \item Dla~każdego prefiksu wejścia~\(x\) dodaje elementy \textit{B}~$\to$~$\bullet$~$\gamma$~,~\textit{x} dla~wszystkich produkcji \textit{B}~$\to$~$\gamma$.
     \item Rekurencyjnie domyka nowo dodane elementy, kontynuując proces, dopóki nie~zostaną dodane nowe produkcje (punkt stały domknięcia).
-\end{itemize}
+\end{enumerate}
 
 W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali, które mogą pojawić się~w~tej pozycji.
 
@@ -137,7 +137,7 @@ Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesun
 Konstrukcja automatu LR(1) rozpoczyna się~od~stanu początkowego i~iteracyjnie dodaje nowe stany, dopóki wszystkie możliwe przejścia nie~zostaną odkryte.
 Proces można podzielić na~cztery główne etapy:
 
-\begin{itemize}
+\begin{enumerate}
     \item Domknięcie elementu \texttt{S'~→~•~root,~\$} tworzy stan~0 (stan początkowy automatu).
     \item Dla~każdego stanu zbierane są~symbole, które mogą pojawić się~po~kropce.
           Dla~każdego takiego symbolu obliczany jest stan docelowy za~pomocą funkcji \texttt{goto}.
@@ -146,7 +146,7 @@ Proces można podzielić na~cztery główne etapy:
           Specjalny element \texttt{S'~→~root~•,~\$} generuje akcję \textit{accept} dla~symbolu \texttt{\$}.
     \item Algorytm powtarza powyższe kroki dla~wszystkich wygenerowanych stanów.
           Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
-\end{itemize}
+\end{enumerate}
 
 \lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1)},label={lst:parser-algo-build}]{listings/parser-algo/lr1-build.scala}
 
