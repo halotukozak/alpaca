@@ -53,10 +53,10 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
           Specyfikacja pozostaje zbliżona do~naturalnej formy języka.
-
+    
     \item Pełny zbiór prefiksów wejścia eliminuje konflikty typowe dla~SLR i~LALR wynikające z~nadmiernie szerokich zbiorów \texttt{FOLLOW}.
           W~rezultacie specyfikacja wymaga mniej manualnych deklaracji rozwiązywania konfliktów.
-
+    
     \item Stany LR(1) jawnie wskazują, jaki token był oczekiwany w~danym miejscu.
           Informacja ta umożliwia generowanie precyzyjnych komunikatów błędów składniowych z~kontekstem.
 
@@ -66,6 +66,8 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
           Akcje semantyczne mogą zatem bezpośrednio konstruować węzły drzewa składni abstrakcyjnej.
 
 \end{itemize}
+
+\newpage
 
 \subsection[Koszty i ograniczenia]{Koszty i~ograniczenia}
 \label{subsec:parser-algo-lr1-costs}

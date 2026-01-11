@@ -23,7 +23,9 @@ System udostępnia interfejs języka dziedzinowego (DSL) oparty na dopasowaniu w
 Definicja \verb|LexerDefinition| reprezentuje reguły leksera jako funkcję częściową mapującą wzorce wyrażeń regularnych (jako ciągi znaków) na definicje tokenów.
 Wykorzystanie funkcji częściowej pozwala na naturalne wyrażenie reguł leksykalnych w~idiomatycznej składni Scali.
 
-Metoda \verb|lexer| definiuje główny interfejs systemu:
+\newpage
+
+Metoda \verb|lexer| definiuje główny interfejs systemu.
 
 \lstinputlisting[language=scala,caption={Punkt wejścia: transparent inline def lexer},label={lst:impl-lexer-entry}]{listings/implementation/lexer-02-entrypoint.scala}
 
@@ -45,6 +47,8 @@ Kluczowym krokiem implementacji jest ekstrakcja reguł z~definicji funkcji czę�
 
 Fragment \ref{lst:impl-lexer-cases} wykorzystuje dopasowanie wzorców w~cytatach (ang.~\emph{quotes}) do dekonstrukcji~\cite{scala3-guides-quotes} typowanego AST funkcji częściowej.
 Struktura \verb|Lambda(\_, Match(\_, cases))| odpowiada wewnętrznej reprezentacji funkcji częściowej, gdzie \verb|Match| zawiera listę przypadków \verb|CaseDef|.
+
+\newpage
 
 \subsubsection[Transformacja i adaptacja referencji]{Transformacja i~adaptacja referencji}\label{subsubsec:impl-lexer-refs}
 
@@ -139,6 +143,9 @@ Dostęp do pól tokenów odbywa się poprzez \verb|trait Selectable|.
 Standardowa implementacja tego mechanizmu, opisana w~dokumentacji~\cite{scala3-selectable}, wprowadza narzut związany z~dynamicznym wyborem nazwy pola (refleksja).
 W~prezentowanym rozwiązaniu narzut ten jest eliminowany poprzez precyzyjne typowanie strukturalne.
 Aby mechanizm \verb|Selectable| działał poprawnie ze strukturalnymi typami i~nie wymagał refleksji, klasa generowana przez makro musi implementować \verb|type Fields <: NamedTuple.AnyNamedTuple|\cite{scala3-computed-field-names}.
+
+\newpage
+
 W~naszym podejściu makro generuje definicję \verb|type Fields| zawierającą wszystkie zdefiniowane tokeny i~ich typy, dzięki czemu:
 \begin{itemize}
     \item IDE i~kompilator dysponują informacją o~dostępnych polach i~ich typach (pełne uzupełnianie i~sprawdzanie typów),
@@ -163,7 +170,6 @@ Alternatywne podejście oparte na strukturze mapy wymagałoby:
     \item Potencjalnej obsługi kolizji
     \item Dynamicznego rzutowania typu
 \end{itemize}
-
 co wprowadzałoby znaczący narzut wydajnościowy oraz eliminowało możliwość optymalizacji przez kompilator.
 
 \subsubsection{Bezpieczeństwo typów na poziomie systemu}\label{subsubsec:impl-type-safety}
@@ -245,6 +251,7 @@ Ta strategia jest zgodna z~zasadą fail-fast - lepiej jest wyraźnie odrzucić n
 Implementacja generatora parserów w~systemie~\textit{ALPACA} wykorzystuje mechanizmy metaprogramowania Scali~3\cite{scala3-reference-macros} do~konstrukcji tabel parsowania LR(1) w~czasie kompilacji.
 Podejście to łączy zalety generatorów kodu (wydajność wykonania, statyczna walidacja gramatyki) z~elastycznością bibliotek (integracja z~systemem typów, brak dodatkowego kroku kompilacji).
 
+\newpage
 Realizacja napotkała szereg wyzwań technicznych, z~których najistotniejsze to:
 \begin{itemize}
     \item Konstrukcja tabel LR(1) w~czasie kompilacji z wykorzystaniem makr
@@ -319,7 +326,6 @@ Problem został rozwiązany poprzez zastosowanie techniki \textit{fragmentacji m
 Zamiast generować jeden duży literal mapy, każdy wpis tabeli jest dodawany w osobnej, małej metodzie pomocniczej:
 
 \lstinputlisting[language=scala,caption={Rozwiązanie problemu rozmiaru metod przez fragmentację},label={lst:impl-parser-fragment}]{listings/implementation/parser-06-fragment.scala}
-
 W tym podejściu:
 \begin{itemize}
     \item Tworzymy builder mapy jako zmienną lokalną (\verb|Map.newBuilder|)
