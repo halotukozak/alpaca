@@ -234,14 +234,13 @@ Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawiera
     \item Sugestię rewizji reguł \texttt{before}/\texttt{after}
 \end{itemize}
 
-Przykładowy komunikat:
-\begin{verbatim}
+\begin{lstlisting}[caption={Przykładowy komunikat o konfliktach},label={lst:parser-algo-verify-error}]
 Inconsistent conflict resolution detected:
 Reduction(sub) before Shift(*) before Reduction(sub)
 There are elements being both before and after Reduction(sub)
 at the same time.
 Consider revising the before/after rules to eliminate cycles
-\end{verbatim}
+\end{lstlisting}
 
 Weryfikacja ta~zapewnia, że~wszelkie błędy w~deklaracjach precedencji są~wykrywane na~etapie kompilacji gramatyki, eliminując możliwość nieokreślonego zachowania parsera w~czasie wykonania.
 Jest~to kluczowy element zasady \emph{fail-fast}, która maksymalizuje bezpieczeństwo i~przewidywalność systemu.
