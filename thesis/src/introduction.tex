@@ -22,19 +22,17 @@ Gramatyki bezkontekstowe (CFG) definiują strukturę syntaktyczną języków pro
 Parsery dla CFG dzielą się na dwie główne kategorie: parsery zstępujące rekurencyjnie (ang.~\emph{top-down}), takie jak LL(\(k\))~\cite{lewis1968}, oraz parsery wstępujące rekurencyjnie (ang.~\emph{bottom-up}), takie jak LR(\(k\))~\cite{knuth1965}.
 Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, złożonością implementacji oraz jakością komunikatów błędów.
 
-\newpage
 \section[Teza i pytania badawcze]{Teza i~pytania badawcze}
 \label{sec:intro-thesis}
 
 W~niniejszej pracy przyjęto tezę, zgodnie z~którą wykorzystanie metaprogramowania w~języku Scala~3 (makra kompilacyjne, typy rafinowane) umożliwia konstrukcję systemu generującego analizatory leksykalne i~składniowe charakteryzujących się następującymi właściwościami:
-
 \begin{itemize}
     \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
     \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@.
     \item diagnostyka błędów --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
 \end{itemize}
 
-W~ramach weryfikacji tezy sformułowano następujące pytania badawcze:
+\noindent W~ramach weryfikacji tezy sformułowano następujące pytania badawcze:
 \begin{itemize}
     \item Czy możliwe jest osiągnięcie wydajności zbliżonej do~generatorów kodu przy zachowaniu elastyczności bibliotek kombinatorów poprzez zastosowanie metaprogramowania?
     \item W~jakim stopniu wykorzystanie typów rafinowanych w~Scali~3 wpływa na~bezpieczeństwo typów i~komfort pracy z~wygenerowanym parserem?
@@ -42,7 +40,6 @@ W~ramach weryfikacji tezy sformułowano następujące pytania badawcze:
 \end{itemize}
 
 Celem pracy jest zaprojektowanie i~zaimplementowanie narzędzia \emph{ALPACA} (\emph{Another Lexer Parser And Compiler Alpaca}) w~języku Scala, które implementuje funkcjonalności powszechnie stosowane w~budowie analizatorów leksykalnych i~składniowych, weryfikując postawioną tezę.
-
 
 \section{Motywacja projektu}
 \label{sec:intro-motivation}
@@ -134,7 +131,9 @@ W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakż
 Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
+\begin{minipage}{\linewidth}
 \lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY},label={lst:review-python}]{listings/introduction/intro-02-sly-parser.py}
+\end{minipage}
 
 Komunikaty błędów w~bibliotece \emph{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:review-sly-err}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:review-sly-out}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.
@@ -182,11 +181,13 @@ Niewielki fragment (14 z~133~linii) błędu wygenerowanego przez bibliotekę \em
 \emph{FastParse}~\cite{fastparse-docs} to opracowana przez Li~Haoyi wysokowydajna biblioteka kombinatorów parserów dla Scali, zaprojektowana w~celu uproszczenia tworzenia parserów tekstu strukturalnego.
 Umożliwia ona programistom definiowanie parserów rekurencyjnych, dzięki czemu nadaje się do parsowania języków programowania, formatów danych, takich jak JSON, czy DSL-i.
 Cechą charakterystyczną FastParse jest równowaga między użytecznością a~wydajnością.
+
 Parsery są konstruowane poprzez łączenie mniejszych parserów za pomocą operatorów, takich jak~\verb&~& dla sekwencjonowania i~\verb&|& dla alternatyw, przy jednoczesnym zachowaniu czytelności zbliżonej do formalnych definicji gramatyki.
 Według dokumentacji~\cite{fastparse-docs}, parsery \emph{Fastparse} zajmują 1/10 kodu w~porównaniu do ręcznie napisanego parsera rekurencyjnego.
 W~porównaniu do narzędzi generujących parsery, takich jak \emph{ANTLR} lub \emph{Lex} i~\emph{Yacc}, implementacja nie wymaga żadnego specjalnego kroku kompilacji lub generowania kodu.
 To sprawia, że rozpoczęcie pracy z~\emph{Fastparse} jest znacznie łatwiejsze niż w~przypadku bardziej tradycyjnych narzędzi do generowania parserów.
 Przykładowo, parser wyrażeń arytmetycznych może być zwięźle napisany, aby obsługiwać zagnieżdżone nawiasy, pierwszeństwo operatorów i~raportowanie błędów w~mniej niż 20~liniach kodu~\cite{fastparse-slides}.
+
 Biblioteka kładzie również nacisk na debugowanie, generując szczegółowe komunikaty o~błędach, które wskazują dokładną lokalizację i~przyczynę niepowodzeń parsowania, takich jak niedopasowane nawiasy lub nieprawidłowe tokeny.
 
 \subsection{Analiza porównawcza}

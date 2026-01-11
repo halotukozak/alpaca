@@ -48,7 +48,7 @@ W~parserach LR konflikty często biorą się~ze~zbliżonych prefiksów wielu pro
 System ALPACA generuje parsery klasy LR(1)---deterministyczne analizatory wykorzystujące pełny jednoelementowy zbiór prefiksów wejścia oraz kanoniczne stany LR\@.
 Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji, złożonych struktur składniowych) z~przewidywalnym zachowaniem i~stabilną wydajnością parsowania.
 
-\subsection[Zalety podejścia LR(1)]{Zalety podejścia LR(1)}\label{subsec:parser-algo-lr1-pros}
+Zalety podejścia LR(1):
 
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
@@ -67,18 +67,12 @@ Wybór ten łączy wysoką moc wyrazu gramatyk (obsługa lewostronnej rekurencji
 
 \end{itemize}
 
-\newpage
-
-\subsection[Koszty i ograniczenia]{Koszty i~ograniczenia}
-\label{subsec:parser-algo-lr1-costs}
+Koszty i ograniczenia
 
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
-
     \item Obliczanie zbiorów domknięcia (ang.~\emph{closure}) i~przejść (ang.~\emph{goto}) dla~LR(1) wymaga więcej obliczeń niż~w~uproszczonych wariantach, wpływając na~czas kompilacji oraz rozmiar generatora~\cite{szeruda2023parsers}.
-
     \item Parser jest deterministyczny na~poziomie składniowym, lecz~wciąż muszą zostać rozwiązane niejednoznaczności (np.~\emph{dangling else}]) poprzez jawne reguły precedencji operatorów.
-
     \item Choć klasa jest szeroka, nadal istnieją konstrukcje wymagające przekształceń w~celu dopasowania do~ograniczeń LR(1).
 \end{itemize}
 

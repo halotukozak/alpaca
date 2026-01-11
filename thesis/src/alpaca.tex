@@ -19,6 +19,10 @@
 \usepackage{array}
 \usepackage[table]{xcolor}
 
+\usepackage{enumitem}
+\setlist[itemize]{itemsep=0.2em, parsep=0pt,topsep=0.5em}
+\setlist[enumerate]{itemsep=0.2em, parsep=0pt,topsep=0.5em}
+
 \hypersetup{colorlinks,
     linkcolor=blue,
     citecolor=blue,
@@ -96,8 +100,8 @@
     tabsize=2,
     rulecolor=\color{black!30},
     title=\lstname,
-    breaklines=true,
-    breakatwhitespace=true,
+    breaklines=false,
+    breakatwhitespace=false,
     framextopmargin=2pt,
     framexbottommargin=2pt,
     extendedchars=false,
@@ -109,7 +113,7 @@
     showspaces=false,
     showstringspaces=false,
     showtabs=false,
-    tabsize=2
+    tabsize=2,
 }
 
 \SetAlgorithmName{\LangAlgorithm}{\LangAlgorithmRef}{\LangListOfAlgorithms}

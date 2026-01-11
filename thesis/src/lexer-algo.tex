@@ -55,23 +55,19 @@ Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce opera
 
 \subsection{Zalety podejścia opartego na wyrażeniach regularnych}
 \label{subsec:lexer-algo-pros}
-\begin{itemize}
-    \item Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
-    \item Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
-    \item Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
-          ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
-    \item Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
-\end{itemize}
+Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
+Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
+Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
+ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
+Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
 
 \subsection{Wady i ograniczenia}
 \label{subsec:lexer-algo-cons}
 
-\begin{itemize}
-    \item Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
-    \item Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
-          W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
-          Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
-\end{itemize}
+Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
+Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
+W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
+Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
 
 \subsection{Decyzja}
 \label{subsec:lexer-algo-choice}
@@ -130,7 +126,7 @@ Mechanizm ten wykrywa dwa klasy problemów wynikających z~decyzji implementacyj
 Niech $P = \{p_1, p_2, \ldots, p_n\}$ będzie uporządkowaną sekwencją wzorców tokenów, gdzie~$p_i$ poprzedza~$p_j$ dla~$i < j$.
 Niech~$L(p)$ oznacza język regularny akceptowany przez wzorzec~$p$.
 
-\paragraph{Subsumpcja}
+\subsubsection{Subsumpcja}
 Wzorzec~$p_j$ jest subsumowany przez~$p_i$ (gdzie~$i < j$), gdy:
 $$L(p_j) \subseteq L(p_i)$$
 
@@ -140,7 +136,7 @@ Jest to analogiczne do~\enquote{martwego kodu} w~programowaniu.
 \textbf{Przykład:} jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~$L(\text{KEYWORD}) \subseteq L(\text{ID})$, ponieważ słowa \texttt{if} i~\texttt{then} są również akceptowane przez~\texttt{[a-z]+}.
 W~rezultacie token \texttt{KEYWORD} nigdy nie~zostanie rozpoznany.
 
-\paragraph{Pokrycie prefiksów}
+\subsubsection{Pokrycie prefiksów}
 Wzorzec~$p_i$ pokrywa prefiksy wzorca~$p_j$ (gdzie~$i < j$), gdy istnieje słowo~$w \in L(p_j)$ takie, że:
 $$\exists u, v \in \Sigma^* : w = uv \land u \in L(p_i)$$
 
