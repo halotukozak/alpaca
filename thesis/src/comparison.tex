@@ -29,12 +29,12 @@ Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architektu
 Wszystkie testy zostały przeprowadzone w~kontrolowanym środowisku o~następujących parametrach:
 
 \begin{itemize}
-    \item \textbf{Procesor:} Apple M4 Pro, 14 rdzeni
-    \item \textbf{Pamięć RAM:} 48 GB
-    \item \textbf{System operacyjny:} macOS Sequoia 15.6
-    \item \textbf{JVM:} OpenJDK 21.0.8
-    \item \textbf{Python:} 3.13.5
-    \item \textbf{Scala:} 3.8.0-RC1
+    \item Procesor: Apple M4 Pro, 14 rdzeni
+    \item Pamięć RAM: 48 GB
+    \item System operacyjny: macOS Sequoia 15.6
+    \item JVM: OpenJDK 21.0.8
+    \item Python: 3.13.5
+    \item Scala: 3.8.0-RC1
 \end{itemize}
 
 Przed każdym pomiarem wykonywano fazę rozgrzewki (ang.~\emph{warmup}) składającą się z~trzech iteracji, co~pozwalało na~optymalizację kodu przez kompilator JIT~\cite{lindholm2014java} oraz stabilizację pamięci podręcznej procesora.
@@ -243,25 +243,18 @@ Optymalizacja mechanizmu ignorowania znaków stanowi kierunek przyszłych prac o
 
 \subsubsection{Faza parsowania}
 
-Faza parsowania systemu~\emph{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę SLY dla wszystkich testowanych scenariuszy.
-Różnica ta wynika z~różnic architektonicznych:
-
-\begin{itemize}
-    \item \textbf{ALPACA} wykorzystuje tabele parsowania LR(1) generowane w~czasie kompilacji, co~eliminuje narzut interpretacji w~czasie wykonania,
-    \item \textbf{SLY} interpretuje reguły gramatyczne w~czasie wykonania z~wykorzystaniem refleksji Pythona, co~wprowadza znaczący narzut.
-\end{itemize}
+Faza parsowania systemu~\emph{ALPACA} wykazuje stabilną wydajność, znacząco przewyższającą bibliotekę \emph{SLY} dla wszystkich testowanych scenariuszy.
+Różnica ta wynika z~różnic architektonicznych.
+System~\emph{ALPACA} wykorzystuje tabele parsowania LR(1) generowane w~czasie kompilacji, co~eliminuje narzut interpretacji w~czasie wykonania.
+Z~kolei biblioteka~\emph{SLY} interpretuje reguły gramatyczne w~czasie wykonania z~wykorzystaniem refleksji Pythona, co~wprowadza znaczący narzut.
 
 \subsection{Zachowanie przy głębokim zagnieżdżeniu}
 \label{subsec:comp-nesting}
 
-Testy z~danymi rekurencyjnymi ujawniły istotne różnice w~obsłudze głęboko zagnieżdżonych struktur:
-
-\begin{itemize}
-    \item \textbf{FastParse} --- przepełnienie stosu dla głębokości zagnieżdżenia przekraczającej 1000--2000~poziomów, co~jest konsekwencją rekursywnej natury kombinatorów parserów,
-    \item \textbf{ALPACA} --- stabilne działanie parsera niezależnie od~głębokości zagnieżdżenia dzięki wykorzystaniu automatu ze~stosem zamiast rekurencji,
-    \item \textbf{SLY} --- stabilne działanie dla wszystkich testowanych głębokości, analogicznie do~ALPACA\@.
-\end{itemize}
-
+Testy z~danymi rekurencyjnymi ujawniły istotne różnice w~obsłudze głęboko zagnieżdżonych struktur.
+Biblioteka \emph{FastParse} wykazuje przepełnienie stosu dla głębokości zagnieżdżenia przekraczającej 1000--2000~poziomów, co~jest konsekwencją rekursywnej natury kombinatorów parserów.
+System \emph{ALPACA} charakteryzuje się stabilnym działaniem parsera niezależnie od~głębokości zagnieżdżenia dzięki wykorzystaniu automatu ze~stosem zamiast rekurencji.
+Biblioteka \emph{SLY} również wykazuje stabilne działanie dla wszystkich testowanych głębokości, analogicznie do~systemu \emph{ALPACA}.
 Obserwacja ta potwierdza przewagę parserów LR nad kombinatorami parserów w~scenariuszach wymagających obsługi głęboko zagnieżdżonych struktur.
 
 \subsection{Wnioski}

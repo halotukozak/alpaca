@@ -8,7 +8,7 @@ Szczególny nacisk położono na charakterystykę procesu wytwórczego, narzędz
 \section[Charakterystyka projektu]{Charakterystyka projektu i~sposób realizacji}
 \label{sec:org-project}
 
-Projekt \emph{ALPACA} ma charakter \textbf{badawczo-rozwojowy} i~łączy elementy badań teoretycznych z~praktyczną implementacją.
+Projekt \emph{ALPACA} ma charakter badawczo-rozwojowy i~łączy elementy badań teoretycznych z~praktyczną implementacją.
 Podstawowe wymaganie projektu, polegające na implementacji narzędzia umożliwiającego generowanie analizatorów leksykalnych i~składniowych w~fazie kompilacji przy pełnym wsparciu środowiska IDE, zostało jedynie częściowo sprecyzowane na etapie początkowym.
 W~dalszych etapach realizacji specyfikacja była doprecyzowywana w~sposób iteracyjny, na~podstawie wyników eksperymentów oraz analizy ograniczeń technicznych.
 
@@ -24,9 +24,9 @@ W~drugim semestrze zrealizowano fazę wdrożeniowo-optymalizacyjną, skoncentrow
 
 Projekt realizowany był przez zespół dwóch osób o~jasno zdefiniowanych rolach.
 
-\paragraph[Bartosz Buczek (dalej: BB)]{Bartosz~Buczek (dalej: BB)} był odpowiedzialny przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
+\textbf{Bartosz~Buczek (dalej: BB)} był odpowiedzialny przede wszystkim za implementację algorytmów analizy leksykalnej i~składniowej, opracowanie mechanizmu rozwiązywania konfliktów gramatycznych oraz przygotowanie testów wydajnościowych.
 
-\paragraph[Bartłomiej Kozak (dalej: BK)]{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \emph{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
+\textbf{Bartłomiej~Kozak (dalej: BK)} odpowiadał za implementację języka dziedzinowego (DSL) systemu \emph{ALPACA} z~wykorzystaniem metaprogramowania w~Scali~3, generację tabel parsowania w~fazie kompilacji, projektowanie zaawansowanych mechanizmów systemu typów oraz opracowanie dokumentacji.
 
 \subsection{Podział prac na główne zadania}
 \label{subsec:org-tasks}
@@ -46,8 +46,7 @@ Zakres:
     \item Obsługa kontekstu w~lekserze.\ (BB, BK)
     \item Diagnostyka błędów leksykalnych.\ (BB, BK)
 \end{itemize}
-
-\textbf{Artefakty:}
+Artefakty:
 
 \begin{itemize}
     \item Moduł \verb|alpaca.lexer|
@@ -56,8 +55,7 @@ Zakres:
 \end{itemize}
 
 \subsubsection{System parserów}
-
-\textbf{Zakres:}
+Zakres:
 
 \begin{itemize}
     \item Implementacja algorytmów konstrukcji stanów LR(1) w~fazie kompilacji.\ (BB, BK)
@@ -68,8 +66,7 @@ Zakres:
     \item Obsługa kontekstu w~parserze.\ (BB, BK)
     \item Diagnostyka błędów składniowych.\ (BB, BK)
 \end{itemize}
-
-\textbf{Artefakty:}
+Artefakty:
 
 \begin{itemize}
     \item Moduł \texttt{alpaca.parser}
@@ -79,7 +76,7 @@ Zakres:
 
 \subsubsection[Infrastruktura i narzędzia pomocnicze]{Infrastruktura i~narzędzia pomocnicze}
 
-\textbf{Zakres:}
+Zakres:
 
 \begin{itemize}
     \item Implementacja pomocniczych klas i~makr, m.in.\ \verb|Empty[T]|, \verb|ReplaceRefs|, \verb|CreateLambda|, \verb|Copyable[T]|.\ (BK)
@@ -90,7 +87,7 @@ Zakres:
 
 \subsubsection{Dokumentacja pracy dyplomowej}
 
-\textbf{Zakres:}
+Zakres:
 
 \begin{itemize}
     \item \nameref{ch:intro}.\ (BB, BK)
@@ -128,13 +125,10 @@ Prace prowadzono z~wykorzystaniem systemu kontroli wersji Git.
 
 \subsubsection{Kanały komunikacji}
 
-Komunikacja zespołu opierała się na~kilku komplementarnych kanałach:
-
-\begin{itemize}
-    \item \textbf{GitHub Issues i~Pull Requests} --- główne narzędzie do~dyskusji nad kodem, proponowania zmian oraz rejestrowania błędów.
-    \item \textbf{Signal} --- kanał komunikacji tekstowej dla szybkich pytań oraz wymiany odnośników i~materiałów.
-    \item \textbf{Spotkania osobiste} --- wykorzystywane przede wszystkim do~omówień strategicznych i~podejmowania decyzji architektonicznych.
-\end{itemize}
+Komunikacja zespołu opierała się na~kilku komplementarnych kanałach.
+Głównym narzędziem do~dyskusji nad kodem, proponowania zmian oraz rejestrowania błędów były GitHub Issues i~Pull Requests.
+Signal służył jako kanał komunikacji tekstowej dla szybkich pytań oraz wymiany odnośników i~materiałów.
+Spotkania osobiste wykorzystywano przede wszystkim do~omówień strategicznych i~podejmowania decyzji architektonicznych.
 
 \subsubsection{Ustalanie kamieni milowych}
 
@@ -193,7 +187,7 @@ Dodatkowo projekt kompiluje się bez ostrzeżeń przy włączonych zaostrzonych 
 
 \subsubsection{Testowanie}
 
-Wykorzystano framework testowy \textbf{ScalaTest}, który umożliwił przygotowanie testów jednostkowych dla modułów leksera i~parsera, a~także testów integracyjnych dla pełnych przykładów (parser wyrażeń arytmetycznych, parser uproszczonego formatu JSON). Testy uruchamiano poleceniem \verb|mill test|.
+Wykorzystano framework testowy \emph{ScalaTest}, który umożliwił przygotowanie testów jednostkowych dla modułów leksera i~parsera, a~także testów integracyjnych dla pełnych przykładów (parser wyrażeń arytmetycznych, parser uproszczonego formatu JSON). Testy uruchamiano poleceniem \verb|mill test|.
 Pokrycie testami obejmuje główne ścieżki wykonania i~przypadki brzegowe.
 
 Testowanie systemów opartych na~makrach kompilacyjnych stanowi szczególne wyzwanie, ponieważ makra wykonywane są w~fazie kompilacji, a~błędy mogą ujawniać się dopiero na~poziomie wygenerowanego kodu.
@@ -363,9 +357,9 @@ Realizacja projektu ALPACA wymagała znaczącego zaangażowania zespołu przez o
 Skala pracy oraz złożoność napotkanych wyzwań technicznych znajdują odzwierciedlenie w poniższych wskaźnikach:
 
 \begin{itemize}
-    \item \textbf{Historię rozwoju reprezentuje} łącznie \textbf{450 commitów} zintegrowanych w głównej gałęzi projektu, dokumentujących iteracyjny proces implementacji oraz poprawiania systemu.
-    \item \textbf{Struktura zmian kodowych} obejmuje około \textbf{80 Pull Requestów}, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
-    \item \textbf{Rozmiar implementacji} wynosi około \textbf{4000 linii kodu implementacyjnego} (bez uwzględnienia testów) oraz około \textbf{2000 linii kodów testowych}.
+    \item Historia rozwoju reprezentuje łącznie 450 commitów zintegrowanych w głównej gałęzi projektu, dokumentujących iteracyjny proces implementacji oraz poprawiania systemu.
+    \item Struktura zmian kodowych obejmuje około 80 Pull Requestów, z których każdy zawierał recenzję i testy weryfikujące poprawność dodawanych funkcjonalności.
+    \item Rozmiar implementacji wynosi około 4000 linii kodu implementacyjnego (bez uwzględnienia testów) oraz około 2000 linii kodów testowych.
 \end{itemize}
 
 Rozkład pracy w~czasie pokazany na rysunku~\ref{fig:org-commits} ilustruje dynamikę zespołu, wskazując na stały postęp oraz okresy intensywnej pracy nad rozwiązywaniem kluczowych wyzwań technicznych.
@@ -600,9 +594,9 @@ Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy prioryte
 System automatycznie:
 
 \begin{itemize}
-    \item \textbf{Wyprowadza przechodniość}: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
-    \item \textbf{Rozwiązuje wszystkie konflikty}: Używając grafu relacji pierwszeństwa
-    \item \textbf{Weryfikuje spójność}: Sprawdza czy~nie~ma~cykli w~relacjach
+    \item Wyprowadza przechodniość: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
+    \item Rozwiązuje wszystkie konflikty: Używając grafu relacji pierwszeństwa
+    \item Weryfikuje spójność: Sprawdza czy~nie~ma~cykli w~relacjach
 \end{itemize}
 
 Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:

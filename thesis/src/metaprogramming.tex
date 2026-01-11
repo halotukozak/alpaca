@@ -113,30 +113,20 @@ System metaprogramowania Scali~3 czerpie inspiracje z~innych języków, ale wpro
 
 \subsection[Makra w Lisp i Scheme]{Makra w~Lisp i~Scheme}\label{subsec:meta-lisp}
 Język Lisp~\cite{mccarthy1960lisp} był pionierem w~dziedzinie metaprogramowania, wprowadzając koncepcję makr jako transformacji list reprezentujących kod.
-Kluczową różnicą między makrami Lisp a~Scali~3 jest:
-
-\begin{itemize}
-    \item \textbf{Lisp:} makra operują na nietypowanych listach (\emph{S-expressions}), co umożliwia dużą elastyczność, ale eliminuje sprawdzanie typów w~czasie kompilacji
-    \item \textbf{Scala~3:} makra operują na typowanych drzewach składni (TASTy), zapewniając pełne bezpieczeństwo typów
-\end{itemize}
+Kluczową różnicą między makrami Lisp a~Scali~3 jest sposób reprezentacji kodu.
+Makra w~Lisp operują na nietypowanych listach (\emph{S-expressions}), co umożliwia dużą elastyczność, ale eliminuje sprawdzanie typów w~czasie kompilacji.
+Z~kolei makra w~Scali~3 operują na typowanych drzewach składni (TASTy), zapewniając pełne bezpieczeństwo typów.
 
 \subsection{Template Haskell}\label{subsec:meta-haskell}
 Template Haskell~\cite{sheard2002template} wprowadza programowanie wieloetapowe do~języka Haskell poprzez cytaty i~wstawki, podobnie jak Scala~3.
-Główne podobieństwa i~różnice:
-
-\begin{itemize}
-    \item \textbf{Podobieństwa:} obie implementacje wykorzystują cytaty (\verb|[| ... |]| w~Haskell, \verb|'{ ... }| w~Scali) oraz wstawki (\verb|$(...)| w~Haskell, \verb|${...}| w~Scali)
-    \item \textbf{Różnice:} Template Haskell wymaga specjalnego trybu kompilacji (\verb|-XTemplateHaskell|), podczas gdy makra Scali~3 są standardową częścią języka; Scala~3 oferuje bogatsze API refleksji (TASTy)
-\end{itemize}
+Obie implementacje wykorzystują cytaty (\verb|[ ... ]| w~Haskell, \verb|'{ ... }| w~Scali) oraz wstawki (\verb|$(...)| w~Haskell, \verb|${...}| w~Scali).
+Główna różnica polega na~tym, że Template Haskell wymaga specjalnego trybu kompilacji (\verb|-XTemplateHaskell|), podczas gdy makra Scali~3 są standardową częścią języka.
+Dodatkowo Scala~3 oferuje bogatsze API refleksji (TASTy).
 
 \subsection[Makra w Rust]{Makra w~Rust}\label{subsec:meta-rust}
 Język Rust oferuje dwa systemy makr: makra deklaratywne (\verb|macro\_rules!|) oraz makra proceduralne~\cite{rust-macros,klabnik2018rust}.
-W~porównaniu do~Scali~3:
-
-\begin{itemize}
-    \item \textbf{Rust:} makra proceduralne operują na~tokenach (ang.~\emph{token stream}), co daje dużą kontrolę, ale utrudnia analizę semantyczną
-    \item \textbf{Scala~3:} makra operują na~typowanych AST, co umożliwia analizę semantyczną i~sprawdzanie typów wygenerowanego kodu
-\end{itemize}
+W~porównaniu do~Scali~3, makra proceduralne w~Rust operują na~tokenach (ang.~\emph{token stream}), co daje dużą kontrolę, ale utrudnia analizę semantyczną.
+Z~kolei makra w~Scali~3 operują na~typowanych AST, co umożliwia analizę semantyczną i~sprawdzanie typów wygenerowanego kodu.
 
 
 \section[Zastosowania metaprogramowania w projekcie]{Zastosowania metaprogramowania w~projekcie}\label{sec:meta-alpaca}
@@ -145,13 +135,13 @@ System metaprogramowania Scali~3 stanowi fundament implementacji projektu \emph{
 Kluczowe zastosowania obejmują:
 
 \begin{itemize}
-    \item \textbf{Generacja klas anonimowych} (sekcja~\ref{subsec:impl-lexer-anon-class}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
+    \item Generacja klas anonimowych (sekcja~\ref{subsec:impl-lexer-anon-class}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
 
-    \item \textbf{Transformacja AST} (sekcja~\ref{subsubsec:impl-lexer-refs}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
+    \item Transformacja AST (sekcja~\ref{subsubsec:impl-lexer-refs}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
 
-    \item \textbf{Typy rafinowane} (sekcja~\ref{subsec:impl-lexer-refinement}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
+    \item Typy rafinowane (sekcja~\ref{subsec:impl-lexer-refinement}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
 
-    \item \textbf{Walidacja w~czasie kompilacji} (sekcja~\ref{subsec:impl-errors}) --- wykrywanie błędów gramatyki przed wykonaniem programu
+    \item Walidacja w~czasie kompilacji (sekcja~\ref{subsec:impl-errors}) --- wykrywanie błędów gramatyki przed wykonaniem programu
 \end{itemize}
 
 Szczegółowa analiza implementacji tych mechanizmów zostanie przedstawiona w~rozdziale~\ref{ch:impl}.

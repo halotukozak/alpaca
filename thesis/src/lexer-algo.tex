@@ -156,20 +156,16 @@ Algorytm walidacji wykorzystuje bibliotekę \texttt{dregex}~\cite{dregex}, któr
 Algorytm przebiega w~następujących krokach:
 
 \begin{enumerate}
-    \item \textbf{Rozszerzenie wzorców o~sufiksowe dopełnienie}:
-          Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
+    \item Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
           Wzorzec~$p'$ pokrywa prefiksy~$p$ wtedy i~tylko wtedy, gdy~$L(p) \subseteq L(p' \cdot \Sigma^*)$.
 
-    \item \textbf{Kompilacja wzorców}:
-          Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
+    \item Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
 
-    \item \textbf{Weryfikacja par wzorców}:
-          Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
+    \item Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
           $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
           co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
 
-    \item \textbf{Generacja komunikatów diagnostycznych}:
-          Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
+    \item Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
           \begin{verbatim}
 Pattern <p_j> is shadowed by <p_i>
     \end{verbatim}
