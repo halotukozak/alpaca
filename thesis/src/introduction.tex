@@ -27,8 +27,8 @@ Wybór klasy parsera determinuje kompromisy między mocą wyrazu gramatyki, zło
 
 W~niniejszej pracy przyjęto tezę, zgodnie z~którą wykorzystanie metaprogramowania w~języku Scala~3 (makra kompilacyjne, typy rafinowane) umożliwia konstrukcję systemu generującego analizatory leksykalne i~składniowe charakteryzujących się następującymi właściwościami:
 \begin{itemize}
-    \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY).
-    \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@.
+    \item wydajność --- czas parsowania porównywalny z~narzędziami opartymi na generacji kodu (ANTLR, Yacc), przewyższający biblioteki interpretowane (PLY, SLY),
+    \item użyteczność --- interfejs programistyczny (API) niezależny od dedykowanego DSL, zintegrowany z~systemem typów Scali i~wspierany przez standardowe narzędzia IDE\@,
     \item diagnostyka błędów --- komunikaty błędów generowane w~czasie kompilacji (dla błędów gramatyki) oraz w~czasie parsowania (dla błędów składniowych), zawierające kontekst syntaktyczny.
 \end{itemize}
 

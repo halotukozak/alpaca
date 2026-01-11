@@ -24,9 +24,9 @@ Wstawki, oznaczane jako \verb|${...}|, pozwalają na ocenę wyrażenia generują
 
 W~przykładzie \ref{lst:meta-quotes}:
 \begin{itemize}
-    \item \verb|'x| tworzy cytat (ang.~\emph{quote}) z~wyrażenia \verb|x|, opóźniając jego wykonanie
-    \item \verb|'{...}| tworzy blok kodu jako dane, które będzie wstawione w~miejscu wywołania makra
-    \item \verb|$x| wstawia (ang.~\emph{splice}) wartość cytatu do~nowego kontekstu
+    \item \verb|'x| tworzy cytat (ang.~\emph{quote}) z~wyrażenia \verb|x|, opóźniając jego wykonanie,
+    \item \verb|'{...}| tworzy blok kodu jako dane, które będzie wstawione w~miejscu wywołania makra,
+    \item \verb|$x| wstawia (ang.~\emph{splice}) wartość cytatu do~nowego kontekstu.
 \end{itemize}
 
 Formalna semantyka tych konstrukcji została przedstawiona w~pracy Stuckiego, Brachthäusera i~Odersky'ego~\cite{stucki2021multistage}, gdzie cytaty i~wstawki są traktowane jako prymitywne formy w~typowanych drzewach składniowych (ang.~\emph{typed abstract syntax trees}).
@@ -133,13 +133,13 @@ System metaprogramowania Scali~3 stanowi fundament implementacji projektu \emph{
 Kluczowe zastosowania obejmują:
 
 \begin{itemize}
-    \item Generacja klas anonimowych (sekcja~\ref{subsec:impl-lexer-anon-class}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji
+    \item generację klas anonimowych (sekcja~\ref{subsec:impl-lexer-anon-class}) --- wykorzystanie \verb|Symbol.newClass| do~programatycznego tworzenia typów w~czasie kompilacji,
 
-    \item Transformacja AST (sekcja~\ref{subsubsec:impl-lexer-refs}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|
+    \item transformację AST (sekcja~\ref{subsubsec:impl-lexer-refs}) --- przepisywanie właścicieli symboli (\emph{re-owning}) poprzez \verb|ReplaceRefs|,
 
-    \item Typy rafinowane (sekcja~\ref{subsec:impl-lexer-refinement}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|
+    \item typy rafinowane (sekcja~\ref{subsec:impl-lexer-refinement}) --- dynamiczne rozszerzanie typów o~pola strukturalne poprzez \verb|Refinement|,
 
-    \item Walidacja w~czasie kompilacji (sekcja~\ref{subsec:impl-errors}) --- wykrywanie błędów gramatyki przed wykonaniem programu
+    \item walidację w~czasie kompilacji (sekcja~\ref{subsec:impl-errors}) --- wykrywanie błędów gramatyki przed wykonaniem programu.
 \end{itemize}
 
 Szczegółowa analiza implementacji tych mechanizmów zostanie przedstawiona w~rozdziale~\ref{ch:impl}.
@@ -150,13 +150,13 @@ Rozdział przedstawił system metaprogramowania Scali~3 jako fundament teoretycz
 Kluczowe wnioski:
 
 \begin{itemize}
-    \item System cytatów i~wstawek (ang.~\emph{quotes and splices}) umożliwia bezpieczne przenoszenie kodu między fazami kompilacji
+    \item System cytatów i~wstawek (ang.~\emph{quotes and splices}) umożliwia bezpieczne przenoszenie kodu między fazami kompilacji.
 
-    \item Bezpieczeństwo międzyetapowe (ang.~\emph{cross-stage safety}) zapobiega błędom związanym z~dostępem do~zmiennych z~niewłaściwych faz
+    \item Bezpieczeństwo międzyetapowe (ang.~\emph{cross-stage safety}) zapobiega błędom związanym z~dostępem do~zmiennych z~niewłaściwych faz.
 
-    \item Refleksja TASTy dostarcza bogatego API do~analizy i~transformacji kodu w~czasie kompilacji
+    \item Refleksja TASTy dostarcza bogatego API do~analizy i~transformacji kodu w~czasie kompilacji.
 
-    \item Scala~3 łączy zalety systemów metaprogramowania z~Lisp, Template Haskell i~Rust, wprowadzając własne innowacje w~zakresie bezpieczeństwa typów
+    \item Scala~3 łączy zalety systemów metaprogramowania z~Lisp, Template Haskell i~Rust, wprowadzając własne innowacje w~zakresie bezpieczeństwa typów.
 \end{itemize}
 
 Mechanizmy te stanowią podstawę implementacji opisanej w~rozdziale~\ref{ch:impl}, gdzie zostaną zastosowane do~konstrukcji lekserów i~parserów w~czasie kompilacji.

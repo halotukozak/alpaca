@@ -441,10 +441,10 @@ System typów musiał dysponować informacją o~polach dostępnych w~wartości z
 Zaimplementowano system typów rafinowanych, w~którym:
 
 \begin{itemize}
-    \item Każdy token reprezentowany jest jako pole w~typie rafinowanym.
-    \item Typ rafinowany udostępnia \verb|type Fields| definiujący \verb|NamedTuple| ze wszystkimi tokenami.
-    \item Środowisko IDE ma dostęp do~pełnych informacji typów i~może oferować wsparcie w~postaci autouzupełniania oraz podpowiedzi.
-    \item Dostęp do~pola tokena (np.~\verb|c.NUMBER|) jest statycznie typowany i~bezpieczny.
+    \item każdy token reprezentowany jest jako pole w~typie rafinowanym,
+    \item typ rafinowany udostępnia \verb|type Fields| definiujący \verb|NamedTuple| ze wszystkimi tokenami,
+    \item środowisko IDE ma dostęp do~pełnych informacji typów i~może oferować wsparcie w~postaci autouzupełniania oraz podpowiedzi,
+    \item dostęp do~pola tokena (np.~\verb|c.NUMBER|) jest statycznie typowany i~bezpieczny.
 \end{itemize}
 
 \begin{figure}[!htbp]
@@ -528,8 +528,8 @@ Biblioteczne wyrażenia regularne determinują, że~tokenizacja przebiega sekwen
 Trudność w~diagnozowaniu tego typu błędów wynika z~następujących czynników:
 
 \begin{itemize}
-    \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera;
-    \item Błędy ujawniają się~dopiero w~fazie parsowania konkretnego wejścia;
+    \item Błąd nie~jest~sygnalizowany w~fazie kompilacji leksera.
+    \item Błędy ujawniają się~dopiero w~fazie parsowania konkretnego wejścia.
     \item Komunikat diagnostyczny wskazuje na parser (\enquote{nieoczekiwany symbol}), a~nie~lekser, utrudniając identyfikację pierwotnej przyczyny.
 \end{itemize}
 
@@ -590,9 +590,9 @@ Notacja \texttt{X before Y} oznacza, że~operator \texttt{X} ma~wyższy prioryte
 System automatycznie:
 
 \begin{itemize}
-    \item Wyprowadza przechodniość: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|
-    \item Rozwiązuje wszystkie konflikty: Używając grafu relacji pierwszeństwa
-    \item Weryfikuje spójność: Sprawdza czy~nie~ma~cykli w~relacjach
+    \item wyprowadza przechodniość: Skoro \verb|pow| przed \verb|mul| i~\verb|mul| przed \verb|add|, to~\verb|pow| przed \verb|add|,
+    \item rozwiązuje wszystkie konflikty: Używając grafu relacji pierwszeństwa,
+    \item weryfikuje spójność: Sprawdza czy~nie~ma~cykli w~relacjach.
 \end{itemize}
 
 Jeśli~podczas przetwarzania zdefiniowanych reguł system wykryje cykl (np.~$A \prec B \prec C \prec A$), wyświetlana jest diagnostyka:
@@ -683,13 +683,13 @@ w~zbiorze rozwiązań konfliktów (ang. \emph{resolutions}), zapewniając popraw
 System weryfikowany był na~trzech poziomach złożoności:
 
 \begin{itemize}
-    \item \textbf{Test podstawowy} --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
+    \item Test podstawowy --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
 
-    \item \textbf{Test złożoności średniej} --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
+    \item Test złożoności średniej --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
           takie jak~wyrażenie \verb|((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)...|,
           potwierdzające poprawną ewaluację zagnieżdżonych wyrażeń;
 
-    \item \textbf{Test zaawansowany} --- wyrażenie zawierające funkcje trygonometryczne,
+    \item Test zaawansowany --- wyrażenie zawierające funkcje trygonometryczne,
           operatory potęgowania i~dzielenia całkowitego, takie jak~\verb|sin(pi/6) + cos(pi/3) + (2 ** 3 ** 2) / (3 + 1) + ...|,
           demonstrujące prawidłową obsługę złożonych operacji i~funkcji matematycznych.
 \end{itemize}
