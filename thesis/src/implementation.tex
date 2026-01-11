@@ -83,8 +83,6 @@ Implementacja wykorzystuje rekurencyjne przetwarzanie drzewa AST z zastosowaniem
 Kluczowym mechanizmem implementacyjnym makra \verb|lexer| jest programatyczna konstrukcja klasy anonimowej w~czasie kompilacji\cite{stucki2021multistage}.
 Proces ten wykorzystuje API refleksji TASTy\cite{scala3-reflection} do dynamicznego tworzenia struktur typów, które następnie są materializowane jako kod bajtowy JVM\@.
 
-\subsubsection{Konstrukcja symbolu klasy}\label{subsubsec:impl-lexer-symbol}
-
 Anonimowa klasa implementująca \verb|Tokenization[Ctx]| jest tworzona poprzez wywołanie \verb|Symbol.newClass|:
 
 Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
@@ -95,8 +93,6 @@ Metoda \verb|Symbol.newClass| przyjmuje następujące parametry:
     \item \verb|decls| --- funkcja dostarczająca listy deklaracji członków klasy (pól i~metod)
 \end{itemize}
 
-\subsubsection{Definicja członków klasy}\label{subsubsec:impl-lexer-members}
-
 Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
 
 \begin{itemize}
@@ -106,8 +102,6 @@ Funkcja \verb|decls| konstruuje pełną listę deklaracji dla klasy anonimowej:
     \item \verb|Pole tokens| --- lista wszystkich zdefiniowanych tokenów (włączając ignorowane).
     \item \verb|Pole byName| --- czyli mapa umożliwiająca dynamiczny dostęp do tokenów po nazwie.
 \end{itemize}
-
-\subsubsection{Materializacja klasy}\label{subsubsec:impl-lexer-materialization}
 
 Po zdefiniowaniu symbolu klasy następuje konstrukcja jej ciała.
 Klasa jest następnie instancjonowana poprzez wywołanie jej konstruktora.
@@ -279,8 +273,6 @@ Na przykład wzorzec \verb|\{ case (Expr(a), CalcLexer.PLUS(\_), Expr(b)) => a +
 
 \subsection{Generacja tabel parsowania w czasie kompilacji}\label{subsec:impl-parser-tables}
 
-\subsubsection{Makro createTablesImpl}\label{subsubsec:impl-parser-macro}
-
 Centralnym elementem systemu jest makro \verb|createTablesImpl|, które analizuje definicję parsera i generuje tabele w~czasie kompilacji. Wykonuje ono następujące kroki:
 \begin{enumerate}
     \item Ekstrakcja wszystkich reguł gramatycznych z definicji parsera poprzez refleksję TASTy
@@ -289,8 +281,6 @@ Centralnym elementem systemu jest makro \verb|createTablesImpl|, które analizuj
     \item Generacja tabel akcji semantycznych
     \item Walidacja gramatyki i rozwiązywanie konfliktów
 \end{enumerate}
-
-\subsubsection{Ekstrakcja produkcji z wzorców}\label{subsubsec:impl-parser-extraction}
 
 Funkcja \verb|extractEBNF| dokonuje transformacji wzorców dopasowania na produkcje gramatyczne:
 
@@ -375,8 +365,6 @@ To podejście umożliwia wyrażenie precedencji i łączności operatorów w spo
 \verb|\%left|, \verb|\%right| i~\verb|\%nonassoc| w SLY\cite{sly}.
 
 \subsection{Generacja kodu tabel}\label{subsec:impl-table-gen}
-
-\subsubsection{Implementacja ToExpr dla złożonych struktur}\label{subsubsec:impl-toexpr}
 
 System wymaga konwersji struktur danych w~czasie kompilacji (wartości) na kod (wyrażenia \verb|Expr[T]|).
 Realizowane jest to poprzez implementację instancji \verb|ToExpr| dla typów \verb|ParseTable| i \verb|ActionTable|.
@@ -479,7 +467,7 @@ Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahu
 
 \lstinputlisting[language=scala,caption={Definicja klasy CreateLambda do~programatycznej konstrukcji wyrażeń lambda},label={lst:impl-utils-lambda}]{listings/implementation/utils-05-createlambda.scala}
 
-Klasa~\verb|CreateLambda| implementuje algorytm konstrukcji wyrażeń lambda poprzez:
+\noindent Klasa~\verb|CreateLambda| implementuje algorytm konstrukcji wyrażeń lambda poprzez:
 \begin{enumerate}
     \item utworzenie świeżego symbolu dla każdego parametru funkcji,
     \item wywołanie funkcji użytkownika dostarczającej ciała na~podstawie tych symboli,

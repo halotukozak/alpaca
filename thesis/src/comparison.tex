@@ -9,12 +9,7 @@ Weryfikacja empiryczna tezy pracy wymaga systematycznego porównania systemu~\em
 W~tym celu przeprowadzono serię testów wydajnościowych (ang.~\emph{benchmarks}), których metodologia, wyniki oraz interpretacja zostaną przedstawione w~niniejszym rozdziale.
 
 Wybór narzędzi porównawczych wynikał z~analizy przeprowadzonej w~sekcji~\ref{sec:intro-review}.
-Jako rozwiązania reprezentatywne dla głównych kategorii wybrano:
-
-\begin{itemize}
-    \item \textbf{SLY}~\cite{sly} --- bibliotekę dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek w językach interpretowanych),
-    \item \textbf{FastParse}~\cite{fastparse-docs} --- bibliotekę kombinatorów parserów dla Scali, reprezentującą nowoczesne podejście do~budowy parserów w~językach statycznie typowanych (kategoria kombinatorów parserów).
-\end{itemize}
+Jako rozwiązania reprezentatywne dla głównych kategorii wybrano: SLY~\cite{sly} --- bibliotekę dla języka Python, reprezentującą podejście oparte na~refleksji i~dynamicznym typowaniu (kategoria bibliotek w językach interpretowanych) oraz FastParse~\cite{fastparse-docs} --- bibliotekę kombinatorów parserów dla Scali, reprezentującą nowoczesne podejście do~budowy parserów w~językach statycznie typowanych (kategoria kombinatorów parserów).
 
 Wybór tych narzędzi uzasadniony jest ich reprezentatywnością dla różnych paradygmatów konstrukcji parserów oraz dostępnością dokumentacji i~aktywnym wsparciem społeczności.
 Pominięto generatory kodu takie jak ANTLR ze~względu na~różnice w~architekturze (zewnętrzny krok generacji vs.~metaprogramowanie w~czasie kompilacji), które utrudniają bezpośrednie porównanie wydajności.
@@ -78,9 +73,9 @@ Pomiary przeprowadzono dla rozmiarów danych wejściowych: 100, 500, 1000 oraz 2
 Dla każdego rozmiaru mierzono następujące metryki:
 
 \begin{itemize}
-    \item \textbf{Czas leksykalizacji} (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
-    \item \textbf{Czas parsowania} (ang.~\emph{parse time}) --- czas analizy składniowej strumienia tokenów,
-    \item \textbf{Całkowity czas przetwarzania} (ang.~\emph{full parse time}) --- łączny czas leksykalizacji i~parsowania.
+    \item Czas leksykalizacji (ang.~\emph{lex time}) --- czas przekształcenia tekstu wejściowego w~strumień tokenów (dotyczy ALPACA i~SLY, które wyróżniają fazę leksykalizacji),
+    \item Czas parsowania (ang.~\emph{parse time}) --- czas analizy składniowej strumienia tokenów,
+    \item Całkowity czas przetwarzania (ang.~\emph{full parse time}) --- łączny czas leksykalizacji i~parsowania.
 \end{itemize}
 
 FastParse realizuje leksykalizację i~parsowanie w~jednym przebiegu, dlatego dla tej biblioteki mierzono wyłącznie całkowity czas przetwarzania.
@@ -317,16 +312,7 @@ Fragment kodu~\ref{lst:comp-sly-type-error} ilustruje sytuację, w~której błą
 \label{subsec:comp-api-ide}
 
 System~\emph{ALPACA} oferuje pełną integrację ze~standardowymi narzędziami IDE dla języka Scala (IntelliJ IDEA, Metals) bez konieczności instalacji dedykowanych wtyczek.
-Funkcjonalności takie jak:
-
-\begin{itemize}
-    \item automatyczne uzupełnianie nazw tokenów,
-    \item nawigacja do~definicji (\emph{go-to-definition}),
-    \item prezentacja typów przy najechaniu kursorem,
-    \item wykrywanie błędów w~czasie rzeczywistym
-\end{itemize}
-
-są dostępne natywnie dzięki wykorzystaniu systemu typów Scali.
+Funkcjonalności takie jak: automatyczne uzupełnianie nazw tokenów, nawigacja do~definicji (\emph{go-to-definition}), prezentacja typów przy najechaniu kursorem oraz wykrywanie błędów w~czasie rzeczywistym są dostępne natywnie dzięki wykorzystaniu systemu typów Scali.
 
 Biblioteka SLY, ze~względu na~wykorzystanie refleksji i~niestandardowych konwencji (nazwy metod jako produkcje, dekoratory~\verb|@_()|), oferuje ograniczone wsparcie IDE\@.
 Analizatory statyczne, takie jak mypy, generują liczne błędy dla poprawnego kodu SLY, co~ilustruje fragment~\ref{lst:comp-mypy}:

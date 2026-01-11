@@ -12,14 +12,13 @@ Klasyczne podejścia opierają się na~automatach ze~stosem (PDA, ang.~\emph{pus
 \subsection[Gramatyki bezkontekstowe i klasy parserów]{Gramatyki bezkontekstowe i~klasy parserów}\label{subsec:parser-algo-classes}
 
 Gramatyka bezkontekstowa (CFG) definiowana jest poprzez nieterminale, terminale (tokeny), symbol startowy oraz zbiór produkcji.
-Wśród klas parserów wyróżnia się~dwie główne:
+Wśród klas parserów wyróżnia się~dwie główne.
 
-\begin{itemize}
-    \item LL(k) (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
-          Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
-    \item LR(k) (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
-          Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
-\end{itemize}
+LL(k) (ang.~\emph{Left-to-right, Leftmost derivation})~\cite{ll-parser-wiki}---parsery zstępujące, predykcyjne: konstruują lewostronne wyprowadzenia, wybierając produkcje na~podstawie prefiksu wejścia (ang.~\emph{lookahead}).
+Wymuszają ograniczenia na~gramatykę: brak lewostronnej rekurencji oraz niekolidujące zbiory \texttt{FIRST}/\texttt{FOLLOW}.
+
+LR(k) (ang.~\emph{Left-to-right, Rightmost derivation})~\cite{lr-parser-wiki}---parsery wstępujące, przesuwająco-redukcyjne: rekonstruują prawostronne wyprowadzenia wstecz, operując na~stosie stanów automatu LR\@.
+Obsługują szerszą klasę gramatyk, w~tym zawierające lewostronną rekurencję.
 
 \subsection[Modelowanie automatu z stosem]{Modelowanie automatu z ~stosem}
 \label{subsec:parser-algo-pda}
@@ -53,10 +52,10 @@ Zalety podejścia LR(1):
 \begin{itemize}
     \item LR(1) obsługuje istotnie więcej konstrukcji niż~LL(k) i~eliminuje konieczność wymuszonych przekształceń gramatyki (eliminacji lewej rekurencji, agresywnej lewostronnej faktoryzacji).
           Specyfikacja pozostaje zbliżona do~naturalnej formy języka.
-    
+
     \item Pełny zbiór prefiksów wejścia eliminuje konflikty typowe dla~SLR i~LALR wynikające z~nadmiernie szerokich zbiorów \texttt{FOLLOW}.
           W~rezultacie specyfikacja wymaga mniej manualnych deklaracji rozwiązywania konfliktów.
-    
+
     \item Stany LR(1) jawnie wskazują, jaki token był oczekiwany w~danym miejscu.
           Informacja ta umożliwia generowanie precyzyjnych komunikatów błędów składniowych z~kontekstem.
 
@@ -67,7 +66,7 @@ Zalety podejścia LR(1):
 
 \end{itemize}
 
-Koszty i ograniczenia
+\noindent Koszty i ograniczenia
 
 \begin{itemize}
     \item Kanoniczne LR(1) może generować znacznie więcej stanów niż~uproszczone warianty (SLR, LALR), co~wpływa na~rozmiar tabeli akcji.
@@ -105,7 +104,7 @@ Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} prze
 Stan początkowy to~domknięcie elementu \texttt{S'~→~•~root,~\$}, gdzie~S' jest~generowanym symbolem startowym, root jest~symbolem startowym gramatyki, a~\$ reprezentuje koniec wejścia.
 Kolejne stany konstruowane są~klasycznym schematem \emph{closure}/\emph{goto}~\cite{agh-lr1-parsers} i~deduplikowane, aby~otrzymać deterministyczny automat LR(1).
 
-\subsubsection{Funkcja \texttt{closure}}\label{subsubsec:parser-algo-closure}
+\subsubsection{Funkcja closure}\label{subsubsec:parser-algo-closure}
 
 Dla~elementu zawierającego nieterminal po~kropce (\emph{A}~$\to$~$\alpha$~$\bullet$~\emph{B}~$\beta$~,~\emph{a}), funkcja ~\texttt{closure} realizuje następujące kroki:
 
@@ -119,7 +118,7 @@ W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali
 
 \lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}},label={lst:parser-algo-closure}]{listings/parser-algo/para-02-lr1-closure.scala}
 
-\subsubsection{Funkcja \texttt{goto}}
+\subsubsection{Funkcja goto}
 \label{subsubsec:parser-algo-goto}
 Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesunięcie kropki we~wszystkich elementach zawierających ten symbol, a~następnie stosuje \texttt{closure} do~wyniku, korzystając z~wcześniej obliczonych zbiorów \texttt{FIRST}.
 
@@ -168,7 +167,7 @@ Podczas budowy tabeli parsera, gdy~algorytm napotyka konflikt między~akcjami~$a
     \item Jeśli~brak relacji precedencji, zgłoś błąd kompilacji z~komunikatem diagnostycznym
 \end{enumerate}
 
-W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający:
+\noindent W~przypadku braku reguły precedencji kompilator rzuca wyjątek zawierający:
 \begin{itemize}
     \item Opis konfliktu (shift/reduce lub~reduce/reduce)
     \item Symbol wywołujący konflikt
@@ -218,7 +217,7 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
 
 \lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
 
-\paragraph{Kluczowe właściwości}
+Kluczowe właściwości
 \begin{itemize}
     \item Jeśli~algorytm zakończy się bez komunikatu o błędzie, graf jest~acykliczny (DAG)
     \item Każdy cykl zostanie wykryty

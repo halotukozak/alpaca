@@ -166,9 +166,7 @@ Postęp realizacji wskazuje, że zespół pomyślnie ukończył pierwsze dwa kam
 \subsection[Narzędzia programistyczne i CI/CD]{Narzędzia programistyczne i~CI/CD}
 \label{subsec:org-dev-tools}
 
-\subsubsection{System kontroli wersji}
-
-\textbf{Git i~GitHub}
+\subsubsection{System kontroli wersji Git i~GitHub}
 
 Całość projektu hostowana jest na~platformie GitHub\cite{alpaca-github}.
 
@@ -206,11 +204,9 @@ Każda publiczna klasa, funkcja oraz makro opatrzone są komentarzami Scaladoc.
 Komentarze dokumentują cel, parametry, wartości zwracane oraz przykładowe scenariusze użycia.
 Złożone implementacje (np.\ algorytm LR(1)) uzupełniono o~komentarze liniowe objaśniające kluczowe fragmenty logiki.
 
-\subsubsection[README i dokumentacja]{README i~dokumentacja}
+Plik \texttt{README.md} zawiera instrukcje instalacji, przykłady użycia oraz zarys architektury systemu.
 
-\paragraph{README.md} zawiera instrukcje instalacji, przykłady użycia oraz zarys architektury systemu.
-
-\paragraph{GitHub Pages} hostuje bardziej szczegółową dokumentację, poradniki oraz sekcję FAQ\cite{alpaca-docs}.
+\texttt{GitHub Pages} hostuje bardziej szczegółową dokumentację, poradniki oraz sekcję FAQ\cite{alpaca-docs}.
 
 \subsubsection{Praca dyplomowa (LaTeX)}
 
@@ -231,10 +227,10 @@ Projekt nie posiadał sztywnej, kompletnej specyfikacji funkcjonalnej na~etapie 
 Projektowanie przebiegało iteracyjnie, zgodnie z~następującym schematem:
 
 \begin{enumerate}
-    \item \textbf{Prototypowanie} --- szybkie eksperymentowanie z~różnymi podejściami.
-    \item \textbf{Ewaluacja} --- ocena wydajności, przydatności oraz spójności otrzymanych rozwiązań.
-    \item \textbf{Udoskonalanie} --- ulepszanie wybranych podejść.
-    \item \textbf{Integracja} --- łączenie poszczególnych komponentów w~spójny system.
+    \item Prototypowanie --- szybkie eksperymentowanie z~różnymi podejściami.
+    \item Ewaluacja --- ocena wydajności, przydatności oraz spójności otrzymanych rozwiązań.
+    \item Udoskonalanie --- ulepszanie wybranych podejść.
+    \item Integracja --- łączenie poszczególnych komponentów w~spójny system.
 \end{enumerate}
 
 \subsubsection{Test-Driven Development (TDD) — częściowe zastosowanie}
@@ -715,16 +711,16 @@ zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 System weryfikowany był na~czterech poziomach złożoności:
 
 \begin{itemize}
-    \item \textbf{Test primitywnych wartości} --- proste wyrażenie \verb|true| zwracające wartość logiczną;
+    \item Test primitywnych wartości --- proste wyrażenie \verb|true| zwracające wartość logiczną;
 
-    \item \textbf{Test struktur zagnieżdżonych} --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
+    \item Test struktur zagnieżdżonych --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
           takie jak~struktury zawierające dane osobowe (imię, wiek, kursy, adres z~ulicą i~kodem pocztowym),
           demonstrujące prawidłową rekonstrukcję głębokich struktur danych;
 
-    \item \textbf{Test tablic obiektów} --- tablica zawierająca wiele obiektów o~jednolitej strukturze,
+    \item Test tablic obiektów --- tablica zawierająca wiele obiektów o~jednolitej strukturze,
           taka jak~lista rekordów z~polami identyfikacyjnymi i~nazwami, potwierdzająca obsługę iteracyjnych struktur;
 
-    \item \textbf{Test rzeczywistej złożoności} --- struktura naśladująca rzeczywisty format konfiguracyjny
+    \item Test rzeczywistej złożoności --- struktura naśladująca rzeczywisty format konfiguracyjny
           (menu z~zagnieżdżonymi polami popup i~listami elementów menu z~akcjami),
           zawierająca trzy poziomy zagnieżdżenia i~mieszaniny obiektów oraz~tablic.
 \end{itemize}
@@ -750,7 +746,7 @@ Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza p
 \subsection{Walidacja poprawności}
 \label{subsec:org-validation}
 
-\subsubsection{Walidacja gramatyk}
+Walidacja gramatyk odbywała się w~trzech etapach:
 
 \begin{itemize}
     \item Testy weryfikujące poprawną detekcję konfliktów LR(1).
@@ -758,7 +754,7 @@ Szczegółowe wyniki testów wydajnościowych, metodologia badań oraz analiza p
     \item Testy potwierdzające obsługę lewostronnej rekurencji przez parser LR(1).
 \end{itemize}
 
-\subsubsection{Walidacja typów}
+\noindent Walidacja typów odbywała się w~trzech etapach:
 
 \begin{itemize}
     \item Sprawdzanie, czy typy rafinowane poprawnie odwzorowują zdefiniowane tokeny.
