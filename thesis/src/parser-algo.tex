@@ -97,7 +97,7 @@ Na~podstawie produkcji obliczany jest zbiór \texttt{FirstSet} (iteracyjnie do~o
 
 Pętla powtarza się~do~osiągnięcia punktu stałego (kiedy~\texttt{FIRST} przestają~się~zmieniać).
 
-\lstinputlisting[language=scala,caption={Implementacja metody obliczającej zbiory FIRST},label={lst:parser-algo-first}]{listings/parser-algo/para-01-first-sets.scala}
+\lstinputlisting[language=scala,caption={Implementacja metody obliczającej zbiory FIRST.},label={lst:parser-algo-first}]{listings/parser-algo/para-01-first-sets.scala}
 
 \subsection{Budowa automatów LR(1)}
 \label{subsec:parser-algo-lr1-gen}
@@ -116,13 +116,13 @@ Dla~elementu zawierającego nieterminal po~kropce (\emph{A}~$\to$~$\alpha$~$\bul
 
 W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali, które mogą pojawić się~w~tej pozycji.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}},label={lst:parser-algo-closure}]{listings/parser-algo/para-02-lr1-closure.scala}
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{closure}.},label={lst:parser-algo-closure}]{listings/parser-algo/para-02-lr1-closure.scala}
 
 \subsubsection{Funkcja goto}
 \label{subsubsec:parser-algo-goto}
 Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesunięcie kropki we~wszystkich elementach zawierających ten symbol, a~następnie stosuje \texttt{closure} do~wyniku, korzystając z~wcześniej obliczonych zbiorów \texttt{FIRST}.
 
-\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}},label={lst:parser-algo-goto}]{listings/parser-algo/lr1-goto.scala}
+\lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}.},label={lst:parser-algo-goto}]{listings/parser-algo/lr1-goto.scala}
 
 \subsubsection{Główny algorytm budowy LR(1)}
 \label{subsubsec:parser-algo-main}
@@ -141,7 +141,7 @@ Proces można podzielić na~cztery główne etapy:
           Identyczne zestawy elementów nie~tworzą nowych stanów, gwarantując, że~automat pozostaje deterministyczny i~skończony.
 \end{enumerate}
 
-\lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1)},label={lst:parser-algo-build}]{listings/parser-algo/lr1-build.scala}
+\lstinputlisting[language=scala,caption={Główny algorytm budowy automatów LR(1).},label={lst:parser-algo-build}]{listings/parser-algo/lr1-build.scala}
 
 Stany są~przechowywane w~posortowanych zbiorach strukturalnych, dzięki czemu są~porównywane na~podstawie zawartości (nie~referencji), co~umożliwia naturalną deduplikację.
 
@@ -197,7 +197,7 @@ system automatycznie wyprowadza~$\texttt{pow} \prec \texttt{add}$ poprzez ście�
 
 Dzięki temu użytkownik definiuje jedynie~$n-1$ reguł dla~$n$~poziomów precedencji (zamiast~$\binom{n}{2}$ reguł bez~przechodniości).
 
-\lstinputlisting[language=scala,caption={Implementacja rozwiązywania konfliktów z~przechodniością},label={lst:parser-algo-conflicts},escapeinside={(*@}{@*)}]{listings/parser-algo/conflict-resolution-get.scala}
+\lstinputlisting[language=scala,caption={Implementacja rozwiązywania konfliktów z~przechodniością.},label={lst:parser-algo-conflicts},escapeinside={(*@}{@*)}]{listings/parser-algo/conflict-resolution-get.scala}
 
 \subsubsection{Weryfikacja acykliczności w czasie kompilacji}
 \label{subsubsec:parser-algo-acyclic}
@@ -214,7 +214,7 @@ Każdy węzeł może znajdować się~w~jednym z~trzech stanów:
     \item \texttt{Processed} --- węzeł całkowicie przetworzony, wszystkie jego następniki zostały sprawdzone
 \end{itemize}
 
-\lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
+\lstinputlisting[language=scala,caption={Implementacja weryfikacji acykliczności grafu precedencji.},label={lst:parser-algo-verify}]{listings/parser-algo/conflict-resolution-verify.scala}
 
 \noindent Kluczowe właściwości
 \begin{itemize}
@@ -232,7 +232,7 @@ Kompilator informuje o błędzie \texttt{InconsistentConflictResolution} zawiera
     \item Sugestię rewizji reguł \texttt{before}/\texttt{after}
 \end{itemize}
 
-\begin{lstlisting}[caption={Przykładowy komunikat o konfliktach},label={lst:parser-algo-verify-error}]
+\begin{lstlisting}[caption={Przykładowy komunikat o~konfliktach.},label={lst:parser-algo-verify-error}]
 Inconsistent conflict resolution detected:
 Reduction(sub) before Shift(*) before Reduction(sub)
 There are elements being both before and after Reduction(sub)

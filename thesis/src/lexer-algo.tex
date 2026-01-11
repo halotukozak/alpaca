@@ -113,7 +113,7 @@ W~celu unikania nadmiernego zużycia pamięci, lekser analizuje wejście w~spos�
 Klasa \texttt{LazyReader} realizuje tę~funkcjonalność: pobiera dane ze~źródła w~blokach o~rozmiarze 16~KB (ang.~\emph{chunks}) i~buforuje je lokalnie.
 Metoda \texttt{ensure} zapewnia, że~żądana pozycja jest~dostępna w~buforze, czytając kolejne porcje danych w~razie potrzeby.
 
-\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}},label={lst:lexer-algo-lazy}]{listings/lexer-algo/lexa-01-lazy-reader.scala}
+\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}.},label={lst:lexer-algo-lazy}]{listings/lexer-algo/lexa-01-lazy-reader.scala}
 
 \subsection{Wczesna walidacja wzorców}
 \label{subsec:lexer-algo-val}
