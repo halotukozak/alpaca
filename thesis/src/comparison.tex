@@ -151,10 +151,10 @@ Tabela~\ref{tab:comp-res-recur-math} przedstawia wyniki dla wyrażeń arytmetycz
         100                               & 3,55~ms                              & 1,70~ms                           & 4,96~ms            & 1,79~ms  & 7,27~ms   & 9,25~ms   & 3,10~ms                    \\
         500                               & 27,70~ms                             & 7,81~ms                           & 29,92~ms           & 10,45~ms & 35,30~ms  & 46,85~ms  & 4,56~ms                    \\
         1000                              & 63,79~ms                             & 12,94~ms                          & 80,08~ms           & 20,22~ms & 72,95~ms  & 96,95~ms  & 7,29~ms                    \\
-        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & \emph{Stack\-Over\-flow} \\
+        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & $\dagger$ \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne)}
+    \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne). $\dagger$ oznacza błąd przepełnienia stosu (\emph{StackOverflowError})}
     \label{tab:comp-res-recur-math}
 \end{table}
 
@@ -198,14 +198,12 @@ Tabela~\ref{tab:comp-res-recur-json} przedstawia wyniki dla formatu JSON o~struk
         100                               & 44,96~ms                             & 4,33~ms                           & 49,44~ms           & 20,33~ms  & 17,77~ms  & 39,81~ms  & 3,47~ms   \\
         500                               & 2,99~s                               & 18,09~ms                          & 3,02~s             & 358,04~ms & 95,21~ms  & 459,70~ms & 15,19~ms  \\
         1000                              & 23,55~s                              & 37,51~ms                          & 23,52~s            & 1,36~s    & 189,58~ms & 1,58~s    & 86,38~ms  \\
-        2000                              & ---                                  & ---                               & ---                & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
+        2000                              & \textsuperscript{*}                  & \textsuperscript{*}               & \textsuperscript{*} & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
         \bottomrule
     \end{tabularx}
-    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne)}
+    \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne).\\\textsuperscript{*} oznacza, że system nie zakończył pomiaru w~akceptowalnym czasie}
     \label{tab:comp-res-recur-json}
 \end{table}
-
-Dla przypadku 2000~elementów system~\emph{ALPACA} nie zakończył pomiaru w~akceptowalnym czasie (oznaczono jako~---).
 
 Wyniki dla rekurencyjnych danych JSON ujawniają problem wydajnościowy w~module leksykalizacji systemu~\emph{ALPACA} dla danych o~wysokim stopniu zagnieżdżenia.
 Czas leksykalizacji rośnie nieproporcjonalnie do~rozmiaru danych, co~wymaga dalszej analizy i~optymalizacji (sekcja~\ref{subsec:comp-conclusions}).
