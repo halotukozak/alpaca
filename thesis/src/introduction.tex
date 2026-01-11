@@ -120,21 +120,17 @@ Ze względu na interpretowany charakter oraz dynamiczne typowanie, parsery te ch
 Mechanizm refleksji wykorzystywany przez bibliotekę~\textit{SLY} (inspekcja nazw metod i~typów) powoduje generowanie ostrzeżeń przez analizatory statyczne środowiska PyCharm.
 Ponadto należy zaznaczyć, iż autor projektu informuje o~braku dalszego rozwoju tych narzędzi~\cite{sly-github}.
 
-Przykład~\ref{lst:review-python} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w~bibliotece \textit{SLY}:
+Przykład~\ref{lst:review-python} ilustruje kilka nieintuicyjnych, automatycznych mechanizmów obecnych w~bibliotece \textit{SLY}.
 
-\paragraph{Dekorator \texttt{@\_()}}
-Dekorator ten definiuje wzorzec dopasowania dla produkcji.
+Dekorator \texttt{@\_()} definiuje wzorzec dopasowania dla produkcji.
 Argumenty w~cudzysłowie są traktowane jako literały, podczas gdy identyfikatory bez cudzysłowu odnoszą się do innych nieterminali.
 
-\paragraph{Konwencja nazewnictwa metod}
-Nazwa metody określa typ zwracany przez produkcję.
+Konwencja nazewnictwa metod określa typ zwracany przez produkcję.
 Parser automatycznie identyfikuje wszystkie metody o~danej nazwie jako alternatywne produkcje dla tego nieterminala.
 Mechanizm ten eliminuje potrzebę jawnej deklaracji reguł, ale utrudnia śledzenie struktury gramatyki.
 
-\paragraph{Priorytet operatorów}
 W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakże dodanie \verb|\%~prec| pozwala nadpisać priorytet dla konkretnej reguły składniowej.
 
-\paragraph[Dostęp do kontekstu]{Dostęp do~kontekstu}
 Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
