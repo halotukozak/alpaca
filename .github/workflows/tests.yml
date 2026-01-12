@@ -43,6 +43,9 @@ jobs:
       - name: Compile tests
         run: ./mill test.compile
 
+      - name: Compile example
+        run: ./mill example.compile
+
       - name: Run tests
         run: ./mill test
 
@@ -61,3 +64,4 @@ jobs:
 
       - name: Generate Docs
         run: ./mill docJar
+        
