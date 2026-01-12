@@ -46,6 +46,9 @@ jobs:
       - name: Compile example
         run: ./mill example.compile
 
+      - name: Compile example with the latest tag
+        run: ./example/mill compile
+
       - name: Run tests
         run: ./mill test
 
