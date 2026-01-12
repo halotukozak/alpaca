@@ -154,7 +154,7 @@ object Type:
       case _ => false
 
   case class Matrix(rows: scala.Int | Null = null, cols: scala.Int | Null = null)
-    extends Type(rows != null && cols != null) {
+    extends Type(rows != null && cols != null):
     override def toString: Predef.String = (rows, cols) match
       case (null, null) => "Matrix[?, ?]"
       case (null, b) => s"Matrix[?, $b]"
@@ -167,7 +167,6 @@ object Type:
       case Type.Matrix(rows, cols) if this.isFinal && other.isFinal => this.rows == rows && this.cols == cols
       case _: Type.Matrix => true
       case _ => false
-  }
 
   case class VarArg[+T <: Type](tpe: T) extends Type(false):
     override def toString = s"$tpe*"

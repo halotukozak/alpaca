@@ -58,7 +58,7 @@ object MatrixScoper extends TreeAccumulator[Scope]:
   override given Process[AST.Return] = scope =>
     case AST.Return(expr, _) =>
       for _ <- expr.visit(scope)
-        yield scope
+      yield scope
 
   override given Process[AST.Continue] = scope =>
     case _ if scope.inLoop => Result(scope)
