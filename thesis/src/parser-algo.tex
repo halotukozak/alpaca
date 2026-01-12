@@ -122,6 +122,8 @@ W~rezultacie stan zawiera pełny zbiór przewidywań dla~wszystkich nieterminali
 \label{subsubsec:parser-algo-goto}
 Dla~zadanego stanu i~symbolu~s po~kropce funkcja \texttt{goto} realizuje przesunięcie kropki we~wszystkich elementach zawierających ten symbol, a~następnie stosuje \texttt{closure} do~wyniku, korzystając z~wcześniej obliczonych zbiorów \texttt{FIRST}.
 
+\newpage
+
 \lstinputlisting[language=scala,caption={Implementacja funkcji \texttt{goto}.},label={lst:parser-algo-goto}]{listings/parser-algo/lr1-goto.scala}
 
 \subsubsection{Główny algorytm budowy LR(1)}

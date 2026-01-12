@@ -144,13 +144,13 @@ Tabela~\ref{tab:comp-res-iter-math} przedstawia wyniki testów wydajnościowych 
     \centering
     \begin{tabularx}{\textwidth}{l|*{3}{Y}|*{3}{Y}|Y}
         \toprule
-        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse}                                               \\
+        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\small\textbf{ALPACA}} & \multicolumn{3}{c|}{\small\textbf{SLY}} & \small\textbf{FastParse}                                               \\
                                           & Lex                                  & Parse                             & Razem              & Lex      & Parse     & Razem     & Razem    \\
-        \midrule
-        100                               & 16,85~ms                             & 8,49~ms                           & 16,48~ms           & 1,52~ms  & 6,69~ms   & 8,24~ms   & 6,13~ms  \\
-        500                               & 41,94~ms                             & 17,63~ms                          & 30,07~ms           & 7,98~ms  & 31,18~ms  & 38,57~ms  & 14,13~ms \\
-        1000                              & 40,58~ms                             & 10,95~ms                          & 77,24~ms           & 14,84~ms & 59,65~ms  & 76,50~ms  & 21,24~ms \\
-        2000                              & 166,89~ms                            & 21,22~ms                          & 188,56~ms          & 30,61~ms & 124,52~ms & 156,70~ms & 7,73~ms  \\
+        \midrule 
+        \smaller100                               & \smaller16,85~ms                             & \smaller8,49~ms                           & \smaller16,48~ms           & \smaller1,52~ms  & \smaller6,69~ms   & \smaller8,24~ms   & \smaller6,13~ms  \\
+        \smaller500                               & \smaller41,94~ms                             & \smaller17,63~ms                          & \smaller30,07~ms           & \smaller7,98~ms  & \smaller31,18~ms  & \smaller38,57~ms  & \smaller14,13~ms \\
+        \smaller1000                              & \smaller40,58~ms                             & \smaller10,95~ms                          & \smaller77,24~ms           & \smaller14,84~ms & \smaller59,65~ms  & \smaller76,50~ms  & \smaller21,24~ms \\
+        \smaller2000                              & \smaller166,89~ms                            & \smaller21,22~ms                          & \smaller188,56~ms          & \smaller30,61~ms & \smaller124,52~ms & \smaller156,70~ms & \smaller7,73~ms  \\
         \bottomrule
     \end{tabularx}
     \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane iteracyjne).}
@@ -166,13 +166,13 @@ Tabela~\ref{tab:comp-res-recur-math} przedstawia wyniki dla wyrażeń arytmetycz
     \centering
     \begin{tabularx}{\textwidth}{l|*{3}{Y}|*{3}{Y}|Y}
         \toprule
-        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse}                                                                 \\
+        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\small\textbf{ALPACA}} & \multicolumn{3}{c|}{\small\textbf{SLY}} & \small\textbf{FastParse}                                                                 \\
                                           & Lex                                  & Parse                             & Razem              & Lex      & Parse     & Razem     & Razem                      \\
         \midrule
-        100                               & 3,55~ms                              & 1,70~ms                           & 4,96~ms            & 1,79~ms  & 7,27~ms   & 9,25~ms   & 3,10~ms                    \\
-        500                               & 27,70~ms                             & 7,81~ms                           & 29,92~ms           & 10,45~ms & 35,30~ms  & 46,85~ms  & 4,56~ms                    \\
-        1000                              & 63,79~ms                             & 12,94~ms                          & 80,08~ms           & 20,22~ms & 72,95~ms  & 96,95~ms  & 7,29~ms                    \\
-        2000                              & 220,96~ms                            & 25,82~ms                          & 274,95~ms          & 43,06~ms & 150,68~ms & 194,77~ms & $\dagger$ \\
+        \smaller100                               & \smaller3,55~ms                              & \smaller1,70~ms                           & \smaller4,96~ms            & \smaller1,79~ms  & \smaller7,27~ms   & \smaller9,25~ms   & \smaller3,10~ms                    \\
+        \smaller500                               & \smaller27,70~ms                             & \smaller7,81~ms                           & \smaller29,92~ms           & \smaller10,45~ms & \smaller35,30~ms  & \smaller46,85~ms  & \smaller4,56~ms                    \\
+        \smaller1000                              & \smaller63,79~ms                             & \smaller12,94~ms                          & \smaller80,08~ms           & \smaller20,22~ms & \smaller72,95~ms  & \smaller96,95~ms  & \smaller7,29~ms                    \\
+        \smaller2000                              & \smaller220,96~ms                            & \smaller25,82~ms                          & \smaller274,95~ms          & \smaller43,06~ms & \smaller150,68~ms & \smaller194,77~ms & $\dagger$ \\
         \bottomrule
     \end{tabularx}
     \caption{Wyniki testów wydajnościowych dla wyrażeń arytmetycznych (dane rekurencyjne). $\dagger$ oznacza błąd przepełnienia stosu (\emph{StackOverflowError}).}
@@ -191,13 +191,13 @@ Tabela~\ref{tab:comp-res-iter-json} przedstawia wyniki dla formatu JSON o~strukt
     \centering
     \begin{tabularx}{\textwidth}{l|*{3}{Y}|*{3}{Y}|Y}
         \toprule
-        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse}                                                \\
+        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\small\textbf{ALPACA}} & \multicolumn{3}{c|}{\small\textbf{SLY}} & \small\textbf{FastParse}                                                \\
                                           & Lex                                  & Parse                             & Razem              & Lex       & Parse     & Razem     & Razem    \\
         \midrule
-        100                               & 30,63~ms                             & 4,09~ms                           & 26,27~ms           & 7,22~ms   & 17,07~ms  & 24,88~ms  & 15,82~ms \\
-        500                               & 144,00~ms                            & 20,55~ms                          & 164,02~ms          & 35,60~ms  & 87,15~ms  & 131,62~ms & 11,67~ms \\
-        1000                              & 478,19~ms                            & 46,43~ms                          & 555,45~ms          & 75,34~ms  & 182,93~ms & 263,86~ms & 12,64~ms \\
-        2000                              & 1,72~s                               & 117,50~ms                         & 1,58~s             & 151,88~ms & 374,71~ms & 550,08~ms & 16,58~ms \\
+        \smaller100                               & \smaller30,63~ms                             & \smaller4,09~ms                           & \smaller26,27~ms           & \smaller7,22~ms   & \smaller17,07~ms  & \smaller24,88~ms  & \smaller15,82~ms \\
+        \smaller500                               & \smaller144,00~ms                            & \smaller20,55~ms                          & \smaller164,02~ms          & \smaller35,60~ms  & \smaller87,15~ms  & \smaller131,62~ms & \smaller11,67~ms \\
+        \smaller1000                              & \smaller478,19~ms                            & \smaller46,43~ms                          & \smaller555,45~ms          & \smaller75,34~ms  & \smaller182,93~ms & \smaller263,86~ms & \smaller12,64~ms \\
+        \smaller2000                              & \smaller1,72~s                               & \smaller117,50~ms                         & \smaller1,58~s             & \smaller151,88~ms & \smaller374,71~ms & \smaller550,08~ms & \smaller16,58~ms \\
         \bottomrule
     \end{tabularx}
     \caption{Wyniki testów wydajnościowych dla formatu JSON (dane iteracyjne).}
@@ -213,13 +213,13 @@ Tabela~\ref{tab:comp-res-recur-json} przedstawia wyniki dla formatu JSON o~struk
     \centering
     \begin{tabularx}{\textwidth}{l|*{3}{Y}|*{3}{Y}|Y}
         \toprule
-        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\textbf{ALPACA}} & \multicolumn{3}{c|}{\textbf{SLY}} & \textbf{FastParse}                                                 \\
+        \multirow{2}{*}{\textbf{Rozmiar}} & \multicolumn{3}{c|}{\small\textbf{ALPACA}} & \multicolumn{3}{c|}{\small\textbf{SLY}} & \small\textbf{FastParse}                                                 \\
                                           & Lex                                  & Parse                             & Razem              & Lex       & Parse     & Razem     & Razem     \\
         \midrule
-        100                               & 44,96~ms                             & 4,33~ms                           & 49,44~ms           & 20,33~ms  & 17,77~ms  & 39,81~ms  & 3,47~ms   \\
-        500                               & 2,99~s                               & 18,09~ms                          & 3,02~s             & 358,04~ms & 95,21~ms  & 459,70~ms & 15,19~ms  \\
-        1000                              & 23,55~s                              & 37,51~ms                          & 23,52~s            & 1,36~s    & 189,58~ms & 1,58~s    & 86,38~ms  \\
-        2000                              & \textsuperscript{*}                  & \textsuperscript{*}               & \textsuperscript{*} & 5,26~s    & 385,47~ms & 5,79~s    & 346,44~ms \\
+        \smaller100                               & \smaller44,96~ms                             & \smaller4,33~ms                           & \smaller49,44~ms           & \smaller20,33~ms  & \smaller17,77~ms  & \smaller39,81~ms  & \smaller3,47~ms   \\
+        \smaller500                               & \smaller2,99~s                               & \smaller18,09~ms                          & \smaller3,02~s             & \smaller358,04~ms & \smaller95,21~ms  & \smaller459,70~ms & \smaller15,19~ms  \\
+        \smaller1000                              & \smaller23,55~s                              & \smaller37,51~ms                          & \smaller23,52~s            & \smaller1,36~s    & \smaller189,58~ms & \smaller1,58~s    & \smaller86,38~ms  \\
+        \smaller2000                              & \textsuperscript{*}                  & \textsuperscript{*}               & \textsuperscript{*} & \smaller5,26~s    & \smaller385,47~ms & \smaller5,79~s    & \smaller346,44~ms \\
         \bottomrule
     \end{tabularx}
     \caption{Wyniki testów wydajnościowych dla formatu JSON (dane rekurencyjne).\\\textsuperscript{*} oznacza, że system nie zakończył pomiaru w~akceptowalnym czasie.}

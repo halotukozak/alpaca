@@ -133,9 +133,7 @@ W~krotce \verb|precedence| definiowane jest pierwszeństwo operatorów, jednakż
 Argument~\verb|p| pozwala na dostęp do~kontekstu produkcji (np.\ numeru linii), ale także do zmiennych we wzorcu dopasowania w~adnotacji.
 Jeśli zdefiniowany jest więcej niż jeden element, dodawany jest numer do akcesora, np.~\verb|expr1| jest odwołaniem do drugiego wyrażenia \verb|expr|.
 
-\begin{minipage}{\linewidth}
 \lstinputlisting[language=Python,caption={Fragment definicji parsera w~Pythonie, wykorzystujący bibliotekę SLY.},label={lst:review-python}]{listings/introduction/intro-02-sly-parser.py}
-\end{minipage}
 
 Komunikaty błędów w~bibliotece \emph{SLY} nie zawierają informacji o~kontekście syntaktycznym ani sugestii poprawek, co obrazuje przykład~\ref{lst:review-sly-err}, który po uruchomieniu informuje użytkownika błędem z~fragmentu kodu~\ref{lst:review-sly-out}.
 Okazuje się, że problemem był brak atrybutu \verb|ignore\_comment| w~definicji \verb|Lexer|.

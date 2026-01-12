@@ -413,12 +413,13 @@ Standardowe podejście wymagałoby podjęcia następujących działań.
 Klasa typu~\verb|Empty[T]| rozwiązuje ten problem poprzez automatyczną derywację funkcji konstruującej na~podstawie wartości domyślnych parametrów konstruktora~\cite{scala3-derivation}.
 
 Typ~\verb|Empty[T]| jest reprezentowany jako funkcja zerargumentowa~\verb|() => T|, co~umożliwia leniwą inicjalizację instancji (\emph{lazy instantiation}). Atrybut~\verb|private[alpaca]| ogranicza widoczność do~pakietu, zapobiegając przypadkowemu użyciu poza systemem.
+
+\newpage
+
 \lstinputlisting[language=scala,caption={Definicja klasy typu Empty\lbrack T\rbrack.},label={lst:impl-19-utils-empty}]{listings/implementation/lexer-08-empty.scala}
 
 Derywacja instancji~\verb|Empty[T]| wykorzystuje mechanizm~\verb|Mirror| wprowadzony w~Scali~3~\cite{scala3-derivation}, który umożliwia generyczną introspekcję typów produktowych w~czasie kompilacji.
 Kompilator automatycznie generuje kod konstruujący instancję~\verb|T| z~wartości domyślnych, weryfikując przy~tym ich dostępność.
-
-\newpage
 
 \lstinputlisting[language=scala,caption={Użycie mechanizmu Empty\lbrack T\rbrack.},label={lst:impl-20-utils-empty-usage}]{listings/implementation/lexer-09-empty-usage.scala}
 
@@ -443,6 +444,9 @@ Przykładem jest sytuacja, w~której kod oryginalnie odnoszący się do~parametr
 Proces ten, znany jako \emph{re-owning}~\cite{scala3-guides-reflection}, wymaga systematycznej zamiany wszystkich referencji do~starego symbolu nowymi referencjami.
 
 \lstinputlisting[language=scala,caption={Definicja klasy ReplaceRefs rozszerzającej TreeMap.},label={lst:impl-utils-refs}]{listings/implementation/utils-03-replacerefs.scala}
+
+\newpage
+
 \noindent Klasa~\verb|ReplaceRefs| implementuje metodę~\verb|transformTree|, która:
 \begin{enumerate}
     \item przechodzi rekurencyjnie po~wszystkich węzłach drzewa AST,
@@ -469,6 +473,8 @@ Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahu
 
 \lstinputlisting[language=scala,caption={Definicja klasy CreateLambda do~programatycznej konstrukcji wyrażeń lambda.},label={lst:impl-utils-lambda}]{listings/implementation/utils-05-createlambda.scala}
 
+\newpage
+
 \noindent Klasa~\verb|CreateLambda| implementuje algorytm konstrukcji wyrażeń lambda poprzez następujące kroki.
 \begin{enumerate}
     \item utworzenie świeżego symbolu dla każdego parametru funkcji,
@@ -476,8 +482,6 @@ Przykładem jest generacja funkcji transformującej dla parsera, która ekstrahu
     \item konstrukcję węzła~\verb|Lambda| w~AST z~odpowiednimi typami parametrów i~zwracanym,
     \item weryfikację typowania wyniku.
 \end{enumerate}
-
-\newpage
 
 Mechanizm ten jest analogiczny do~konstrukcji~\verb|Lambda| w~systemie refleksji TASTy~\cite{scala3-guides-reflection}, ale oferuje wyższy poziom abstrakcji poprzez automatyczne zarządzanie symbolami i~kontekstem właściciela.
 
@@ -498,6 +502,8 @@ Anotacja~\verb|@implicitNotFound| dostarcza czytelny komunikat o błędzie w~prz
 
 Derywacja instancji~\verb|Copyable[T]| wykorzystuje mechanizm~\verb|Mirror.ProductOf[T]|, który umożliwia dekonstrukcję instancji typu produktowego do~krotki wartości pól, a~następnie rekonstrukcję nowej instancji z~tej krotki.
 Proces ten jest realizowany w~czasie kompilacji bez użycia refleksji w~czasie wykonania~\cite{scala3-derivation}.
+
+\newpage
 
 \lstinputlisting[language=scala,caption={Użycie Copyable\lbrack T\rbrack.},label={lst:impl-26-utils-copyable-usage}]{listings/implementation/lexer-11-copyable-usage.scala}
 
