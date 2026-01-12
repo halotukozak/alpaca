@@ -5,5 +5,4 @@ definedTokens
   .asType match
   case '[refinedTpe] =>
     val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
-
     Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] & refinedTpe]

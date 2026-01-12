@@ -628,32 +628,24 @@ Projekt zawiera rozbudowany zestaw testów jednostkowych, obejmujących poszczeg
     \centering
     \begin{tabularx}{\textwidth}{|l|X|}
         \hline
-        \textbf{Moduł / Komponent} & \textbf{Zakres testów jednostkowych} \\
+        \textbf{Moduł / Komponent} & \textbf{Zakres testów jednostkowych}                                                        \\
         \hline
-        Lekser &
-        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
-            \item Testowanie definicji tokenów (nazwy, wzorce, wartości domyślne).
-            \item Testowanie ignorowanych reguł leksykalnych.
-            \item Testowanie wykrywania konfliktów nazw tokenów (błędy kompilacji).
-            \item Testowanie obsługi niepoprawnych wyrażeń regularnych.
-        \end{itemize} \\
+        \multirow{4}{*}{Lekser}    & Testowanie definicji tokenów (nazwy, wzorce, wartości domyślne).                            \\ \cline{2-2}
+                                   & Testowanie ignorowanych reguł leksykalnych.                                                 \\ \cline{2-2}
+                                   & Testowanie wykrywania konfliktów nazw tokenów (błędy kompilacji).                           \\ \cline{2-2}
+                                   & Testowanie obsługi niepoprawnych wyrażeń regularnych.                                       \\
         \hline
-        Parser &
-        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
-            \item Testowanie ekstrakcji produkcji z~definicji.
-            \item Testowanie algorytmów LR(1) (\emph{closure}, \emph{goto}, obliczanie zbiorów \emph{FIRST}).
-            \item Testowanie rozwiązywania konfliktów typu \emph{shift--reduce}.
-            \item Testowanie akcji semantycznych z~różnymi typami kontekstu.
-        \end{itemize} \\
+        \multirow{4}{*}{Parser}    & Testowanie ekstrakcji produkcji z~definicji.                                                \\ \cline{2-2}
+                                   & Testowanie algorytmów LR(1) (\emph{closure}, \emph{goto}, obliczanie zbiorów \emph{FIRST}). \\ \cline{2-2}
+                                   & Testowanie rozwiązywania konfliktów typu \emph{shift--reduce}.                              \\ \cline{2-2}
+                                   & Testowanie akcji semantycznych z~różnymi typami kontekstu.                                  \\
         \hline
-        Infrastruktura &
-        \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}, before=\vspace{-0.6\baselineskip}]
-            \item Testowanie klas typów (\verb|Empty[T]|, \verb|Copyable[T]|).
-            \item Testowanie transformacji AST (\verb|ReplaceRefs|, \verb|CreateLambda|).
-        \end{itemize} \\
+        \multirow{2}{*}{Funkcje pomocnicze}
+                                   & Testowanie derywacji (Empty[T], Copyable[T]).                                 \\ \cline{2-2}
+                                   & Testowanie mechanizmu withDefault[T].                                              \\ \cline{2-2}
         \hline
     \end{tabularx}
-    \caption{Zakres testów jednostkowych dla głównych komponentów systemu.}
+    \caption{Zakres testów jednostkowych dla głównych komponentów systemu}
     \label{tab:org-unit-tests}
 \end{table}
 
@@ -670,7 +662,7 @@ dzielenie całkowite) oraz~funkcje matematyczne (trygonometryczne, hiperboliczne
 a~także stałe matematyczne (pi, e, tau, nieskończoność, NaN). Akcje semantyczne obliczają wartość wyrażenia
 poprzez wyodrębnianie wartości liczbowych z~tokenów i~wykonywanie odpowiednich operacji arytmetycznych.
 
-Lekser systemu obsługuje ignorowanie białych znaków i~komentarzy, definiuje operatory wieloznakowe (\\verb|**|, \\verb|//|)
+Lekser systemu obsługuje ignorowanie białych znaków i~komentarzy, definiuje operatory wieloznakowe (\verb|**|, \verb|//|)
 przed~operatorami jednoznakowymi, by~uniknąć konfliktów w~kolejności dopasowania. Ponadto rozpoznaje liczby zmiennoprzecinkowe
 i~całkowite (w~tym notację wykładniczą) oraz~funkcje matematyczne jako~słowa kluczowe.
 
@@ -682,14 +674,14 @@ w~zbiorze rozwiązań konfliktów (ang. \emph{resolutions}), zapewniając popraw
 \noindent System weryfikowany był na~trzech poziomach złożoności:
 
 \begin{itemize}
-    \item Test podstawowy --- proste wyrażenie \verb|1 + 2| zwracające oczekiwany wynik $3.0$;
+    \item Test podstawowy --- proste wyrażenie $1 + 2$ zwracające oczekiwany wynik $3.0$;
 
     \item Test złożoności średniej --- wielopoziomowe nawiasowanie i~operacje łączące operatory o~różnych priorytetach,
-          takie jak~wyrażenie \verb|((12 + 7) * (3 - 8 / (4 + 2)) + (15 - (9 - 3 * (2 + 1))) / 5)...|,
+          takie jak~wyrażenie $((12 + 7) \cdot (3 - 8 / (4 + 2)) + (15 - (9 - 3 \cdot (2 + 1))) / 5) \dots$,
           potwierdzające poprawną ewaluację zagnieżdżonych wyrażeń;
 
     \item Test zaawansowany --- wyrażenie zawierające funkcje trygonometryczne,
-          operatory potęgowania i~dzielenia całkowitego, takie jak~\verb|sin(pi/6) + cos(pi/3) + (2 ** 3 ** 2) / (3 + 1) + ...|,
+          operatory potęgowania i~dzielenia całkowitego, takie jak~$\sin(\pi/6) + \cos(\pi/3) + (2^{3^2}) / (3 + 1) + \dots$,
           demonstrujące prawidłową obsługę złożonych operacji i~funkcji matematycznych.
 \end{itemize}
 
@@ -718,7 +710,7 @@ zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 \noindent System weryfikowany był na~czterech poziomach złożoności:
 
 \begin{itemize}
-    \item Test primitywnych wartości --- proste wyrażenie \verb|true| zwracające wartość logiczną;
+    \item Test primitywnych wartości --- proste wyrażenie $\texttt{true}$ zwracające wartość logiczną;
 
     \item Test struktur zagnieżdżonych --- złożony obiekt JSON zawierający pola prymitywne oraz~zagnieżdżone obiekty i~tablice,
           takie jak~struktury zawierające dane osobowe (imię, wiek, kursy, adres z~ulicą i~kodem pocztowym),
@@ -735,7 +727,6 @@ zaś parsowanie jest jednoznaczne dzięki determinizmowi składni JSON.
 Wszystkie testy przechodzą pomyślnie, potwierdzając poprawność implementacji leksera w~obsłudze białych znaków i~znaków specjalnych,
 prawidłowość parsowania struktur rekurencyjnych, prawidłową transformację danych przez~akcje semantyczne
 oraz~odporność systemu na~wyrażenia JSON o~arbitralnej złożoności strukturalnej.
-
 
 \subsection{Benchmarki wydajności}
 \label{subsec:org-benchmarks}
