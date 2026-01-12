@@ -8,8 +8,8 @@ import scala.annotation.nowarn
 
 @nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer = lexer {
-    case comment @ "#.*" => Token.Ignored
+  val Lexer = lexer:
+    case "#.*" => Token.Ignored
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -28,7 +28,6 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
         "'" | "," | ";") =>
       Token[literal.type]
-  }
 
   test("Lexer recognizes basic tokens") {
     Lexer.tokens.map(_.info.pattern) shouldBe List(

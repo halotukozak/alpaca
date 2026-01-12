@@ -5,4 +5,4 @@ def squareImpl(x: Expr[Int])(using Quotes): Expr[Int] = '{
   squared
 }
 
-// Użycie: square(3) → rozwinie się do: val squared = 3 * 3; squared
+// usage: square(3) → will be expanded to: val squared = 3 * 3; squared

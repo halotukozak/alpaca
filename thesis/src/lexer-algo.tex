@@ -26,7 +26,7 @@ DFA przetwarza wejście znak po znaku, zachowując jednoznaczny stan aktywny ora
 Lekser stosuje dwie komplementarne zasady determinujące zachowanie dla wieloznacznych sytuacji:
 
 \begin{itemize}
-    \item Dopóki DFA ma ścieżkę przejść, znak jest konsumowany; token jest emitowany dopiero po~ostatnim stanie akceptującym widzianym na tej ścieżce (najdłuższe dopasowanie, ang. \textit{maximal munch}).
+    \item Dopóki DFA ma ścieżkę przejść, znak jest konsumowany; token jest emitowany dopiero po~ostatnim stanie akceptującym widzianym na tej ścieżce (najdłuższe dopasowanie, ang. \emph{maximal munch}).
     \item Gdy kilka reguł akceptuje prefiks o~tej samej długości, wybierana jest reguła o najwyższym priorytecie (często określanym kolejnością definicji).
 \end{itemize}
 
@@ -34,18 +34,18 @@ Kombinacja tych zasad gwarantuje deterministyczną oraz reproducywalną sekwencj
 
 \subsection{Błędy leksykalne}
 \label{subsec:lexer-algo-errors}
-W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, ogłaszany jest błąd leksykalny w~bieżącej pozycji wejścia.
+W~sytuacji, gdy automat nie posiada przejścia dla bieżącego znaku, zgłaszany jest błąd leksykalny w~bieżącej pozycji wejścia.
 Mechanizm diagnostyczny przywołuje informacje o~pozycji znaku, co~znacząco ułatwia śledzenie źródła problemu w~tekście źródłowym.
 
 
-\section[Automaty DFA a wyrażenia regularne w systemie ALPACA]{Automaty DFA a wyrażenia regularne w~systemie ALPACA}
+\section[Automaty DFA a wyrażenia regularne]{Automaty DFA a wyrażenia regularne}
 \label{sec:lexer-algo-regex}
 
 \subsection{Tło: Tradycyjne podejście}
 \label{subsec:lexer-algo-trad}
 
 Narzędzia klasyczne do~budowy leksera (takie jak~Lex~\cite{lesk1975lex}) generują jawny, deterministyczny automat skończony (DFA) z~zestawu wyrażeń regularnych.
-Podejście to wymaga implementacji pełnego zestawu algorytmów: transformacja NFA$\to$DFA, minimalizacja, optymalizacja — każdy etap jest czasochłonny dla twórcy narzędzia.
+Podejście to wymaga implementacji pełnego zestawu algorytmów: transformacja NFA$\to$DFA, minimalizacja, optymalizacja --- każdy etap jest czasochłonny dla twórcy narzędzia.
 
 \subsection{Alternatywa: Wyrażenia regularne biblioteczne}
 \label{subsec:lexer-algo-alt}
@@ -55,42 +55,38 @@ Zamiast ręcznie kodować DFA, makro kompilacyjne łączy wszystkie wzorce opera
 
 \subsection{Zalety podejścia opartego na wyrażeniach regularnych}
 \label{subsec:lexer-algo-pros}
-\begin{itemize}
-    \item Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
-    \item Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
-    \item Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
-          ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
-    \item Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
-\end{itemize}
+Poprzez wykorzystanie powszechnie znanego mechanizmu wyrażeń regularnych, użytkownicy języka specjalistycznego (DSL) mogą definiować reguły leksykalne bez~konieczności zrozumienia złożoności konstrukcji automatu i~algorytmów optymalizacji.
+Użytkownicy mogą zastosować rozszerzenia wyrażeń regularnych (takie jak~\emph{backreference}, \emph{negative lookahead}, czy~warunkowość), których implementacja byłaby niemożliwa w~jawnym DFA\@.
+Własna implementacja DFA wymaga pokrycia pełnego spektrum funkcjonalności wyrażeń regularnych, ciągłego utrzymania w~synchronizacji z~ewolucją języka hosta, oraz inwestycji w~optymalizację.
+ALPACA deleguje ten wysiłek do~zoptymalizowanego i~wielokrotnie przetestowanego silnika bibliotecznego.
+Definicje reguł leksykalnych pozostają kompaktowe i~czytelne, co~ułatwia przegląd, weryfikację i~modyfikację.
 
 \subsection{Wady i ograniczenia}
 \label{subsec:lexer-algo-cons}
 
-\begin{itemize}
-    \item Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
-    \item Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
-          W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
-          Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
-\end{itemize}
+Silniki wyrażeń regularnych mogą wykazywać wyższą złożoność obliczeniową niż ręcznie zoptymalizowane DFA, zwłaszcza w~przypadku dużych zbiorów reguł lub~złożonych wzorców.
+Zachowanie silnika wyrażeń regularnych dla dwuznacznych sytuacji (na~przykład gdy dwa wzorce różnej długości akceptują identyczną sekwencję) zależy od~implementacji silnika.
+W~niekorzystnych przypadkach może prowadzić do~nieoczekiwanych wyborów.
+Rozwiązaniem jest jawna deklaracja priorytetu poprzez kolejność definiowania reguł.
 
-\subsection{Syntetyzacja: Decyzja projektu ALPACA}
+\subsection{Decyzja}
 \label{subsec:lexer-algo-choice}
 
-Powyższe rozważania doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
+Rozważania przedstawione w~sekcjach~\ref{subsec:lexer-algo-pros} i~\ref{subsec:lexer-algo-cons} doprowadziły do~wyboru wyrażeń regularnych nad jawną konstrukcją DFA\@.
 Wymiana wydajności (potencjalnie) za~uproszczenie interfejsu jest~akceptowalna w~kontekście systemu ALPACA\@.
 
 
-\section[Praktyczna implementacja leksera w systemie ALPACA]{Praktyczna implementacja leksera w~systemie ALPACA}
+\section[Praktyczna implementacja leksera]{Praktyczna implementacja leksera}
 \label{sec:lexer-algo-impl}
 
 Implementacja modułu \texttt{alpaca.lexer} łączy ergonomię języka specjalistycznego (DSL) z~kodem wykonywany w~czasie kompilacji, eliminując narzut parsowania wyrażeń regularnych w~czasie działania aplikacji.
 
-\subsection[Przebieg tokenizacji w ALPACA]{Przebieg tokenizacji w~ALPACA}
+\subsection[Przebieg tokenizacji]{Przebieg tokenizacji}
 \label{subsec:lexer-algo-flow}
 
 Podczas kompilacji projektu wszystkie wzorce są łączone operatorem alternatywy (\texttt{|}) w~jedno wyrażenie regularne z~nazwanymi grupami.
 Mechanizm ten umożliwia rozróżnienie, która z~reguł dopasowała się podczas każdego przebiegu wyszukiwania.
-Następnie pętla skanująca—podczas wykonania aplikacji iteracyjnie wywołuje to~wyrażenie na~kolejnych fragmentach wejścia, identyfikuje dopasowany token, akumuluje leksemy oraz przesuwa wskaźnik wejścia aż do~wyczerpania danych.
+Następnie pętla skanująca --- podczas wykonania aplikacji iteracyjnie wywołuje to~wyrażenie na~kolejnych fragmentach wejścia, identyfikuje dopasowany token, akumuluje leksemy oraz przesuwa wskaźnik wejścia aż do~wyczerpania danych.
 
 \subsection{Obsługa reguł ignorowanych}
 \label{subsec:lexer-algo-ignored}
@@ -117,7 +113,7 @@ W~celu unikania nadmiernego zużycia pamięci, lekser analizuje wejście w~spos�
 Klasa \texttt{LazyReader} realizuje tę~funkcjonalność: pobiera dane ze~źródła w~blokach o~rozmiarze 16~KB (ang.~\emph{chunks}) i~buforuje je lokalnie.
 Metoda \texttt{ensure} zapewnia, że~żądana pozycja jest~dostępna w~buforze, czytając kolejne porcje danych w~razie potrzeby.
 
-\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}},label={lst:lexer-algo-lazy}]{listings/lexer-algo/lexa-01-lazy-reader.scala}
+\lstinputlisting[language=scala,caption={Implementacja metody \texttt{ensure} w~klasie \texttt{LazyReader}.},label={lst:lexer-algo-lazy}]{listings/lexer-algo/lexa-01-lazy-reader.scala}
 
 \subsection{Wczesna walidacja wzorców}
 \label{subsec:lexer-algo-val}
@@ -130,7 +126,7 @@ Mechanizm ten wykrywa dwa klasy problemów wynikających z~decyzji implementacyj
 Niech $P = \{p_1, p_2, \ldots, p_n\}$ będzie uporządkowaną sekwencją wzorców tokenów, gdzie~$p_i$ poprzedza~$p_j$ dla~$i < j$.
 Niech~$L(p)$ oznacza język regularny akceptowany przez wzorzec~$p$.
 
-\paragraph{Subsumpcja}
+\subsubsection{Subsumpcja}
 Wzorzec~$p_j$ jest subsumowany przez~$p_i$ (gdzie~$i < j$), gdy:
 $$L(p_j) \subseteq L(p_i)$$
 
@@ -140,7 +136,7 @@ Jest to analogiczne do~\enquote{martwego kodu} w~programowaniu.
 \textbf{Przykład:} jeśli definiuje się \texttt{ID~=~[a-z]+}, a~następnie \texttt{KEYWORD~=~if|then}, to~$L(\text{KEYWORD}) \subseteq L(\text{ID})$, ponieważ słowa \texttt{if} i~\texttt{then} są również akceptowane przez~\texttt{[a-z]+}.
 W~rezultacie token \texttt{KEYWORD} nigdy nie~zostanie rozpoznany.
 
-\paragraph{Pokrycie prefiksów}
+\subsubsection{Pokrycie prefiksów}
 Wzorzec~$p_i$ pokrywa prefiksy wzorca~$p_j$ (gdzie~$i < j$), gdy istnieje słowo~$w \in L(p_j)$ takie, że:
 $$\exists u, v \in \Sigma^* : w = uv \land u \in L(p_i)$$
 
@@ -153,30 +149,23 @@ Lekser dopasuje znak~\texttt{<} jako token \texttt{LT}, pozostawiając znak~\tex
 
 Algorytm walidacji wykorzystuje bibliotekę \texttt{dregex}~\cite{dregex}, która implementuje działania na językach regularnych i~umożliwia sprawdzanie relacji zawierania między wyrażeniami regularnymi.
 
-Algorytm przebiega w~następujących krokach:
+\noindent Algorytm przebiega w~następujących krokach:
 
 \begin{enumerate}
-    \item \textbf{Rozszerzenie wzorców o~sufiksowe dopełnienie}:
-          Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
+    \item Każdy wzorzec~$p$ jest transformowany do~postaci~$p \cdot \Sigma^*$ (w~notacji wyrażeń regularnych: \texttt{p.*}), co~umożliwia wykrywanie pokrycia prefiksów.
           Wzorzec~$p'$ pokrywa prefiksy~$p$ wtedy i~tylko wtedy, gdy~$L(p) \subseteq L(p' \cdot \Sigma^*)$.
 
-    \item \textbf{Kompilacja wzorców}:
-          Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
+    \item Wszystkie rozszerzone wzorce są kompilowane do~wewnętrznej reprezentacji biblioteki \texttt{dregex}, która konstruuje strukturę danych umożliwiającą efektywne sprawdzanie relacji podzbioru.
 
-    \item \textbf{Weryfikacja par wzorców}:
-          Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
+    \item Dla~każdej pary~$(i, j)$ takiej, że~$i < j$, algorytm sprawdza, czy:
           $$L(p_j \cdot \Sigma^*) \subseteq L(p_i \cdot \Sigma^*)$$
           co~odpowiada zarówno subsumpcji, jak i~pokryciu prefiksów.
 
-    \item \textbf{Generacja komunikatów diagnostycznych}:
-          Dla~każdej pary naruszającej warunek algorytm generuje komunikat:
-          \begin{verbatim}
-Pattern <p_j> is shadowed by <p_i>
-    \end{verbatim}
+    \item Dla~każdej pary naruszającej warunek algorytm generuje komunikat \texttt{Pattern p\_j is shadowed by p\_i}
 \end{enumerate}
 
 \subsubsection[Integracja z procesem kompilacji]{Integracja z~procesem kompilacji}
 
 Moduł \texttt{RegexChecker} jest wywoływany w~fazie ekspansji makra \texttt{lexer}, przed~generacją kodu leksera.
 Wykrycie któregokolwiek konfliktu powoduje przerwanie kompilacji z~obszernym komunikatem diagnostycznym, dzięki~czemu błędy konfiguracji są~eliminowane przed~czasem wykonania programu.
-Podejście to jest zgodne z~zasadą \textit{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.
+Podejście to jest zgodne z~zasadą \emph{fail-fast} w~inżynierii oprogramowania oraz filozofią języka Scala polegającą na~maksymalnym wykorzystaniu systemu typów i~walidacji w~czasie kompilacji.

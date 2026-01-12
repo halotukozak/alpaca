@@ -1,8 +1,6 @@
 package alpaca.internal
 
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
-
 import scala.reflect.ClassTag
 
 final class withDefaultTest extends AnyFunSuite:

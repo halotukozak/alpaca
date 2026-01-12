@@ -46,7 +46,7 @@ object NonEmptyList:
    * @throws IllegalArgumentException if the list is empty
    */
   private[internal] def unsafe[A](list: List[A]): NonEmptyList[A] = list match
-    case head :: tail => list
+    case _ :: _ => list
     case Nil => throw IllegalArgumentException("Empty list cannot be converted to NonEmptyList")
 
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NonEmptyList[A]] with

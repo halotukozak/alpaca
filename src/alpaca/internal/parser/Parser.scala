@@ -139,7 +139,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
       val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
         case '{ rule(${ Varargs(cases) }*) } =>
           cases.flatMap:
-            case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } => name.value
+            case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
             case _ => None
 
       rules

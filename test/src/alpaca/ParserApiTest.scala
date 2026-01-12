@@ -3,19 +3,17 @@ package alpaca
 import Production as P
 
 import alpaca.internal.Copyable
+import alpaca.internal.lexer.LexerRefinement
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import alpaca.internal.lexer.Lexeme
-import alpaca.internal.lexer.LexerRefinement
-
-import scala.deriving.Mirror
 
 import scala.collection.mutable
+import scala.deriving.Mirror
 
 final class ParserApiTest extends AnyFunSuite with Matchers:
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])
 
-  val CalcLexer = lexer {
+  val CalcLexer = lexer:
     case " " => Token.Ignored
     case "\\t" => Token.Ignored
     case id @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](id)
@@ -31,7 +29,6 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     case newline @ "\n+" =>
       ctx.line += newline.count(_ == '\n')
       Token.Ignored
-  }
 
   case class CalcContext(
     names: mutable.Map[String, Int] = mutable.Map.empty,
@@ -67,7 +64,8 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
       },
       { case Expr(expr) => expr },
     )
-    val root = rule { case Statement(stmt) => stmt }
+    val root = rule:
+      case Statement(stmt) => stmt
 
     override val resolutions = Set(
       P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
@@ -99,13 +97,13 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
   }
 
   test("api") {
-    type R = (Int, Option[Int], List[Int])
     object ApiParser extends Parser[CalcContext]:
-      val Num = rule { case CalcLexer.NUMBER(n) => n.value }
+      val Num = rule:
+        case CalcLexer.NUMBER(n) => n.value
 
-      val root = rule { case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
-        (n, numOpt, numList)
-      }
+      val root = rule:
+        case (Num(n), CalcLexer.COMMA(_), Num.Option(numOpt), CalcLexer.COMMA(_), Num.List(numList)) =>
+          (n, numOpt, numList)
 
     ApiParser.parse(CalcLexer.tokenize("1,,").lexemes) should matchPattern:
       case (_, (1, None, Nil)) =>

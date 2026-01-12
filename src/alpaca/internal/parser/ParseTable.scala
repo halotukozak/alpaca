@@ -27,7 +27,7 @@ private[parser] object ParseTable:
      */
     def apply(state: Int, symbol: Symbol)(using DebugSettings): ParseAction =
       try table((state, symbol))
-      catch case e: NoSuchElementException => throw AlgorithmError(show"No action for state $state and symbol $symbol")
+      catch case _: NoSuchElementException => throw AlgorithmError(show"No action for state $state and symbol $symbol")
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -60,7 +60,6 @@ private[parser] object ParseTable:
   def apply(
     productions: List[Production],
     conflictResolutionTable: ConflictResolutionTable,
-  )(using quotes: Quotes,
   )(using DebugSettings,
   ): ParseTable =
     logger.trace("building first set...")
@@ -94,7 +93,7 @@ private[parser] object ParseTable:
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
                 case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
-    @tailrec def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+    @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get

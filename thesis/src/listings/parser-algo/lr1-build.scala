@@ -15,11 +15,11 @@ val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 while states.sizeIs > currStateId do
   val currState = states(currStateId)
 
-  // redukcje i akceptacja
+  // reductions and acceptations
   for item <- currState if item.isLastItem do
       addToTable(item.lookAhead, Reduction(item.production))
 
-  // przejścia shift (goto)
+  // shift (goto) transitions
   for stepSymbol <- currState.possibleSteps do
     val newState = goto(currState, stepSymbol, productions, firstSet)
 
