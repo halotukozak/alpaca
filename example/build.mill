@@ -1,0 +1,37 @@
+//| mill-version: 1.1.0-RC1
+//| mill-jvm-version: 21
+// package build
+
+import mill.scalalib.*
+
+object `package` extends ScalaModule:
+  def scalaVersion = "3.8.0-RC3"
+
+  override def scalacOptions = Seq(
+    "-deprecation",
+    "-feature",
+    // "-explain",
+    "-new-syntax",
+    "-unchecked",
+    "-language:noAutoTupling",
+    "-Vprofile",
+    "-Xprint-inline",
+    "-Ycheck:macros",
+    // "-Ydebug-error",
+    "-Ydebug-flags",
+    "-Ydebug-missing-refs",
+    "-Yexplain-lowlevel",
+    "-Yexplicit-nulls",
+    // "-Yprint-debug",
+    // "-Xprint:postInlining",
+    "-Wsafe-init",
+    "-Yshow-suppressed-errors",
+    "-Yshow-var-bounds",
+    "-Werror",
+    "-Wunused:all",
+    "-experimental",
+  )
+
+  def mvnDeps = Seq(
+    mvn"io.github.halotukozak::alpaca:0.0.4",
+  )

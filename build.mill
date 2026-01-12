@@ -13,6 +13,8 @@ import mill.contrib.scoverage.ScoverageModule
 import mill.util.VcsVersion
 
 object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
+  root =>
+
   def scalaVersion = "3.8.0-RC4"
 
   def scoverageVersion = "2.5.2"
@@ -92,3 +94,11 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
+
+
+  object example extends ScalaModule:
+    def scalaVersion = root.scalaVersion
+
+    def moduleDeps = Seq(root)
+
+    def scalacOptions = root.scalacOptions() ++ Seq("-Yretain-trees")
