@@ -36,7 +36,7 @@ object MatrixParser extends Parser:
   )
 
   def If: Rule[AST.If] = rule(
-    "if-else" {
+    "ifelse" {
       case (ML.`if`(l), ML.`\\(`(_), Condition(cond), ML.`\\)`(_), Block(thenBlock), ML.`else`(_), Block(elseBlock)) =>
         AST.If(cond, thenBlock, elseBlock, l.line)
     },
@@ -149,7 +149,7 @@ object MatrixParser extends Parser:
     production.add.after(ML.`\\*`, ML.`/`),
     production.sub.after(ML.`\\*`, ML.`/`),
     production.sub.before(ML.`\\+`, ML.`-`),
-    production.`if-else`.before(ML.`else`),
+    production.ifelse.before(ML.`else`),
     ML.`else`.before(production.`if`),
   )
 
