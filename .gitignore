@@ -47,7 +47,6 @@ build/
 .metals/
 
 debug/
-src/alpaca/local.scala
 thesis/src/.texpadtmp/
 thesis/src/*.aux
 thesis/src/*.log
