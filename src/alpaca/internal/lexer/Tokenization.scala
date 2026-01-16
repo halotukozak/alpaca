@@ -2,9 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
-import scala.util.matching.Regex
-import scala.NamedTuple.NamedTuple
 
 /**
  * The result of compiling a lexer definition.
@@ -18,7 +17,8 @@ import scala.NamedTuple.NamedTuple
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
 ) extends Selectable:
-  type LexemeRefinement <: Lexeme[?, ?]
+  type LexemeFields <: AnyNamedTuple
+  final type Lexeme = alpaca.internal.lexer.Lexeme[?, ?] withFields LexemeFields
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
   def tokens: List[Token[?, Ctx, ?]]
@@ -31,7 +31,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = LexemeRefinement }
+  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = Lexeme }
 
   /**
    * Tokenizes the input character sequence.
@@ -47,12 +47,8 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   final def tokenize(
     input: CharSequence,
   )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme[?, ?] & LexemeRefinement]) =
-    @tailrec def loop(
-      globalCtx: Ctx,
-    )(
-      acc: List[Lexeme[?, ?] & LexemeRefinement],
-    ): List[Lexeme[?, ?] & LexemeRefinement] =
+  ): (ctx: Ctx, lexemes: List[Lexeme]) =
+    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme]): List[Lexeme] =
       globalCtx.text.length match
         case 0 =>
           acc.reverse // todo: make it not reversed
@@ -72,7 +68,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
               throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme[?, ?] & LexemeRefinement]
+            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
           loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()

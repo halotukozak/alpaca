@@ -1,7 +1,7 @@
 package alpaca
 package internal
 
-import scala.NamedTuple.NamedTuple
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -106,3 +106,5 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
         owner
 
     body(using owner.asQuotes)(owner)
+
+infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
