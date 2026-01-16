@@ -5,17 +5,17 @@ package lexer
 import alpaca.Token as TokenDef
 
 import java.util.regex.Pattern
-import scala.NamedTuple.NamedTuple
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
-def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
+def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }] = withTimeout:
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = withTimeout:
   import quotes.reflect.*
-  type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = LexemeRefn }
+  type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
@@ -131,10 +131,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     privateWithin = Symbol.noSymbol,
   )
 
-  def lexemeRefinementSymbol(cls: Symbol) = Symbol.newTypeAlias(
+  def lexemeFieldsSymbol(cls: Symbol) = Symbol.newTypeAlias(
     parent = cls,
-    name = "LexemeRefinement",
-    tpe = TypeRepr.of[LexemeRefn],
+    name = "LexemeFields",
+    tpe = TypeRepr.of[lexemeFields],
     flags = Flags.Synthetic,
     privateWithin = Symbol.noSymbol,
   )
@@ -174,7 +174,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
     cls =>
       tokenSymbols(cls) ++ List(
         fieldsSymbol(cls),
-        lexemeRefinementSymbol(cls),
+        lexemeFieldsSymbol(cls),
         compiledSymbol(cls),
         tokensSymbol(cls),
         selectDynamicSymbol(cls),
@@ -190,7 +190,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
         ValDef(owner, Some(expr.asTerm.changeOwner(owner)))
 
     tokenVals ++ Vector(
-      TypeDef(lexemeRefinementSymbol(cls)),
+      TypeDef(lexemeFieldsSymbol(cls)),
       TypeDef(fieldsSymbol(cls)),
       withOverridingSymbol(parent = cls)(compiledSymbol): owner =>
         ValDef(
@@ -255,10 +255,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, LexemeRefn: Type](
 
   logger.trace("creating tokenization class instance")
   definedTokens
-    .foldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn }]):
+    .foldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeFields = lexemeFields }]):
       case (tpe, (expr, name)) => Refinement(tpe, name, expr.asTerm.tpe)
     .asType match
     case '[refinedTpe] =>
       val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
 
-      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeRefinement = LexemeRefn } & refinedTpe]
+      Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeFields = lexemeFields } & refinedTpe]
