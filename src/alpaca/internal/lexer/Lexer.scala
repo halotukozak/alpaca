@@ -104,23 +104,23 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
 
-val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
-  case (methSym, List(fieldName: Term)) =>
-    Match(
-      Typed(
-        fieldName,
-        Annotated(
-          TypeTree.ref(fieldName.tpe.typeSymbol),
-          '{ new annotation.switch }.asTerm.changeOwner(methSym),
+  val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
+    case (methSym, List(fieldName: Term)) =>
+      Match(
+        Typed(
+          fieldName,
+          Annotated(
+            TypeTree.ref(fieldName.tpe.typeSymbol),
+            '{ new annotation.switch }.asTerm.changeOwner(methSym),
+          ),
         ),
-      ),
-      definedTokens.collect:
-        case (epxr, name) if epxr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
-          CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, epxr.asTerm),
-    ).changeOwner(methSym)
+        definedTokens.collect:
+          case (epxr, name) if epxr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
+            CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, epxr.asTerm),
+      ).changeOwner(methSym)
 
   logger.trace("creating tokenization class instance")
-    (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
+  (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
 
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
@@ -141,5 +141,5 @@ val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
             override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
-        }.asInstanceOf[Tokenization[Ctx] {type LexemeFields = lexemeFields; type Fields = fields} & refinedTpe]
+        }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
