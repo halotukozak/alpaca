@@ -28,8 +28,17 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
-          cache: 'mill' # Built-in caching for Mill
 
+      - name: Cache Mill dependencies
+          uses: actions/cache@v5
+          with:
+            path: |
+              ~/.cache/coursier
+              ~/.cache/mill
+            key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+            restore-keys: |
+              ${{ runner.os }}-mill-
+              
       - name: Install Hyperfine
         run: sudo apt-get install -y hyperfine
 
