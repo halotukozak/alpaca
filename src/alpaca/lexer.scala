@@ -3,7 +3,8 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
-import scala.annotation.{compileTimeOnly, unused}
+import scala.NamedTuple.NamedTuple
+import scala.annotation.compileTimeOnly
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -21,8 +22,8 @@ import scala.annotation.{compileTimeOnly, unused}
  * }}}
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
- * @param rules the lexer rules as a partial function
- * @param copy implicit Copyable instance for the context
+ * @param rules         the lexer rules as a partial function
+ * @param copy          implicit Copyable instance for the context
  * @param betweenStages implicit BetweenStages for context updates
  * @return a Tokenization instance that can tokenize input strings
  */
@@ -32,9 +33,9 @@ transparent inline def lexer[Ctx <: LexerCtx](
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
   betweenStages: BetweenStages[Ctx],
-  lexerRefinement: LexerRefinement[Ctx],
-): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }) }
+  m: Mirror.Of[Ctx],
+): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
+  ${ lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]]('{ rules }, '{ betweenStages }) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
@@ -69,7 +70,7 @@ object Token:
    *
    * @tparam Name the token name
    * @param value the value to extract from the match
-   * @param ctx the lexer context
+   * @param ctx   the lexer context
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
@@ -154,9 +155,9 @@ object LexerCtx:
    * This is the most commonly used context and provides useful information
    * for error reporting.
    *
-   * @param text the remaining text to tokenize
+   * @param text     the remaining text to tokenize
    * @param position the current character position (1-based)
-   * @param line the current line number (1-based)
+   * @param line     the current line number (1-based)
    */
   final case class Default(
     var text: CharSequence = "",
