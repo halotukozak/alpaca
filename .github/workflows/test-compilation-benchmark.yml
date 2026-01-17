@@ -56,7 +56,7 @@ jobs:
             (
               cd "$dir"
           
-              hyperfine --runs 5 --prepare "./mill clean \ ./mill compile" "./mill test.compile" --export-json "../${dir}.json"
+              hyperfine --runs 5 --prepare "./mill clean && ./mill compile" "./mill test.compile" --export-json "../${dir}.json"
             )
             echo "::endgroup::"
           }
