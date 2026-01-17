@@ -1,0 +1,124 @@
+name: Test Compilation Benchmark
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Cache Mill dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+
+      - name: Clean compilation artifacts
+        run: ./mill clean
+
+      - name: Measure current branch test compilation time
+        run: |
+          echo "Measuring test compilation time on current branch..."
+          START_TIME=$(date +%s)
+          ./mill test.compile
+          END_TIME=$(date +%s)
+          CURRENT_DURATION=$((END_TIME - START_TIME))
+          echo "CURRENT_DURATION=$CURRENT_DURATION" >> $GITHUB_ENV
+          echo "Current branch test compilation time: ${CURRENT_DURATION}s"
+
+      - name: Checkout master branch
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          clean: false
+
+      - name: Clean compilation artifacts for master
+        run: ./mill clean
+
+      - name: Measure master branch test compilation time
+        run: |
+          echo "Measuring test compilation time on master branch..."
+          START_TIME=$(date +%s)
+          ./mill test.compile
+          END_TIME=$(date +%s)
+          MASTER_DURATION=$((END_TIME - START_TIME))
+          echo "MASTER_DURATION=$MASTER_DURATION" >> $GITHUB_ENV
+          echo "Master branch test compilation time: ${MASTER_DURATION}s"
+
+      - name: Compare and report results
+        run: |
+          echo "### Test Compilation Time Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | Compilation Time |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Current | ${CURRENT_DURATION}s |" >> $GITHUB_STEP_SUMMARY
+          echo "| Master | ${MASTER_DURATION}s |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          DIFF=$((CURRENT_DURATION - MASTER_DURATION))
+          if [ $DIFF -gt 0 ]; then
+            PERCENT=$(awk "BEGIN {printf \"%.2f\", ($DIFF / $MASTER_DURATION) * 100}")
+            echo "**Current branch is ${DIFF}s slower (${PERCENT}% increase)** ⚠️" >> $GITHUB_STEP_SUMMARY
+          elif [ $DIFF -lt 0 ]; then
+            DIFF_ABS=$((-DIFF))
+            PERCENT=$(awk "BEGIN {printf \"%.2f\", ($DIFF_ABS / $MASTER_DURATION) * 100}")
+            echo "**Current branch is ${DIFF_ABS}s faster (${PERCENT}% decrease)** ✅" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**No difference in compilation time** ✅" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const current = process.env.CURRENT_DURATION;
+            const master = process.env.MASTER_DURATION;
+            const diff = current - master;
+            
+            let message = '### 📊 Test Compilation Time Benchmark\n\n';
+            message += '| Branch | Compilation Time |\n';
+            message += '|--------|------------------|\n';
+            message += `| Current | ${current}s |\n`;
+            message += `| Master | ${master}s |\n\n`;
+            
+            if (diff > 0) {
+              const percent = ((diff / master) * 100).toFixed(2);
+              message += `**Current branch is ${diff}s slower (${percent}% increase)** ⚠️\n`;
+            } else if (diff < 0) {
+              const diffAbs = Math.abs(diff);
+              const percent = ((diffAbs / master) * 100).toFixed(2);
+              message += `**Current branch is ${diffAbs}s faster (${percent}% decrease)** ✅\n`;
+            } else {
+              message += '**No difference in compilation time** ✅\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
