@@ -3,9 +3,14 @@
   "extends": [
     "config:recommended"
   ],
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": ["(^|/)build\\.sc$", "(^|/)build\\.mill$", "\\.mill$"],
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
       "matchStrings": [
         "mvn\"(?<depName>[^:]+:[^:]+):(?<currentValue>[^\"]+)\""
       ],
