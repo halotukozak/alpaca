@@ -17,6 +17,7 @@ import scala.annotation.tailrec
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
 ) extends Selectable:
+  type Fields <: AnyNamedTuple
   type LexemeFields <: AnyNamedTuple
   final type Lexeme = alpaca.internal.lexer.Lexeme[?, ?] withFields LexemeFields
 

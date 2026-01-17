@@ -155,7 +155,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(inline second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -171,7 +171,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(inline second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
 object Production:
 

@@ -112,21 +112,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         privateWithin = Symbol.noSymbol,
       )
 
+  val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
+
   def fieldsSymbol(cls: Symbol) = Symbol.newTypeAlias(
     parent = cls,
     name = "Fields",
-    tpe = TypeRepr
-      .of[NamedTuple]
-      .appliedTo(
-        definedTokens
-          .foldLeft((TypeRepr.of[EmptyTuple], TypeRepr.of[EmptyTuple])):
-            case ((names, types), (expr, name)) =>
-              (
-                TypeRepr.of[*:].appliedTo(List(ConstantType(StringConstant(name)), names)),
-                TypeRepr.of[*:].appliedTo(List(expr.asTerm.tpe, types)),
-              )
-          .toList,
-      ),
+    tpe = fieldsTpeFrom(fields),
     flags = Flags.Synthetic,
     privateWithin = Symbol.noSymbol,
   )
@@ -254,11 +245,11 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   logger.trace("creating tokenization class instance")
-  definedTokens
-    .foldLeft(TypeRepr.of[Tokenization[Ctx] { type LexemeFields = lexemeFields }]):
-      case (tpe, (expr, name)) => Refinement(tpe, name, expr.asTerm.tpe)
-    .asType match
+  refinementTpeFrom(fields).asType match
     case '[refinedTpe] =>
-      val newCls = Typed(New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone, TypeTree.of[refinedTpe])
+      val newCls = Typed(
+        New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone,
+        TypeTree.of[Tokenization[Ctx] { type LexemeFields = lexemeFields } & refinedTpe],
+      )
 
       Block(clsDef :: Nil, newCls).asExprOf[Tokenization[Ctx] { type LexemeFields = lexemeFields } & refinedTpe]
