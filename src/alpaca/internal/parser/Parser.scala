@@ -122,7 +122,8 @@ abstract class Parser[Ctx <: ParserCtx](
 
     ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
 
-private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty
+private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
+  mutable.Map.empty
 
 def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout:
   import quotes.reflect.*
