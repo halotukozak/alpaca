@@ -56,11 +56,7 @@ jobs:
             (
               cd "$dir"
           
-              # Warm up Mill and compile project
-              ./mill compile > /dev/null 2>&1
-          
-              # Run 1 warmup, then 5 timed runs
-              hyperfine --warmup 1 --runs 5 "./mill test.compile" --export-json "../${dir}.json"
+              hyperfine --runs 5 --prepare "./mill clean \ ./mill compile" "./mill test.compile" --export-json "../${dir}.json"
             )
             echo "::endgroup::"
           }
