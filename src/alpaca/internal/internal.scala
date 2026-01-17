@@ -128,7 +128,7 @@ def refinementTpeFrom(
   refn
     .foldLeft(TypeRepr.of[Any]):
       case (acc, (label, tpe)) => Refinement(acc, label, tpe)
-      
+
 def fieldsTpeFrom(
   using quotes: Quotes,
 )(
