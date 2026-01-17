@@ -1,0 +1,5 @@
+Size,Lex Time,Lex Iterations,Parse Time,Parse Iterations,Full Parse Time,Full Parse Iterations
+100,30.63 ms,10,4.09 ms,10,26.27 ms,10
+500,144.00 ms,10,20.55 ms,10,164.02 ms,10
+1000,478.19 ms,10,46.43 ms,10,555.45 ms,10
+2000,1.72 s,10,117.50 ms,10,1.58 s,10

@@ -1,0 +1,24 @@
+//| mill-version: 1.1.0-RC2
+//| mill-jvm-version: 21
+package build
+
+import mill._
+import mill.scalalib._
+
+object `package` extends ScalaModule {
+  def scalaVersion = "3.8.0-RC1"
+
+  override def scalacOptions = Seq(
+    "-deprecation",
+    "-feature",
+    "-unchecked",
+    "-experimental",
+    "-Yretain-trees",
+  )
+
+  def mvnDeps = Seq(
+    mvn"io.github.halotukozak::alpaca:0.0.1-113-a10616"
+  )
+
+  def artifactName = "alpaca-benchmark"
+}
