@@ -188,30 +188,30 @@
     \end{center}
 
     \small
-    Analizatory leksykalne i składniowe stanowią fundamentalne komponenty procesu kompilacji, realizując fazy transformacji ciągu znaków wejściowych na strumień tokenów oraz weryfikacji zgodności strukturalnej z gramatyką.
-    Istniejące narzędzia do konstruowania tych analizatorów wykazują ograniczenia w kontekście nowoczesnych języków programowania oraz narzędzi deweloperskich.
-    Popularne generatory kodu takie jak Lex/Yacc i ANTLR wymagają zewnętrznych etapów budowania i znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i SLY cechują się słabą wydajnością i ograniczonym bezpieczeństwem typów.
-    Kombinatory parserów oferują elastyczność w opisie i modyfikacji składni języka, jednak często wiążą się z dodatkowym narzutem wykonania zmniejszającym wydajność w porównaniu do podejść generacyjnych.
-    Praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) --- narzędzie opracowane w Scali 3, które korzystając z możliwości metaprogramowania w czasie kompilacji, łączy wydajność generatorów kodu z użytecznością bibliotek.
-    Teza badawcza postuluje, że wykorzystanie makr Scali 3, mechanizmu cytatów i wstawek oraz typów rafinowanych umożliwia konstrukcję lekserów i parserów o trzech właściwościach.
-    Po pierwsze, zapewniają one wydajność zbliżoną do innych narzędzi.
-    Po drugie, oferują interfejs programistyczny niezależny od zewnętrznych języków domenowych i w pełni zintegrowany z systemem typów Scali.
-    Po trzecie, dostarczają diagnostykę błędów w czasie kompilacji.
-    Metodologia wykorzystuje API refleksji TASTy do programatycznego generowania klas anonimowych implementujących logikę tokenizacji i parsowania w trakcie kompilacji.
-    Specyfikacja analizy leksykalnej opiera się na wyrażeniach regularnych, ograniczając próg wejścia i wspierając praktyczną adopcję narzędzia.
-    Analiza składniowa implementuje algorytmy konstrukcji parserów LR(1) poprzez wykorzystanie automatu ze stosem, którego struktura stanowa jest generowana z użyciem funkcji do wyznaczania zbiorów elementów LR(1) oraz przejść między stanami automatu.
+    Analizatory leksykalne i~składniowe stanowią fundamentalne komponenty procesu kompilacji, realizując fazy transformacji ciągu znaków wejściowych na~strumień tokenów oraz weryfikacji zgodności strukturalnej z~gramatyką.
+    Istniejące narzędzia do~konstruowania tych analizatorów wykazują ograniczenia w~kontekście nowoczesnych języków programowania oraz narzędzi deweloperskich.
+    Popularne generatory kodu takie jak Lex/Yacc i~ANTLR wymagają zewnętrznych etapów budowania i~znajomości języków domenowych, podczas gdy biblioteki interpretowane jak PLY i~SLY cechują się słabą wydajnością i~ograniczonym bezpieczeństwem typów.
+    Kombinatory parserów oferują elastyczność w~opisie i~modyfikacji składni języka, jednak często wiążą się z~dodatkowym narzutem wykonania zmniejszającym wydajność w~porównaniu do~podejść generacyjnych.
+    Praca przedstawia bibliotekę ALPACA (Another Lexer Parser And Compiler Alpaca) --- narzędzie opracowane w~Scali 3, które korzystając z~możliwości metaprogramowania w~czasie kompilacji, łączy wydajność generatorów kodu z~użytecznością bibliotek.
+    Teza badawcza postuluje, że~wykorzystanie makr Scali 3, mechanizmu cytatów i~wstawek oraz typów rafinowanych umożliwia konstrukcję lekserów i~parserów o~trzech właściwościach.
+    Po~pierwsze, zapewniają one wydajność zbliżoną do~innych narzędzi.
+    Po~drugie, oferują interfejs programistyczny niezależny od~zewnętrznych języków domenowych i~w~pełni zintegrowany z~systemem typów Scali.
+    Po~trzecie, dostarczają diagnostykę błędów w~czasie kompilacji.
+    Metodologia wykorzystuje API refleksji TASTy do~programatycznego generowania klas anonimowych implementujących logikę tokenizacji i~parsowania w~trakcie kompilacji.
+    Specyfikacja analizy leksykalnej opiera się na~wyrażeniach regularnych, ograniczając próg wejścia i~wspierając praktyczną adopcję narzędzia.
+    Analiza składniowa implementuje algorytmy konstrukcji parserów LR(1) poprzez wykorzystanie automatu ze~stosem, którego struktura stanowa jest generowana z~użyciem funkcji do~wyznaczania zbiorów elementów LR(1) oraz przejść między stanami automatu.
     Implementacja rozwiązuje ograniczenia JVM poprzez techniki fragmentacji metod, umożliwiając kompilację złożonych gramatyk.
-    Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i przepisywanie referencji między etapami kompilacji.
-    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z dopasowaniem wzorców i systemem typów Scali, co stanowi implementację wewnętrznego języka domenowego opartego na składni języka.
-    Typy rafinowane zapewniają statycznie weryfikowany dostęp do pól tokenów z pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i nawigację do definicji.
-    System wspiera także rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w czasie kompilacji.
-    Ograniczenia precedencji modelowane są jako graf skierowany weryfikowany pod kątem acykliczności metodą DFS z kolorowaniem węzłów; wykryte cykle raportowane są jako niejednoznaczności specyfikacji.
-    Reprezentacja grafowa umożliwia wnioskowanie o relacjach przechodnich, co pozwala na automatyczne rozwiązywanie konfliktów wynikających z pośrednich zależności precedencji.
-    Walidacja empiryczna porównuje bibliotekę ALPACA z alternatywnymi narzędziami w testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych i plików w formacie JSON\@.
-    Wyniki wskazują na konkurencyjną wydajność dla struktur iteracyjnych, identyfikując wrażliwość na obciążenia zdominowane przez tokeny ignorowane.
-    W obecnej implementacji białe znaki przetwarzane są analogicznie do tokenów właściwych, co prowadzi do degradacji wydajności w przypadkach patologicznych, takich jak głęboko wcięte struktury JSON z dużą liczbą spacji przy niewielkiej ilości treści semantycznej.
-    Ograniczenie to wskazano jako kierunek dalszych optymalizacji.
-    Wyniki wspierają tezę, że metaprogramowanie w czasie kompilacji może zapewniać wysoką wydajność przy jednoczesnym zwiększeniu użyteczności i integracji z IDE\@.
+    Akcje semantyczne zachowują bezpieczeństwo typów poprzez transformacje AST i~przepisywanie referencji między etapami kompilacji.
+    Kluczowe wkłady techniczne obejmują deklaratywną specyfikację gramatyki zintegrowaną z~dopasowaniem wzorców i~systemem typów Scali, co~stanowi implementację wewnętrznego języka domenowego opartego na~składni języka.
+    Typy rafinowane zapewniają statycznie weryfikowany dostęp do~pól tokenów z~pełnym wsparciem IDE, obejmującym autouzupełnianie, podpowiedzi typów i~nawigację do~definicji.
+    System wspiera także rozwiązywanie konfliktów poprzez relacje precedencji oraz walidację gramatyki w~czasie kompilacji.
+    Ograniczenia precedencji modelowane są~jako graf skierowany weryfikowany pod~kątem acykliczności metodą DFS z~kolorowaniem węzłów; wykryte cykle raportowane są~jako niejednoznaczności specyfikacji.
+    Reprezentacja grafowa umożliwia wnioskowanie o~relacjach przechodnich, co~pozwala na~automatyczne rozwiązywanie konfliktów wynikających z~pośrednich zależności precedencji.
+    Walidacja empiryczna porównuje bibliotekę ALPACA z~alternatywnymi narzędziami w~testach wydajnościowych obejmujących parsowanie wyrażeń arytmetycznych i~plików w~formacie JSON\@.
+    Wyniki wskazują na~konkurencyjną wydajność dla struktur iteracyjnych, identyfikując wrażliwość na~obciążenia zdominowane przez tokeny ignorowane.
+    W~obecnej implementacji białe znaki przetwarzane są~analogicznie do~tokenów właściwych, co~prowadzi do~degradacji wydajności w~przypadkach patologicznych, takich jak głęboko wcięte struktury JSON z~dużą liczbą spacji przy niewielkiej ilości treści semantycznej.
+    Ograniczenie to~wskazano jako kierunek dalszych optymalizacji.
+    Wyniki wspierają tezę, że~metaprogramowanie w~czasie kompilacji może zapewniać wysoką wydajność przy jednoczesnym zwiększeniu użyteczności i~integracji z~IDE\@.
     \vspace{1cm}
 
     {\bfseries Słowa kluczowe:} metaprogramowanie, Scala 3, makra, analizator leksykalny, parser składniowy, parser LR(1), quote-splice, typy rafinowane, generowanie kodu, refleksja TASTy, bezpieczeństwo typów, optymalizacja kompilacji, integracja IDE, gramatyki.
@@ -224,29 +224,29 @@
     \end{center}
 
     \small
-    Lexical and syntactic analyzers are fundamental components of the compilation process, transforming input character sequences into token streams and verifying structural conformance to a grammar.
+    Lexical and syntactic analyzers are fundamental components of~the compilation process, transforming input character sequences into token streams and verifying structural conformance to~a~grammar.
     Existing tools for constructing these analyzers face significant limitations regarding modern programming languages and the features offered by Integrated Development Environments (IDEs).
     Popular code generators, such as Lex/Yacc and ANTLR, require external build steps and familiarity with external domain-specific languages (DSLs), while interpreted libraries like PLY and SLY are characterized by poor performance and limited type safety.
-    Conversely, parser combinators offer flexibility in grammar specification but often introduce runtime overhead that degrades performance compared to generative approaches.
-    This thesis introduces ALPACA (Another Lexer Parser And Compiler Alpaca), a library developed in Scala 3 that bridges the gap between the performance of code generators and the usability of libraries by leveraging compile-time metaprogramming.
-    The research posits that utilizing Scala 3 macros, the quote-and-splice mechanism, and refined types enables the construction of lexers and parsers with three key properties.
-    First, parsing performance comparable to specialized generative tools.
-    Second, a programming interface decoupled from external DSLs and fully integrated with the Scala type system.
+    Conversely, parser combinators offer flexibility in~grammar specification but often introduce runtime overhead that degrades performance compared to~generative approaches.
+    This thesis introduces ALPACA (Another Lexer Parser And Compiler Alpaca), a~library developed in~Scala 3 that bridges the gap between the performance of~code generators and the usability of~libraries by leveraging compile-time metaprogramming.
+    The research posits that utilizing Scala 3 macros, the quote-and-splice mechanism, and refined types enables the construction of~lexers and parsers with three key properties.
+    First, parsing performance comparable to~specialized generative tools.
+    Second, a~programming interface decoupled from external DSLs and fully integrated with the Scala type system.
     Finally, comprehensive compile-time error diagnostics.
-    The methodology employs the TASTy reflection API to programmatically generate anonymous classes implementing tokenization and parsing logic during compilation.
-    Lexical specifications are expressed using regular expressions, leveraging a widely adopted mechanism to reduce the learning burden and improve practical adoption.
-    Syntactic analysis implements LR(1) parser construction algorithms by employing a pushdown automaton whose state structure is generated using the closure and goto functions to compute LR(1) item sets and transitions between automaton states.
-    The implementation addresses critical JVM constraints through method fragmentation techniques, enabling the compilation of complex grammars.
+    The methodology employs the TASTy reflection API to~programmatically generate anonymous classes implementing tokenization and parsing logic during compilation.
+    Lexical specifications are expressed using regular expressions, leveraging a~widely adopted mechanism to~reduce the learning burden and improve practical adoption.
+    Syntactic analysis implements LR(1) parser construction algorithms by employing a~pushdown automaton whose state structure is generated using the closure and goto functions to~compute LR(1) item sets and transitions between automaton states.
+    The implementation addresses critical JVM constraints through method fragmentation techniques, enabling the compilation of~complex grammars.
     Semantic actions maintain type safety through AST transformations and cross-stage reference rewriting.
-    Key technical contributions include a declarative grammar specification integrated with Scala’s pattern matching and type system, effectively implementing an internal DSL\@.
-    Refined types provide statically verified access to token fields with full IDE support, including autocomplete, type hints, and go-to-definition navigation.
+    Key technical contributions include a~declarative grammar specification integrated with Scala’s pattern matching and type system, effectively implementing an~internal DSL\@.
+    Refined types provide statically verified access to~token fields with full IDE support, including autocomplete, type hints, and go-to-definition navigation.
     The system additionally supports precedence-based conflict resolution and compile-time grammar validation.
-    Precedence constraints are modeled as a directed graph validated for acyclicity using depth-first search with node coloring; cycles are reported as specification ambiguities.
-    The graph representation further enables transitive inference, allowing automatic resolution of conflicts implied by indirect precedence paths.
+    Precedence constraints are modeled as~a~directed graph validated for acyclicity using depth-first search with node coloring; cycles are reported as~specification ambiguities.
+    The graph representation further enables transitive inference, allowing automatic resolution of~conflicts implied by indirect precedence paths.
     Evaluation compares ALPACA with alternative tools using benchmarks for arithmetic expression parsing and JSON parsing.
-    Results indicate competitive performance on iterative inputs, while identifying a performance sensitivity in workloads dominated by ignored tokens.
-    In the current implementation, whitespace is processed equivalently to regular tokens, leading to degradation on pathological cases such as deeply indented JSON with large volumes of whitespace and limited semantic content.
-    This limitation is identified as a primary target for future optimization.
+    Results indicate competitive performance on~iterative inputs, while identifying a~performance sensitivity in~workloads dominated by ignored tokens.
+    In~the current implementation, whitespace is processed equivalently to~regular tokens, leading to~degradation on~pathological cases such as~deeply indented JSON with large volumes of~whitespace and limited semantic content.
+    This limitation is identified as~a~primary target for future optimization.
     Overall, the results support the thesis claim that compile-time metaprogramming can deliver high performance while improving usability and IDE integration.
     \vspace{1cm}
 
