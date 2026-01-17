@@ -24,6 +24,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
+//todo: should it contain info about ignored? for perf?
 private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
 
 private[lexer] object TokenInfo:
