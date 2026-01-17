@@ -1,6 +1,7 @@
 import fastparse._
 import MultiLineWhitespace._
 
+// Source: https://github.com/com-lihaoyi/fastparse/blob/master/fastparse/test/src/fastparse/JsonTests.scala
 object JsonParser extends Parser[JsonParser.Val] {
   sealed trait Val extends Any {
     def value: Any

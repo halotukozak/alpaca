@@ -17,7 +17,7 @@ object `package` extends ScalaModule {
   )
 
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.1-113-a10616"
+    mvn"io.github.halotukozak::alpaca:0.0.3"
   )
 
   def artifactName = "alpaca-benchmark"

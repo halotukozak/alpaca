@@ -2,4 +2,3 @@ Size,Lex Time,Lex Iterations,Parse Time,Parse Iterations,Full Parse Time,Full Pa
 100,44.96 ms,10,4.33 ms,10,49.44 ms,10
 500,2.99 s,10,18.09 ms,10,3.02 s,10
 1000,23.55 s,10,37.51 ms,10,23.52 s,10
-2000
