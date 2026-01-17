@@ -119,18 +119,21 @@ def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.
     case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
     case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
 
-def refinementFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)]): Type[? <: AnyKind] =
+def refinementTpeFrom(
+  using quotes: Quotes,
+)(
+  refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
+): quotes.reflect.TypeRepr =
   import quotes.reflect.*
   refn
     .foldLeft(TypeRepr.of[Any]):
       case (acc, (label, tpe)) => Refinement(acc, label, tpe)
-    .asType
-
-def fieldsFrom(
+      
+def fieldsTpeFrom(
   using quotes: Quotes,
 )(
   refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
-): Type[? <: AnyKind] =
+): quotes.reflect.TypeRepr =
   import quotes.reflect.*
   TypeRepr
     .of[NamedTuple]
@@ -144,9 +147,9 @@ def fieldsFrom(
             )
         .toList,
     )
-    .asType
 
 extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)
+  // todo may not work
   def asTypeOf[T: Type]: Type[? <: T] =
     import quotes.reflect.*
     tpe.asType match
