@@ -2,17 +2,25 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
   "regexManagers": [
     {
-      "fileMatch": ["(^|/)build\\.sc$", "(^|/)build\\.mill$", "\\.mill$"],
+      "fileMatch": [
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
+      ],
       "matchStrings": [
         "mvn\"(?<depName>[^:]+:[^:]+):(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "maven"
     },
     {
-      "fileMatch": ["(^|/)build\\.sc$", "(^|/)build\\.mill$", "\\.mill$"],
+      "fileMatch": [
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
+      ],
       "matchStrings": [
         "mvn\"(?<groupId>[^:]+)::(?<artifactId>[^:]+):(?<currentValue>[^\"]+)\""
       ],
