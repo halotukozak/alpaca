@@ -48,7 +48,7 @@ jobs:
           TOTAL=0
           for i in {1..5}; do
             echo "Run $i/5..."
-            ./mill clean test.compile > /dev/null 2>&1
+            ./mill clean > /dev/null 2>&1
             ./mill compile > /dev/null 2>&1
             START_TIME=$(date +%s%3N)
             ./mill test.compile > /dev/null 2>&1
@@ -81,7 +81,7 @@ jobs:
           TOTAL=0
           for i in {1..5}; do
             echo "Run $i/5..."
-            ./mill clean test.compile > /dev/null 2>&1
+            ./mill clean > /dev/null 2>&1
             ./mill compile > /dev/null 2>&1
             START_TIME=$(date +%s%3N)
             ./mill test.compile > /dev/null 2>&1
