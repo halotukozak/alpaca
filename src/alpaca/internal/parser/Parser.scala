@@ -142,7 +142,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
             case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
             case _ => None
 
-      rules
+      val names = rules
         .unsafeFlatMap:
           case ValDef(name, _, Some(rhs)) =>
             logger.trace(show"Extracting production names from rule $name")
@@ -153,12 +153,10 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
           case _ =>
             report.error("Define resolutions as the last field of the parser.")
             Nil
-        .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
-          case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])
-        .asType
+      refinementFrom(names.map(name => (name, TypeRepr.of[Production])))
     },
   ) match
-    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ DummyProductionSelector.asInstanceOf[refinedTpe] }
+    case '[refinedTpe] => '{ DummyProductionSelector.asInstanceOf[ProductionSelector & refinedTpe] }
 
 private object DummyProductionSelector extends ProductionSelector:
   def selectDynamic(name: String): Any = dummy
