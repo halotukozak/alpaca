@@ -126,7 +126,7 @@
 
 % PROCESSING OPTIONS
 \ProcessOptions
-\LoadClass[a4paper,12pt]{report}
+\LoadClass[a4paper,12pt,twoside]{report}
 
 \RequirePackage{setspace}
 \RequirePackage{times}
@@ -145,7 +145,7 @@
   \def\tablename{Tabela}%
 }
 
-\geometry{bindingoffset=10mm, lmargin=20mm, rmargin=20mm, tmargin=25mm, bmargin=25mm, foot=10mm, head=10mm}
+\geometry{bindingoffset=10mm, inner=20mm, outer=20mm, tmargin=25mm, bmargin=25mm, foot=10mm, head=10mm}
 
 \renewcommand{\baselinestretch}{1.1}
 
