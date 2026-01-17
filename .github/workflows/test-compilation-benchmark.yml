@@ -1,154 +1,108 @@
 name: Test Compilation Benchmark
 
 on:
-  push:
-    branches:
-      - '*'
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
   benchmark:
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      contents: read
       pull-requests: write
+      contents: read
 
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v6
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          path: 'current'
+
+      - name: Checkout Base Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: 'base'
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
+          cache: 'mill' # Built-in caching for Mill
 
-      - name: Cache Mill dependencies
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/coursier
-            ~/.cache/mill
-          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
-          restore-keys: |
-            ${{ runner.os }}-mill-
+      - name: Install Hyperfine
+        run: sudo apt-get install -y hyperfine
 
-      - name: Clean compilation artifacts
-        run: ./mill clean
-
-      - name: Compile main project
-        run: ./mill compile
-
-      - name: Measure current branch test compilation time
+      - name: Benchmark
+        id: benchmark
         run: |
-          echo "Measuring test compilation time on current branch (5 runs)..."
-          TOTAL=0
-          for i in {1..5}; do
-            echo "Run $i/5..."
-            ./mill clean > /dev/null 2>&1
+          # Helper function to warm up and benchmark
+          run_bench() {
+            local dir=$1
+            cd $dir
             ./mill compile > /dev/null 2>&1
-            START_TIME=$(date +%s%3N)
-            ./mill test.compile > /dev/null 2>&1
-            END_TIME=$(date +%s%3N)
-            DURATION=$((END_TIME - START_TIME))
-            echo "  Run $i: ${DURATION}ms"
-            TOTAL=$((TOTAL + DURATION))
-          done
-          CURRENT_AVG=$((TOTAL / 5))
-          CURRENT_AVG_SEC=$(awk "BEGIN {printf \"%.2f\", $CURRENT_AVG / 1000}")
-          echo "CURRENT_AVG=$CURRENT_AVG" >> $GITHUB_ENV
-          echo "CURRENT_AVG_SEC=$CURRENT_AVG_SEC" >> $GITHUB_ENV
-          echo "Average test compilation time (current branch): ${CURRENT_AVG_SEC}s"
+            # Run 1 warmup, then 5 timed runs
+            hyperfine --warmup 1 --runs 5 "./mill test.compile" --export-json ../$dir.json
+            cd ..
+          }
 
-      - name: Checkout master branch
-        uses: actions/checkout@v6
-        with:
-          ref: master
-          clean: false
-
-      - name: Clean compilation artifacts for master
-        run: ./mill clean
-
-      - name: Compile main project for master
-        run: ./mill compile
-
-      - name: Measure master branch test compilation time
-        run: |
-          echo "Measuring test compilation time on master branch (5 runs)..."
-          TOTAL=0
-          for i in {1..5}; do
-            echo "Run $i/5..."
-            ./mill clean > /dev/null 2>&1
-            ./mill compile > /dev/null 2>&1
-            START_TIME=$(date +%s%3N)
-            ./mill test.compile > /dev/null 2>&1
-            END_TIME=$(date +%s%3N)
-            DURATION=$((END_TIME - START_TIME))
-            echo "  Run $i: ${DURATION}ms"
-            TOTAL=$((TOTAL + DURATION))
-          done
-          MASTER_AVG=$((TOTAL / 5))
-          MASTER_AVG_SEC=$(awk "BEGIN {printf \"%.2f\", $MASTER_AVG / 1000}")
-          echo "MASTER_AVG=$MASTER_AVG" >> $GITHUB_ENV
-          echo "MASTER_AVG_SEC=$MASTER_AVG_SEC" >> $GITHUB_ENV
-          echo "Average test compilation time (master branch): ${MASTER_AVG_SEC}s"
-
-      - name: Compare and report results
-        run: |
-          echo "### Test Compilation Time Comparison (Average of 5 runs)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch | Average Compilation Time |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------------------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Current | ${CURRENT_AVG_SEC}s |" >> $GITHUB_STEP_SUMMARY
-          echo "| Master | ${MASTER_AVG_SEC}s |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Benchmarking Base branch..."
+          run_bench "base"
           
-          DIFF=$(awk "BEGIN {printf \"%.2f\", $CURRENT_AVG_SEC - $MASTER_AVG_SEC}")
-          DIFF_INT=$(awk "BEGIN {print ($CURRENT_AVG_SEC > $MASTER_AVG_SEC) ? 1 : (($CURRENT_AVG_SEC < $MASTER_AVG_SEC) ? -1 : 0)}")
-          
-          if [ "$DIFF_INT" -gt 0 ]; then
-            PERCENT=$(awk "BEGIN {printf \"%.2f\", ($DIFF / $MASTER_AVG_SEC) * 100}")
-            echo "**Current branch is ${DIFF}s slower (${PERCENT}% increase)** ⚠️" >> $GITHUB_STEP_SUMMARY
-          elif [ "$DIFF_INT" -lt 0 ]; then
-            DIFF_ABS=$(awk "BEGIN {printf \"%.2f\", -($DIFF)}")
-            PERCENT=$(awk "BEGIN {printf \"%.2f\", ($DIFF_ABS / $MASTER_AVG_SEC) * 100}")
-            echo "**Current branch is ${DIFF_ABS}s faster (${PERCENT}% decrease)** ✅" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "**No difference in compilation time** ✅" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "Benchmarking Current branch..."
+          run_bench "current"
 
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
+      - name: Compare Results
+        id: compare
+        run: |
+          BASE_TIME=$(jq '.results[0].mean' base.json)
+          CURR_TIME=$(jq '.results[0].mean' current.json)
+          
+          DIFF=$(echo "$CURR_TIME - $BASE_TIME" | bc)
+          PERC=$(echo "scale=2; ($DIFF / $BASE_TIME) * 100" | bc)
+          
+          # Pass variables to next steps
+          echo "base_sec=$(printf "%.2f" $BASE_TIME)" >> $GITHUB_OUTPUT
+          echo "curr_sec=$(printf "%.2f" $CURR_TIME)" >> $GITHUB_OUTPUT
+          echo "diff_sec=$(printf "%.2f" $DIFF)" >> $GITHUB_OUTPUT
+          echo "perc=$PERC" >> $GITHUB_OUTPUT
+
+      - name: Upsert PR Comment
         uses: actions/github-script@v7
         with:
           script: |
-            const current = process.env.CURRENT_AVG_SEC;
-            const master = process.env.MASTER_AVG_SEC;
-            const diff = (parseFloat(current) - parseFloat(master)).toFixed(2);
+            const { base_sec, curr_sec, diff_sec, perc } = steps.compare.outputs;
+            const emoji = parseFloat(diff_sec) > 0 ? '⚠️' : '✅';
+            const status = parseFloat(diff_sec) > 0 ? 'slower' : 'faster';
             
-            let message = '### 📊 Test Compilation Time Benchmark (Average of 5 runs)\n\n';
-            message += '| Branch | Average Compilation Time |\n';
-            message += '|--------|---------------------------|\n';
-            message += `| Current | ${current}s |\n`;
-            message += `| Master | ${master}s |\n\n`;
+            const body = `### 📊 Test Compilation Benchmark
+            | Branch | Average Time |
+            | :--- | :--- |
+            | **Base (${{ github.base_ref }})** | ${base_sec}s |
+            | **Current (${{ github.head_ref }})** | ${curr_sec}s |
             
-            if (diff > 0) {
-              const percent = ((diff / master) * 100).toFixed(2);
-              message += `**Current branch is ${diff}s slower (${percent}% increase)** ⚠️\n`;
-            } else if (diff < 0) {
-              const diffAbs = Math.abs(diff).toFixed(2);
-              const percent = ((diffAbs / master) * 100).toFixed(2);
-              message += `**Current branch is ${diffAbs}s faster (${percent}% decrease)** ✅\n`;
-            } else {
-              message += '**No difference in compilation time** ✅\n';
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            **Result:** Current branch is ${Math.abs(diff_sec)}s ${status} (${Math.abs(perc)}%) ${emoji}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: message
+              issue_number: context.issue.number,
             });
+
+            const botComment = comments.find(c => c.body.includes('### 📊 Test Compilation Benchmark'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
