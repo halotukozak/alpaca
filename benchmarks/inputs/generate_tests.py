@@ -11,7 +11,7 @@ def generate_iterative_math(num_lines: int, output_file: str):
             f.write("1 + 1 - 1 +\n")
         f.write("1 + 1 - 1\n")
 
-    print(f"✓ Wygenerowano {output_file}: {num_lines} linii")
+    print(f"✓ Generated {output_file}: {num_lines} lines")
 
 # 1 + 1 + (
 # 1 + 1 + (
@@ -28,7 +28,7 @@ def generate_recursive_math(num_lines: int, output_file: str):
         for _ in range(num_lines):
             f.write(") - 1\n")
 
-    print(f"✓ Wygenerowano {output_file}: głębokość {num_lines}")
+    print(f"✓ Generated {output_file}: depth {num_lines}")
 
 # {
 #   "items": [
@@ -48,18 +48,6 @@ def generate_recursive_math(num_lines: int, output_file: str):
 #   ]
 # }
 def generate_iterative_json(num_objects: int, output_file: str):
-    data = {
-        "items": [
-            {
-                "id": i,
-                "name": f"item_{i}",
-                "value": i * 10,
-                "active": i % 2 == 0
-            }
-            for i in range(num_objects)
-        ]
-    }
-
     with open(output_file, 'w') as f:
         f.write("{\n")
         f.write(indent("\"items\": [\n", 1))
@@ -76,7 +64,7 @@ def generate_iterative_json(num_objects: int, output_file: str):
         f.write(indent("]\n", 1))
         f.write("}")
 
-    print(f"✓ Wygenerowano {output_file}: {num_objects} obiektów")
+    print(f"✓ Generated {output_file}: {num_objects} objects")
 
 def generate_recursive_json(num_objects: int, output_file: str):
     with open(output_file, 'w') as f:
@@ -91,7 +79,7 @@ def generate_recursive_json(num_objects: int, output_file: str):
         for i in reversed(range(num_objects + 1)):
             f.write(indent("}\n", i + 1))
 
-    print(f"✓ Wygenerowano {output_file}: {num_objects} obiektów")
+    print(f"✓ Generated {output_file}: {num_objects} objects")
 
 if __name__ == "__main__":
     tests = [
@@ -102,9 +90,9 @@ if __name__ == "__main__":
     ]
 
     for func, description in tests:
-        print(f"\nGenerowanie testów: {description}\n")
+        print(f"\nGenerating tests: {description}\n")
         for size in (3, 100, 500, 1_000, 2_000, 5_000, 10_000):
             output_file = f"{description}_{size}.txt"
             func(size, output_file)
 
-    print("\nGotowe!")
+    print("\nDone!")

@@ -1,5 +1,6 @@
 from pathlib import Path
 from sly import Lexer, Parser
+from sly.yacc import YaccProduction as _
 
 class MathLexer(Lexer):
     literals = ['+', '-', '*', '/', '(', ')']
