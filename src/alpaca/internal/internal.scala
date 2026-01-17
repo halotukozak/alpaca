@@ -130,7 +130,7 @@ def fieldsFrom(
   using quotes: Quotes,
 )(
   refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
-): Type[? <: AnyNamedTuple] =
+): Type[? <: AnyKind] =
   import quotes.reflect.*
   TypeRepr
     .of[NamedTuple]
@@ -144,7 +144,7 @@ def fieldsFrom(
             )
         .toList,
     )
-    .asTypeOf[AnyNamedTuple]
+    .asType
 
 extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)
   def asTypeOf[T: Type]: Type[? <: T] =
