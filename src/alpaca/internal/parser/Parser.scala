@@ -131,32 +131,37 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
 
   logger.trace(show"Generating production selector for $parserSymbol")
 
-  cachedProductions.getOrElseUpdate(
-    parserTpe.asType, {
-      val rules = parserTpe.typeSymbol.declarations.collect:
-        case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+  cachedProductions
+    .getOrElseUpdate(
+      parserTpe.asType, {
+        val rules = parserTpe.typeSymbol.declarations.collect:
+          case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
-      val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
-        case '{ rule(${ Varargs(cases) }*) } =>
-          cases.flatMap:
-            case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
-            case _ => None
+        val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
+          case '{ rule(${ Varargs(cases) }*) } =>
+            cases.flatMap:
+              case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
+              case _ => None
 
-      val names = rules
-        .unsafeFlatMap:
-          case ValDef(name, _, Some(rhs)) =>
-            logger.trace(show"Extracting production names from rule $name")
-            extractName(rhs.asExprOf[Rule[?]])
-          case DefDef(name, _, _, Some(rhs)) =>
-            logger.trace(show"Extracting production names from rule $name")
-            extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
-          case _ =>
-            report.error("Define resolutions as the last field of the parser.")
-            Nil
-      refinementFrom(names.map(name => (name, TypeRepr.of[Production])))
-    },
-  ) match
-    case '[refinedTpe] => '{ DummyProductionSelector.asInstanceOf[ProductionSelector & refinedTpe] }
+        val fields = rules
+          .flatMap:
+            case ValDef(name, _, Some(rhs)) =>
+              logger.trace(show"Extracting production names from rule $name")
+              extractName(rhs.asExprOf[Rule[?]])
+            case DefDef(name, _, _, Some(rhs)) =>
+              logger.trace(show"Extracting production names from rule $name")
+              extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+            case _ =>
+              report.error("Define resolutions as the last field of the parser.")
+              Nil
+          .map(name => (name, TypeRepr.of[Production]))
+
+        (refinementFrom(fields), fieldsFrom(fields))
+      },
+    )
+    .runtimeChecked match
+    case ('[refinement], '[fields]) =>
+      '{ DummyProductionSelector.asInstanceOf[ProductionSelector { type Fields = fields } & refinement] }
 
 private object DummyProductionSelector extends ProductionSelector:
-  def selectDynamic(name: String): Any = dummy
+  override def selectDynamic(name: String): Any = dummy
