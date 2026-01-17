@@ -112,15 +112,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         privateWithin = Symbol.noSymbol,
       )
 
-  val fieldsTpe = fieldsFrom(
-    definedTokens.map:
-      case (expr, name) => (name, expr.asTerm.tpe),
-  )
+  val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
 
   def fieldsSymbol(cls: Symbol) = Symbol.newTypeAlias(
     parent = cls,
     name = "Fields",
-    tpe = TypeRepr.of(using fieldsTpe),
+    tpe = fieldsTpeFrom(fields),
     flags = Flags.Synthetic,
     privateWithin = Symbol.noSymbol,
   )
@@ -248,8 +245,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   val clsDef = ClassDef(cls, parents, body)
 
   logger.trace("creating tokenization class instance")
-
-  refinementFrom(definedTokens.map { case (expr, name) => (name, expr.asTerm.tpe) }) match
+  refinementTpeFrom(fields).asType match
     case '[refinedTpe] =>
       val newCls = Typed(
         New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone,

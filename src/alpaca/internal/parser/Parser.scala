@@ -157,7 +157,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
               Nil
           .map(name => (name, TypeRepr.of[Production]))
 
-        (refinementFrom(fields), fieldsFrom(fields))
+        (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType)
       },
     )
     .runtimeChecked match
