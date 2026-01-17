@@ -41,7 +41,14 @@ jobs:
         run: ./mill compile
 
       - name: Compile tests
-        run: ./mill test.compile
+        run: |
+          echo "Starting test compilation..."
+          START_TIME=$(date +%s)
+          ./mill test.compile
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "Test compilation completed in ${DURATION}s"
+          echo "TEST_COMPILE_TIME=${DURATION}" >> $GITHUB_ENV
 
       - name: Run tests
         run: ./mill test
@@ -61,3 +68,12 @@ jobs:
 
       - name: Generate Docs
         run: ./mill docJar
+
+      - name: Report Test Compilation Time
+        if: always()
+        run: |
+          if [ -n "$TEST_COMPILE_TIME" ]; then
+            echo "### ⏱️ Test Compilation Time" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Test compilation took **${TEST_COMPILE_TIME}s**" >> $GITHUB_STEP_SUMMARY
+          fi
