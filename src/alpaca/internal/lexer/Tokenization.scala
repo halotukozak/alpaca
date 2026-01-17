@@ -32,7 +32,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?] { type LexemeTpe = Lexeme }
+  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?]
 
   /**
    * Tokenizes the input character sequence.
