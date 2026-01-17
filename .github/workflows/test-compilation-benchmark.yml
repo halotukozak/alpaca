@@ -6,6 +6,7 @@ on:
 
 jobs:
   benchmark:
+    name: Compilation Benchmark
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -15,19 +16,19 @@ jobs:
       - name: Checkout PR Branch
         uses: actions/checkout@v6
         with:
-          path: 'current'
+          path: current
 
       - name: Checkout Base Branch
         uses: actions/checkout@v6
         with:
           ref: ${{ github.base_ref }}
-          path: 'base'
+          path: base
 
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           java-version: 21
-          distribution: 'temurin'
+          distribution: temurin
 
       - name: Cache Mill dependencies
         uses: actions/cache@v5
@@ -35,62 +36,80 @@ jobs:
           path: |
             ~/.cache/coursier
             ~/.cache/mill
-          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          key: ${{ runner.os }}-mill-${{ hashFiles('current/build.mill') }}
           restore-keys: |
             ${{ runner.os }}-mill-
 
       - name: Install Hyperfine
-        run: sudo apt-get install -y hyperfine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine
 
-      - name: Benchmark
+      - name: Run Benchmarks
         id: benchmark
         run: |
-          # Helper function to warm up and benchmark
+          set -e
+          
           run_bench() {
             local dir=$1
-            cd $dir
+            echo "::group::Benchmarking $dir"
+            cd "$dir"
+          
+            # Warm up Mill and compile project
             ./mill compile > /dev/null 2>&1
+          
             # Run 1 warmup, then 5 timed runs
-            hyperfine --warmup 1 --runs 5 "./mill test.compile" --export-json ../$dir.json
+            hyperfine --warmup 1 --runs 5 "./mill test.compile" --export-json "../${dir}.json"
+          
             cd ..
+            echo "::endgroup::"
           }
 
-          echo "Benchmarking Base branch..."
           run_bench "base"
-          
-          echo "Benchmarking Current branch..."
           run_bench "current"
 
-      - name: Compare Results
-        id: compare
+      - name: Extract Results
+        id: extract
         run: |
-          BASE_TIME=$(jq '.results[0].mean' base.json)
-          CURR_TIME=$(jq '.results[0].mean' current.json)
-          
-          DIFF=$(echo "$CURR_TIME - $BASE_TIME" | bc)
-          PERC=$(echo "scale=2; ($DIFF / $BASE_TIME) * 100" | bc)
-          
-          # Pass variables to next steps
-          echo "base_sec=$(printf "%.2f" $BASE_TIME)" >> $GITHUB_OUTPUT
-          echo "curr_sec=$(printf "%.2f" $CURR_TIME)" >> $GITHUB_OUTPUT
-          echo "diff_sec=$(printf "%.2f" $DIFF)" >> $GITHUB_OUTPUT
-          echo "perc=$PERC" >> $GITHUB_OUTPUT
+          echo "base_mean=$(jq '.results[0].mean' base.json)" >> $GITHUB_OUTPUT
+          echo "curr_mean=$(jq '.results[0].mean' current.json)" >> $GITHUB_OUTPUT
 
       - name: Upsert PR Comment
         uses: actions/github-script@v8
+        env:
+          BASE_MEAN: ${{ steps.extract.outputs.base_mean }}
+          CURR_MEAN: ${{ steps.extract.outputs.curr_mean }}
         with:
           script: |
-            const { base_sec, curr_sec, diff_sec, perc } = steps.compare.outputs;
-            const emoji = parseFloat(diff_sec) > 0 ? '⚠️' : '✅';
-            const status = parseFloat(diff_sec) > 0 ? 'slower' : 'faster';
+            const baseMean = parseFloat(process.env.BASE_MEAN);
+            const currMean = parseFloat(process.env.CURR_MEAN);
             
-            const body = `### 📊 Test Compilation Benchmark
-            | Branch | Average Time |
-            | :--- | :--- |
-            | **Base (${{ github.base_ref }})** | ${base_sec}s |
-            | **Current (${{ github.head_ref }})** | ${curr_sec}s |
+            const diff = currMean - baseMean;
+            const perc = (diff / baseMean) * 100;
             
-            **Result:** Current branch is ${Math.abs(diff_sec)}s ${status} (${Math.abs(perc)}%) ${emoji}`;
+            const diffAbs = Math.abs(diff).toFixed(3);
+            const percAbs = Math.abs(perc).toFixed(2);
+            
+            let status = 'faster';
+            let emoji = '✅';
+            if (perc > 1) {
+              status = 'slower';
+              emoji = '⚠️';
+            } else if (Math.abs(perc) <= 1) {
+              status = 'unchanged';
+              emoji = 'ℹ️';
+            }
+
+            const body = [
+              '### 📊 Test Compilation Benchmark',
+              '',
+              '| Branch | Average Time |',
+              '| :--- | :--- |',
+              `| **Base (${context.payload.pull_request.base.ref})** | ${baseMean.toFixed(3)}s |`,
+              `| **Current (${context.payload.pull_request.head.ref})** | ${currMean.toFixed(3)}s |`,
+              '',
+              `**Result:** Current branch is **${diffAbs}s ${status}** (${percAbs}%) ${emoji}`
+            ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
