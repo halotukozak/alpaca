@@ -134,16 +134,12 @@ val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
       )
 
       '{
-        new Tokenization[Ctx](using $betweenStages):
-          override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
+        {
+          new Tokenization[Ctx](using $betweenStages):
+            override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
-          override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
+            override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
 
-          override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
-          .asInstanceOf[
-          Tokenization[Ctx] {
-            type LexemeFields = lexemeFields
-            type Fields = fields
-          } & refinedTpe,
-        ]
+            override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
+        }.asInstanceOf[Tokenization[Ctx] {type LexemeFields = lexemeFields; type Fields = fields} & refinedTpe]
       }
