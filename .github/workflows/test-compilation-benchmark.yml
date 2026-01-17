@@ -39,6 +39,9 @@ jobs:
       - name: Clean compilation artifacts
         run: ./mill clean
 
+      - name: Compile main project
+        run: ./mill compile
+
       - name: Measure current branch test compilation time
         run: |
           echo "Measuring test compilation time on current branch..."
@@ -57,6 +60,9 @@ jobs:
 
       - name: Clean compilation artifacts for master
         run: ./mill clean
+
+      - name: Compile main project for master
+        run: ./mill compile
 
       - name: Measure master branch test compilation time
         run: |

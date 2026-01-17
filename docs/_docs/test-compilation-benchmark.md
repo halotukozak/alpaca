@@ -19,7 +19,7 @@ A dedicated workflow (`test-compilation-benchmark.yml`) compares test compilatio
 
 ### What It Measures
 
-The benchmark measures the time taken to run `./mill test.compile`, which compiles all test source files in the project.
+The benchmark measures the time taken to run `./mill test.compile`, which compiles all test source files in the project. The main project is compiled first with `./mill compile` to ensure the measurement captures only the test compilation time, not the combined main project and test compilation time.
 
 ## Viewing Results
 
@@ -68,7 +68,8 @@ Current branch is 5s faster (10.00% decrease) ✅
 
 ## Technical Details
 
-- Compilation is performed on a clean slate (after running `./mill clean`)
+- The main project is compiled first using `./mill compile` to isolate test compilation time
+- Test compilation is performed on a clean slate (after running `./mill clean`)
 - Times are measured using Unix timestamps
 - Both branches use the same CI environment for fair comparison
 - Caching is used for Mill dependencies to ensure consistent timing
