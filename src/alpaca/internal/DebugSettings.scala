@@ -18,7 +18,7 @@ object DebugSettings:
   inline def materialize = ${ materializeImpl }
   private def materializeImpl(using quotes: Quotes): Expr[DebugSettings] = Expr(summon)
 
-  private[alpaca] given (quotes: Quotes) => DebugSettings =
+  given (quotes: Quotes) => DebugSettings =
     import quotes.reflect.*
     val settings = CompilationInfo.XmacroSettings
       .flatMap:
@@ -47,7 +47,7 @@ object DebugSettings:
         .toMap,
     )
 
-  private[alpaca] given ToExpr[DebugSettings]:
+  given ToExpr[DebugSettings]:
     def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] = '{
       DebugSettings(
         ${ Expr(x.debugDirectory) },

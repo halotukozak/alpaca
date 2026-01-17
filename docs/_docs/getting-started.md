@@ -137,6 +137,7 @@ alpaca/
 ├── docs/                     # Documentation
 └── build.mill                # Mill build configuration
 ```
+
 ## Advanced Features
 
 ### Contextual Lexing and Parsing
@@ -222,6 +223,13 @@ case "#.*" => Token.Ignored
 
 - 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
 - 🐛 [Debug Settings](https://halotukozak.github.io/alpaca/docs/debug-settings.html) - Configure compile-time debugging and logging
+
+## Thesis
+
+This project was developed as a Bachelor's Thesis. The full text of the thesis is available in
+the [thesis.pdf](https://github.com/halotukozak/alpaca/blob/master/thesis.pdf) file. The LaTeX source files can be found
+on the `thesis` [branch](https://github.com/halotukozak/alpaca/tree/thesis). Note that the thesis is written in Polish
+and does not represent the current state of the project.
 
 ## Contributing
 

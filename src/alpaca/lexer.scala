@@ -3,6 +3,7 @@ package alpaca
 import alpaca.internal.*
 import alpaca.internal.lexer.*
 
+import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
 
 /**
@@ -33,11 +34,18 @@ transparent inline def lexer[Ctx <: LexerCtx](
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
   betweenStages: BetweenStages[Ctx],
-  lexerRefinement: LexerRefinement[Ctx],
+  m: Mirror.Of[Ctx],
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
-): Tokenization[Ctx] { type LexemeRefinement = lexerRefinement.Lexeme } =
-  ${ lexerImpl[Ctx, lexerRefinement.Lexeme]('{ rules }, '{ betweenStages }, '{ errorHandling }, '{ empty }) }
+): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
+  ${
+    lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
+      '{ rules },
+      '{ betweenStages },
+      '{ errorHandling },
+      '{ empty },
+    )
+  }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
@@ -72,7 +80,7 @@ object Token:
    *
    * @tparam Name the token name
    * @param value the value to extract from the match
-   * @param ctx the lexer context
+   * @param ctx   the lexer context
    * @return a token definition
    */
   @compileTimeOnly("Should never be called outside the lexer definition")
@@ -155,9 +163,9 @@ object LexerCtx:
    * This is the most commonly used context and provides useful information
    * for error reporting.
    *
-   * @param text the remaining text to tokenize
+   * @param text     the remaining text to tokenize
    * @param position the current character position (1-based)
-   * @param line the current line number (1-based)
+   * @param line     the current line number (1-based)
    */
   final case class Default(
     var text: CharSequence = "",
