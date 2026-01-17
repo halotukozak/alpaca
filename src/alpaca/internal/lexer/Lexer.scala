@@ -115,8 +115,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
           ),
         ),
         definedTokens.collect:
-          case (epxr, name) if epxr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
-            CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, epxr.asTerm),
+          case (expr, name) if expr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
+            CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
   logger.trace("creating tokenization class instance")
