@@ -3,6 +3,8 @@ import scala.util.{Try, Success, Failure}
 import java.nio.file.StandardOpenOption.*
 
 object Benchmark {
+  val iterations = 10
+  
   def formatTime(seconds: Double): String = {
     if (seconds < 0.001) f"${seconds * 1_000_000}%.2f µs"
     else if (seconds < 1) f"${seconds * 1_000}%.2f ms"
@@ -12,7 +14,7 @@ object Benchmark {
   def benchmarkFullParse[T](
       parser: Parser[T],
       content: String,
-      iterations: Int = 10
+      iterations: Int = Benchmark.iterations
   ): Double = {
     // Warmup
     for (_ <- 0 until 3) {
@@ -48,7 +50,7 @@ object Benchmark {
 
         try {
           val fullParseTime = benchmarkFullParse(parser, input)
-          val line = s"$size,${formatTime(fullParseTime)},10\n".getBytes
+          val line = s"$size,${formatTime(fullParseTime)},$iterations\n".getBytes
           Files.write(resultFilePath, line, APPEND)
         } catch {
           case _: StackOverflowError =>

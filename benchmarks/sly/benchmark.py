@@ -8,7 +8,9 @@ sys.path.append(str(Path(__file__).parent))
 from math_parser import MathLexer, MathParser
 from json_parser import JsonLexer, JsonParser
 
-def benchmark_lexer(lexer_class, content, iterations=10):
+ITERATIONS = 10
+
+def benchmark_lexer(lexer_class, content, iterations=ITERATIONS):
     # Warmup
     for _ in range(3):
         list(lexer_class().tokenize(content))
@@ -21,7 +23,7 @@ def benchmark_lexer(lexer_class, content, iterations=10):
 
     return end - start
 
-def benchmark_parser(lexer_class, parser_class, content, iterations=10):
+def benchmark_parser(lexer_class, parser_class, content, iterations=ITERATIONS):
     tokens = list(lexer_class().tokenize(content))
 
     # Warmup
@@ -35,7 +37,7 @@ def benchmark_parser(lexer_class, parser_class, content, iterations=10):
 
     return end - start
 
-def benchmark_full_parse(lexer_class, parser_class, content, iterations=10):
+def benchmark_full_parse(lexer_class, parser_class, content, iterations=ITERATIONS):
     # Warmup
     for _ in range(3):
         tokens = lexer_class().tokenize(content)
@@ -79,11 +81,11 @@ if __name__ == "__main__":
                 
                 result_file.write(f"{size}")
                 t = benchmark_lexer(lexer_class, content)
-                result_file.write(f",{format_time(t)},{10}")
+                result_file.write(f",{format_time(t)},{ITERATIONS}")
                 t = benchmark_parser(lexer_class, parser_class, content)
-                result_file.write(f",{format_time(t)},{10}")
+                result_file.write(f",{format_time(t)},{ITERATIONS}")
                 t = benchmark_full_parse(lexer_class, parser_class, content)
-                result_file.write(f",{format_time(t)},{10}")
+                result_file.write(f",{format_time(t)},{ITERATIONS}")
                 result_file.write("\n")
 
                 print(f"Completed {group_name} size {size}")

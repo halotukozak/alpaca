@@ -6,10 +6,12 @@ import alpaca.*
 import alpaca.internal.lexer.Tokenization
 
 object Benchmark {
+  val iterations = 10
+  
   def safely(resultFile: Path)(run: => Double): Unit =
     try {
       val time = run
-      val line = s",${formatTime(time)},10".getBytes
+      val line = s",${formatTime(time)},$iterations".getBytes
       Files.write(resultFile, line, APPEND)
     } catch {
       case _: StackOverflowError =>
@@ -26,7 +28,7 @@ object Benchmark {
   def benchmarkLexer(
       lexer: Tokenization[LexerCtx.Default],
       content: String,
-      iterations: Int = 10
+      iterations: Int = Benchmark.iterations
   ): Double = {
     // Warmup
     for (_ <- 0 until 3) {
@@ -47,7 +49,7 @@ object Benchmark {
       lexer: Tokenization[LexerCtx.Default],
       parser: Parser[ParserCtx.Empty],
       content: String,
-      iterations: Int = 10
+      iterations: Int = Benchmark.iterations
   ): Double = {
     val (_, tokens) = lexer.tokenize(content)
 
@@ -70,7 +72,7 @@ object Benchmark {
       lexer: Tokenization[LexerCtx.Default],
       parser: Parser[ParserCtx.Empty],
       content: String,
-      iterations: Int = 10
+      iterations: Int = Benchmark.iterations
   ): Double = {
     // Warmup
     for (_ <- 0 until 3) {
