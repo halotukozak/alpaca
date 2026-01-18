@@ -19,7 +19,7 @@ private[internal] trait Showable[-T]:
    *
    * @return the string representation of the value
    */
-  extension (t: T)(using DebugSettings) def show: Shown
+  extension (t: T)(using Log) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
@@ -38,11 +38,13 @@ object Shown:
    *
    * @tparam T the type with a Showable instance
    */
-  given [T: Showable] => DebugSettings => Conversion[T, Shown] = _.show
+  given [T: Showable] => Log => Conversion[T, Shown] = _.show
 
 private[internal] object Showable:
-  def apply[T](func: DebugSettings ?=> T => Shown): Showable[T] = new:
-    extension (t: T)(using debugSettings: DebugSettings) override def show: Shown = func(t)
+  def apply[T](func: Log ?=> T => Shown): Showable[T] = new:
+    extension (t: T)(using Log) override def show: Shown = func(t)
+
+  given Conversion[String, Shown] = _.asInstanceOf[Shown]
 
   /** Showable instance for String (identity). */
   given Showable[String] = Showable(_.asInstanceOf[Shown])
@@ -77,7 +79,8 @@ private[internal] object Showable:
 
   given [T] => (quotes: Quotes) => Showable[quotes.reflect.TypeRepr] = Showable: tpe =>
     val short = show"[${quotes.reflect.Printer.TypeReprShortCode.show(tpe)}]"
-    if summon[DebugSettings].enableVerboseNames then show"$short(${quotes.reflect.Printer.TypeReprStructure.show(tpe)})"
+    if summon[Log].debugSettings.enableVerboseNames then
+      show"$short(${quotes.reflect.Printer.TypeReprStructure.show(tpe)})"
     else short
 
   given [T] => (quotes: Quotes) => Showable[Type[T]] = Showable: tpe =>
@@ -116,7 +119,7 @@ private[internal] object Showable:
     val shown = showables.zip(values).map(_.show(_))
     show"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
 
-extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using DebugSettings)
+extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using Log)
 
   /**
    * Creates a string representation with custom start, separator, and end strings.

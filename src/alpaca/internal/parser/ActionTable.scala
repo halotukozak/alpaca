@@ -17,7 +17,7 @@ package parser
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-private[parser] type Action[-Ctx <: ParserCtx] = (Ctx, Seq[Any]) => Any
+private[parser] type Action[-Ctx <: ParserCtx] = Log ?=> (Ctx, Seq[Any]) => Any
 
 /**
  * An opaque type representing the parser action table.

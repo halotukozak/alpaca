@@ -24,10 +24,10 @@ private[lexer] object RegexChecker:
    *
    * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: List[String])(using DebugSettings): Unit = patterns match
+  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match
     case Nil => ()
     case _ =>
-      logger.trace("checking regex patterns for shadowing...")
+      Log.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
       par:

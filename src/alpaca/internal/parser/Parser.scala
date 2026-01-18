@@ -9,6 +9,7 @@ import alpaca.internal.parser.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
+import ox.*
 
 /**
  * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
@@ -84,7 +85,8 @@ abstract class Parser[Ctx <: ParserCtx](
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
-    given DebugSettings = DebugSettings.materialize
+    given Log = Log.materialize
+
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -125,12 +127,14 @@ abstract class Parser[Ctx <: ParserCtx](
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
 
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout:
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervised:
+  given Log = new Log
+
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
-  logger.trace(show"Generating production selector for $parserSymbol")
+  Log.trace(show"Generating production selector for $parserSymbol")
 
   cachedProductions
     .getOrElseUpdate(
@@ -147,10 +151,10 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withTimeout
         val fields = rules
           .flatMap:
             case ValDef(name, _, Some(rhs)) =>
-              logger.trace(show"Extracting production names from rule $name")
+              Log.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]])
             case DefDef(name, _, _, Some(rhs)) =>
-              logger.trace(show"Extracting production names from rule $name")
+              Log.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
             case _ =>
               report.error("Define resolutions as the last field of the parser.")

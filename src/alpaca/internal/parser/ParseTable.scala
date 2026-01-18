@@ -27,7 +27,7 @@ private[parser] object ParseTable:
      * @return the parse action to take
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
-    def apply(state: Int, symbol: Symbol)(using DebugSettings): ParseAction =
+    def apply(state: Int, symbol: Symbol)(using Log): ParseAction =
       try table((state, symbol))
       catch case _: NoSuchElementException => throw AlgorithmError(show"No action for state $state and symbol $symbol")
 
@@ -39,7 +39,7 @@ private[parser] object ParseTable:
      *
      * @return a Csv representation of the parse table
      */
-    def toCsv(using DebugSettings): Csv =
+    def toCsv(using Log): Csv =
       val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
       val states = table.keysIterator.map(_.state).distinct.toList.sorted
 
@@ -59,14 +59,10 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  def apply(
-    productions: List[Production],
-    conflictResolutionTable: ConflictResolutionTable,
-  )(using DebugSettings,
-  ): ParseTable =
-    logger.trace("building first set...")
+  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
+    Log.trace("building first set...")
     val firstSet = FirstSet(productions)
-    logger.trace("building states and parse table...")
+    Log.trace("building states and parse table...")
     var currStateId = 0
     val states =
       mutable.ListBuffer(
@@ -85,7 +81,7 @@ private[parser] object ParseTable:
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
-              logger.trace(show"Conflict resolved: $action")
+              Log.trace(show"Conflict resolved: $action")
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
@@ -100,13 +96,13 @@ private[parser] object ParseTable:
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          Log.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
-      logger.trace(show"processing state $currStateId")
+      Log.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 

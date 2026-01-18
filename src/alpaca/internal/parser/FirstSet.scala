@@ -24,20 +24,20 @@ private[parser] object FirstSet:
    * @param productions the grammar productions
    * @return the computed FIRST sets
    */
-  def apply(productions: List[Production])(using DebugSettings): FirstSet =
-    logger.trace("computing first set...")
+  def apply(productions: List[Production])(using Log): FirstSet =
+    Log.trace("computing first set...")
     loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec
-  private def loop(productions: List[Production], firstSet: FirstSet)(using DebugSettings): FirstSet =
+  private def loop(productions: List[Production], firstSet: FirstSet)(using Log): FirstSet =
     val newFirstSet = productions.foldLeft(firstSet)(addImports)
     if firstSet == newFirstSet then
-      logger.trace("first set stabilized")
+      Log.trace("first set stabilized")
       newFirstSet
     else loop(productions, newFirstSet)
 
   @tailrec
-  private def addImports(firstSet: FirstSet, production: Production)(using DebugSettings): FirstSet =
+  private def addImports(firstSet: FirstSet, production: Production)(using Log): FirstSet =
     production.runtimeChecked match
       case Production.NonEmpty(lhs, NEL(head: Terminal, _), name) =>
         firstSet.updated(lhs, firstSet(lhs) + head)

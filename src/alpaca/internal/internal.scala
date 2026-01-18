@@ -1,7 +1,7 @@
 package alpaca
 package internal
 
-import ox.timeout
+import ox.*
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,7 +20,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
+private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
   /**
@@ -34,7 +34,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
    * @return a TreeMap that performs the replacements
    */
   def apply(queries: (find: Symbol, replace: Term)*): TreeMap =
-    logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
+    Log.trace(show"creating ReplaceRefs with ${queries.size} queries")
     new TreeMap:
       // skip NoSymbol
       private val filtered = queries.view.filterNot(_.find.isNoSymbol)
@@ -43,7 +43,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
         filtered
           .collectFirst:
             case (find, replace) if find == tree.symbol =>
-              logger.trace(show"replacing reference to $find with $replace")
+              Log.trace(show"replacing reference to $find with $replace")
               replace
           .getOrElse(super.transformTerm(tree)(owner))
 
@@ -56,7 +56,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q):
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using Log, Ox):
   import quotes.reflect.*
 
   /**
@@ -67,7 +67,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q):
    * @return an expression of type F
    */
   def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
-    logger.trace(show"creating lambda of type ${Type.of[F]}")
+    Log.trace(show"creating lambda of type ${Type.of[F]}")
     require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
@@ -91,23 +91,25 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 
-private[alpaca] def withTimeout[T](using debugSettings: DebugSettings)(block: => T): T =
+private[alpaca] def timeoutOnTooLongCompilation()(using debugSettings: DebugSettings)(using Ox): CancellableFork[Unit] = forkCancellable:
   debugSettings.compilationTimeout.runtimeChecked match
-    case duration: FiniteDuration => timeout(duration)(block)
-    case Duration.Inf => block
-    case Duration.MinusInf => timeout(Duration.Zero)(block)
+    case duration: FiniteDuration =>
+      sleep(duration)
+      throw AlpacaTimeoutException
+    case Duration.Inf => ()
+    case Duration.MinusInf => throw AlpacaTimeoutException
 
-private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log, Ox):
   import quotes.reflect.*
 
   def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
     val baseSymbol = symbol(parent)
     val owner = baseSymbol.overridingSymbol(parent) match
       case owner if owner.isNoSymbol =>
-        logger.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
+        Log.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
         baseSymbol
       case owner =>
-        logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
+        Log.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
         owner
 
     body(using owner.asQuotes)(owner)
@@ -153,7 +155,7 @@ def fieldsTpeFrom(
         .toList,
     )
 
-extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)
+extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)(using Log)
   // todo may not work
   def asTypeOf[T: Type]: Type[? <: T] =
     import quotes.reflect.*

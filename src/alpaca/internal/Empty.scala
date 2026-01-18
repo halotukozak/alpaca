@@ -1,7 +1,7 @@
 package alpaca
 package internal
 
-import ox.{collectPar, mapPar}
+import ox.*
 
 /**
  * A type class for creating empty instances of types.
@@ -27,11 +27,14 @@ private[alpaca] object Empty:
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withTimeout:
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervised:
+    given Log = new Log
+    val timeout = timeoutOnTooLongCompilation()
+
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
-    logger.trace(show"deriving Empty for $tpe")
+    Log.trace(show"deriving Empty for $tpe")
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
@@ -41,13 +44,13 @@ private[alpaca] object Empty:
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
-    logger.trace(show"found ${defaultParameters.size} default parameters")
+    Log.trace(show"found ${defaultParameters.size} default parameters")
 
     val parameters = constructor.paramSymss.collectPar(threads):
       case params if !params.exists(_.isTypeParam) =>
         params.zipWithIndex.mapPar(threads):
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
-            logger.trace(show"parameter $param has default value")
+            Log.trace(show"parameter $param has default value")
             defaultParameters(idx)
           case (param, _) =>
             report.errorAndAbort(
@@ -61,6 +64,7 @@ private[alpaca] object Empty:
         .appliedToArgss(parameters)
         .asExprOf[T]
 
+    timeout.cancelNow()
     '{
       new Empty[T]:
         def apply(): T = $value

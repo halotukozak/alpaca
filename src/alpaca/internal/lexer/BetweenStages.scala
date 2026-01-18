@@ -4,6 +4,8 @@ package lexer
 
 import java.util.regex.Matcher
 
+import ox.*
+
 /**
  * A hook for updating context between lexing stages.
  *
@@ -29,9 +31,11 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = withTimeout:
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervised:
+    given Log = new Log
+
     import quotes.reflect.*
-    logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
+    Log.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
       .of[Ctx]
@@ -43,13 +47,13 @@ private[alpaca] object BetweenStages:
       .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
       .map(_.asType)
 
-    logger.trace(show"found ${parents.size} parent context traits")
+    Log.trace(show"found ${parents.size} parent context traits")
 
     val derivedBetweenStages = Expr.ofList {
       parents
         .map:
           case '[type ctx >: Ctx <: LexerCtx; ctx] =>
-            logger.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
+            Log.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))

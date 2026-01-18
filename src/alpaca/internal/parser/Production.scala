@@ -25,7 +25,7 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
    * @param lookAhead the lookahead terminal (defaults to EOF)
    * @return an Item representing this production with the dot at position 0
    */
-  def toItem(lookAhead: Terminal = Symbol.EOF)(using DebugSettings): Item = Item(this, 0, lookAhead)
+  def toItem(lookAhead: Terminal = Symbol.EOF)(using Log): Item = Item(this, 0, lookAhead)
 
   case NonEmpty(
     lhs: NonTerminal & Symbol.NonEmpty,

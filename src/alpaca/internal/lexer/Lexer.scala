@@ -14,7 +14,9 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = withTimeout:
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervised:
+  given Log = new Log
+  val timeout = timeoutOnTooLongCompilation()
   import quotes.reflect.*
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
@@ -39,25 +41,25 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
         : PartialFunction[Expr[TokenDef[ValidName, Ctx, Any]], List[(TokenInfo, Expr[Token[?, Ctx, ?]])]] =
         case '{ Token.Ignored(using $_) } =>
-          logger.trace("extractSimple(1)")
+          Log.trace("extractSimple(1)")
           compileNameAndPattern[Nothing](tree).unsafeMap:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ IgnoredToken[name, Ctx](${ Expr(tokenInfo) }, $ctxManipulation) })
 
         case '{ type name <: ValidName; Token[name](using $_) } =>
-          logger.trace("extractSimple(2)")
+          Log.trace("extractSimple(2)")
           compileNameAndPattern[name](tree).unsafeMap:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ DefinedToken[name, Ctx, Unit](${ Expr(tokenInfo) }, $ctxManipulation, _ => ()) })
 
         case '{ type name <: ValidName; Token[name]($value: String)(using $_) } if value.asTerm.symbol == tree.symbol =>
-          logger.trace("extractSimple(3)")
+          Log.trace("extractSimple(3)")
           compileNameAndPattern[name](tree).unsafeMap:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ DefinedToken[name, Ctx, String](${ Expr(tokenInfo) }, $ctxManipulation, _.lastRawMatched) })
 
         case '{ type name <: ValidName; Token[name]($value: value)(using $_) } =>
-          logger.trace("extractSimple(4)")
+          Log.trace("extractSimple(4)")
           compileNameAndPattern[name](tree).unsafeMap:
             case ('[type name <: ValidName; name], tokenInfo) =>
               // we need to widen here to avoid weird types
@@ -68,7 +70,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   (tokenInfo, '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) })
 
-      logger.trace("extracting tokens from body")
+      Log.trace("extracting tokens from body")
       val (infos, tokens) = extractSimple('{ _ => () })
         .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
@@ -96,10 +98,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  logger.trace("partitioning defined and ignored tokens")
+  Log.trace("partitioning defined and ignored tokens")
   val (definedTokens, ignoredTokens) = tokens.partition(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
 
-  logger.trace("checking regex patterns")
+  Log.trace("checking regex patterns")
   RegexChecker.checkPatterns(infos.map(_.pattern))
 
   val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
@@ -119,7 +121,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
-  logger.trace("creating tokenization class instance")
+  Log.trace("creating tokenization class instance")
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
 
@@ -133,6 +135,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
           .tap(Pattern.compile), // we'd like to compile it here to fail in compile time if regex is invalid
       )
 
+      timeout.cancelNow()
       '{
         {
           new Tokenization[Ctx](using $betweenStages):
