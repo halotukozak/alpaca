@@ -24,6 +24,18 @@
         "/\\.mill$/"
       ],
       "matchStrings": [
+        "def scalaTestVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "maven"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
+      "matchStrings": [
         "def scalaVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
       "depNameTemplate":  "scala/scala3",
