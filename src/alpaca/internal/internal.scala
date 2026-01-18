@@ -91,13 +91,14 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 
-private[alpaca] def timeoutOnTooLongCompilation()(using debugSettings: DebugSettings)(using Ox): CancellableFork[Unit] = forkCancellable:
-  debugSettings.compilationTimeout.runtimeChecked match
-    case duration: FiniteDuration =>
-      sleep(duration)
-      throw AlpacaTimeoutException
-    case Duration.Inf => ()
-    case Duration.MinusInf => throw AlpacaTimeoutException
+private[alpaca] def timeoutOnTooLongCompilation()(using debugSettings: DebugSettings)(using Ox): CancellableFork[Unit] =
+  forkCancellable:
+    debugSettings.compilationTimeout.runtimeChecked match
+      case duration: FiniteDuration =>
+        sleep(duration)
+        throw AlpacaTimeoutException
+      case Duration.Inf => ()
+      case Duration.MinusInf => throw AlpacaTimeoutException
 
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log, Ox):
   import quotes.reflect.*
