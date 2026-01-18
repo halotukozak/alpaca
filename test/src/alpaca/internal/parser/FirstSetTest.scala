@@ -8,7 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import Production.NonEmpty as NEP
 
 final class FirstSetTest extends AnyFunSuite:
-  given DebugSettings = DebugSettings.materialize
+  given Log = Log.materialize
 
   test("FirstSet should correctly identify first sets for simple grammar") {
     val productions: List[Production] = List(
