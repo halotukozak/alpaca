@@ -22,9 +22,10 @@ import scala.annotation.compileTimeOnly
  * }}}
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
- * @param rules         the lexer rules as a partial function
- * @param copy          implicit Copyable instance for the context
+ * @param rules the lexer rules as a partial function
  * @param betweenStages implicit BetweenStages for context updates
+ * @param errorHandling implicit ErrorHandling for custom error recovery
+ * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
  */
 transparent inline def lexer[Ctx <: LexerCtx](
@@ -34,8 +35,17 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(using
   betweenStages: BetweenStages[Ctx],
   m: Mirror.Of[Ctx],
+  errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
-  ${ lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]]('{ rules }, '{ betweenStages }) }
+  ${
+    lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
+      '{ rules },
+      '{ betweenStages },
+      '{ errorHandling },
+      '{ empty },
+    )
+  }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
@@ -117,20 +127,18 @@ object LexerCtx:
    * - Applies any context modifications
    */
   given BetweenStages[LexerCtx] =
-    case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-
       val ctxAsProduct = ctx.asInstanceOf[Product]
       val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
         ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
-    case (IgnoredToken(_, modifyCtx), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (IgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)
+
+  given ErrorHandling[LexerCtx] = ctx =>
+    ErrorHandling.Strategy.Throw(new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'"))
 
   /**
    * An empty lexer context with no extra state tracking.
@@ -166,6 +174,13 @@ object LexerCtx:
   ) extends LexerCtx
       with PositionTracking
       with LineTracking
+
+  object Default:
+    given ErrorHandling[Default] = ctx =>
+      ErrorHandling.Strategy.Throw:
+        new RuntimeException(
+          s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
+        )
 
 /**
  * Type alias for lexer rule definitions.

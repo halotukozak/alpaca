@@ -46,7 +46,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val exception = intercept[RuntimeException]:
       Lexer.tokenize("123abc")
 
-    assert(exception.getMessage.contains("Unexpected character: 'a'"))
+    assert(exception.getMessage.contains("Unexpected character at line 1, position 4: 'a'"))
   }
 
   test("tokenize complex expression") {

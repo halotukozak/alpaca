@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import scala.annotation.implicitNotFound
+
 /**
  * A type class for creating empty instances of types.
  *
@@ -9,6 +11,7 @@ package internal
  *
  * @tparam T the type to create empty instances of
  */
+@implicitNotFound("${T} should be a case class.")
 private[alpaca] trait Empty[T] extends (() => T)
 
 private[alpaca] object Empty:
