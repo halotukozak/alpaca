@@ -2,7 +2,12 @@ package alpaca
 package internal
 package parser
 
+import ox.*
+import ox.channels.*
+import ox.flow.Flow
+
 import scala.collection.immutable.SortedSet
+import scala.collection.mutable
 
 /**
  * An opaque type representing a parser state.

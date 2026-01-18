@@ -3,6 +3,8 @@ package internal
 package parser
 
 import alpaca.internal.parser.ParseAction.{Reduction, Shift}
+import ox.flow.Flow
+import ox.mapPar
 
 import scala.annotation.tailrec
 import scala.collection.mutable

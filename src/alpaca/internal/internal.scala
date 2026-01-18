@@ -1,8 +1,11 @@
 package alpaca
 package internal
 
+import ox.timeout
+
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
@@ -88,9 +91,11 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 
-inline private[alpaca] def withTimeout[T](using debugSettings: DebugSettings)(inline block: T): T =
-  val future = Future(block)
-  Await.result(future, debugSettings.compilationTimeout)
+private[alpaca] def withTimeout[T](using debugSettings: DebugSettings)(block: => T): T =
+  debugSettings.compilationTimeout.runtimeChecked match
+    case duration: FiniteDuration => timeout(duration)(block)
+    case Duration.Inf => block
+    case Duration.MinusInf => timeout(Duration.Zero)(block)
 
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
@@ -155,3 +160,5 @@ extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)
     tpe.asType match
       case '[t] if TypeRepr.of[t] <:< TypeRepr.of[T] => Type.of[t & T]
       case _ => report.errorAndAbort(show"expected type ${TypeRepr.of[T]} but got $tpe")
+
+inline def threads = Runtime.getRuntime.availableProcessors()

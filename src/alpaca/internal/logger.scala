@@ -1,6 +1,9 @@
 package alpaca
 package internal
 
+import ox.*
+import ox.channels.*
+
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}

@@ -8,6 +8,7 @@ import java.util.regex.Pattern
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
+import ox.*
 
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
@@ -86,6 +87,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       val patterns = infos.map(_.pattern)
       RegexChecker.checkPatterns(patterns).foreach(report.errorAndAbort)
       RegexChecker.checkPatterns(patterns.reverse).foreach(report.errorAndAbort)
+      par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
 
       (
         tokens = accTokens ::: tokens.map:

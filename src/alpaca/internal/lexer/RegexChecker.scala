@@ -3,6 +3,7 @@ package internal
 package lexer
 
 import dregex.Regex
+import ox.par
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 

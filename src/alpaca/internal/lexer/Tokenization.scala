@@ -4,6 +4,8 @@ package lexer
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
+import ox.flow.Flow
+import ox.foreachPar
 
 /**
  * The result of compiling a lexer definition.
@@ -84,7 +86,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val totalGroups = matcher.groupCount
     val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
 
-    tokens.iterator.foreach: token =>
+    tokens.foreachPar(threads): token =>
       val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
       if groupIndex != null then map(groupIndex) = token
     map

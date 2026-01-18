@@ -88,6 +88,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     mvn"org.jparsec:jparsec:3.1",
     mvn"org.slf4j:slf4j-api:2.0.17",
     mvn"org.slf4j:slf4j-simple:2.0.17",
+    mvn"com.softwaremill.ox::core:1.0.2"
   )
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:

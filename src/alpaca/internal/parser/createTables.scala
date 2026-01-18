@@ -6,6 +6,7 @@ import NonEmptyList as NEL
 
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
+import ox.*
 
 import scala.reflect.NameTransformer
 
@@ -87,8 +88,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
           other.asTerm -> null
 
       cases
-        .map(extractProductionName)
-        .map:
+        .mapPar(threads)(extractProductionName)
+        .mapPar(threads):
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
           case (Lambda(_, Match(_, _)), _) =>
             report.errorAndAbort("Productions definition with multiple cases is not supported yet")
@@ -113,7 +114,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
               action = createAction(binds, rhs),
             ) :: others.flatten
 
-  val rules = parserTpe.typeSymbol.declarations.collect:
+  val rules = parserTpe.typeSymbol.declarations.collectPar(threads):
     case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
 
   logger.trace("Rules extracted, building parse table...")

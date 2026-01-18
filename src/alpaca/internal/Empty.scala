@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import ox.{collectPar, mapPar}
+
 /**
  * A type class for creating empty instances of types.
  *
@@ -41,9 +43,9 @@ private[alpaca] object Empty:
 
     logger.trace(show"found ${defaultParameters.size} default parameters")
 
-    val parameters = constructor.paramSymss.collect:
+    val parameters = constructor.paramSymss.collectPar(threads):
       case params if !params.exists(_.isTypeParam) =>
-        params.zipWithIndex.map:
+        params.zipWithIndex.mapPar(threads):
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             logger.trace(show"parameter $param has default value")
             defaultParameters(idx)
