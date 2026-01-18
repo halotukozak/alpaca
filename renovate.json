@@ -5,14 +5,14 @@
   ],
   "customManagers": [
     {
-      "customType":  "regex",
-      "fileMatch": [
+      "customType": "regex",
+      "fileMatch":  [
         "(^|/)build\\.sc$",
         "(^|/)build\\.mill$",
         "\\.mill$"
       ],
       "matchStrings": [
-        "mvn\"(?<depName>[^:]+:[^:]+):(?<currentValue>[^\"]+)\""
+        "mvn\"(?<depName>[^: ]+:[^:]+):(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "maven"
     },
@@ -21,26 +21,12 @@
       "fileMatch": [
         "(^|/)build\\.sc$",
         "(^|/)build\\.mill$",
-        "\\. mill$"
+        "\\.mill$"
       ],
       "matchStrings": [
         "def scalaVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
       "depNameTemplate": "scala/scala3",
-      "datasourceTemplate":  "github-releases",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "fileMatch": [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\.mill$"
-      ],
-      "matchStrings":  [
-        "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\. \\d+)\""
-      ],
-      "depNameTemplate": "scoverage/scalac-scoverage-plugin",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
@@ -52,9 +38,23 @@
         "\\.mill$"
       ],
       "matchStrings": [
+        "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\. mill$"
+      ],
+      "matchStrings": [
         "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
       ],
-      "depNameTemplate": "com.lihaoyi:mill-main",
+      "depNameTemplate":  "com.lihaoyi:mill-main",
       "datasourceTemplate": "maven"
     },
     {
@@ -62,10 +62,10 @@
       "fileMatch": [
         "(^|/)build\\.sc$",
         "(^|/)build\\.mill$",
-        "\\.mill$"
+        "\\. mill$"
       ],
       "matchStrings": [
-        "//\\|\\s*mill-jvm-version:\\s*(? <currentValue>\\d+)"
+        "//\\|\\s*mill-jvm-version:\\s*(?<currentValue>\\d+)"
       ],
       "depNameTemplate": "java",
       "datasourceTemplate": "adoptium-java",
