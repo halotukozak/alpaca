@@ -26,6 +26,7 @@
       "matchStrings": [
         "def scalaTestVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
+      "depNameTemplate":  "org-scalatest/scalatest",
       "datasourceTemplate": "maven"
     },
     {
