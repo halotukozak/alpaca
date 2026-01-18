@@ -2,5 +2,7 @@ package alpaca
 package internal
 package lexer
 
-final class ShadowException private (message: Shown) extends AlpacaException(message):
-  def this(first: String, second: String)(using DebugSettings) = this(show"Pattern $first is shadowed by $second")
+import scala.annotation.constructorOnly
+
+final class ShadowException(first: String, second: String)(using @constructorOnly log: Log)
+  extends AlpacaException(show"Pattern $first is shadowed by $second")
