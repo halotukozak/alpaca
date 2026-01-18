@@ -120,12 +120,12 @@ private object ParserExtractors:
 
   val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled[List[?]](x)
+    case x => raiseShouldNeverBeCalled(x)(using summon[Default[List[?]]], Log.materialize)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled[Option[?]](x)
+    case x => raiseShouldNeverBeCalled(x)(using summon[Default[Option[?]]], Log.materialize)
 
   val noneAction: Action[ParserCtx] = (_, _) => None
