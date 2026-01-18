@@ -29,6 +29,8 @@ private[internal] object Csv:
    * The output has headers on the first line followed by data rows,
    * with values separated by commas.
    */
+  
+  ///todo it should be printed to the code lazy
   given Showable[Csv] = Showable: csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")

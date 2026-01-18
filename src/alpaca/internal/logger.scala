@@ -22,20 +22,21 @@ private[internal] object logger:
     scheduler.scheduleAtFixedRate(task, 0, 4, TimeUnit.SECONDS)
     sys.addShutdownHook(scheduler.shutdown())
 
+  // should be logged async
   private def log(level: Level, msg: Shown)(using debugSettings: DebugSettings, pos: DebugPosition): Unit =
     debugSettings.logOut(level) match
       case Out.stdout => println(show"$level: $pos\t$msg")
       case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
       case Out.disabled => ()
 
-  def trace(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.trace, msg)
-  def debug(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.debug, msg)
-  def info(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.info, msg)
-  def warn(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.warn, msg)
-  def error(msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.error, msg)
+  inline def trace(inline msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.trace, msg)
+  inline def debug(inline msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.debug, msg)
+  inline def info(inline msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.info, msg)
+  inline def warn(inline msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.warn, msg)
+  inline def error(inline msg: Shown)(using DebugSettings, DebugPosition): Unit = log(Level.error, msg)
 
   // noinspection AccessorLikeMethodIsUnit
-  def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
+  inline def toFile(path: String, replace: Boolean)(inline content: Shown)(using debugSettings: DebugSettings): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     val writer =
       def createWriter(p: Path) =

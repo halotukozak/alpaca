@@ -9,4 +9,4 @@ package alpaca.internal
  *
  * @param message the error message describing what went wrong
  */
-private[internal] final class AlgorithmError(message: String) extends Exception(message)
+private[internal] final class AlgorithmError(message: String) extends Exception(message) //do not extend NoStackTrace
