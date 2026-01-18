@@ -6,10 +6,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch":  [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\.mill$"
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
       ],
       "matchStrings": [
         "mvn\"(?<depName>[^: ]+:[^:]+):(?<currentValue>[^\"]+)\""
@@ -18,10 +18,10 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\.mill$"
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
       ],
       "matchStrings": [
         "def scalaVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
@@ -32,37 +32,37 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\.mill$"
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
       ],
       "matchStrings": [
         "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
+      "depNameTemplate": "scoverage/scalac-scoverage-plugin",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\. mill$"
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\. mill$/"
       ],
       "matchStrings": [
         "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
       ],
-      "depNameTemplate":  "com.lihaoyi:mill-main",
+      "depNameTemplate": "com.lihaoyi:mill-main",
       "datasourceTemplate": "maven"
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)build\\.sc$",
-        "(^|/)build\\.mill$",
-        "\\. mill$"
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\. mill$/"
       ],
       "matchStrings": [
         "//\\|\\s*mill-jvm-version:\\s*(?<currentValue>\\d+)"
