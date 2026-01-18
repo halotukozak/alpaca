@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "customManagers": [
+  "customManagers":  [
     {
       "customType": "regex",
       "managerFilePatterns": [
@@ -26,7 +26,7 @@
       "matchStrings": [
         "def scalaVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "depNameTemplate": "scala/scala3",
+      "depNameTemplate":  "scala/scala3",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
@@ -40,7 +40,7 @@
       "matchStrings": [
         "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "depNameTemplate": "scoverage/scalac-scoverage-plugin",
+      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
@@ -49,26 +49,26 @@
       "managerFilePatterns": [
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
-        "/\\. mill$/"
+        "/\\.mill$/"
       ],
       "matchStrings": [
         "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
       ],
-      "depNameTemplate": "com.lihaoyi:mill-main",
-      "datasourceTemplate": "maven"
+      "depNameTemplate": "com-lihaoyi/mill",
+      "datasourceTemplate": "github-releases"
     },
     {
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
-        "/\\. mill$/"
+        "/\\.mill$/"
       ],
-      "matchStrings": [
+      "matchStrings":  [
         "//\\|\\s*mill-jvm-version:\\s*(?<currentValue>\\d+)"
       ],
       "depNameTemplate": "java",
-      "datasourceTemplate": "adoptium-java",
+      "datasourceTemplate":  "adoptium-java",
       "versioningTemplate": "regex:^(? <major>\\d+)$"
     }
   ]
