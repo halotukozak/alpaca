@@ -87,7 +87,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         symbol = fresh,
         bind = bind,
         others = List(
-          (production = Production.Empty(fresh), action = '{ Log ?=> noneAction }),
+          (production = Production.Empty(fresh), action = '{ noneAction }),
           (
             production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
             action = '{ someAction },
