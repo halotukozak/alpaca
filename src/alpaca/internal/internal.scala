@@ -1,7 +1,7 @@
 package alpaca
 package internal
 
-import scala.NamedTuple.NamedTuple
+import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -106,3 +106,52 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
         owner
 
     body(using owner.asQuotes)(owner)
+
+infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
+
+def extractAll[Tup <: Tuple: Type](using Quotes): List[Type[?]] = Type.of[Tup] match
+  case '[h *: t] => Type.of[h] :: extractAll[t]
+  case '[EmptyTuple] => Nil
+
+def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.TypeRepr] =
+  import quotes.reflect.*
+  tpe match
+    case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
+    case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
+
+def refinementTpeFrom(
+  using quotes: Quotes,
+)(
+  refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
+): quotes.reflect.TypeRepr =
+  import quotes.reflect.*
+  refn
+    .foldLeft(TypeRepr.of[Any]):
+      case (acc, (label, tpe)) => Refinement(acc, label, tpe)
+
+def fieldsTpeFrom(
+  using quotes: Quotes,
+)(
+  refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
+): quotes.reflect.TypeRepr =
+  import quotes.reflect.*
+  TypeRepr
+    .of[NamedTuple]
+    .appliedTo(
+      refn
+        .foldLeft((TypeRepr.of[EmptyTuple], TypeRepr.of[EmptyTuple])):
+          case ((labels, types), (label, tpe)) =>
+            (
+              TypeRepr.of[*:].appliedTo(List(ConstantType(StringConstant(label)), labels)),
+              TypeRepr.of[*:].appliedTo(List(tpe, types)),
+            )
+        .toList,
+    )
+
+extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)
+  // todo may not work
+  def asTypeOf[T: Type]: Type[? <: T] =
+    import quotes.reflect.*
+    tpe.asType match
+      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[T] => Type.of[t & T]
+      case _ => report.errorAndAbort(show"expected type ${TypeRepr.of[T]} but got $tpe")

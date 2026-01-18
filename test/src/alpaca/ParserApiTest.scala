@@ -3,7 +3,6 @@ package alpaca
 import Production as P
 
 import alpaca.internal.Copyable
-import alpaca.internal.lexer.LexerRefinement
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
