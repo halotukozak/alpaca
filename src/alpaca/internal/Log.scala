@@ -25,9 +25,9 @@ class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseabl
 
   override def close(): Unit = writerCache.values.forEach(_.get.close())
 
-  private def createWriter(path: Path, replace: Boolean): AtomicReference[BufferedWriter] = new AtomicReference:
+  private def createWriter(path: Path, replace: Boolean): AtomicReference[BufferedWriter] =
     if path.getParent != null then Files.createDirectories(path.getParent)
-    new BufferedWriter(new FileWriter(path.toFile, !replace))
+    new AtomicReference(new BufferedWriter(new FileWriter(path.toFile, !replace)))
 
   def append(path: Path)(content: Shown): Unit =
     writerCache.computeIfAbsent(path, p => createWriter(p, false)).get.write(content)
