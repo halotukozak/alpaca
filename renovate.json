@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "customManagers": [
+  "customManagers":  [
     {
       "customType": "regex",
       "managerFilePatterns": [
@@ -40,22 +40,9 @@
       "matchStrings": [
         "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "depNameTemplate": "scoverage/scalac-scoverage-plugin",
+      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns":  [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\. mill$/"
-      ],
-      "matchStrings": [
-        "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
-      ],
-      "depNameTemplate":  "com-lihaoyi/mill",
-      "datasourceTemplate": "github-releases"
     },
     {
       "customType": "regex",
@@ -65,10 +52,10 @@
         "/\\.mill$/"
       ],
       "matchStrings": [
-        "//\\|\\s*mill-jvm-version:\\s*(? <currentValue>\\d+)"
+        "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
       ],
-      "depNameTemplate": "java",
-      "datasourceTemplate": "adoptium-java"
+      "depNameTemplate": "com-lihaoyi/mill",
+      "datasourceTemplate": "github-releases"
     }
   ]
 }
