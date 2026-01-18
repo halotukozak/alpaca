@@ -7,9 +7,9 @@
     {
       "customType": "regex",
       "fileMatch": [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\.mill$/"
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
       ],
       "matchStrings": [
         "mvn\"(? <depName>[^: ]+:[^:]+):(?<currentValue>[^\"]+)\""
@@ -19,57 +19,57 @@
     {
       "customType": "regex",
       "fileMatch": [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\.mill$/"
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
       ],
       "matchStrings": [
         "def scalaVersion\\s*=\\s*\"(? <currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
-      "depNameTemplate":  "scala/scala3",
+      "depNameTemplate": "scala/scala3",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\.mill$/"
-      ],
-      "matchStrings":  [
-        "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\. \\d+)\""
-      ],
-      "depNameTemplate": "scoverage/scalac-scoverage-plugin",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "fileMatch": [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\.mill$/"
+      "fileMatch":  [
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
       ],
       "matchStrings": [
-        "//\\|\\s*mill-version:\\s*(? <currentValue>\\S+)"
+        "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\. mill$"
+      ],
+      "matchStrings": [
+        "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
       ],
       "depNameTemplate": "com.lihaoyi:mill-main",
-      "datasourceTemplate":  "maven"
+      "datasourceTemplate": "maven"
     },
     {
       "customType": "regex",
       "fileMatch": [
-        "/(^|/)build\\.sc$/",
-        "/(^|/)build\\.mill$/",
-        "/\\.mill$/"
+        "(^|/)build\\.sc$",
+        "(^|/)build\\.mill$",
+        "\\.mill$"
       ],
-      "matchStrings": [
+      "matchStrings":  [
         "//\\|\\s*mill-jvm-version:\\s*(?<currentValue>\\d+)"
       ],
       "depNameTemplate": "java",
-      "datasourceTemplate": "adoptium-java",
-      "versioningTemplate":  "regex: ^(? <major>\\d+)"
+      "datasourceTemplate":  "adoptium-java",
+      "versioningTemplate": "regex: ^(? <major>\\d+)$"
     }
   ]
 }
