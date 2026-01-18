@@ -22,17 +22,16 @@ private[lexer] object RegexChecker:
    * meaning the earlier pattern would always match first and the
    * shadowed pattern would never be used.
    *
-   * @param patterns the regex patterns to check
-   * @return a sequence of error messages describing any shadowing issues
+   * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: Seq[String])(using DebugSettings): Seq[String] = patterns match
-    case Nil => Nil
+  def checkPatterns(patterns: List[String])(using DebugSettings): Unit = patterns match
+    case Nil => ()
     case _ =>
       logger.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
-      for
-        i <- patterns.indices
-        j <- (i + 1) until regexes.size
-        if regexes.get(j).isSubsetOf(regexes.get(i))
-      yield show"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
+      par:
+        for
+          i <- patterns.indices
+          j <- (i + 1) until regexes.size
+        yield () => if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))

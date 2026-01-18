@@ -85,8 +85,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .unzip
 
       val patterns = infos.map(_.pattern)
-      RegexChecker.checkPatterns(patterns).foreach(report.errorAndAbort)
-      RegexChecker.checkPatterns(patterns.reverse).foreach(report.errorAndAbort)
       par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
 
       (
@@ -102,7 +100,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   val (definedTokens, ignoredTokens) = tokens.partition(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
 
   logger.trace("checking regex patterns")
-  RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
+  RegexChecker.checkPatterns(infos.map(_.pattern))
 
   val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
 
