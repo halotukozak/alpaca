@@ -17,8 +17,8 @@ import scala.NamedTuple.NamedTuple
  */
 //todo: make Tuple-based in the future for better type safety and performance
 private[internal] final case class Csv(
-  headers: List[Shown],
-  rows: List[List[Shown]],
+  headers: Flow[Shown],
+  rows: Flow[Flow[Shown]],
 )
 
 private[internal] object Csv:
@@ -36,7 +36,7 @@ private[internal] object Csv:
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
     show"$header\n$rows"
 
-  extension [N <: Tuple, V <: Tuple](rows: List[NamedTuple[N, V]])
+  extension [N <: Tuple, V <: Tuple](rows: Flow[NamedTuple[N, V]])
     /**
      * Converts a list of named tuples to CSV format.
      *
@@ -49,8 +49,8 @@ private[internal] object Csv:
 
     inline def toCsv(using Log): Csv =
       Csv(
-        compiletime.constValueTuple[N].toShowableList,
-        rows.map(_.toTuple.toShowableList),
+        compiletime.constValueTuple[N].toShowableFlow,
+        rows.map(_.toTuple.toShowableFlow),
       )
 
   extension [T <: Tuple](tuple: T)
@@ -60,3 +60,12 @@ private[internal] object Csv:
       .toList
       .asInstanceOf[List[(Showable[Any], Any)]]
       .map(_.show(_))
+
+    inline def toShowableFlow(using Log) = compiletime
+      .summonAll[Tuple.Map[T, Showable]]
+      .zip(tuple)
+      .toList //todo: nod needed
+      .asFlow
+      .asInstanceOf[Flow[(Showable[Any], Any)]]
+      .map(_.show(_))
+      

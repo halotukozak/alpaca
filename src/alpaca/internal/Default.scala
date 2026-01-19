@@ -14,23 +14,25 @@ private[internal] object Default:
   given Default[Int] = () => 0
   given Default[String] = () => ""
   given Default[ValidName] = () => ""
-  given [I[X] <: Iterable[X]](using factory: Factory[Nothing, I[Nothing]]): Default[I[Nothing]] =
+  given [I[X] <: Iterable[X]] => ( factory: Factory[Nothing, I[Nothing]]) => Default[I[Nothing]] =
     () => factory.fromSpecific(Nil)
   given Default[IterableOnce[Nothing]] = () => Iterable.empty
   given Default[Option[Nothing]] = () => None
 
-  given [T](using quotes: Quotes): Default[Expr[T]] = () => '{ ??? }
+  given [T] => ( quotes: Quotes) => Default[Expr[T]] = () => '{ ??? }
 
-  given [T <: AnyKind](using quotes: Quotes): Default[Type[T]] = () => Type.of[Nothing].asInstanceOf[Type[T]]
+  given [T <: AnyKind] => ( quotes: Quotes) => Default[Type[T]] = () => Type.of[Nothing].asInstanceOf[Type[T]]
 
-  given (using quotes: Quotes): Default[quotes.reflect.TypeRepr] =
+  given ( quotes: Quotes) => Default[quotes.reflect.TypeRepr] =
     import quotes.reflect.*
     () => TypeRepr.of[Nothing]
 
-  given (using quotes: Quotes): Default[quotes.reflect.Symbol] =
+  given ( quotes: Quotes) => Default[quotes.reflect.Symbol] =
     import quotes.reflect.*
     () => Symbol.noSymbol
 
-  given [H: Default as head, T <: Tuple: Default as tail]: Default[H *: T] = () => head() *: tail()
+  given [H: Default as head, T <: Tuple: Default as tail] => Default[H *: T] = () => head() *: tail()
 
   given Default[EmptyTuple] = () => EmptyTuple
+
+  given [T] => Default[Flow[T]] = () => Flow.empty

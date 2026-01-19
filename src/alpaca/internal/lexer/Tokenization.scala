@@ -51,7 +51,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     input: CharSequence,
   )(using empty: Empty[Ctx],
   ): (ctx: Ctx, lexemes: List[Lexeme]) =
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme]): List[Lexeme] =
+    @tailrec def loop(globalCtx: Ctx)(acc: Flow[Lexeme]): Flow[Lexeme] =
       globalCtx.text.length match
         case 0 =>
           acc.reverse // todo: make it not reversed
@@ -60,8 +60,8 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 
           val token =
             if matcher.lookingAt then
-              Iterator
-                .range(1, matcher.groupCount + 1)
+              Flow
+                .range(1, matcher.groupCount + 1, 1)
                 .collectFirst:
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
@@ -70,13 +70,13 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
               // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
               throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
           betweenStages(token, matcher, globalCtx)
-          val lexem = List(token).collect:
+          val lexem = Flow.fromValues(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
-          loop(globalCtx)(lexem ::: acc)
+          loop(globalCtx)(lexem ++ acc)
 
     val initialContext = empty()
     initialContext.text = input
-    (initialContext, loop(initialContext)(Nil))
+    (initialContext, loop(initialContext)(Flow.empty).runToList())
 
   /** The compiled pattern that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
@@ -86,7 +86,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val totalGroups = matcher.groupCount
     val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
 
-    tokens.foreachPar(threads): token =>
+    tokens.foreach: token =>
       val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
       if groupIndex != null then map(groupIndex) = token
     map

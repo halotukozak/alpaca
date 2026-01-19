@@ -30,7 +30,7 @@ object DebugSettings:
       compilationTimeout = settings.get(Timeout).map(Duration.create).getOrElse(90.seconds),
       enableVerboseNames = settings.get(EnableVerboseNames).exists(_.toBoolean),
       logOut = Log.Level.values
-        .map(level =>
+        .map: level =>
           (
             level,
             settings
@@ -39,8 +39,7 @@ object DebugSettings:
                 try Log.Out.valueOf(name)
                 catch case _: IllegalArgumentException => level.default
               .getOrElse(level.default),
-          ),
-        )
+          )
         .toMap,
     )
 

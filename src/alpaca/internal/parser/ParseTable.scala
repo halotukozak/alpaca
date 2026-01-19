@@ -4,7 +4,7 @@ package parser
 
 import alpaca.internal.parser.ParseAction.{Reduction, Shift}
 import ox.flow.Flow
-import ox.mapPar
+import ox.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -40,11 +40,11 @@ private[parser] object ParseTable:
      * @return a Csv representation of the parse table
      */
     def toCsv(using Log): Csv =
-      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-      val states = table.keysIterator.map(_.state).distinct.toList.sorted
+      val symbols = table.keysIterator.map(_.stepSymbol).distinct.asFlow
+      val states = table.keysIterator.map(_.state).distinct.toList.sorted.asFlow //todo: SortedSet?
 
-      val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val headers = Flow.fromValues(show"State") ++ symbols.map(_.show)
+      val rows = states.map(i => Flow.fromValues(show"$i") ++ symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
 
       Csv(headers, rows)
 
@@ -59,9 +59,9 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
+  def apply(productions: Flow[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
     Log.trace("building first set...")
-    val firstSet = FirstSet(productions)
+    val firstSet = FirstSet(productions.runToList())
     Log.trace("building states and parse table...")
     var currStateId = 0
     val states =
@@ -91,6 +91,7 @@ private[parser] object ParseTable:
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
                 case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
+    //todo: use Ox
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
@@ -122,7 +123,7 @@ private[parser] object ParseTable:
 
   given Showable[ParseTable] = Showable: table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-    val states = table.keysIterator.map(_.state).distinct.toList.sorted
+    val states = table.keysIterator.map(_.state).distinct.toList.sorted //todo: SortedSet?
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
@@ -162,7 +163,7 @@ private[parser] object ParseTable:
         Symbol.spliceOwner,
         Symbol.freshName("builder"),
         TypeRepr.of[BuilderTpe],
-        Flags.Mutable,
+        Flags.Synthetic,
         Symbol.noSymbol,
       )
 
@@ -170,14 +171,13 @@ private[parser] object ParseTable:
 
       val builder = Ref(symbol).asExprOf[BuilderTpe]
 
-      val additions = entries
-        .map(entry =>
-          '{
-            def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
-            avoidTooLargeMethod()
-          }.asTerm,
-        )
-        .toList
+      val additions = entries.asFlow
+        .map: entry =>
+            '{
+              def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
+              avoidTooLargeMethod()
+            }.asTerm
+        .runToList()
 
       val result = '{ $builder.result() }.asTerm
 

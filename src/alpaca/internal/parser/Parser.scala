@@ -90,6 +90,7 @@ abstract class Parser[Ctx <: ParserCtx](
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
+    //todo: use Ox
     @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null =
       val nextSymbol = Terminal(lexems.head.name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
@@ -139,7 +140,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervised:
   cachedProductions
     .getOrElseUpdate(
       parserTpe.asType, {
-        val rules = parserTpe.typeSymbol.declarations.collect:
+        val rules = parserTpe.typeSymbol.declarations.asFlow.collect:
           case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
         val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
@@ -149,7 +150,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervised:
               case _ => None
 
         val fields = rules
-          .flatMap:
+          .mapConcat:
             case ValDef(name, _, Some(rhs)) =>
               Log.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]])
@@ -160,6 +161,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervised:
               report.error("Define resolutions as the last field of the parser.")
               Nil
           .map(name => (name, TypeRepr.of[Production]))
+          .runToList()
 
         (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType)
       },

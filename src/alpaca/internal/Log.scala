@@ -43,7 +43,7 @@ class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseabl
       .get
       .write(content)
 
-  inline def toFile(path: String, replace: Boolean)(content: Shown): Unit = fork:
+  inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     if replace then this.replace(file)(content) else this.append(file)(content)
 
