@@ -39,33 +39,32 @@ private[alpaca] object Empty:
     val constructor = tpe.classSymbol.get.primaryConstructor
 
     val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers
+      .iterator
       .collect:
         case m if m.name.startsWith("$lessinit$greater$default$") =>
-          m.name.stripPrefix("$lessinit$greater$default$").toLong - 1 -> Ref(m)
+          m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
     Log.trace(show"found ${defaultParameters.size} default parameters")
 
-    val parameters = constructor.paramSymss.asFlow
-      .collect:
-        case params if !params.exists(_.isTypeParam) =>
-          params.asFlow.zipWithIndex
-            .map:
-              case (param, idx) if param.flags.is(Flags.HasDefault) =>
-                Log.trace(show"parameter $param has default value")
-                defaultParameters(idx)
-              case (param, _) =>
-                report.errorAndAbort(
-                  show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
-                )
-            .runToList()
-      .runToList()
+    val parameters = constructor.paramSymss.iterator.collect:
+      case params if !params.exists(_.isTypeParam) =>
+        params.iterator.zipWithIndex
+          .map:
+            case (param, idx) if param.flags.is(Flags.HasDefault) =>
+              Log.trace(show"parameter $param has default value")
+              defaultParameters(idx)
+            case (param, _) =>
+              report.errorAndAbort(
+                show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
+              )
+          .toList
 
     val value =
       New(TypeTree.of[T])
         .select(constructor)
         .appliedToTypes(tpe.typeArgs)
-        .appliedToArgss(parameters)
+        .appliedToArgss(parameters.toList)
         .asExprOf[T]
 
     timeout.cancelNow()
