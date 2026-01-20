@@ -127,21 +127,12 @@ def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.
     case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
     case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
 
-def refinementTpeFrom(
-  using quotes: Quotes,
-)(
-  refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
-): quotes.reflect.TypeRepr =
+def refinementTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)]): quotes.reflect.TypeRepr =
   import quotes.reflect.*
-  refn
-    .foldLeft(TypeRepr.of[Any]):
+  refn.foldLeft(TypeRepr.of[Any]):
       case (acc, (label, tpe)) => Refinement(acc, label, tpe)
 
-def fieldsTpeFrom(
-  using quotes: Quotes,
-)(
-  refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)],
-): quotes.reflect.TypeRepr =
+def fieldsTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)]): quotes.reflect.TypeRepr =
   import quotes.reflect.*
   TypeRepr
     .of[NamedTuple]
@@ -164,33 +155,3 @@ extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)(using Log)
       case '[t] if TypeRepr.of[t] <:< TypeRepr.of[T] => Type.of[t & T]
       case _ => report.errorAndAbort(show"expected type ${TypeRepr.of[T]} but got $tpe")
 
-export ox.flow.Flow
-
-extension [C[X] <: Iterable[X], T](c: C[T]) inline def asFlow: Flow[T] = Flow.fromIterable(c)
-
-extension [C[X] <: Iterator[X], T](c: C[T]) inline def asFlow: Flow[T] = Flow.fromIterator(c)
-
-extension [A](flow: Flow[A])
-  def head: A = flow.take(1).runLast()
-  def headOption: Option[A] = flow.take(1).runLastOption()
-  def collectFirst[B](f: PartialFunction[A, B]): Option[B] = flow.collect(f).headOption
-  def filterNot(predicate: A => Boolean): Flow[A] = flow.filter(!predicate(_))
-  def partition(predicate: A => Boolean): (Flow[A], Flow[A]) = ???
-  def foldLeft[B](initial: B)(op: (B, A) => B): B = ???
-  def foldRight[B](initial: B)(op: (A, B) => B): B = ???
-  def mkString(prefix: String, sep: String, suffix: String): String = ???
-  def mkString(sep: String): String = ???
-  def mkString: String = ???
-  def runToMap[K, V]()(using A <:< (K, V)) = flow.runToList().toMap
-  def runToSet() = flow.runToList().toSet
-  def reverse = ???
-  def find(predicate: A => Boolean): Option[A] = flow.filter(predicate).headOption
-  def tail = flow.drop(1)
-  def unzip[K, V](using A => (K, V)): (Flow[K], Flow[V]) = ???
-  def unzip3[K, V, W](using A => (K, V, W)): (Flow[K], Flow[V], Flow[W]) = ???
-  def :+(e: A): Flow[A] =  flow ++ Flow.fromValues(e)
-  def +:(e: A): Flow[A] = Flow.fromValues(e) ++ flow
-  def tapFlow(f: Flow[A] => Unit) = 
-    f(flow)
-    flow
-  def indices: Flow[Long] = flow.zipWithIndex.map(_._2)
