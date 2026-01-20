@@ -40,13 +40,14 @@ private[alpaca] object BetweenStages:
     val parents = TypeRepr
       .of[Ctx]
       .baseClasses
-      .asFlow
+      .iterator
       .map(_.typeRef)
       .filter(_ <:< TypeRepr.of[LexerCtx])
       // we need to filter self type. Maybe I will change it in future since subtyping check does not work
       // and by symbol is disgusting :/
       .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
       .map(_.asType)
+      .toList
 
     val derivedBetweenStages = Expr.ofList:
       parents
@@ -56,7 +57,6 @@ private[alpaca] object BetweenStages:
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
-        .runToList()
 
     '{ (token, m, ctx) =>
       $derivedBetweenStages.foreach(_.apply(token, m, ctx)) // todo: do not init List

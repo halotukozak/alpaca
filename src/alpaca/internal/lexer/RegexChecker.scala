@@ -24,7 +24,7 @@ private[lexer] object RegexChecker:
    *
    * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: Flow[String])(using Log): Unit = patterns.runToList() match //todo: find better way
+  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
     case Nil => ()
     case patterns =>
       Log.trace("checking regex patterns for shadowing...")
