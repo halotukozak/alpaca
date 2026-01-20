@@ -9,6 +9,16 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import Log.*
 
+/**
+ * A logging facility for Alpaca macro compilation.
+ *
+ * This class provides logging capabilities during macro expansion, supporting
+ * both console and file-based logging. It manages file writers with automatic
+ * flushing based on the compilation timeout.
+ *
+ * @param debugSettings the debug configuration
+ * @param ox the Ox context for concurrency
+ */
 private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
   private given Log = this
 
