@@ -6,6 +6,7 @@ import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.collection.mutable
 import scala.deriving.Mirror
 
@@ -118,6 +119,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
   }
 
   test("parse error") {
+    @unused
     val lexems = CalcLexer.tokenize("a 123 4 + 5").lexemes
 
     // todo https://github.com/halotukozak/alpaca/pull/65

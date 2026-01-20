@@ -41,13 +41,13 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
-    // "-Wunused:all",
+    "-Wunused:all",
     "-experimental",
     "-preview",
     s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
     // "-Xmacro-settings:trace=file",
-    // "-Yprofile-enabled",
-    // s"-Yprofile-trace:$moduleDir/debug/compile-trace.json",
+    //  "-Yprofile-enabled",
+    //  s"-Yprofile-trace:$moduleDir/debug/compile-trace.json",
   )
 
   override def scalaDocOptions = Task {
