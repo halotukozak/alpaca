@@ -9,8 +9,8 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 /**
  * A dummy value for compile-time placeholders.
  *
- * This function returns null cast to any type. It is used exclusively in 
- * compile-time contexts (macros) as a placeholder value that should never 
+ * This function returns null cast to any type. It is used exclusively in
+ * compile-time contexts (macros) as a placeholder value that should never
  * actually be evaluated at runtime.
  *
  * @tparam T the type to cast to
