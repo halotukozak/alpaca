@@ -43,7 +43,7 @@ object Tables:
  * 3. Constructs the LR parse table
  * 4. Generates debug output if enabled
  *
- * Note: This implementation uses various collection types (List, Map, etc.).
+ * Note: This implementation uses various collection types (List, Map, etc.
  * Future optimizations may consider View, Iterator, or Vector to improve
  * compile-time performance and memory usage for large grammars.
  *
@@ -70,19 +70,20 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
   import parserExtractor.*
 
   def extractEBNF(ruleName: String)
-    : PartialFunction[Expr[Rule[?]], Flow[(production: Production, action: Expr[Action[Ctx]])]] =
+    : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>
-      def createAction(binds: Flow[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
+      def createAction(binds: Seq[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
-          val replacements = Flow.fromValues((find = ctxSymbol, replace = ctx)) ++
-            binds.zipWithIndex
+          val replacements = (find = ctxSymbol, replace = ctx) ::
+            binds.iterator.zipWithIndex
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx.toInt))
-              .unsafeMapConcat:
+              .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
                   Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
+              .toList
 
-          replaceRefs(replacements.runToList()*).transformTerm(rhs)(methSym)
+          replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
       val extractProductionName: Function[Expr[ProductionDefinition[?]], (Tree, ValidName | Null)] =
         case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } =>
@@ -90,8 +91,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
         case other =>
           other.asTerm -> null
 
-      cases
-        .asFlow
+      cases.iterator
         .map(extractProductionName)
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
@@ -105,45 +105,49 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
-            others ++ Flow.fromValues ((
-              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
-              action = createAction(Flow.fromValues(bind), rhs),
-            ))
+            (
+              (
+                production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
+                action = createAction(List(bind), rhs),
+              ),
+            ) :: others
 
           // TupleN, N > 1
           case (CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
-            val (symbols, binds, others) = patterns.asFlow.map(extractEBNFAndAction).unzip3(using _.toTuple)
-            (others.flatten) ++ Flow.fromValues ((
-              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail.runToList()*), name),
+            val (symbols, binds, others) = patterns.map(extractEBNFAndAction).unzip3(using _.toTuple)
+            (
+              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
               action = createAction(binds, rhs),
-            ) )
+            ) :: (others.flatten)
+        .toList
 
-  val rules = parserTpe.typeSymbol.declarations.asFlow.collect:
+  val rules = parserTpe.typeSymbol.declarations.iterator.collect:
     case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
 
-  Log.trace("Rules extracted, building parse table...")
+  Log.trace("Rules extracted, building parse table.")
 
   val table = rules
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
       case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
-    .tapFlow: table =>
+    .toList
+    .tap: table =>
       // csv may be not the best format for this due to the commas
       Log.toFile(show"$parserName/actionTable.dbg.csv", true)(table.toCsv)
 
-  Log.trace("Productions extracted, building conflict resolution table...")
+  Log.trace("Productions extracted, building conflict resolution table.")
 
   val productions = table
     .map(_.production)
-    .tapFlow: table =>
+    .tap: table =>
       Log.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
 
-  Log.trace("Productions extracted, building parse and action tables...")
+  Log.trace("Productions extracted, building parse and action tables.")
 
   val findProduction: Expr[Production] => Production =
-    val productionsByName = productions.collect { case p if p.name != null => p.name -> p }.runToMap()
-    val productionsByRhs = productions.collect(p => p.rhs -> p).runToMap()
+    val productionsByName = productions.iterator.collect { case p if p.name != null => p.name -> p }.toMap
+    val productionsByRhs = productions.iterator.collect(p => (p.rhs, p)).toMap
     {
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         Log.trace(show"Looking for production with name '$name'")
@@ -166,7 +170,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
       case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
     }
 
-  Log.trace("Conflict resolution rules extracted, building conflict resolution table...")
+  Log.trace("Conflict resolution rules extracted, building conflict resolution table.")
 
   val resolutionExprs = scala.util
     .Try:
@@ -182,11 +186,11 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
     case '{ $_ : Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
 
-  Log.trace("Building conflict resolution table...")
+  Log.trace("Building conflict resolution table.")
 
   val conflictResolutionTable = ConflictResolutionTable(
-    resolutionExprs.asFlow
-      .unsafeMapConcat:
+    resolutionExprs.iterator
+      .unsafeFlatMap:
         case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
         case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
       .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
@@ -198,27 +202,27 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     table.verifyNoConflicts()
     Log.toFile(show"$parserName/conflictResolutions.dbg", true)(table)
 
-  Log.trace("Conflict resolution table built, identifying root production...")
+  Log.trace("Conflict resolution table built, identifying root production.")
 
   val root = table
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
     .get
 
-  Log.trace("Root production identified, generating parse and action tables...")
+  Log.trace("Root production identified, generating parse and action tables.")
+
+  List(("", 4)).unzip
 
   val parseTable = Expr:
     ParseTable(
-      Flow.fromValues(Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) )++ table.map(_.production),
+      (Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs))) :: table.map(_.production),
       conflictResolutionTable,
     ).tap: parseTable =>
       Log.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv)
 
   val actionTable = Expr.ofList:
-    table
-      .map:
-        case (production, action) => Expr.ofTuple(Expr(production) -> action)
-      .runToList()
+    table.map:
+      case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   timeout.cancelNow()
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
