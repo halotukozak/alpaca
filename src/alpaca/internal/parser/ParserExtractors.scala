@@ -69,16 +69,16 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     (
       symbol: parser.Symbol.NonEmpty,
       bind: Option[Bind],
-      others: Flow[(production: Production, action: Expr[Action[Ctx]])],
+      others: List[(production: Production, action: Expr[Action[Ctx]])],
     ),
   ] =
     case Extractor.NonTerminal(name, bind, null) =>
       Log.trace(show"extracted non-terminal ref: $name")
-      (symbol = NonTerminal(name), bind = bind, others = Flow.empty)
+      (symbol = NonTerminal(name), bind = bind, others = Nil)
 
     case Extractor.Terminal(name, bind, null) =>
       Log.trace(show"extracted terminal ref: $name")
-      (symbol = Terminal(name), bind = bind, others = Flow.empty)
+      (symbol = Terminal(name), bind = bind, others = Nil)
 
     case Extractor.Symbol(name, bind, Names.Option) =>
       Log.trace(show"extracted optional: $name")
@@ -86,7 +86,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       (
         symbol = fresh,
         bind = bind,
-        others = Flow.fromValues(
+        others = List(
           (production = Production.Empty(fresh), action = '{ noneAction }),
           (
             production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
@@ -101,7 +101,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       (
         symbol = fresh,
         bind = bind,
-        others = Flow.fromValues(
+        others = List(
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
           (
             production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
