@@ -1,8 +1,6 @@
 package alpaca
 package internal
 
-import ox.*
-
 /**
  * A type class for creating empty instances of types.
  *
@@ -27,8 +25,7 @@ private[alpaca] object Empty:
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervised:
-    given Log = new Log
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
     val timeout = timeoutOnTooLongCompilation()
 
     import quotes.reflect.*

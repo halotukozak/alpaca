@@ -2,7 +2,6 @@ package alpaca
 package internal
 
 import scala.util.Try
-import ox.*
 
 /**
  * Generates a detailed string representation of a symbol during macro expansion.
@@ -239,8 +238,7 @@ extension (using quotes: Quotes)(e: Any)
  */
 inline private[alpaca] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 
-private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervised:
-  given Log = new Log
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervisedWithLog:
   import quotes.reflect.*
   Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
@@ -254,7 +252,6 @@ private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = sup
  */
 inline private[alpaca] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
 
-private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervised:
-  given Log = new Log
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervisedWithLog:
   import quotes.reflect.*
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

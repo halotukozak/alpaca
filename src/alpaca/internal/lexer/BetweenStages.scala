@@ -4,8 +4,6 @@ package lexer
 
 import java.util.regex.Matcher
 
-import ox.*
-
 /**
  * A hook for updating context between lexing stages.
  *
@@ -31,9 +29,7 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervised:
-    given Log = new Log
-
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
     import quotes.reflect.*
     Log.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 

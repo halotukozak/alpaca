@@ -9,7 +9,6 @@ import alpaca.internal.parser.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
-import ox.*
 
 /**
  * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
@@ -75,18 +74,16 @@ abstract class Parser[Ctx <: ParserCtx](
   inline protected final def ctx: Ctx = dummy
 
   /**
-   * Parses a list of lexems using the defined grammar.
+   * Parses a list of lexemes using the defined grammar.
    *
    * This method builds the parse table at compile time and uses it to
-   * parse the input lexems using an LR parsing algorithm.
+   * parse the input lexemes using an LR parsing algorithm.
    *
    * @tparam R the result type
-   * @param lexems   the list of lexems to parse
+   * @param lexemes   the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
-    given Log = Log.materialize
-
+  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) = supervisedWithLog:
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -127,9 +124,7 @@ abstract class Parser[Ctx <: ParserCtx](
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
 
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervised:
-  given Log = new Log
-
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef

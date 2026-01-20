@@ -39,7 +39,7 @@ object Tables:
  * 3. Constructs the LR parse table
  * 4. Generates debug output if enabled
  *
- * Note: This implementation uses various collection types (List, Map, etc.
+ * Note: This implementation uses various collection types (List, Map, etc.).
  * Future optimizations may consider View, Iterator, or Vector to improve
  * compile-time performance and memory usage for large grammars.
  *
@@ -48,8 +48,7 @@ object Tables:
  * @return an expression containing the parse and action tables
  */
 private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
-  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervised:
-  given Log = new Log
+  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
   val timeout = timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
@@ -102,10 +101,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
             (
-              (
-                production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
-                action = createAction(List(bind), rhs),
-              ),
+              production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
+              action = createAction(List(bind), rhs),
             ) :: others
 
           // TupleN, N > 1
@@ -206,8 +203,6 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     .get
 
   Log.trace("Root production identified, generating parse and action tables.")
-
-  List(("", 4)).unzip
 
   val parseTable = Expr:
     ParseTable(

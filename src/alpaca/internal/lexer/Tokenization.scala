@@ -59,7 +59,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
           val token =
             if matcher.lookingAt then
               Iterator
-                .range(1, matcher.groupCount + 1, 1)
+                .range(1, matcher.groupCount + 1)
                 .collectFirst:
                   case i if matcher.start(i) != -1 => groupToTokenMap(i)
                 .getOrElse:
@@ -70,7 +70,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
           betweenStages(token, matcher, globalCtx)
           val lexem = List(token).collect:
             case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
-          loop(globalCtx)(lexem ++ acc)
+          loop(globalCtx)(lexem ::: acc)
 
     val initialContext = empty()
     initialContext.text = input

@@ -5,23 +5,27 @@ import ox.*
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.ConcurrentHashMap
-
+import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.publicInBinary
 import Log.*
 
-class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
+private[internal] class Log @publicInBinary private (using val debugSettings: DebugSettings)(using Ox)
+  extends AutoCloseable:
   private given Log = this
 
   private val writerCache = new ConcurrentHashMap[Path, AtomicReference[BufferedWriter]]
 
-  fork:
-    sleep(debugSettings.compilationTimeout.runtimeChecked)
-    writerCache.values.forEach: writer =>
-      try writer.get.flush()
-      catch case _: Exception => ()
+  private val flushing = forkCancellable:
+    if debugSettings.compilationTimeout.isFinite then
+      sleep(debugSettings.compilationTimeout.runtimeChecked)
+      writerCache.values.forEach: writer =>
+        try writer.get.flush()
+        catch case _: Exception => ()
 
-  override def close(): Unit = writerCache.values.forEach(_.get.close())
+  override def close(): Unit =
+    flushing.cancel()
+    writerCache.values.forEach(_.get.close())
 
   private def createWriter(path: Path, replace: Boolean): AtomicReference[BufferedWriter] =
     if path.getParent != null then Files.createDirectories(path.getParent)
@@ -41,6 +45,7 @@ class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseabl
       .get
       .write(content)
 
+  // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     if replace then this.replace(file)(content) else this.append(file)(content)
@@ -50,11 +55,15 @@ class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseabl
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
-object Log:
-  inline def materialize = ${ materializeImpl }
-  private def materializeImpl(using quotes: Quotes): Expr[Log] =
+inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): T =
+  supervised(op(using Log.materialize))
+
+private[internal] object Log:
+
+  inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
+  private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
     val debugSettings = Expr(summon[DebugSettings])
-    '{ supervised(new Log(using $debugSettings)) }
+    '{ new Log(using $debugSettings)(using $ox) }
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)
@@ -62,6 +71,7 @@ object Log:
   inline def warn(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.warn, msg)
   inline def error(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.error, msg)
 
+  // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown)(using Log): Unit =
     summon[Log].toFile(path, replace)(content)
 

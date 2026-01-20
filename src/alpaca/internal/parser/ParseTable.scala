@@ -39,11 +39,11 @@ private[parser] object ParseTable:
      */
     // it shouldn't be eager
     def toCsv(using Log): Csv =
-      val symbols = table.keysIterator.map(_.stepSymbol).distinct
+      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
       val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
 
-      val headers = List(show"State") ++ symbols.map(_.show)
-      val rows = states.map(i => List(show"$i") ++ symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val headers = show"State" :: symbols.map(_.show)
+      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
 
       Csv(headers, rows)
 

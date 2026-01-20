@@ -29,7 +29,8 @@ private[parser] type Action[-Ctx <: ParserCtx] = (Ctx, Seq[Any]) => Any
  * @tparam Ctx the parser context type
  * @tparam R the result type
  */
-opaque private[parser] type ActionTable[Ctx <: ParserCtx] = Map[Production, Action[Ctx]]
+opaque private[parser] type ActionTable[Ctx <: ParserCtx] =
+  Map[Production, Action[Ctx]] // todo: Action should be based on Production type
 
 private[parser] object ActionTable:
 
