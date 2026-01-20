@@ -37,16 +37,3 @@ extension [A: Default](opt: Option[A])(using Log, DebugPosition)
 extension [A, B: Default](pf: PartialFunction[A, B])(using Log, DebugPosition)
   inline private[alpaca] def unsafeApply(a: A): B =
     pf.applyOrElse(a, raiseShouldNeverBeCalled)
-
-extension [A](flow: Flow[A])(using Log, DebugPosition)
-  inline private[alpaca] def unsafeMap[B: Default](inline f: PartialFunction[A, B]): Flow[B] =
-    flow.map(f.unsafeApply)
-
-  inline private[alpaca] def unsafeFlatMap[B](inline f: PartialFunction[A, Flow[B]]): Flow[B] =
-    flow.flatMap(f.unsafeApply)
-
-  inline private[alpaca] def unsafeFoldLeft[B: Default](z: B)(inline op: PartialFunction[(B, A), B]): B =
-    flow.foldLeft(z)((b, a) => op.unsafeApply((b, a)))
-
-  inline private[alpaca] def unsafeMapConcat[B](inline f: PartialFunction[A, IterableOnce[B]]): Flow[B] =
-    flow.mapConcat(f.unsafeApply)

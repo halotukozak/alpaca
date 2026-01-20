@@ -125,13 +125,13 @@ def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.
     case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
     case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
 
-def refinementTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)])
+def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   refn.foldLeft(TypeRepr.of[Any]):
     case (acc, (label, tpe)) => Refinement(acc, label, tpe)
 
-def fieldsTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)])
+def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   TypeRepr
@@ -147,10 +147,4 @@ def fieldsTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quot
         .toList,
     )
 
-extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)(using Log)
-  // todo may not work
-  def asTypeOf[T: Type]: Type[? <: T] =
-    import quotes.reflect.*
-    tpe.asType match
-      case '[t] if TypeRepr.of[t] <:< TypeRepr.of[T] => Type.of[t & T]
-      case _ => report.errorAndAbort(show"expected type ${TypeRepr.of[T]} but got $tpe")
+val threads = Runtime.getRuntime.availableProcessors

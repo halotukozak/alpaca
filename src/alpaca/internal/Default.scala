@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.collection.Factory
+import ox.flow.Flow
 
 private[internal] trait Default[+T] extends (() => T):
   def transform[A](f: T => A): Default[A] = () => f(apply())
