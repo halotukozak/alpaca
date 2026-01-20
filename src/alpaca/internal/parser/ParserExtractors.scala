@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import NonEmptyList as NEL
-
 import alpaca.internal.lexer.Token
 import alpaca.internal.parser.ParserExtractors.*
 

@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import NonEmptyList as NEL
-
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 import ox.*

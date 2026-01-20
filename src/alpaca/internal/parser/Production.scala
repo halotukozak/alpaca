@@ -11,7 +11,7 @@ package parser
  *
  * @param rhs the right-hand side sequence of symbols
  */
-private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.Empty.type):
+private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.type):
 
   /** The left-hand side non-terminal of the production. */
   val lhs: NonTerminal
@@ -29,7 +29,7 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
 
   case NonEmpty(
     lhs: NonTerminal & Symbol.NonEmpty,
-    override val rhs: NonEmptyList[Symbol.NonEmpty],
+    override val rhs: NEL[Symbol.NonEmpty],
     name: ValidName | Null = null,
   ) extends Production(rhs)
 

@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import NonEmptyList as NEL
-
 import org.scalatest.funsuite.AnyFunSuite
 import Production.NonEmpty as NEP
 

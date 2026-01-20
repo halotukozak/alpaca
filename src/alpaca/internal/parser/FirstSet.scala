@@ -3,7 +3,6 @@ package internal
 package parser
 
 import scala.annotation.tailrec
-import NonEmptyList as NEL
 
 /**
  * An opaque type representing FIRST sets for grammar symbols.
