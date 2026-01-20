@@ -8,7 +8,6 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.unused
 import scala.collection.mutable
-import scala.deriving.Mirror
 
 final class ParserApiTest extends AnyFunSuite with Matchers:
   type R = Unit | Int | List[Int] | (String, Option[List[Int]])

@@ -1,7 +1,7 @@
 package alpaca
 package internal
 
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.concurrent.duration.{Duration, DurationInt}
 
 final case class DebugSettings(
   debugDirectory: String | Null,

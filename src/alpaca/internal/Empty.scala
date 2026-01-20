@@ -38,8 +38,7 @@ private[alpaca] object Empty:
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
-    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers
-      .iterator
+    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers.iterator
       .collect:
         case m if m.name.startsWith("$lessinit$greater$default$") =>
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)

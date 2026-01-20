@@ -84,7 +84,7 @@ private[parser] object ConflictResolutionTable:
 
       val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
 
-      // todo: use Channel
+      // todo: use Ox Channel
       @tailrec
       def loop(stack: List[Action]): Unit = stack match
         case Nil => // Done

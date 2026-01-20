@@ -2,13 +2,11 @@ package alpaca
 package internal
 
 import ox.*
-import ox.channels.*
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{ConcurrentHashMap, Executors, TimeUnit}
-import scala.concurrent.duration.{Duration, DurationInt}
+import java.util.concurrent.ConcurrentHashMap
 
 import Log.*
 

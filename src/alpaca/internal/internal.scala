@@ -4,9 +4,7 @@ package internal
 import ox.*
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.concurrent.{Await, Future}
 
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
@@ -56,7 +54,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using Log, Ox):
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
   /**
@@ -100,7 +98,7 @@ private[alpaca] def timeoutOnTooLongCompilation()(using debugSettings: DebugSett
       case Duration.Inf => ()
       case Duration.MinusInf => throw AlpacaTimeoutException
 
-private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log, Ox):
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
   def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
@@ -127,12 +125,14 @@ def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.
     case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
     case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
 
-def refinementTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)]): quotes.reflect.TypeRepr =
+def refinementTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)])
+  : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   refn.foldLeft(TypeRepr.of[Any]):
-      case (acc, (label, tpe)) => Refinement(acc, label, tpe)
+    case (acc, (label, tpe)) => Refinement(acc, label, tpe)
 
-def fieldsTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)]): quotes.reflect.TypeRepr =
+def fieldsTpeFrom(using quotes: Quotes)(refn: Iterable[(label: String, tpe: quotes.reflect.TypeRepr)])
+  : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   TypeRepr
     .of[NamedTuple]
@@ -154,4 +154,3 @@ extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)(using Log)
     tpe.asType match
       case '[t] if TypeRepr.of[t] <:< TypeRepr.of[T] => Type.of[t & T]
       case _ => report.errorAndAbort(show"expected type ${TypeRepr.of[T]} but got $tpe")
-

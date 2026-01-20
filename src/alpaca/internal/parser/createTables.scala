@@ -6,8 +6,6 @@ import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 import ox.*
 
-import scala.reflect.NameTransformer
-
 /**
  * An opaque type containing the parse and action tables for the parser.
  *

@@ -3,12 +3,12 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
+import ox.*
 
 import java.util.regex.Pattern
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
-import ox.*
 
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
@@ -22,7 +22,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
-  val withOverridingSymbol = new WithOverridingSymbol[quotes.type]
   val replaceRefs = new ReplaceRefs[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
@@ -101,8 +100,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  Log.trace("partitioning defined and ignored tokens")
-  val (definedTokens, ignoredTokens) = tokens.partition(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
+  val definedTokens = tokens.filter(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
 
   Log.trace("checking regex patterns")
   RegexChecker.checkPatterns(infos.map(_.pattern))
@@ -119,9 +117,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             '{ new annotation.switch }.asTerm.changeOwner(methSym),
           ),
         ),
-        definedTokens.collect:
-          case (expr, name) if expr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
-            CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
+        definedTokens.map: (expr, name) =>
+          CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
   Log.trace("creating tokenization class instance")

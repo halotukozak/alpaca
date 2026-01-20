@@ -2,11 +2,7 @@ package alpaca
 package internal
 package parser
 
-import ox.*
-import ox.channels.*
-
 import scala.collection.immutable.SortedSet
-import scala.collection.mutable
 
 /**
  * An opaque type representing a parser state.
@@ -42,8 +38,7 @@ private[parser] object State:
      */
     def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet)(using Log): State =
       Log.trace(show"computing next state for symbol $step")
-      state
-      .iterator
+      state.iterator
         .filter(item => !item.isLastItem && item.nextSymbol == step)
         .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
 
@@ -63,8 +58,7 @@ private[parser] object State:
     if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
       val lookAheads = item.nextTerminals(firstSet)
 
-      productions
-        .iterator
+      productions.iterator
         .filter(_.lhs == item.nextSymbol)
         .foldLeft(state + item): (acc, production) =>
           lookAheads.foldLeft(acc): (acc, lookAhead) =>

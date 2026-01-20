@@ -221,6 +221,4 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx])
     result: (parser.root.type match
       case Rule[t] => t
     ) | Null,
-  ) =
-    given Log = Log.materialize
-    parser.unsafeParse(lexems)
+  ) = parser.unsafeParse(lexems)

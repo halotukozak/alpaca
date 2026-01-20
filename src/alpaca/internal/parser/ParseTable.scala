@@ -4,8 +4,6 @@ package parser
 
 import alpaca.internal.parser.ParseAction.{Reduction, Shift}
 
-import ox.*
-
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -39,7 +37,7 @@ private[parser] object ParseTable:
      *
      * @return a Csv representation of the parse table
      */
-    //it shouldn't be eager
+    // it shouldn't be eager
     def toCsv(using Log): Csv =
       val symbols = table.keysIterator.map(_.stepSymbol).distinct
       val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
@@ -60,7 +58,7 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  //todo: can be parallelized with Ox?
+  // todo: can be parallelized with Ox?
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
     Log.trace("building first set...")
     val firstSet = FirstSet(productions)
@@ -173,12 +171,12 @@ private[parser] object ParseTable:
       val builder = Ref(symbol).asExprOf[BuilderTpe]
 
       val additions = entries
-          .map: entry =>
-            '{
-              def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
-              avoidTooLargeMethod()
-            }.asTerm
-          .toList
+        .map: entry =>
+          '{
+            def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
+            avoidTooLargeMethod()
+          }.asTerm
+        .toList
 
       val result = '{ $builder.result() }.asTerm
 

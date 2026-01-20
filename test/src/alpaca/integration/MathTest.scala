@@ -1,7 +1,7 @@
 package alpaca
 package integration
 
-import alpaca.{Production as P, Rule, Token}
+import alpaca.{Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
 final class MathTest extends AnyFunSuite:

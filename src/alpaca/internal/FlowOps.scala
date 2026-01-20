@@ -19,7 +19,7 @@ extension [A](flow: Flow[A])
       case ((trueFlow, falseFlow), a) if predicate(a) => (trueFlow.append(a), falseFlow)
       case ((trueFlow, falseFlow), a) => (trueFlow, falseFlow.append(a))
 
-  private inline def foldLeft[B](initial: B)(inline op: (B, A) => B): B = flow.scan(initial)(op).runLast()
+  inline private def foldLeft[B](initial: B)(inline op: (B, A) => B): B = flow.scan(initial)(op).runLast()
   inline def runToMap[K, V]()(using A <:< (K, V)): Map[K, V] = flow.runToList().toMap
   inline def runToSet(): Set[A] = flow.runToList().toSet
   inline def reverse: Flow[A] = flow.foldLeft(Flow.empty[A]):
