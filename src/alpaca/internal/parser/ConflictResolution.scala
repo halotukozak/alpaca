@@ -59,7 +59,7 @@ private[parser] object ConflictResolutionTable:
 
       def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
         val to = extractProdOrName(second)
-        //todo: use Flow
+        // todo: use Flow
         @tailrec
         def loop(queue: List[ConflictKey], visited: Set[ConflictKey]): Option[ParseAction] = queue match
           case Nil => None
@@ -84,6 +84,7 @@ private[parser] object ConflictResolutionTable:
 
       val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
 
+      // todo: use Channel
       @tailrec
       def loop(stack: List[Action]): Unit = stack match
         case Nil => // Done
@@ -108,11 +109,10 @@ private[parser] object ConflictResolutionTable:
    */
   given Showable[ConflictResolutionTable] = Showable: table =>
     table
-      .asFlow
       .map: (k, v) =>
         def show(x: ConflictKey): String = x match
           case p: Production => show"$p"
           case s: String => show"Token[$s]"
 
-        show"${show(k)} before ${v.asFlow.map(show).mkShow(", ")}"
+        show"${show(k)} before ${v.map(show).mkShow(", ")}"
       .mkShow("\n")
