@@ -20,7 +20,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
       RegexChecker.checkPatterns(patterns)
   }
 
-  test("checkPatterns should return Iterable[String] for overlapping patterns") {
+  test("checkPatterns should throw ShadowException for overlapping patterns") {
     val patterns = List(
       "[a-zA-Z_][a-zA-Z0-9_]*",
       "\\*",
