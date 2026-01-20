@@ -115,9 +115,9 @@ private[internal] object Showable:
     val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
     val showables =
       compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
-    val values = Tuple.fromProductTyped(t).toList.asFlow
-    val shown = showables.asFlow.zip(values).map(_.show(_))
-    show"$name(${fields.asFlow.zip(shown).map((f, v) => s"$f: $v").mkShow(", ")})"
+    val values = Tuple.fromProductTyped(t).toList
+    val shown = showables.zip(values).map(_.show(_))
+    show"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkShow(", ")})"
 
 extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using Log)
 
@@ -130,7 +130,7 @@ extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using Log)
    * @return the formatted string
    */
   private[internal] def mkShow(start: String, sep: String, end: String): Shown =
-    c.map(_.show).mkString(start, sep, end)
+    c.iterator.map(_.show).mkString(start, sep, end)
 
   /**
    * Creates a string representation with a custom separator.
@@ -148,11 +148,6 @@ extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using Log)
   private[internal] def mkShow: Shown = mkShow("")
 
 extension [T: Showable](it: Iterator[T])(using Log)
-  private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)
-  private[internal] def mkShow(sep: String): Shown = mkShow("", sep, "")
-  private[internal] def mkShow: Shown = mkShow("")
-
-extension [T: Showable](it: Flow[T])(using Log)
   private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)
   private[internal] def mkShow(sep: String): Shown = mkShow("", sep, "")
   private[internal] def mkShow: Shown = mkShow("")
