@@ -3,6 +3,17 @@ package internal
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
+/**
+ * Configuration for debugging and compilation settings.
+ *
+ * This case class holds various configuration options that control how Alpaca
+ * behaves during compilation, including logging, timeouts, and verbose output.
+ *
+ * @param debugDirectory optional directory for debug output files
+ * @param compilationTimeout maximum time allowed for macro compilation
+ * @param enableVerboseNames whether to use verbose names in generated code
+ * @param logOut mapping of log levels to output destinations
+ */
 final case class DebugSettings(
   debugDirectory: String | Null,
   compilationTimeout: Duration,

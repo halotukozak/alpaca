@@ -4,9 +4,28 @@ package internal
 import scala.collection.Factory
 import ox.flow.Flow
 
+/**
+ * A type class for creating default values of types.
+ *
+ * This trait provides a way to obtain default instances of various types,
+ * including primitives, collections, and macro-related types like Expr and Type.
+ * It is used internally to provide fallback values where needed.
+ *
+ * @tparam T the type to create defaults for
+ */
 private[internal] trait Default[+T] extends (() => T):
+  /**
+   * Transforms the default value using the provided function.
+   *
+   * @tparam A the result type
+   * @param f the transformation function
+   * @return a new Default that applies the transformation
+   */
   def transform[A](f: T => A): Default[A] = () => f(apply())
 
+/**
+ * Default instances for common types.
+ */
 private[internal] object Default:
   def apply[T](using d: Default[T]): Default[T] = d
 
