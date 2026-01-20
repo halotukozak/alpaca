@@ -10,8 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.publicInBinary
 import Log.*
 
-private[internal] class Log @publicInBinary private (using val debugSettings: DebugSettings)(using Ox)
-  extends AutoCloseable:
+private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
   private given Log = this
 
   private val writerCache = new ConcurrentHashMap[Path, AtomicReference[BufferedWriter]]
