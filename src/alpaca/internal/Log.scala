@@ -7,7 +7,6 @@ import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.publicInBinary
 import Log.*
 
 private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
