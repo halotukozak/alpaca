@@ -8,8 +8,8 @@ import scala.quoted.*
  * Raises a compilation error or runtime exception for unreachable code.
  *
  * This function is used to mark code paths that should theoretically never
- * be reached. If they are reached, it indicates a bug in the library.
- * During compilation, it reports an error; at runtime, it throws an exception.
+ * be reached. During macro expansion (compile-time), it reports a compilation error.
+ * If the code path is somehow reached at runtime, it throws an AlgorithmError.
  *
  * @tparam T the return type (a default value is provided)
  * @param elem the element that triggered the error
@@ -35,12 +35,15 @@ inline private[alpaca] def raiseShouldNeverBeCalled[T: Default](elem: Any)(using
  * Extension methods for collections that use partial functions unsafely.
  *
  * These methods assume the partial function will always be defined for all
- * elements in the collection. If not, they raise a compilation error or
- * runtime exception.
+ * elements in the collection. If not, they raise a compilation error during 
+ * macro expansion (compile-time) or throw an AlgorithmError at runtime.
  */
 extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)(using Log, DebugPosition)
   /**
    * Maps over a collection using a partial function.
+   *
+   * The partial function must be defined for all elements, otherwise
+   * a compilation error or runtime exception will be raised.
    *
    * @tparam B the result element type
    * @param f the partial function to apply
@@ -52,6 +55,9 @@ extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)(using Log, Debu
   /**
    * FlatMaps over a collection using a partial function.
    *
+   * The partial function must be defined for all elements, otherwise
+   * a compilation error or runtime exception will be raised.
+   *
    * @tparam B the result element type
    * @param f the partial function to apply
    * @return the flat-mapped collection
@@ -61,6 +67,9 @@ extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)(using Log, Debu
 
   /**
    * Folds over a collection using a partial function.
+   *
+   * The partial function must be defined for all (accumulator, element) pairs,
+   * otherwise a compilation error or runtime exception will be raised.
    *
    * @tparam B the result type
    * @param z the initial value
@@ -72,10 +81,15 @@ extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)(using Log, Debu
 
 /**
  * Extension method for Option that assumes the value is present.
+ *
+ * Raises a compilation error or runtime exception if the Option is None.
  */
 extension [A: Default](opt: Option[A])(using Log, DebugPosition)
   /**
-   * Gets the value from an Option, raising an error if None.
+   * Gets the value from an Option.
+   *
+   * If the Option is None, raises a compilation error during macro expansion
+   * or throws an AlgorithmError at runtime.
    *
    * @return the value
    */
@@ -84,10 +98,16 @@ extension [A: Default](opt: Option[A])(using Log, DebugPosition)
 
 /**
  * Extension method for partial functions.
+ *
+ * Allows applying a partial function as if it were total, with error handling
+ * for undefined cases.
  */
 extension [A, B: Default](pf: PartialFunction[A, B])(using Log, DebugPosition)
   /**
-   * Applies a partial function, raising an error if undefined.
+   * Applies a partial function.
+   *
+   * If the partial function is not defined for the input, raises a compilation 
+   * error during macro expansion or throws an AlgorithmError at runtime.
    *
    * @param a the input value
    * @return the result
