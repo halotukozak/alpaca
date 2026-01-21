@@ -1,13 +1,14 @@
 package alpaca
 package internal
 
+import alpaca.internal.logger.*
 import ox.*
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import Log.*
+import scala.concurrent.duration.DurationInt
 
 /**
  * A logging facility for Alpaca macro compilation.
@@ -22,51 +23,53 @@ import Log.*
 private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
   private given Log = this
 
-  private val writerCache = new ConcurrentHashMap[Path, AtomicReference[BufferedWriter]]
+  private val writerCache = new ConcurrentHashMap[Path, BufferedWriter]
 
   private val flushing = forkCancellable:
     if debugSettings.compilationTimeout.isFinite then
-      sleep(debugSettings.compilationTimeout.runtimeChecked)
-      writerCache.values.forEach: writer =>
-        try writer.get.flush()
-        catch case _: Exception => ()
+      sleep(5.seconds)
+      writerCache.forEach(
+        threads,
+        (_, writer) =>
+          try writer.flush()
+          catch case _: Exception => (),
+      )
 
   override def close(): Unit =
     flushing.cancel()
-    writerCache.values.forEach(_.get.close())
+    writerCache.forEach(threads, (_, writer) => writer.close())
 
-  private def createWriter(path: Path, replace: Boolean): AtomicReference[BufferedWriter] =
+  private def createWriter(path: Path, replace: Boolean): BufferedWriter =
     if path.getParent != null then Files.createDirectories(path.getParent)
-    new AtomicReference(new BufferedWriter(new FileWriter(path.toFile, !replace)))
+    new BufferedWriter(new FileWriter(path.toFile, !replace))
 
-  def append(path: Path)(content: Shown): Unit =
-    writerCache.computeIfAbsent(path, p => createWriter(p, false)).get.write(content)
+  def append(path: Path)(content: Shown): Unit = writerCache.compute(
+    path,
+    (p, existing) => (if existing != null then createWriter(p, true) else existing).tap(_.write(content)),
+  )
 
-  def replace(path: Path)(content: Shown): Unit =
-    writerCache
-      .compute(
-        path,
-        (p, existing) =>
-          if existing != null then existing.synchronized(existing.get.close())
-          createWriter(p, true),
-      )
-      .get
-      .write(content)
+  def replace(path: Path)(content: Shown): Unit = writerCache
+    .compute(
+      path,
+      (p, existing) =>
+        if existing != null then existing.close()
+        createWriter(p, true).tap(_.write(content)),
+    )
 
   // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     if replace then this.replace(file)(content) else this.append(file)(content)
 
-  private def log(level: Level, msg: Shown)(using pos: DebugPosition): Unit = debugSettings.logOut(level) match
+  def log(level: Level, msg: Shown)(using pos: DebugPosition): Unit = debugSettings.logOut(level) match
     case Out.stdout => println(show"$level: $pos\t$msg")
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
 inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): T =
-  supervised(op(using Log.materialize))
+  supervised(op(using logger.materialize))
 
-private[internal] object Log:
+private[internal] object logger:
 
   inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
   private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =

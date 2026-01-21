@@ -35,7 +35,7 @@ inline private[alpaca] def raiseShouldNeverBeCalled[T: Default](elem: Any)(using
  * Extension methods for collections that use partial functions unsafely.
  *
  * These methods assume the partial function will always be defined for all
- * elements in the collection. If not, they raise a compilation error during 
+ * elements in the collection. If not, they raise a compilation error during
  * macro expansion (compile-time) or throw an AlgorithmError at runtime.
  */
 extension [A, CC[_], C <: IterableOnceOps[A, CC, CC[A]]](col: C)(using Log, DebugPosition)
@@ -106,7 +106,7 @@ extension [A, B: Default](pf: PartialFunction[A, B])(using Log, DebugPosition)
   /**
    * Applies a partial function.
    *
-   * If the partial function is not defined for the input, raises a compilation 
+   * If the partial function is not defined for the input, raises a compilation
    * error during macro expansion or throws an AlgorithmError at runtime.
    *
    * @param a the input value
