@@ -15,7 +15,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   betweenStages: Expr[BetweenStages[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
-  val timeout = timeoutOnTooLongCompilation()
+  timeoutOnTooLongCompilation()
+  
   import quotes.reflect.*
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
@@ -131,7 +132,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
           .mkString("|")
           .tap(Pattern.compile) // we'd like to compile it here to fail in compile time if regex is invalid
 
-      timeout.cancelNow()
       '{
         {
           new Tokenization[Ctx](using $betweenStages):

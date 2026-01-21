@@ -47,9 +47,10 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
-private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
-  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
-  val timeout = timeoutOnTooLongCompilation()
+private def createTablesImpl[Ctx <: ParserCtx: Type](
+  using quotes: Quotes,
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
+  timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
@@ -215,5 +216,4 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     table.map:
       case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
-  timeout.cancelNow()
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }

@@ -128,8 +128,8 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
  * @param debugSettings the debug configuration
  * @return a cancellable fork that can be cancelled to prevent timeout
  */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): CancellableFork[Unit] =
-  forkCancellable:
+private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
+  forkDiscard:
     summon[Log].debugSettings.compilationTimeout.runtimeChecked match
       case duration: FiniteDuration =>
         sleep(duration)

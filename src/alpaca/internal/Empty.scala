@@ -26,7 +26,7 @@ private[alpaca] object Empty:
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
   private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
-    val timeout = timeoutOnTooLongCompilation()
+    timeoutOnTooLongCompilation()
 
     import quotes.reflect.*
 
@@ -43,27 +43,27 @@ private[alpaca] object Empty:
 
     logger.trace(show"found ${defaultParameters.size} default parameters")
 
-    val parameters = constructor.paramSymss.iterator.collect:
-      case params if !params.exists(_.isTypeParam) =>
-        params.iterator.zipWithIndex
-          .map:
-            case (param, idx) if param.flags.is(Flags.HasDefault) =>
-              logger.trace(show"parameter $param has default value")
-              defaultParameters(idx)
-            case (param, _) =>
-              report.errorAndAbort(
-                show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
-              )
-          .toList
+    val parameters = constructor.paramSymss
+      .collect:
+        case params if !params.exists(_.isTypeParam) =>
+          params.iterator.zipWithIndex
+            .map:
+              case (param, idx) if param.flags.is(Flags.HasDefault) =>
+                logger.trace(show"parameter $param has default value")
+                defaultParameters(idx)
+              case (param, _) =>
+                report.errorAndAbort(
+                  show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
+                )
+            .toList
 
     val value =
       New(TypeTree.of[T])
         .select(constructor)
         .appliedToTypes(tpe.typeArgs)
-        .appliedToArgss(parameters.toList)
+        .appliedToArgss(parameters)
         .asExprOf[T]
 
-    timeout.cancelNow()
     '{
       new Empty[T]:
         def apply(): T = $value
