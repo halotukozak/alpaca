@@ -44,8 +44,6 @@ private[internal] object Showable:
   def apply[T](func: Log ?=> T => Shown): Showable[T] = new:
     extension (t: T)(using Log) override def show: Shown = func(t)
 
-  given Conversion[String, Shown] = _.asInstanceOf[Shown]
-
   /** Showable instance for String (identity). */
   given Showable[String] = Showable(_.asInstanceOf[Shown])
 

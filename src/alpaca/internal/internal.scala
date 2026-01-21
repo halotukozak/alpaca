@@ -183,32 +183,6 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
 infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
 
 /**
- * Extracts all types from a tuple type.
- *
- * Recursively decomposes a tuple type into a list of individual types.
- *
- * @tparam Tup the tuple type to extract from
- * @return a list of Type instances
- */
-def extractAll[Tup <: Tuple: Type](using Quotes): List[Type[?]] = Type.of[Tup] match
-  case '[h *: t] => Type.of[h] :: extractAll[t]
-  case '[EmptyTuple] => Nil
-
-/**
- * Extracts all types from a tuple TypeRepr.
- *
- * Recursively decomposes a tuple TypeRepr into a list of individual TypeReprs.
- *
- * @param tpe the tuple TypeRepr to extract from
- * @return a list of TypeRepr instances
- */
-def extractAll(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.TypeRepr] =
-  import quotes.reflect.*
-  tpe match
-    case AppliedType(tycon, List(head, tail)) if tycon =:= TypeRepr.of[*:] => head :: extractAll(tail)
-    case tpe if tpe =:= TypeRepr.of[EmptyTuple] => Nil
-
-/**
  * Creates a refinement type from a sequence of labeled types.
  *
  * Builds a type with structural refinements for each label/type pair.
