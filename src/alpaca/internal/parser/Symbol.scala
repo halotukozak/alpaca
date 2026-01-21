@@ -89,7 +89,7 @@ private[parser] object Symbol:
 
   given Showable[Symbol] = Showable: symbol =>
     NameTransformer.encode(symbol.name) match
-      case encoded if !summon[DebugSettings].enableVerboseNames || encoded == symbol.name =>
+      case encoded if !summon[Log].debugSettings.enableVerboseNames || encoded == symbol.name =>
         if symbol.name.contains(SyntheticInfix) then show"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
         else symbol.name
       case encoded => show"${symbol.name} ($encoded)"

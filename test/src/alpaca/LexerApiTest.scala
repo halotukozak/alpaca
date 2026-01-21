@@ -4,9 +4,6 @@ import alpaca.internal.lexer.Token
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.annotation.nowarn
-
-@nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
   val Lexer = lexer:
     case "#.*" => Token.Ignored

@@ -29,23 +29,23 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = withTimeout:
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
     import quotes.reflect.*
     logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
       .of[Ctx]
       .baseClasses
+      .iterator
       .map(_.typeRef)
       .filter(_ <:< TypeRepr.of[LexerCtx])
       // we need to filter self type. Maybe I will change it in future since subtyping check does not work
       // and by symbol is disgusting :/
       .filterNot(_.typeSymbol == TypeRepr.of[Ctx].typeSymbol)
       .map(_.asType)
+      .toList
 
-    logger.trace(show"found ${parents.size} parent context traits")
-
-    val derivedBetweenStages = Expr.ofList {
+    val derivedBetweenStages = Expr.ofList:
       parents
         .map:
           case '[type ctx >: Ctx <: LexerCtx; ctx] =>
@@ -53,7 +53,6 @@ private[alpaca] object BetweenStages:
             Expr
               .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
-    }
 
     '{ (token, m, ctx) =>
       $derivedBetweenStages.foreach(_.apply(token, m, ctx)) // todo: do not init List

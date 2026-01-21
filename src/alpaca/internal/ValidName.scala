@@ -12,8 +12,7 @@ package internal
 type ValidName = String & Singleton
 
 object ValidName:
-
-  def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
+  def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
     import quotes.reflect.*
     logger.trace(show"extracting ValidName from ${Type.of[Name]}")
     TypeRepr.of[Name] match
@@ -26,9 +25,8 @@ object ValidName:
    * Token names must not be an underscore (_) as that would be invalid.
    *
    * @param name the token name to validate
-   * @param quotes the Quotes instance
    */
-  def check(name: String)(using quotes: Quotes): Unit =
+  def check(name: String)(using quotes: Quotes)(using Log): Unit =
     import quotes.reflect.*
     name match
       case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")

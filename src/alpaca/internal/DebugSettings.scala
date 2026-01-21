@@ -3,6 +3,17 @@ package internal
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
+/**
+ * Configuration for debugging and compilation settings.
+ *
+ * This case class holds various configuration options that control how Alpaca
+ * behaves during compilation, including logging, timeouts, and verbose output.
+ *
+ * @param debugDirectory optional directory for debug output files
+ * @param compilationTimeout maximum time allowed for macro compilation
+ * @param enableVerboseNames whether to use verbose names in generated code
+ * @param logOut mapping of log levels to output destinations
+ */
 final case class DebugSettings(
   debugDirectory: String | Null,
   compilationTimeout: Duration,
@@ -15,16 +26,13 @@ object DebugSettings:
   private final val Timeout = "compilationTimeout"
   private final val EnableVerboseNames = "enableVerboseNames"
 
-  inline def materialize = ${ materializeImpl }
-  private def materializeImpl(using quotes: Quotes): Expr[DebugSettings] = Expr(summon)
-
   given (quotes: Quotes) => DebugSettings =
     import quotes.reflect.*
     val settings = CompilationInfo.XmacroSettings
       .flatMap:
         case s"$key=$value" => Some((key, value))
         case value =>
-          report.warning(show"Invalid debug setting: $value")
+          report.warning(s"Invalid debug setting: $value")
           None
       .toMap
 
@@ -33,7 +41,7 @@ object DebugSettings:
       compilationTimeout = settings.get(Timeout).map(Duration.create).getOrElse(90.seconds),
       enableVerboseNames = settings.get(EnableVerboseNames).exists(_.toBoolean),
       logOut = logger.Level.values
-        .map(level =>
+        .map: level =>
           (
             level,
             settings
@@ -42,8 +50,7 @@ object DebugSettings:
                 try logger.Out.valueOf(name)
                 catch case _: IllegalArgumentException => level.default
               .getOrElse(level.default),
-          ),
-        )
+          )
         .toMap,
     )
 

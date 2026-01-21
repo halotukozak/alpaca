@@ -3,7 +3,6 @@ package internal
 package parser
 
 import scala.annotation.tailrec
-import NonEmptyList as NEL
 
 /**
  * An opaque type representing FIRST sets for grammar symbols.
@@ -24,12 +23,12 @@ private[parser] object FirstSet:
    * @param productions the grammar productions
    * @return the computed FIRST sets
    */
-  def apply(productions: List[Production])(using DebugSettings): FirstSet =
+  def apply(productions: List[Production])(using Log): FirstSet =
     logger.trace("computing first set...")
     loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec
-  private def loop(productions: List[Production], firstSet: FirstSet)(using DebugSettings): FirstSet =
+  private def loop(productions: List[Production], firstSet: FirstSet)(using Log): FirstSet =
     val newFirstSet = productions.foldLeft(firstSet)(addImports)
     if firstSet == newFirstSet then
       logger.trace("first set stabilized")
@@ -37,7 +36,7 @@ private[parser] object FirstSet:
     else loop(productions, newFirstSet)
 
   @tailrec
-  private def addImports(firstSet: FirstSet, production: Production)(using DebugSettings): FirstSet =
+  private def addImports(firstSet: FirstSet, production: Production)(using Log): FirstSet =
     production.runtimeChecked match
       case Production.NonEmpty(lhs, NEL(head: Terminal, _), name) =>
         firstSet.updated(lhs, firstSet(lhs) + head)

@@ -4,6 +4,8 @@ package parser
 
 import alpaca.internal.parser.ParseAction.Reduction
 
+import scala.annotation.constructorOnly
+
 /**
  * Base class for parser conflict exceptions.
  *
@@ -12,7 +14,7 @@ import alpaca.internal.parser.ParseAction.Reduction
  *
  * @param message the error message
  */
-sealed class ConflictException(message: Shown) extends Exception(message)
+sealed class ConflictException(message: Shown) extends AlpacaException(message)
 
 /**
  * Exception thrown when there is a shift/reduce conflict.
@@ -20,13 +22,8 @@ sealed class ConflictException(message: Shown) extends Exception(message)
  * This occurs when the parser cannot decide whether to shift a symbol
  * or reduce by a production. It often indicates an ambiguous grammar.
  */
-final class ShiftReduceConflict private (message: Shown) extends ConflictException(message):
-  /**
-   * @param symbol the symbol to potentially shift
-   * @param red the reduction to potentially apply
-   * @param path the path of symbols leading to this conflict
-   */
-  def this(symbol: Symbol, red: Reduction, path: List[Symbol])(using DebugSettings) = this(
+final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbol])(using @constructorOnly log: Log)
+  extends ConflictException(
     show"""
           |Shift \"$symbol\" vs Reduce $red
           |In situation like:
@@ -41,13 +38,8 @@ final class ShiftReduceConflict private (message: Shown) extends ConflictExcepti
  * This occurs when the parser cannot decide which of two productions
  * to reduce by. This always indicates an ambiguous grammar.
  */
-final class ReduceReduceConflict private (message: Shown) extends ConflictException(message):
-  /**
-   *  @param red1 the first potential reduction
-   *  @param red2 the second potential reduction
-   *  @param path the path of symbols leading to this conflict
-   */
-  def this(red1: Reduction, red2: Reduction, path: List[Symbol])(using DebugSettings) = this(
+final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Symbol])(using @constructorOnly log: Log)
+  extends ConflictException(
     show"""
           |Reduce $red1 vs Reduce $red2
           |In situation like:
@@ -63,12 +55,8 @@ final class ReduceReduceConflict private (message: Shown) extends ConflictExcept
  * both preceding and following the same node, so the ordering
  * constraints cannot be satisfied.
  */
-final class InconsistentConflictResolution private (message: Shown) extends ConflictException(message):
-  /**
-   *  @param node the node detected in the cycle
-   *  @param path the chain of nodes showing the inconsistent ordering
-   */
-  def this(node: ConflictKey, path: List[ConflictKey])(using DebugSettings) = this(
+final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])(using @constructorOnly log: Log)
+  extends ConflictException(
     show"""
           |Inconsistent conflict resolution detected:
           |${path.dropWhile(_ != node).mkShow(" before ")} before $node

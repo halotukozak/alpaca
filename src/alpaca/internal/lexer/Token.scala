@@ -41,7 +41,7 @@ private[lexer] object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
+  def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (

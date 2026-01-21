@@ -1,8 +1,6 @@
 package alpaca
 package integration
 
-import Production as P
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class CompilationTheoryTest extends AnyFunSuite:
