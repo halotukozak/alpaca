@@ -16,7 +16,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
   timeoutOnTooLongCompilation()
-  
+
   import quotes.reflect.*
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
