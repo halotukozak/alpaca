@@ -43,7 +43,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
    * @return a TreeMap that performs the replacements
    */
   def apply(queries: (find: Symbol, replace: Term)*): TreeMap =
-    Log.trace(show"creating ReplaceRefs with ${queries.size} queries")
+    logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
     new TreeMap:
       // skip NoSymbol
       private val filtered = queries.filter(!_.find.isNoSymbol)
@@ -52,7 +52,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
         filtered
           .collectFirst:
             case (find, replace) if find == tree.symbol =>
-              Log.trace(show"replacing reference to $find with $replace")
+              logger.trace(show"replacing reference to $find with $replace")
               replace
           .getOrElse(super.transformTerm(tree)(owner))
 
@@ -76,7 +76,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(usi
    * @return an expression of type F
    */
   def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
-    Log.trace(show"creating lambda of type ${Type.of[F]}")
+    logger.trace(show"creating lambda of type ${Type.of[F]}")
     require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
@@ -126,17 +126,16 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
  * on the returned fork to prevent the timeout.
  *
  * @param debugSettings the debug configuration
- * @param ox the Ox context
  * @return a cancellable fork that can be cancelled to prevent timeout
  */
-private[alpaca] def timeoutOnTooLongCompilation()(using debugSettings: DebugSettings)(using Ox): CancellableFork[Unit] =
+private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): CancellableFork[Unit] =
   forkCancellable:
-    debugSettings.compilationTimeout.runtimeChecked match
+    summon[Log].debugSettings.compilationTimeout.runtimeChecked match
       case duration: FiniteDuration =>
         sleep(duration)
-        throw AlpacaTimeoutException
+        throw AlpacaTimeoutException()
       case Duration.Inf => ()
-      case Duration.MinusInf => throw AlpacaTimeoutException
+      case Duration.MinusInf => throw AlpacaTimeoutException()
 
 /**
  * A helper class for overriding symbols in macro expansion.
@@ -164,10 +163,10 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
     val baseSymbol = symbol(parent)
     val owner = baseSymbol.overridingSymbol(parent) match
       case owner if owner.isNoSymbol =>
-        Log.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
+        logger.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
         baseSymbol
       case owner =>
-        Log.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
+        logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
         owner
 
     body(using owner.asQuotes)(owner)

@@ -49,7 +49,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
    * @return the set of terminals that could appear next
    */
   def nextTerminals(firstSet: FirstSet)(using Log): Set[Terminal] =
-    Log.trace(show"computing next terminals for item $this")
+    logger.trace(show"computing next terminals for item $this")
     production match
       case Production.NonEmpty(lhs, rhs, name) =>
         rhs.lift(dotPosition + 1) match

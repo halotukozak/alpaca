@@ -24,14 +24,14 @@ private[parser] object FirstSet:
    * @return the computed FIRST sets
    */
   def apply(productions: List[Production])(using Log): FirstSet =
-    Log.trace("computing first set...")
+    logger.trace("computing first set...")
     loop(productions, Map.empty.withDefaultValue(Set.empty))
 
   @tailrec
   private def loop(productions: List[Production], firstSet: FirstSet)(using Log): FirstSet =
     val newFirstSet = productions.foldLeft(firstSet)(addImports)
     if firstSet == newFirstSet then
-      Log.trace("first set stabilized")
+      logger.trace("first set stabilized")
       newFirstSet
     else loop(productions, newFirstSet)
 

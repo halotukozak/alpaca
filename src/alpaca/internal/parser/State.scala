@@ -37,7 +37,7 @@ private[parser] object State:
      * @return the new state
      */
     def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet)(using Log): State =
-      Log.trace(show"computing next state for symbol $step")
+      logger.trace(show"computing next state for symbol $step")
       state.iterator
         .filter(item => !item.isLastItem && item.nextSymbol == step)
         .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))

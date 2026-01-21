@@ -18,7 +18,7 @@ final case class DebugSettings(
   debugDirectory: String | Null,
   compilationTimeout: Duration,
   enableVerboseNames: Boolean,
-  logOut: Map[Log.Level, Log.Out],
+  logOut: Map[logger.Level, logger.Out],
 )
 
 object DebugSettings:
@@ -40,14 +40,14 @@ object DebugSettings:
       debugDirectory = settings.get(Directory).orNull,
       compilationTimeout = settings.get(Timeout).map(Duration.create).getOrElse(90.seconds),
       enableVerboseNames = settings.get(EnableVerboseNames).exists(_.toBoolean),
-      logOut = Log.Level.values
+      logOut = logger.Level.values
         .map: level =>
           (
             level,
             settings
               .get(level.toString)
               .map: name =>
-                try Log.Out.valueOf(name)
+                try logger.Out.valueOf(name)
                 catch case _: IllegalArgumentException => level.default
               .getOrElse(level.default),
           )

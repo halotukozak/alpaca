@@ -3,8 +3,6 @@ package internal
 
 import scala.util.control.NoStackTrace
 
-import alpaca.internal.Showable.given_Conversion_String_Shown
-
 /**
  * Base exception class for all Alpaca-specific errors.
  *
@@ -21,4 +19,5 @@ abstract class AlpacaException(message: Shown) extends Exception(message) with N
  * This exception is raised when the compilation timeout configured in
  * DebugSettings is exceeded during macro expansion.
  */
-object AlpacaTimeoutException extends AlpacaException("Alpaca compilation timeout")
+class AlpacaTimeoutException(message: Shown) extends AlpacaException(message):
+  def this()(using Log) = this("Alpaca compilation timeout")

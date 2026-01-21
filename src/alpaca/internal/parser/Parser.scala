@@ -129,7 +129,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
-  Log.trace(show"Generating production selector for $parserSymbol")
+  logger.trace(show"Generating production selector for $parserSymbol")
 
   cachedProductions
     .getOrElseUpdate(
@@ -146,10 +146,10 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
         val fields = rules
           .flatMap:
             case ValDef(name, _, Some(rhs)) =>
-              Log.trace(show"Extracting production names from rule $name")
+              logger.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]])
             case DefDef(name, _, _, Some(rhs)) =>
-              Log.trace(show"Extracting production names from rule $name")
+              logger.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
             case _ =>
               report.error("Define resolutions as the last field of the parser.")

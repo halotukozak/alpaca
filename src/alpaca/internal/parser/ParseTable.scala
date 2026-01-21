@@ -60,9 +60,9 @@ private[parser] object ParseTable:
    */
   // todo: can be parallelized with Ox?
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
-    Log.trace("building first set...")
+    logger.trace("building first set...")
     val firstSet = FirstSet(productions)
-    Log.trace("building states and parse table...")
+    logger.trace("building states and parse table...")
     var currStateId = 0
     val states =
       mutable.ListBuffer(
@@ -81,7 +81,7 @@ private[parser] object ParseTable:
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
-              Log.trace(show"Conflict resolved: $action")
+              logger.trace(show"Conflict resolved: $action")
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
@@ -96,13 +96,13 @@ private[parser] object ParseTable:
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          Log.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
-      Log.trace(show"processing state $currStateId")
+      logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 

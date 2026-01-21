@@ -31,7 +31,7 @@ private[alpaca] object Empty:
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
-    Log.trace(show"deriving Empty for $tpe")
+    logger.trace(show"deriving Empty for $tpe")
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
@@ -41,14 +41,14 @@ private[alpaca] object Empty:
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
-    Log.trace(show"found ${defaultParameters.size} default parameters")
+    logger.trace(show"found ${defaultParameters.size} default parameters")
 
     val parameters = constructor.paramSymss.iterator.collect:
       case params if !params.exists(_.isTypeParam) =>
         params.iterator.zipWithIndex
           .map:
             case (param, idx) if param.flags.is(Flags.HasDefault) =>
-              Log.trace(show"parameter $param has default value")
+              logger.trace(show"parameter $param has default value")
               defaultParameters(idx)
             case (param, _) =>
               report.errorAndAbort(

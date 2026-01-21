@@ -71,15 +71,15 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     ),
   ] =
     case Extractor.NonTerminal(name, bind, null) =>
-      Log.trace(show"extracted non-terminal ref: $name")
+      logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
     case Extractor.Terminal(name, bind, null) =>
-      Log.trace(show"extracted terminal ref: $name")
+      logger.trace(show"extracted terminal ref: $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
 
     case Extractor.Symbol(name, bind, Names.Option) =>
-      Log.trace(show"extracted optional: $name")
+      logger.trace(show"extracted optional: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
@@ -94,7 +94,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
     case Extractor.Symbol(name, bind, Names.List) =>
-      Log.trace(show"extracted repeated: $name")
+      logger.trace(show"extracted repeated: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,

@@ -27,7 +27,7 @@ private[lexer] object RegexChecker:
   def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
     case Nil => ()
     case patterns =>
-      Log.trace("checking regex patterns for shadowing...")
+      logger.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
       par:

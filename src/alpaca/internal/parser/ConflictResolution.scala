@@ -52,7 +52,7 @@ private[parser] object ConflictResolutionTable:
      * @return Some(action) if one action has precedence, None otherwise
      */
     def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using Log): Option[ParseAction] =
-      Log.trace(show"resolving conflict between $first and $second on symbol $symbol")
+      logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
       def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
         case red: ParseAction.Reduction => red.production
         case _: ParseAction.Shift => symbol.name
@@ -74,7 +74,7 @@ private[parser] object ConflictResolutionTable:
       winsOver(first, second) orElse winsOver(second, first)
 
     def verifyNoConflicts()(using Log): Unit =
-      Log.trace("verifying conflict resolution table for cycles...")
+      logger.trace("verifying conflict resolution table for cycles...")
       enum VisitState:
         case Unvisited, Visited, Processed
 
