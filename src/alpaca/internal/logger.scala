@@ -44,7 +44,7 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
 
   def append(path: Path)(content: Shown): Unit = writerCache.compute(
     path,
-    (p, existing) => (if existing != null then createWriter(p, true) else existing).tap(_.write(content)),
+    (p, existing) => (if existing == null then createWriter(p, false) else existing).tap(_.write(content)),
   )
 
   def replace(path: Path)(content: Shown): Unit = writerCache
