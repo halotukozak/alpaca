@@ -21,7 +21,8 @@ import scala.collection.mutable
 //todo: use Ox
 final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable:
   private val buffer = mutable.ArrayDeque.empty[Char]
-  private val chunk = new Array[Char](8192)
+  private val ChunkSize = 8192
+  private val chunk = new Array[Char](ChunkSize)
   private var offset = 0  // Track the logical start position
 
   /**
@@ -70,7 +71,7 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
     offset += count
     size -= count
     // Periodically compact the buffer when offset grows large
-    if offset > 8192 && offset > buffer.size / 2 then
+    if offset > ChunkSize && offset > buffer.size / 2 then
       buffer.dropInPlace(offset)
       offset = 0
     this

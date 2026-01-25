@@ -51,7 +51,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   )(using empty: Empty[Ctx],
   ): (ctx: Ctx, lexemes: List[Lexeme]) =
     val buffer = ListBuffer.empty[Lexeme]
-    val matcher = compiled.matcher(input)
+    val matcher = compiled.matcher("")
     
     @tailrec def loop(globalCtx: Ctx): Unit =
       if globalCtx.text.length > 0 then
