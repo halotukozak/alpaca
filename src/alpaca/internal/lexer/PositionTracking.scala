@@ -27,8 +27,6 @@ object PositionTracking:
    * when the context extends PositionTracking.
    */
   given BetweenStages[PositionTracking] = (_, matcher, ctx) =>
-    val matched = matcher.group(0)
-    if matched.length == 1 && matched.charAt(0) == '\n' then
-      ctx.position = 1
-    else
-      ctx.position += matched.length
+    matcher.group(0) match
+      case "\n" => ctx.position = 1
+      case matched: String => ctx.position += matched.length
