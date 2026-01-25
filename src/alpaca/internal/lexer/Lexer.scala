@@ -88,7 +88,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .unzip
 
       val patterns = infos.map(_.pattern)
-      par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
+      RegexChecker.checkPatterns(patterns)
 
       (
         tokens = accTokens ::: tokens.map:

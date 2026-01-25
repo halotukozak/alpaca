@@ -22,6 +22,7 @@ import scala.collection.mutable
 final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable:
   private val buffer = mutable.ArrayDeque.empty[Char]
   private val chunk = new Array[Char](8192)
+  private var offset = 0  // Track the logical start position
 
   /**
    * Gets the character at the specified position.
@@ -33,8 +34,9 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @throws IndexOutOfBoundsException if the position is beyond the end of input
    */
   def charAt(pos: Int): Char =
-    ensure(pos)
-    buffer(pos)
+    val actualPos = offset + pos
+    ensure(actualPos)
+    buffer(actualPos)
 
   /**
    * Gets the length of the input.
@@ -51,8 +53,10 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @return a string containing the subsequence
    */
   def subSequence(start: Int, end: Int): CharSequence =
-    ensure(end - 1)
-    buffer.slice(start, end).mkString
+    val actualStart = offset + start
+    val actualEnd = offset + end
+    ensure(actualEnd - 1)
+    buffer.slice(actualStart, actualEnd).mkString
 
   /**
    * Skips the first count characters.
@@ -63,8 +67,12 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @return this LazyReader for chaining
    */
   def from(count: Int): LazyReader =
-    buffer.remove(0, count)
+    offset += count
     size -= count
+    // Periodically compact the buffer when offset grows large
+    if offset > 8192 && offset > buffer.size / 2 then
+      buffer.dropInPlace(offset)
+      offset = 0
     this
 
   override def toString: String = subSequence(0, length).toString
