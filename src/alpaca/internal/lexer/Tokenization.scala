@@ -4,6 +4,7 @@ package lexer
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 /**
  * The result of compiling a lexer definition.
@@ -49,32 +50,34 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     input: CharSequence,
   )(using empty: Empty[Ctx],
   ): (ctx: Ctx, lexemes: List[Lexeme]) =
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme]): List[Lexeme] =
-      globalCtx.text.length match
-        case 0 =>
-          acc.reverse // todo: make it not reversed
-        case _ =>
-          val matcher = compiled.matcher(globalCtx.text)
-
-          val token =
-            if matcher.lookingAt then
-              Iterator
-                .range(1, matcher.groupCount + 1)
-                .collectFirst:
-                  case i if matcher.start(i) != -1 => groupToTokenMap(i)
-                .getOrElse:
-                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else
-              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
-          betweenStages(token, matcher, globalCtx)
-          val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
-          loop(globalCtx)(lexem ::: acc)
+    val buffer = ListBuffer.empty[Lexeme]
+    val matcher = compiled.matcher("")
+    
+    @tailrec def loop(globalCtx: Ctx): Unit =
+      if globalCtx.text.length > 0 then
+        matcher.reset(globalCtx.text)
+        
+        val token =
+          if matcher.lookingAt then
+            Iterator
+              .range(1, matcher.groupCount + 1)
+              .collectFirst:
+                case i if matcher.start(i) != -1 => groupToTokenMap(i)
+              .getOrElse:
+                throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+          else
+            // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
+            throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
+        betweenStages(token, matcher, globalCtx)
+        token match
+          case _: DefinedToken[?, Ctx, ?] => buffer.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
+          case _ => // ignored token
+        loop(globalCtx)
 
     val initialContext = empty()
     initialContext.text = input
-    (initialContext, loop(initialContext)(Nil))
+    loop(initialContext)
+    (initialContext, buffer.toList)
 
   /** The compiled pattern that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
