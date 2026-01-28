@@ -70,7 +70,7 @@ inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): 
 
 private[internal] object logger:
 
-  inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
+  inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('ox) }
   private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
     val debugSettings = Expr(summon[DebugSettings])
     '{ new Log(using $debugSettings)(using $ox) }

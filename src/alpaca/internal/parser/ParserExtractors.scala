@@ -85,10 +85,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         symbol = fresh,
         bind = bind,
         others = List(
-          (production = Production.Empty(fresh), action = '{ noneAction }),
+          (production = Production.Empty(fresh), action = 'noneAction),
           (
             production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
-            action = '{ someAction },
+            action = 'someAction,
           ),
         ),
       )
@@ -100,10 +100,10 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
         symbol = fresh,
         bind = bind,
         others = List(
-          (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
+          (production = Production.Empty(fresh), action = 'emptyRepeatedAction),
           (
             production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
-            action = '{ repeatedAction },
+            action = 'repeatedAction,
           ),
         ),
       )
