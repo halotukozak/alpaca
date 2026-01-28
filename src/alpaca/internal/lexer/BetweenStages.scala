@@ -51,7 +51,7 @@ private[alpaca] object BetweenStages:
           case '[type ctx >: Ctx <: LexerCtx; ctx] =>
             logger.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
             Expr
-              .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
+              .summonIgnoring[BetweenStages[ctx]]('BetweenStages.asTerm.symbol.methodMember("auto")*)
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
 
     '{ (token, m, ctx) =>

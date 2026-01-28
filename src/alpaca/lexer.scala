@@ -35,7 +35,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
   betweenStages: BetweenStages[Ctx],
   m: Mirror.Of[Ctx],
 ): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
-  ${ lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]]('{ rules }, '{ betweenStages }) }
+  ${ lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]]('rules, 'betweenStages) }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:

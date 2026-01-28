@@ -39,7 +39,7 @@ private[internal] object Default:
   given Default[IterableOnce[Nothing]] = () => Iterable.empty
   given Default[Option[Nothing]] = () => None
 
-  given [T] => (quotes: Quotes) => Default[Expr[T]] = () => '{ ??? }
+  given [T] => (quotes: Quotes) => Default[Expr[T]] = () => '???
 
   given [T <: AnyKind] => (quotes: Quotes) => Default[Type[T]] = () => Type.of[Nothing].asInstanceOf[Type[T]]
 
