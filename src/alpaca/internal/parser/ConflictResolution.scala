@@ -104,6 +104,32 @@ private[parser] object ConflictResolutionTable:
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
 
+    def toMermaid(using Log): String =
+      val sb = new StringBuilder
+      sb.append("graph TD\n")
+
+      def nodeName(key: ConflictKey): String =
+        val raw = key match
+          case p: Production => p.name match
+            case null => show"$p"
+            case name: String => name
+          case s: String => show"Token($s)"
+        // Escape special chars for mermaid
+        raw.replace(" ", "_").replace("(", "[").replace(")", "]").replace("->", "_to_").replace("ε", "epsilon")
+
+      def nodeLabel(key: ConflictKey): String = key match
+        case p: Production => show"$p"
+        case s: String => show"Token($s)"
+
+      val nodes = (table.keySet ++ table.values.flatten).toSet
+      for node <- nodes do
+        sb.append(s"  ${nodeName(node)}[\"${nodeLabel(node)}\"]\n")
+
+      for (from, toSet) <- table; to <- toSet do
+        sb.append(s"  ${nodeName(from)} --> ${nodeName(to)}\n")
+
+      sb.toString
+
   /**
    * Showable instance for displaying conflict resolution tables.
    */

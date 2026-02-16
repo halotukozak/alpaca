@@ -195,6 +195,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   ).tap: table =>
     table.verifyNoConflicts()
     logger.toFile(show"$parserName/conflictResolutions.dbg", true)(table)
+    logger.toFile(show"$parserName/conflictResolutions.mmd", true)(table.toMermaid)
 
   logger.trace("Conflict resolution table built, identifying root production.")
 
