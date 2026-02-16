@@ -88,6 +88,37 @@ val modeLexer = lexer[ModeCtx]:
   case "[^\"]+" if ctx.inString  => Token["STRING_CONTENT"]
 ```
 
+## 5. The `BetweenStages` Hook
+
+The `BetweenStages` hook is the internal engine that powers context updates.
+It is a function called by Alpaca after **every** token match (including `Token.Ignored`) but **before** the next match starts.
+
+Its signature is conceptually:
+`(Token, Matcher, Ctx) => Unit`
+
+### Automatic Updates
+By default, Alpaca uses `BetweenStages` to automatically update the `text` field in your context (to advance past the matched string).
+If your context extends `LineTracking` or `PositionTracking`, the defined hooks also increments `line` and `position` counters.
+
+### Customizing `BetweenStages`
+If you need complex logic to run after every match regardless of which token was matched, you can provide a custom `given` instance of `BetweenStages`.
+
+```scala
+
+trait CustomTrait extends LexerCtx:
+  var indentLevel: Int
+
+case class CustomCtx(var text: CharSequence = "", var indentLevel: Int = 0) extends CustomTrait derives BetweenStages
+
+given BetweenStages[CustomTrait] = new:
+  def apply(token: Token[?, MyCtx, ?], matcher: Matcher, ctx: MyCtx): Unit =
+    // Custom logic to update indentLevel based on the matched token
+    token match
+      case Token["INDENT"](_) => ctx.indentLevel += 1
+      case Token["DEDENT"](_) => ctx.indentLevel -= 1
+      case _ => ()
+```
+
 ## Summary of Data Flow
 
 1. **Input String** flows into the `lexer`.
