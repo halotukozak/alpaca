@@ -1,4 +1,4 @@
-//| mill-version: 1.1.0-RC2
+//| mill-version: 1.1.2
 //| mill-jvm-version: 21
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
