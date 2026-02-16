@@ -154,7 +154,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
             case _ =>
               report.error("Define resolutions as the last field of the parser.")
               Nil
-          .map(name => (name, TypeRepr.of[Production]))
+          .map(name => (scala.reflect.NameTransformer.encode(name), TypeRepr.of[Production]))
           .toList
 
         (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType)
