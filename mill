@@ -39,7 +39,7 @@ if [ "$1" = "--setup-completions" ] ; then
 fi
 
 if [ -z "${DEFAULT_MILL_VERSION}" ] ; then
-  DEFAULT_MILL_VERSION=1.0.0
+  DEFAULT_MILL_VERSION=1.1.0-RC2
 fi
 
 
@@ -115,9 +115,11 @@ if [ -z "${MILL_VERSION}" ] ; then
 
   if [ -z "${MILL_VERSION}" ] ; then
     # we don't know a current latest version
-    echo "Retrieving latest mill version ..." 1>&2
-    LANG=C ${CURL_CMD} -s -i -f -I ${MILL_REPO_URL}/releases/latest 2> /dev/null  | grep --ignore-case Location: | sed s'/^.*tag\///' | tr -d '\r\n' > "${MILL_DOWNLOAD_PATH}/.latest"
-    MILL_VERSION=$(head -n 1 "${MILL_DOWNLOAD_PATH}"/.latest 2> /dev/null)
+    echo "Retrieving latest mill version from Maven Central..." 1>&2
+    MILL_VERSION=$(curl -s https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/maven-metadata.xml | grep '<latest>' | sed -E 's/.*<latest>(.*)<\/latest>.*/\1/')
+    if [ -n "$MILL_VERSION" ]; then
+      echo "$MILL_VERSION" > "${MILL_DOWNLOAD_PATH}/.latest"
+    fi
   fi
 
   if [ -z "${MILL_VERSION}" ] ; then

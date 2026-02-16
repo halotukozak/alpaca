@@ -48,10 +48,10 @@ import mill._
 import mill.scalalib._
 
 object myproject extends ScalaModule {
-  def scalaVersion = "3.7.4"
+  def scalaVersion = "3.8.1"
   
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.2"
+    mvn"io.github.halotukozak::alpaca:0.0.4"
   )
   
   override def scalacOptions = Seq(
@@ -79,9 +79,9 @@ override def scalacOptions = Seq(
 Add debug settings to your `build.sbt`:
 
 ```sbt
-scalaVersion := "3.7.4"
+scalaVersion := "3.8.1"
 
-libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.2"
+libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.4"
 
 scalacOptions ++= Seq(
   s"-Xmacro-settings:debugDirectory=${baseDirectory.value}/debug",
@@ -106,8 +106,8 @@ Use the `--scala-opt` flag to pass debug settings:
 
 ```bash
 scala-cli run MyLexer.scala \
-  --scala 3.7.4 \
-  --dep "io.github.halotukozak::alpaca:0.0.2" \
+  --scala 3.8.1 \
+  --dep "io.github.halotukozak::alpaca:0.0.4" \
   --scala-opt "-Xmacro-settings:debugDirectory=/absolute/path/to/debug" \
   --scala-opt "-Xmacro-settings:enableVerboseNames=true"
 ```
@@ -115,8 +115,8 @@ scala-cli run MyLexer.scala \
 Or add directives in your Scala file:
 
 ```scala
-//> using scala "3.7.4"
-//> using dep "io.github.halotukozak::alpaca:0.0.2"
+//> using scala "3.8.1"
+//> using dep "io.github.halotukozak::alpaca:0.0.4"
 //> using options "-Xmacro-settings:debugDirectory=/absolute/path/to/debug"
 //> using options "-Xmacro-settings:enableVerboseNames=true"
 
@@ -137,10 +137,10 @@ import mill._
 import mill.scalalib._
 
 object myparser extends ScalaModule {
-  def scalaVersion = "3.7.4"
+  def scalaVersion = "3.8.1"
   
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.2"
+    mvn"io.github.halotukozak::alpaca:0.0.4"
   )
   
   override def scalacOptions = Seq(

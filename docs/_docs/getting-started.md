@@ -18,17 +18,17 @@ A modern, type-safe lexer and parser library for Scala 3, featuring compile-time
 Add Alpaca as a dependency in your `build.mill`:
 
 ```mill
-//| mill-version: 1.0.6
+//| mill-version: 1.1.0-RC2
 //| mill-jvm-version: 21
 
 import mill._
 import mill.scalalib._
 
 object myproject extends ScalaModule {
-  def scalaVersion = "3.7.4"
+  def scalaVersion = "3.8.1"
   
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.2"
+    mvn"io.github.halotukozak::alpaca:0.0.4"
   )
 }
 ```
@@ -38,13 +38,13 @@ object myproject extends ScalaModule {
 Add Alpaca to your `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.2"
+libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.4"
 ```
 
-Make sure you're using Scala 3.7.4 or later:
+Make sure you're using Scala 3.8.1 or later:
 
 ```sbt
-scalaVersion := "3.7.4"
+scalaVersion := "3.8.1"
 ```
 
 ### Scala CLI
@@ -52,8 +52,8 @@ scalaVersion := "3.7.4"
 Use Alpaca directly in your Scala CLI scripts:
 
 ```scala
-//> using scala "3.7.4"
-//> using dep "io.github.halotukozak::alpaca:0.0.2"
+//> using scala "3.8.1"
+//> using dep "io.github.halotukozak::alpaca:0.0.4"
 
 import alpaca.*
 
@@ -131,7 +131,7 @@ alpaca/
 │   │   └── ...               # Other core utilities
 │   ├── lexer.scala           # Public lexer DSL and API
 │   ├── parser.scala          # Public parser DSL and API
-│   └── local.scala           # Local utilities
+│   └── internal.scala        # Internal utilities
 ├── test/src/alpaca/          # Test suite
 ├── example/                  # Example projects
 ├── docs/                     # Documentation
@@ -201,7 +201,7 @@ case "#.*" => Token.Ignored
 ### Prerequisites
 
 - JDK 21 or later
-- Mill 1.0.6 or later
+- Mill 1.1.0-RC2 or later
 
 ### Build Commands
 
@@ -222,7 +222,17 @@ case "#.*" => Token.Ignored
 ## Documentation
 
 - 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
+- 📖 [Context & State Management](https://halotukozak.github.io/alpaca/docs/context-management.html) - Learn how Alpaca handles state and data flow
+- 📖 [Conflict Resolution](https://halotukozak.github.io/alpaca/docs/guides/conflict-resolution.html) - Deep dive into resolving grammar ambiguities
+- 📖 [Contextual Parsing](https://halotukozak.github.io/alpaca/docs/guides/contextual-parsing.html) - Advanced patterns for indentation, nesting, and modes
+- 📖 [Lexer Error Handling](https://halotukozak.github.io/alpaca/docs/guides/lexer-error-handling.html) - Strategies for resilient tokenization
 - 🐛 [Debug Settings](https://halotukozak.github.io/alpaca/docs/debug-settings.html) - Configure compile-time debugging and logging
+
+### Tutorials
+
+- [Building a JSON Parser](https://halotukozak.github.io/alpaca/docs/tutorials/json-parser.html) - A step-by-step guide to creating a JSON parser
+- [Expression Evaluator](https://halotukozak.github.io/alpaca/docs/tutorials/expression-evaluator.html) - Learn how to handle operator precedence and complex grammars
+- [Understanding Extractors](https://halotukozak.github.io/alpaca/docs/tutorials/extractors.html) - Deep dive into Alpaca's pattern matching system
 
 ## Thesis
 
