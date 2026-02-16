@@ -1,18 +1,27 @@
-# Project State - Alpaca Documentation Extension
+# Project State - Alpaca Documentation Extension & Maintenance
 
 ## Current Phase
-- **Phase 1: Foundation & Refinement** (Starting)
+- **Phase 3: Advanced Guides & Bug Fixes** (Active)
 
 ## Recent Progress
-- Initialized project planning and research.
-- Audited current documentation files.
-- Defined requirements and roadmap for documentation expansion.
+- Completed Phase 2: Core Tutorials & Documentation.
+- Implemented JSON Parser and Expression Evaluator tutorials.
+- Created "Extractors" and "Context & State Management" guides.
+- **Phase 3 Documentation:** Created deep-dive guides for **Conflict Resolution**, **Contextual Parsing** (including `BetweenStages`), and **Lexer Error Handling**.
+- **Phase 3 Fixes:** 
+    - Fixed `createTables` macro to handle missing parser rule errors correctly (Issue 230).
+    - Implemented debug conflict resolution graph printing to Mermaid files (Issue 150).
+    - Fixed production name transformation for names with special characters like hyphens (Issue 198).
+- Updated `README.md` and `getting-started.md` with links to all new guides and tutorials.
+- Verified all documentation through Scaladoc generation.
+- Reorganized work into issue-specific branches for review.
 
 ## Next Steps
-- Audit `getting-started.md` for potential improvements.
-- Create the initial structure for the JSON Parser tutorial.
-- Check Scaladoc configuration in `build.mill`.
+- **[Issue 148]** Fix Parser failure for multiline actions.
+- **[Issue 147]** Fix Parser failure for lambdas.
+- **[Issue 232]** Avoid unnecessary List initialization in `BetweenStages` macro (Phase 4 start).
 
 ## Active Context
-- Focusing on "extending documentation" as per user request.
-- Project uses Scala 3.8.1 and Mill.
+- Focus on completing remaining bug fixes in Phase 3 while maintaining high documentation standards.
+- Reorganized branches: `issue-227-*`, `issue-197-*`, `issue-150-*`, `issue-191-*`, `issue-198-230-*`.
+- UAT files are maintained in `.planning/`.
