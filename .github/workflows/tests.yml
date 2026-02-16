@@ -59,6 +59,7 @@ jobs:
 
       - name: Code Coverage Report
         uses: 5monkeys/cobertura-action@master
+        continue-on-error: true
         with:
           path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
           minimum_coverage: 0 #todo: #51
