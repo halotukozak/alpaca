@@ -269,3 +269,5 @@ val (_, lexemes) = BareLexer.tokenize("1 2 3")
 ```
 
 Use `LexerCtx.Empty` when you only care about the tokens and their values, not where they appeared in the input.
+
+See [Between Stages](between-stages.html) to learn how context snapshots embedded in lexemes flow into the parser.

@@ -241,4 +241,4 @@ val IndentLexer = lexer[IndentCtx]:
   case id @ "[a-z]+" => Token["ID"](id)
 ```
 
-See [Lexer Context](lexer-context.html) for full details on custom contexts.
+See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](between-stages.html) for how tokenized output flows into the parser.
