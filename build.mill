@@ -61,7 +61,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
       "-project-footer",
       "made with ❤️ and coffee",
       "-social-links:github::https://github.com/halotukozak/alpaca",
-      // "-snippet-compiler:compile",
+      "-snippet-compiler:compile",
       s"-source-links:$moduleDir=github://halotukozak/alpaca/master",
       "-revision:master",
     )

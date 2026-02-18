@@ -43,17 +43,17 @@ Each log level can be configured with one of three output modes:
 
 Add debug settings to your `scalacOptions` in `build.mill`:
 
-```scala
+```scala sc:nocompile
 import mill._
 import mill.scalalib._
 
 object myproject extends ScalaModule {
   def scalaVersion = "3.7.4"
-  
+
   def mvnDeps = Seq(
     mvn"io.github.halotukozak::alpaca:0.0.2"
   )
-  
+
   override def scalacOptions = Seq(
     s"-Xmacro-settings:debugDirectory=$moduleDir/debug",
     "-Xmacro-settings:enableVerboseNames=true",
@@ -66,7 +66,7 @@ object myproject extends ScalaModule {
 
 **Tip:** You can combine multiple settings in a single flag using commas:
 
-```scala
+```scala sc:nocompile
 override def scalacOptions = Seq(
   s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true,trace=stdout"
 )
@@ -114,7 +114,7 @@ scala-cli run MyLexer.scala \
 
 Or add directives in your Scala file:
 
-```scala
+```scala sc:nocompile
 //> using scala "3.7.4"
 //> using dep "io.github.halotukozak::alpaca:0.0.2"
 //> using options "-Xmacro-settings:debugDirectory=/absolute/path/to/debug"
@@ -131,29 +131,29 @@ import alpaca.*
 
 Here's a complete example for debugging a complex parser:
 
-```scala
+```scala sc:nocompile
 // build.mill
 import mill._
 import mill.scalalib._
 
 object myparser extends ScalaModule {
   def scalaVersion = "3.7.4"
-  
+
   def mvnDeps = Seq(
     mvn"io.github.halotukozak::alpaca:0.0.2"
   )
-  
+
   override def scalacOptions = Seq(
     // Enable all debug features
     s"-Xmacro-settings:debugDirectory=$moduleDir/debug",
     "-Xmacro-settings:enableVerboseNames=true",
     "-Xmacro-settings:compilationTimeout=180s",
-    
+
     // Log everything to files
     "-Xmacro-settings:trace=file",
     "-Xmacro-settings:debug=file",
     "-Xmacro-settings:info=file",
-    
+
     // Keep warnings and errors on console
     "-Xmacro-settings:warn=stdout",
     "-Xmacro-settings:error=stdout"
