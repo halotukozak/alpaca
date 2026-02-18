@@ -198,20 +198,6 @@ val (ctx, _) = Lexer.tokenize("42 7")
 // ctx.position == 5  -- after "42", " ", "7"
 ```
 
-Trait source signatures (for reference):
-
-```scala sc:nocompile
-// PositionTracking -- resets on newline, advances by match length otherwise
-// given BetweenStages[PositionTracking] = (_, matcher, ctx) =>
-//   matcher.group(0) match
-//     case "\n" => ctx.position = 1
-//     case matched: String => ctx.position += matched.length
-
-// LineTracking -- increments line counter on newline
-// given BetweenStages[LineTracking] = (_, matcher, ctx) =>
-//   if matcher.group(0) == "\n" then ctx.line += 1
-```
-
 ## The BetweenStages Hook
 
 After every successful token match, Alpaca runs the **BetweenStages** hook for the context type.
@@ -219,19 +205,13 @@ This hook is responsible for updating tracking fields and capturing the lexeme s
 
 For custom context types, the hook is auto-derived via an `inline given`:
 
-```scala sc:nocompile
-// Conceptually (from BetweenStages.scala):
-// inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
-//
-// The macro inspects all parent traits of Ctx, summons their BetweenStages
-// instances, and composes them into a single hook.
-//
-// For a context extending PositionTracking and LineTracking:
-//   1. BetweenStages[LexerCtx]          -- updates text, records lexeme
-//   2. BetweenStages[PositionTracking]  -- updates position field
-//   3. BetweenStages[LineTracking]      -- updates line field
-//   All three run automatically after every token match
-```
+he macro inspects all parent traits of Ctx, summons their BetweenStages instances, and composes them into a single hook.
+
+For a context extending PositionTracking and LineTracking:
+  1. BetweenStages[LexerCtx]          -- updates text, records lexeme
+  2. BetweenStages[PositionTracking]  -- updates position field
+  3. BetweenStages[LineTracking]      -- updates line field
+All three run automatically after every token match
 
 Composability is automatic: extending `PositionTracking` and `LineTracking` gives you both hooks with no extra code:
 
