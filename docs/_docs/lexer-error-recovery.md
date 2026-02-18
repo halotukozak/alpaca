@@ -178,7 +178,7 @@ See [Lexer](lexer.html) for the full description of context tracking and the nam
 
 The Alpaca lexer's error handling is intentionally minimal in the current release:
 
-- **No custom error handling.** There is no API to register an error handler or recover from an unexpected character. Any unmatched input is a fatal error ([GitHub issue #21](https://github.com/bkozak-scancode/alpaca/issues/21) tracks custom error recovery; it is open and not yet implemented).
+- **No custom error handling.** There is no API to register an error handler or recover from an unexpected character. Any unmatched input is a fatal error ([GitHub issue #21](https://github.com/halotukozak/alpaca/issues/21) tracks custom error recovery; it is open and not yet implemented).
 
 - **No skip-and-continue behavior.** The lexer cannot skip the unexpected character and resume tokenizing. It stops at the first failure.
 
