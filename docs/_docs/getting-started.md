@@ -222,6 +222,11 @@ case "#.*" => Token.Ignored
 ## Documentation
 
 - 📖 [Full Documentation](https://halotukozak.github.io/alpaca/)
+- 🚀 [Getting Started](https://halotukozak.github.io/alpaca/docs/getting-started.html) - Installation, quick start, and first steps
+- 🔤 [Lexer](https://halotukozak.github.io/alpaca/docs/lexer.html) - Token definitions, regex patterns, and tokenization
+- 🗂️ [Lexer Context](https://halotukozak.github.io/alpaca/docs/lexer-context.html) - Stateful lexing with LexerCtx and tracking traits
+- ⚠️ [Lexer Error Recovery](https://halotukozak.github.io/alpaca/docs/lexer-error-recovery.html) - ShadowException, pattern ordering, and error handling
+- 🔀 [Between Stages](https://halotukozak.github.io/alpaca/docs/between-stages.html) - Lexeme structure and the lexer-to-parser data pipeline
 - 🐛 [Debug Settings](https://halotukozak.github.io/alpaca/docs/debug-settings.html) - Configure compile-time debugging and logging
 
 ## Thesis
