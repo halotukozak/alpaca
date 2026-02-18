@@ -198,3 +198,5 @@ The following sequence describes what happens each time `tokenize()` processes i
 
 The `Lexeme` list is immutable after `tokenize()` returns -- nothing that happens in `parse()` alters the lexeme data.
 If you need to inspect what the lexer produced before parsing, iterate over `lexemes` freely; the parser will see exactly the same list.
+
+See the [Parser](parser.html) page for how to define grammar rules, productions, and EBNF operators that consume the lexeme list.
