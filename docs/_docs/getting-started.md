@@ -51,7 +51,7 @@ scalaVersion := "3.7.4"
 
 Use Alpaca directly in your Scala CLI scripts:
 
-```scala
+```scala sc:nocompile
 //> using scala "3.7.4"
 //> using dep "io.github.halotukozak::alpaca:0.0.2"
 
@@ -66,7 +66,7 @@ import alpaca.*
 
 Define a lexer using pattern matching with regex patterns:
 
-```scala sc-name:MyLexer.scala
+```scala sc:nocompile sc-name:MyLexer.scala
 import alpaca.*
 
 val MyLexer = lexer:
@@ -84,7 +84,7 @@ val MyLexer = lexer:
 
 Define a parser by extending the `Parser` class and defining grammar rules:
 
-```scala sc-name:MyParser.scala sc-compile-with:MyLexer.scala
+```scala sc:nocompile sc-name:MyParser.scala sc-compile-with:MyLexer.scala
 import alpaca.*
 
 object MyParser extends Parser:
@@ -110,7 +110,7 @@ object MyParser extends Parser:
 
 ### Parsing Input
 
-```scala sc-compile-with:MyLexer.scala,MyParser.scala
+```scala sc:nocompile sc-compile-with:MyLexer.scala,MyParser.scala
 val input = "2 + 3 * 4"
 val (_, lexemes) = MyLexer.tokenize(input)
 val (_, result) = MyParser.parse(lexemes)
@@ -144,7 +144,7 @@ alpaca/
 
 Alpaca supports context-aware lexing and parsing, allowing you to maintain state during tokenization and parsing. Here's an example that tracks brace matching:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable.Stack
 
