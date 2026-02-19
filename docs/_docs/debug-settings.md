@@ -172,6 +172,23 @@ This configuration:
 
 **Finding log files:** When using `file` output mode, log files are created in the `debugDirectory` with names based on your source files (e.g., `MyLexer.scala.log`). The full path will be `$moduleDir/debug/MyLexer.scala.log` for Mill projects.
 
+## Compilation Timeout Errors
+
+When macro expansion exceeds the `compilationTimeout` duration (default: 90 seconds), the compiler throws an `AlpacaTimeoutException` with the message:
+
+```
+Alpaca compilation timeout
+```
+
+This is a compile-time error -- it means the macro took too long to build the parse table or validate patterns. Complex grammars with many rules and conflict resolutions are the most common trigger.
+
+**How to fix:**
+- **Increase the timeout:** Set `compilationTimeout` to a longer duration (e.g., `180s` or `300s`) in your `-Xmacro-settings`
+- **Simplify the grammar:** Reduce the number of rules or split the parser into smaller components
+- **Check for ambiguity:** Highly ambiguous grammars generate larger parse tables, which take longer to build
+
+The timeout is enforced by a background thread that runs during macro expansion. Setting `compilationTimeout` to `Inf` disables the timeout entirely (not recommended for CI environments).
+
 ## Notes
 
 - **`debugDirectory` must be an absolute path.** Use build tool variables like `$moduleDir` (Mill) or `${baseDirectory.value}` (SBT) to construct the path

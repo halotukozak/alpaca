@@ -242,8 +242,9 @@ Result: right grouping.
 
 The compiler detects cycles in the transitive closure of `before`/`after` constraints.
 A cycle like A before B before C before A is contradictory — the compiler cannot build a consistent priority table.
+This error is reported as an `InconsistentConflictResolution` compile-time exception.
 
-Cycle error message:
+The `InconsistentConflictResolution` error message:
 
 ```
 Inconsistent conflict resolution detected:
