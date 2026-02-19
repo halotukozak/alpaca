@@ -4,6 +4,8 @@ Every Alpaca lexer carries a **context** object that evolves as the input is pro
 Context lets you do stateful lexing: tracking indentation depth, counting tokens, recording whether you are inside a string literal, or any other state that depends on the token stream seen so far.
 By default, the lexer uses `LexerCtx.Default`, which gives you position and line tracking with no extra setup.
 
+> **Compile-time processing:** When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `BetweenStages` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `BetweenStages.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
+
 ## Default Context
 
 When you write a `lexer:` block without a type parameter, the lexer automatically uses `LexerCtx.Default`.

@@ -11,6 +11,8 @@ Most Alpaca programs only need one thing from this layer: pass `tokenize().lexem
 The rest of this page explains what is inside those lexemes, how context state is embedded in each one,
 and how to extend the pipeline when the defaults are not enough.
 
+> **Compile-time processing:** When you define a `lexer[Ctx]:` block, the Alpaca macro generates the `BetweenStages` hook that constructs each `Lexeme` with its context snapshot. The hook composition -- combining `PositionTracking`, `LineTracking`, and any custom `BetweenStages` instances from parent traits -- is resolved at compile time by inspecting the context type's linearized parents. At runtime, `tokenize()` simply executes the generated hook after each match.
+
 ## The Lexeme Structure
 
 A `Lexeme` is the data record that crosses the lexer-to-parser boundary.

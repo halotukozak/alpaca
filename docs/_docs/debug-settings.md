@@ -10,6 +10,8 @@ Debug settings are configured using the Scala compiler's `-Xmacro-settings` flag
 - Verbose naming
 - Log levels and outputs
 
+> **Compile-time processing:** Debug settings are read by the Alpaca macro during compilation via `-Xmacro-settings`. They control what the macro logs, where it writes output files, and how long it is allowed to run before timing out. These settings have no effect at runtime -- they only influence the compile-time macro expansion process.
+
 ## Available Settings
 
 ### Core Settings

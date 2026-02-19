@@ -4,6 +4,8 @@ LR(1) parsing is deterministic: the parser always knows exactly what to do next 
 A conflict arises when the grammar is ambiguous in a way the LR algorithm cannot resolve on its own.
 Alpaca reports conflicts as compile errors and gives you the `before`/`after` DSL to resolve them by declaring explicit precedence relationships between productions and tokens.
 
+> **Compile-time processing:** When you define `override val resolutions = Set(...)`, the Alpaca macro incorporates your precedence declarations into the LR(1) parse table at compile time. Conflicts (`ShiftReduceConflict`, `ReduceReduceConflict`) and cycles (`InconsistentConflictResolution`) are detected and reported as compile errors. At runtime, the resolved parse table executes deterministically -- no conflict checking happens during parsing.
+
 ## Understanding Conflicts
 
 Two types of conflicts can occur:
