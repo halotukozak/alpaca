@@ -217,6 +217,33 @@ val tokens = result.lexemes
 
 If the input contains a character that does not match any pattern, `tokenize` throws a `RuntimeException` with a message like `Unexpected character: '!'`.
 
+## Running Example: CalcLexer
+
+The following lexer tokenizes arithmetic expressions. It appears throughout the documentation as a running example -- the [Between Stages](between-stages.html) page shows how its output feeds a parser, the [Parser](parser.html) page defines the grammar, and the [Extractors](extractors.html) page shows how to access values from the parsed result.
+
+```scala sc:nocompile
+import alpaca.*
+
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "\\(" => Token["LPAREN"]
+  case "\\)" => Token["RPAREN"]
+  case "\\s+" => Token.Ignored
+```
+
+`CalcLexer` defines seven token types: `NUMBER` (with a `Double` value), four arithmetic operators (`PLUS`, `MINUS`, `TIMES`, `DIVIDE`), and two parentheses (`LPAREN`, `RPAREN`). Whitespace is ignored.
+
+```scala sc:nocompile
+val (_, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
+// lexemes: NUMBER(3.0), PLUS, NUMBER(4.0), TIMES, NUMBER(2.0)
+```
+
+This lexer uses the techniques covered above: regex patterns for digits and operators, variable binding (`num @`) to extract the matched text, `Token.Ignored` for whitespace, and value-bearing tokens (`Token["NUMBER"](num.toDouble)`). The next pages build a parser for these tokens.
+
 ## Lexer Context
 
 By default, the `lexer` block uses `LexerCtx.Default`, which tracks `position` (1-based character offset) and `line` (1-based line number) as it processes the input. These values are available in the `ctx` returned by `tokenize()` and are captured in each lexeme's context snapshot.
