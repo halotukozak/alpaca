@@ -9,12 +9,7 @@ Everything you need is available through a single import:
 import alpaca.*
 ```
 
-> **Compile-time macro**
->
-> The `lexer` block is a Scala 3 macro. When you write a `lexer` definition, the compiler validates your regex patterns,
-> checks for overlapping (shadowing) patterns, and generates the tokenization code -- all at compile time. At runtime,
-> calling `tokenize()` simply executes the generated code. If a pattern is invalid or shadows another, you get a compile
-> error, not a runtime surprise.
+> **Compile-time processing:** The `lexer` block is a Scala 3 macro. When you write a `lexer` definition, the compiler validates your regex patterns, checks for overlapping (shadowing) patterns, and generates the tokenization code -- all at compile time. At runtime, calling `tokenize()` simply executes the generated code. If a pattern is invalid or shadows another, you get a compile error, not a runtime surprise.
 
 ## Defining a Lexer
 
