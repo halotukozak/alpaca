@@ -269,3 +269,5 @@ See [Conflict Resolution](conflict-resolution.html) for full details on shift/re
 See [Parsing Input with Context](parser-context.html) for how to maintain state during parsing with `ParserCtx`.
 
 See [Extractors](extractors.html) for detailed coverage of terminal and non-terminal matching, EBNF patterns, and Lexeme field access in parser rules.
+
+See [Debug Settings](debug-settings.html) for compile-time debug output, log levels, and timeout configuration.
