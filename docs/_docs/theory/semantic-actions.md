@@ -88,4 +88,4 @@ The final result type is the type declared for `root`. For CalcParser: `val root
 - See [Conflicts & Disambiguation](conflicts.md) for how conflict resolution ensures each reduce is unambiguous, so the correct semantic action is always called.
 - See [Extractors](../extractors.md) for the complete extractor reference (terminal, non-terminal, EBNF, Lexeme fields).
 - See [Parser](../parser.md) for the `rule` DSL reference and `parse()` return type.
-- See [Full Example](full-example.md) for the complete CalcParser with all semantic actions assembled and running.
+- Next: [Full Example](full-example.md) — the complete CalcParser with all semantic actions assembled and running.
