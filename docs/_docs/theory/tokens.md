@@ -121,3 +121,4 @@ macro does internally.
 - See [Lexer](../lexer.md) for the full `lexer` DSL reference and all token forms.
 - See [The Lexer: Regex to Finite Automata](lexer-fa.md) for how regex patterns define token
   classes formally.
+- Next: [The Lexer: Regex to Finite Automata](lexer-fa.md) — how these token patterns are compiled
