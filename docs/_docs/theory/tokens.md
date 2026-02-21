@@ -11,7 +11,7 @@ It is the end of the line for derivation — terminals represent the actual char
 that appear in source text. In a lexer, each token class acts as a terminal: it names a category
 of strings, and no lexer-level expansion applies below it.
 
-See [Context-Free Grammars](theory/cfg.md) for how terminals fit into production rules.
+See [Context-Free Grammars](cfg.md) for how terminals fit into production rules.
 
 ## Token Classes vs Token Instances
 
