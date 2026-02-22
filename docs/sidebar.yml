@@ -40,3 +40,13 @@ subsection:
         page: theory/semantic-actions.md
       - title: Full Calculator Example
         page: theory/full-example.md
+  - title: Cookbook
+    subsection:
+      - title: Expression Evaluator
+        page: cookbook/expression-evaluator.md
+      - title: Error Messages
+        page: cookbook/error-messages.md
+      - title: Multi-Pass Processing
+        page: cookbook/multi-pass.md
+      - title: Whitespace-Sensitive Syntax
+        page: cookbook/whitespace-sensitive.md
