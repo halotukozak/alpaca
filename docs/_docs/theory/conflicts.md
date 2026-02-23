@@ -45,6 +45,8 @@ Number ...
 Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
 ```
 
+> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These method names do not exist in the Alpaca API. The correct methods are `before` and `after`. See [Conflict Resolution](../conflict-resolution.md) for full details on reading error messages.
+
 Reduce/reduce conflicts are less common than shift/reduce conflicts. They typically indicate a grammar design issue — two rules competing for the same token sequence. The usual fix is to restructure the grammar so the two competing productions have distinct right-hand sides, or to use a different non-terminal.
 
 ## How LR(1) Lookahead Helps
