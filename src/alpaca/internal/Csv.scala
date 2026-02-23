@@ -15,7 +15,7 @@ import scala.NamedTuple.NamedTuple
  * @param headers the column headers
  * @param rows the data rows, each containing values for each column
  */
-//todo: make Tuple-based in the future for better type safety and performance
+//todo: make Tuple-based in the future for better type safety and performance https://github.com/halotukozak/alpaca/issues/228
 private[internal] final case class Csv(
   headers: List[Shown],
   rows: List[List[Shown]],
