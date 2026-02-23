@@ -228,6 +228,9 @@ case "#.*" => Token.Ignored
 - ⚠️ [Lexer Error Recovery](https://halotukozak.github.io/alpaca/docs/lexer-error-recovery.html) - ShadowException, pattern ordering, and error handling
 - 🔀 [Between Stages](https://halotukozak.github.io/alpaca/docs/between-stages.html) - Lexeme structure and the lexer-to-parser data pipeline
 - 📐 [Parser](https://halotukozak.github.io/alpaca/docs/parser.html) - Grammar rules, EBNF operators, and parsing tokenized input
+- 🧩 [Parser Context](https://halotukozak.github.io/alpaca/docs/parser-context.html) - Custom ParserCtx, shared state across reductions, and the parse() return value
+- ⚖️ [Conflict Resolution](https://halotukozak.github.io/alpaca/docs/conflict-resolution.html) - Shift/reduce and reduce/reduce conflicts, the before/after DSL, and named productions
+- 🎯 [Extractors](https://halotukozak.github.io/alpaca/docs/extractors.html) - Terminal and non-terminal matching, EBNF extractors, and Lexeme field access
 - 🐛 [Debug Settings](https://halotukozak.github.io/alpaca/docs/debug-settings.html) - Configure compile-time debugging and logging
 
 ## Thesis
