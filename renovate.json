@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "customManagers": [
+  "customManagers":  [
     {
       "customType": "regex",
       "managerFilePatterns": [
@@ -12,9 +12,63 @@
         "/\\.mill$/"
       ],
       "matchStrings": [
-        "mvn\"(?<depName>[^:]+:[^:]+):(?<currentValue>[^\"]+)\""
+        "mvn\"(?<depName>[^: ]+:[^:]+):(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "maven"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
+      "matchStrings": [
+        "def scalaTestVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate":  "org.scalatest:scalatest",
+      "datasourceTemplate": "maven"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
+      "matchStrings": [
+        "def scalaVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate":  "scala/scala3",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
+      "matchStrings": [
+        "def scoverageVersion\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate":  "scoverage/scalac-scoverage-plugin",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)build\\.sc$/",
+        "/(^|/)build\\.mill$/",
+        "/\\.mill$/"
+      ],
+      "matchStrings": [
+        "//\\|\\s*mill-version:\\s*(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "com-lihaoyi/mill",
+      "datasourceTemplate": "github-releases"
     }
   ]
 }

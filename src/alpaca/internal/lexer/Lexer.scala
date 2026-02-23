@@ -3,6 +3,7 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
+import ox.*
 
 import java.util.regex.Pattern
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
@@ -15,13 +16,14 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = withTimeout:
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
+  timeoutOnTooLongCompilation()
+
   import quotes.reflect.*
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
-  val withOverridingSymbol = new WithOverridingSymbol[quotes.type]
   val replaceRefs = new ReplaceRefs[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
@@ -59,7 +61,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
         case '{ type name <: ValidName; Token[name]($value: value)(using $_) } =>
           logger.trace("extractSimple(4)")
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).mapPar(threads):
             case ('[type name <: ValidName; name], tokenInfo) =>
               // we need to widen here to avoid weird types
               TypeRepr.of[value].widen.asType match
@@ -68,6 +70,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                     case (methSym, (newCtx: Term) :: Nil) =>
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   (tokenInfo, '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) })
+            case (_, tokenInfo) =>
+              raiseShouldNeverBeCalled[(TokenInfo, Expr[Token[?, Ctx, ?]])](tokenInfo)
 
       logger.trace("extracting tokens from body")
       val (infos, tokens) = extractSimple('{ _ => () })
@@ -86,23 +90,22 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .unzip
 
       val patterns = infos.map(_.pattern)
-      RegexChecker.checkPatterns(patterns).foreach(report.errorAndAbort)
-      RegexChecker.checkPatterns(patterns.reverse).foreach(report.errorAndAbort)
+      par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
 
       (
         tokens = accTokens ::: tokens.map:
           case '{ type name <: ValidName; type tokenTpe <: Token[name, Ctx, ?]; $token: tokenTpe } =>
-            (expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] }, name = ValidName.from[name]),
+            (expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] }, name = ValidName.from[name])
+        ,
         infos = accInfos ::: infos,
       )
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  logger.trace("partitioning defined and ignored tokens")
-  val (definedTokens, ignoredTokens) = tokens.partition(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
+  val definedTokens = tokens.filter(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
 
   logger.trace("checking regex patterns")
-  RegexChecker.checkPatterns(infos.map(_.pattern)).foreach(report.errorAndAbort)
+  RegexChecker.checkPatterns(infos.map(_.pattern))
 
   val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
 
@@ -116,24 +119,20 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             '{ new annotation.switch }.asTerm.changeOwner(methSym),
           ),
         ),
-        definedTokens.collect:
-          case (expr, name) if expr.asTerm.tpe <:< TypeRepr.of[DefinedToken[?, ?, ?]] =>
-            CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
+        definedTokens.map: (expr, name) =>
+          CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
   logger.trace("creating tokenization class instance")
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
-
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
-
-      val regex = Expr(
+      val regex = Expr:
         infos
           .map:
             case TokenInfo(_, regexGroupName, pattern) => show"(?<$regexGroupName>$pattern)"
           .mkString("|")
-          .tap(Pattern.compile), // we'd like to compile it here to fail in compile time if regex is invalid
-      )
+          .tap(Pattern.compile) // we'd like to compile it here to fail in compile time if regex is invalid
 
       '{
         {

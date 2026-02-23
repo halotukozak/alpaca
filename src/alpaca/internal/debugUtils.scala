@@ -150,7 +150,7 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree (never actually returns due to abort)
    */
-  private[alpaca] def dbg(using pos: DebugPosition): tree.type =
+  private[alpaca] def dbg(using pos: DebugPosition)(using Log): tree.type =
     quotes.reflect.report.errorAndAbort(show"$tree at $pos")
     tree
 
@@ -162,7 +162,7 @@ extension (using quotes: Quotes)(tree: quotes.reflect.Tree)
    * @param pos the source position of the debug call
    * @return the tree unchanged
    */
-  private[alpaca] def info(using pos: DebugPosition): tree.type =
+  private[alpaca] def info(using pos: DebugPosition)(using Log): tree.type =
     quotes.reflect.report.info(show"$tree at $pos")
     tree
 
@@ -174,7 +174,7 @@ extension (using quotes: Quotes)(expr: Expr[?])
    * @param pos the source position of the debug call
    * @return the expression (never actually returns due to abort)
    */
-  private[alpaca] def dbg(using pos: DebugPosition): expr.type =
+  private[alpaca] def dbg(using pos: DebugPosition)(using Log): expr.type =
     import quotes.reflect.*
     expr.asTerm.dbg
     expr
@@ -185,7 +185,7 @@ extension (using quotes: Quotes)(expr: Expr[?])
    * @param pos the source position of the debug call
    * @return the expression unchanged
    */
-  private[alpaca] def soft(using pos: DebugPosition): expr.type =
+  private[alpaca] def soft(using pos: DebugPosition)(using Log): expr.type =
     import quotes.reflect.*
     expr.asTerm.info
     expr
@@ -197,7 +197,7 @@ extension (using quotes: Quotes)(msg: String)
    * @param pos the source position of the debug call
    * @throws Nothing always aborts compilation
    */
-  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
+  private[alpaca] def dbg(using pos: DebugPosition)(using Log): Nothing =
     quotes.reflect.report.errorAndAbort(show"$msg at $pos")
 
   /**
@@ -205,7 +205,7 @@ extension (using quotes: Quotes)(msg: String)
    *
    * @param pos the source position of the debug call
    */
-  private[alpaca] def soft(using pos: DebugPosition): Unit =
+  private[alpaca] def soft(using pos: DebugPosition)(using Log): Unit =
     quotes.reflect.report.info(show"$msg at $pos")
 
 extension (using quotes: Quotes)(e: Any)
@@ -215,7 +215,7 @@ extension (using quotes: Quotes)(e: Any)
    * @param pos the source position of the debug call
    * @throws Nothing always aborts compilation
    */
-  private[alpaca] def dbg(using pos: DebugPosition): Nothing =
+  private[alpaca] def dbg(using pos: DebugPosition)(using Log): Nothing =
     quotes.reflect.report.errorAndAbort(show"${e.toString} at $pos")
 
   /**
@@ -224,7 +224,7 @@ extension (using quotes: Quotes)(e: Any)
    * @param pos the source position of the debug call
    * @return the value unchanged
    */
-  private[alpaca] def soft(using pos: DebugPosition): e.type =
+  private[alpaca] def soft(using pos: DebugPosition)(using Log): e.type =
     quotes.reflect.report.info(show"${e.toString} at $pos")
     e
 
@@ -238,7 +238,7 @@ extension (using quotes: Quotes)(e: Any)
  */
 inline private[alpaca] def showAst(inline body: Any) = ${ showAstImpl('{ body }) }
 
-private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withTimeout:
+private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervisedWithLog:
   import quotes.reflect.*
   Printer.TreeShortCode.show(body.asTerm.underlyingArgument).dbg
 
@@ -252,6 +252,6 @@ private def showAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = wit
  */
 inline private[alpaca] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ body }) }
 
-private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = withTimeout:
+private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervisedWithLog:
   import quotes.reflect.*
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg

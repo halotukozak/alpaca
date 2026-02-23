@@ -1,0 +1,7 @@
+Size,Full Parse Time,Iterations
+100,3.10 ms,10
+500,4.56 ms,10
+1000,7.29 ms,10
+2000,StackOverflowError,0
+5000,StackOverflowError,0
+10000,StackOverflowError,0

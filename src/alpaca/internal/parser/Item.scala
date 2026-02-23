@@ -14,12 +14,7 @@ package parser
  * @param dotPosition the position of the dot (0 to production.rhs.size)
  * @param lookAhead the lookahead terminal
  */
-private[parser] final case class Item(
-  production: Production,
-  dotPosition: Int,
-  lookAhead: Terminal,
-)(using DebugSettings,
-):
+private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal)(using Log):
   production match
     case Production.NonEmpty(_, rhs, name) =>
       if dotPosition < 0 || rhs.sizeIs < dotPosition then
@@ -53,7 +48,7 @@ private[parser] final case class Item(
    * @param firstSet the FIRST set calculator
    * @return the set of terminals that could appear next
    */
-  def nextTerminals(firstSet: FirstSet)(using DebugSettings): Set[Terminal] =
+  def nextTerminals(firstSet: FirstSet)(using Log): Set[Terminal] =
     logger.trace(show"computing next terminals for item $this")
     production match
       case Production.NonEmpty(lhs, rhs, name) =>

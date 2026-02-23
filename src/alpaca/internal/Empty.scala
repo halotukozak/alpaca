@@ -28,7 +28,9 @@ private[alpaca] object Empty:
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withTimeout:
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
+    timeoutOnTooLongCompilation()
+
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
@@ -36,7 +38,7 @@ private[alpaca] object Empty:
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
-    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers
+    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers.iterator
       .collect:
         case m if m.name.startsWith("$lessinit$greater$default$") =>
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
@@ -44,16 +46,19 @@ private[alpaca] object Empty:
 
     logger.trace(show"found ${defaultParameters.size} default parameters")
 
-    val parameters = constructor.paramSymss.collect:
-      case params if !params.exists(_.isTypeParam) =>
-        params.zipWithIndex.map:
-          case (param, idx) if param.flags.is(Flags.HasDefault) =>
-            logger.trace(show"parameter $param has default value")
-            defaultParameters(idx)
-          case (param, _) =>
-            report.errorAndAbort(
-              show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
-            )
+    val parameters = constructor.paramSymss
+      .collect:
+        case params if !params.exists(_.isTypeParam) =>
+          params.iterator.zipWithIndex
+            .map:
+              case (param, idx) if param.flags.is(Flags.HasDefault) =>
+                logger.trace(show"parameter $param has default value")
+                defaultParameters(idx)
+              case (param, _) =>
+                report.errorAndAbort(
+                  show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
+                )
+            .toList
 
     val value =
       New(TypeTree.of[T])

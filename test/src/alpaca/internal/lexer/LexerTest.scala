@@ -36,7 +36,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
 
     val (_, lexemes) = Lexer.tokenize("")
-    assert(lexemes == List.empty)
+    assert(lexemes == Nil)
   }
 
   test("throw exception for unexpected character") {
