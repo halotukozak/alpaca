@@ -55,6 +55,6 @@ private[alpaca] object BetweenStages:
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
 
     '{ (token, m, ctx) =>
-      $derivedBetweenStages.foreach(_.apply(token, m, ctx),)
+      $derivedBetweenStages.foreach(_.apply(token, m, ctx))
       // todo: do not init List https://github.com/halotukozak/alpaca/issues/232
     }
