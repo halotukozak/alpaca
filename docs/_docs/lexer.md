@@ -18,13 +18,13 @@ import alpaca.*
 
 ## Defining a Lexer
 
-A lexer is defined with the `lexer` block. Each `case` arm maps a regex pattern to a token constructor.
+A lexer is defined with the `lexer` block. Each `case` branch maps a regex pattern to a token constructor.
 Patterns are tried in order; the first match wins.
 
 ```scala sc:nocompile
 import alpaca.*
 
-val SimpleLang = lexer:
+val Lexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
   case "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"]
   case "\\+" => Token["PLUS"]
@@ -72,14 +72,14 @@ Tokens come in three forms.
 ```scala sc:nocompile
 import alpaca.*
 
-val Keywords = lexer:
+val Lexer = lexer:
   case "if" => Token["IF"]
   case "else" => Token["ELSE"]
   case "while" => Token["WHILE"]
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"]
   case "\\s+" => Token.Ignored
 
-val (_, lexemes) = Keywords.tokenize("if x else y")
+val (_, lexemes) = Lexer.tokenize("if x else y")
 // lexemes: IF, ID, ELSE, ID
 ```
 
@@ -90,12 +90,12 @@ val (_, lexemes) = Keywords.tokenize("if x else y")
 ```scala sc:nocompile
 import alpaca.*
 
-val WithValues = lexer:
+val Lexer = lexer:
   case n @ "[0-9]+" => Token["INT"](n.toInt)
   case s @ "\"[^\"]*\"" => Token["STR"](s.substring(1, s.length - 1))
   case "\\s+" => Token.Ignored
 
-val (_, lexemes) = WithValues.tokenize("""42 "hello" 7""")
+val (_, lexemes) = Lexer.tokenize("""42 "hello" 7""")
 // lexemes: INT(42), STR("hello"), INT(7)
 ```
 
@@ -108,12 +108,12 @@ The type system tracks the value type: `WithValues.INT` has type `Token["INT", L
 ```scala sc:nocompile
 import alpaca.*
 
-val Skipping = lexer:
+val Lexer = lexer:
   case "[0-9]+" => Token["NUM"]
   case "#.*" => Token.Ignored         // line comments
   case "\\s+" => Token.Ignored        // whitespace
 
-val (_, lexemes) = Skipping.tokenize("42 # a comment\n7")
+val (_, lexemes) = Lexer.tokenize("42 # a comment\n7")
 // lexemes: NUM, NUM  (comment and whitespace are gone)
 ```
 
@@ -124,17 +124,16 @@ The `@` syntax binds the matched text to a variable, giving you a `String` you c
 ```scala sc:nocompile
 import alpaca.*
 
-val Binding = lexer:
+val Lexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
   case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
-  case "\\+" => Token["PLUS"]
   case "\\s+" => Token.Ignored
 
-val (_, lexemes) = Binding.tokenize("count 42")
+val (_, lexemes) = Lexer.tokenize("count 42")
 // lexemes: ID("count"), NUM(42)
 ```
 
-Without `@`, you cannot access the matched text. A case arm like `case "[0-9]+" => Token["NUM"]` creates a token with no extracted value -- the match succeeds but the matched digits are not available for transformation.
+Without `@`, you cannot access the matched text. A case branch like `case "[0-9]+" => Token["NUM"]` creates a token with no extracted value -- the match succeeds but the matched digits are not available for transformation.
 
 ## Token Naming Rules
 
@@ -147,17 +146,6 @@ This section explains the complete pipeline from token creation to Scala accesso
 3. To access the token on the lexer object (e.g., in parser rules), Scala's standard name encoding applies
 4. If the resulting name is not a valid Scala identifier (a keyword, or contains operator characters), you access it with **backticks**
 
-### Naming Table
-
-| Token Creation | Token Name | Scala Accessor | Backticks? |
-|---|---|---|---|
-| `Token["NUM"]` | `"NUM"` | `MyLexer.NUM` | No |
-| `Token["if"]` | `"if"` | `` MyLexer.`if` `` | Yes (keyword) |
-| `Token["\\+"]` | `"\\+"` | `` MyLexer.`\\+` `` | Yes |
-| `Token[op.type]` where `op = "\\+"` | `"\\+"` | `` MyLexer.`\\+` `` | Yes |
-| `Token[">="]` | `">="` | `` MyLexer.`>=` `` | Yes |
-| `Token["NUM"](n.toInt)` | `"NUM"` | `MyLexer.NUM` | No |
-
 ### Dynamic Token Names
 
 When several patterns share the same token structure, you can use alternation with `variable.type` to create one token per alternative:
@@ -165,7 +153,7 @@ When several patterns share the same token structure, you can use alternation wi
 ```scala sc:nocompile
 import alpaca.*
 
-val Lang = lexer:
+val Lexer = lexer:
   case keyword @ ("if" | "else" | "while") => Token[keyword.type]
   case op @ ("\\+" | "-" | "\\*") => Token[op.type]
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
@@ -191,15 +179,7 @@ Keywords like `if`, `else`, `while` always need backticks.
 Call `tokenize()` on your lexer with an input string:
 
 ```scala sc:nocompile
-import alpaca.*
-
-val MiniLang = lexer:
-  case num @ "[0-9]+" => Token["NUM"](num.toInt)
-  case "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"]
-  case "\\+" => Token["PLUS"]
-  case "\\s+" => Token.Ignored
-
-val (ctx, lexemes) = MiniLang.tokenize("x + 42")
+val (ctx, lexemes) = Lexer.tokenize("x + 42")
 ```
 
 The `tokenize` method returns a Scala 3 **named tuple** `(ctx: Ctx, lexemes: List[Lexeme])`:
@@ -210,7 +190,7 @@ The `tokenize` method returns a Scala 3 **named tuple** `(ctx: Ctx, lexemes: Lis
 You can also destructure with field names:
 
 ```scala sc:nocompile
-val result = MiniLang.tokenize("x + 42")
+val result = Lexer.tokenize("x + 42")
 val context = result.ctx
 val tokens = result.lexemes
 ```
@@ -231,7 +211,7 @@ case class IndentCtx(
   var indent: Int = 0,
 ) extends LexerCtx
 
-val IndentLexer = lexer[IndentCtx]:
+val Lexer = lexer[IndentCtx]:
   case "\\t" =>
     ctx.indent += 1
     Token.Ignored
