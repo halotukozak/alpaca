@@ -194,6 +194,8 @@ If the input contains a character that does not match any pattern, `tokenize` th
 
 ## Running Example: CalcLexer
 
+[//]: # (todo: przykłady powinny być w osobnym miejscu)
+
 The following lexer tokenizes arithmetic expressions. It appears throughout the documentation as a running example -- the [Between Stages](between-stages.html) page shows how its output feeds a parser, the [Parser](parser.html) page defines the grammar, and the [Extractors](extractors.html) page shows how to access values from the parsed result.
 
 ```scala sc:nocompile
