@@ -194,3 +194,5 @@ val Lexer = lexer[LexerCtx.Empty]:
 val (_, lexemes) = Lexer.tokenize("1 2 3")
 // lexemes(0).fields == Map("text" -> "1")  -- only the text field, nothing else
 ```
+
+See [Between Stages](between-stages.html) to learn how context snapshots embedded in lexemes flow into the parser.

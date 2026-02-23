@@ -221,4 +221,54 @@ val Lexer = lexer[IndentCtx]:
   case id @ "[a-z]+" => Token["ID"](id)
 ```
 
-See [Lexer Context](lexer-context.html) for full details on custom contexts.
+
+## The Lexeme Structure
+
+A `Lexeme` is the data record that crosses the lexer-to-parser boundary.
+Every matched and non-ignored token produces one lexeme; `Token.Ignored` tokens produce none.
+
+From the caller's perspective, a `Lexeme` exposes two primary elements:
+
+- **`name`** -- the token name as a string literal type (e.g., `"NUM"`, `"PLUS"`), as declared in the `Token["NAME"]` constructor.
+- **`value`** -- the extracted value produced by the rule body (e.g., `Int` for `Token["NUM"](num.toInt)`, `Unit` for keyword tokens produced by `Token["KW"]`).
+
+In addition, each lexeme carries a snapshot of all context fields at the time the token was matched. Rather than exposing this snapshot as a raw `Map[String, Any]`, `Lexeme` extends `Selectable`, which lets you access those fields by name with precise types through the tokenization result type.
+The type refinement is part of the `tokenize()` return type -- it encodes the exact set of context fields and their types, enabling compile-time field access such as `lexeme.position`, `lexeme.line`, or `lexeme.text`.
+
+Here is a minimal lexer that produces three lexemes from `"42 + 13"`:
+
+```scala sc:nocompile
+import alpaca.*
+
+val Lexer = lexer:
+  case num @ "[0-9]+" => Token["NUM"](num.toInt)
+  case "\\+" => Token["PLUS"]
+  case "\\s+" => Token.Ignored
+
+val (_, lexemes) = Lexer.tokenize("42 + 13")
+// lexemes == List(
+//   Lexeme("NUM",  42, Map("text" -> "42", "position" -> 3, "line" -> 1)),
+//   Lexeme("PLUS", (), Map("text" -> "+",  "position" -> 5, "line" -> 1)),
+//   Lexeme("NUM",  13, Map("text" -> "13", "position" -> 8, "line" -> 1)),
+// )
+```
+
+Because the result type carries structural refinement, field access is type-safe:
+
+```scala sc:nocompile
+lexemes(0).position  // 3: Int  (not Any)
+lexemes(0).line      // 1: Int
+lexemes(0).text      // "42": String
+```
+
+Two details to keep in mind:
+
+- **`lexeme.text` is the matched string, not the remaining input.** During lexing, `ctx.text` holds the remaining input at each step. The snapshot overrides the `text` field with `ctx.lastRawMatched` -- the characters the rule actually consumed. After matching `"42"` from `"42 + 13"`, the snapshot records `text = "42"`, not `"+ 13"`.
+- **`lexeme.position` is the post-match position.** The cursor advances by the token length before the snapshot is taken. The token `"42"` starts at column 1 but the snapshot records `position = 3` (1 + 2 characters consumed).
+
+The parser appends `Lexeme.EOF` (name `"$"`, value `""`, empty fields) internally before running. The `tokenize()` call itself does not include it.
+You do not need to handle EOF in your lexer rules -- the parser manages it automatically.
+
+text fields after a match does not retroactively alter earlier lexemes.
+
+See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](between-stages.html) for how tokenized output flows into the parser.
