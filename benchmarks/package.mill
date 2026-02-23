@@ -16,7 +16,7 @@ object alpaca extends BenchmarkScalaModule:
   def moduleDeps = Seq(build)
 
 object fastparse extends BenchmarkScalaModule:
-  def scalaVersion = "3.3.1"
+  def scalaVersion = "3.8.1"
   def mvnDeps = Seq(mvn"com.lihaoyi::fastparse:3.0.2")
 
 def runAll() = Task.Command {
