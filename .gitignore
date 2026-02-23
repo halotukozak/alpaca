@@ -57,3 +57,5 @@ thesis/src/alpaca.*
 !thesis/src/alpaca.pdf
 !thesis/src/out/alpaca.pdf
 !thesis/src/alpaca.tex
+
+benchmarks/inputs/*.txt
