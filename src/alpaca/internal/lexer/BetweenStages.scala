@@ -13,7 +13,7 @@ import java.util.regex.Matcher
  *
  * @tparam Ctx the global context type
  */
-// todo: i do not like this name
+// todo: i do not like this name https://github.com/halotukozak/alpaca/issues/235
 private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
 
 private[alpaca] object BetweenStages:
@@ -55,5 +55,6 @@ private[alpaca] object BetweenStages:
               .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
 
     '{ (token, m, ctx) =>
-      $derivedBetweenStages.foreach(_.apply(token, m, ctx)) // todo: do not init List
+      $derivedBetweenStages.foreach(_.apply(token, m, ctx))
+      // todo: do not init List https://github.com/halotukozak/alpaca/issues/232
     }

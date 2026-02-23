@@ -8,7 +8,7 @@ package internal
  * compile-time type safety.
  */
 
-//todo: make it opaque with ban on underscore
+//todo: make it opaque with ban on underscore https://github.com/halotukozak/alpaca/issues/223
 type ValidName = String & Singleton
 
 object ValidName:
