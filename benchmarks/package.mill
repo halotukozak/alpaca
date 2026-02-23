@@ -11,9 +11,9 @@ trait BenchmarkScalaModule extends ScalaModule:
   override def scalacOptions = Seq("-deprecation", "-feature", "-unchecked")
 
 object alpaca extends BenchmarkScalaModule:
-  def scalaVersion = "3.8.0-RC4"
+  def scalaVersion = build.scalaVersion()
   override def scalacOptions = super.scalacOptions() ++ Seq("-experimental", "-Yretain-trees")
-  def mvnDeps = Seq(mvn"io.github.halotukozak::alpaca:0.0.3")
+  def moduleDeps = Seq(build)
 
 object fastparse extends BenchmarkScalaModule:
   def scalaVersion = "3.3.1"

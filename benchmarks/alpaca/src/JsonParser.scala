@@ -60,7 +60,7 @@ object JsonParser extends Parser {
   )
 }
 
-object JsonParserMain extends App {
+@main def jsonParserMain(): Unit =
   import java.nio.file.{Files, Paths}
 
   val filePathIterative = s"inputs/iterative_json_3.txt"
@@ -68,28 +68,25 @@ object JsonParserMain extends App {
     Files.readAllBytes(Paths.get(filePathIterative))
   )
 
-  try {
+  try
     val (_, tokens) = JsonLexer.tokenize(fileContentIterative)
     val (_, result) = JsonParser.parse(tokens)
     println(s"\nResult Iterative: $result")
-  } catch {
+  catch
     case e: Exception =>
       println(s"\nError Iterative: ${e.getMessage}")
       e.printStackTrace()
-  }
 
   val filePathRecursive = s"inputs/recursive_json_3.txt"
   val fileContentRecursive = new String(
     Files.readAllBytes(Paths.get(filePathRecursive))
   )
 
-  try {
+  try
     val (_, tokens) = JsonLexer.tokenize(fileContentRecursive)
     val (_, result) = JsonParser.parse(tokens)
     println(s"\nResult Recursive: $result")
-  } catch {
+  catch
     case e: Exception =>
       println(s"\nError Recursive: ${e.getMessage}")
       e.printStackTrace()
-  }
-}
