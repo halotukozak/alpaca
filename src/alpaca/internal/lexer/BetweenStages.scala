@@ -2,7 +2,6 @@ package alpaca
 package internal
 package lexer
 
-import java.util.regex.Matcher
 import scala.annotation.implicitNotFound
 
 /**
