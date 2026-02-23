@@ -16,7 +16,7 @@ The following lexer definition does **not** compile:
 import alpaca.*
 
 // This does NOT compile -- ShadowException
-val BadLexer = lexer:
+val Lexer = lexer:
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]  // general: letter/underscore, then alphanumerics
   case "[a-zA-Z]+"               => Token["ALPHABETIC"]   // ERROR: every string matching this also matches IDENTIFIER
 ```
@@ -27,7 +27,7 @@ The compile error reads:
 Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*
 ```
 
-**Reading the message:** The message names the shadowed pattern first (the later-defined one, `[a-zA-Z]+`) and the shadowing pattern second (the earlier one, `[a-zA-Z_][a-zA-Z0-9_]*`). This can feel backwards -- you might expect "A shadows B", but the message says "B is shadowed by A". The fix is always the same: move the more specific pattern before the more general one, or remove the duplicate.
+The fix is always the same: move the more specific pattern before the more general one or remove the duplicate.
 
 A similar issue occurs with prefix shadowing. If the pattern `"i"` appears before `"if"`, then the string `"if"` will always be consumed character-by-character, and the keyword pattern `"if"` will never match:
 
@@ -35,7 +35,7 @@ A similar issue occurs with prefix shadowing. If the pattern `"i"` appears befor
 import alpaca.*
 
 // This does NOT compile -- "if" is shadowed by "i"
-val BadKeywords = lexer:
+val Lexer = lexer:
   case "i"  => Token["I"]
   case "if" => Token["IF"]   // ERROR: Pattern if is shadowed by i
   case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
@@ -48,13 +48,13 @@ Malformed Java regex patterns -- unmatched parentheses, invalid quantifiers, bad
 
 ### Guards Not Supported
 
-Scala pattern guards (`case "regex" if condition =>`) are not supported in lexer rule definitions. Attempting to use one produces a compile-time error:
+Scala pattern guards (`case "regex" if condition =>`) are not supported (yet?) in lexer rule definitions. Attempting to use one produces a compile-time error:
 
 ```scala sc:nocompile
 import alpaca.*
 
 // WRONG -- compile-time error: "Guards are not supported yet"
-val GuardedLexer = lexer:
+val Lexer = lexer:
   case "token" if ctx.someCondition => Token["A"]
 ```
 
@@ -69,7 +69,7 @@ case class MyCtx(
 ) extends LexerCtx
 
 // RIGHT -- check condition inside the rule body
-val CorrectLexer = lexer[MyCtx]:
+val Lexer = lexer[MyCtx]:
   case "token" =>
     if ctx.someCondition then Token["A"]
     else Token["B"]
@@ -135,45 +135,6 @@ Unexpected character: 'X'
 
 where `X` is the first character that did not match any pattern.
 
-## Error Position Information
-
-When a runtime error occurs, knowing *where* in the input the failure happened is essential for diagnosing the problem. The default lexer context (`LexerCtx.Default`) tracks `position` (1-based character offset) and `line` (1-based line number) as it processes input. These values advance with every matched token.
-
-Because the `RuntimeException` is thrown at the point of failure, you can use the context returned from a *successful* partial tokenization or instrument your code to catch and inspect the failure point:
-
-```scala sc:nocompile
-import alpaca.*
-
-val MiniLexer = lexer:
-  case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
-  case "\\s+"            => Token.Ignored
-
-try
-  val (ctx, lexemes) = MiniLexer.tokenize("42 99 abc 7")
-catch
-  case e: RuntimeException =>
-    // The exception message identifies the unexpected character.
-    // The lexemes processed before the error represent successful matches.
-    println(e.getMessage)  // "Unexpected character: 'a'"
-```
-
-Each successfully matched lexeme carries a snapshot of the context at the time of that match. If you need fine-grained position information for error reporting, inspect the last lexeme's context fields:
-
-```scala sc:nocompile
-import alpaca.*
-
-val MiniLexer = lexer:
-  case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
-  case "\\s+"            => Token.Ignored
-
-// On a successful tokenization, the final context tells you the position after the last token
-val (ctx, lexemes) = MiniLexer.tokenize("42 99")
-// ctx.position == 6  (after "42 99": 2 digits + 1 space + 2 digits = 5 chars, position is 1-based so 6)
-// ctx.line     == 1
-```
-
-See [Lexer](lexer.html) for the full description of context tracking and the named-tuple return value of `tokenize()`. For custom contexts that track additional position information, see [Lexer Context](lexer-context.html).
-
 ## Limitations and Current State
 
 The Alpaca lexer's error handling is intentionally minimal in the current release:
@@ -185,5 +146,3 @@ The Alpaca lexer's error handling is intentionally minimal in the current releas
 - **Guards are not supported.** As described above, pattern guards in lexer rules are a compile-time error. This is a known limitation of the current macro implementation.
 
 - **Error position is inferred, not reported directly.** The `RuntimeException` message contains the unexpected character but not its position in the input. Position context must be reconstructed from the successfully matched lexemes and their snapshots.
-
-These constraints reflect the current state of the library. The compile-time validation (ShadowException, invalid regex) provides strong guarantees before runtime, and pattern ordering eliminates the most common class of tokenization errors. Runtime error recovery is on the roadmap.
