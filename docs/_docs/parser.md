@@ -10,18 +10,20 @@ Like the lexer, the grammar is analyzed at compile time — the macro builds an 
 
 Extend `Parser` for a stateless parser (uses `ParserCtx.Empty` by default), or `Parser[Ctx]` to carry custom state through parsing.
 The required entry point is a `val root: Rule[R]` — the macro uses this as the grammar start symbol.
-Note: `root` must be a `val`, not a `def`. Using `def root` causes the macro to miss the declaration.
+
+[//]: # (todo: sprawdzić czy to prawda)
+[//]: # (Note: `root` must be a `val`, not a `def`. Using `def root` causes the macro to miss the declaration.)
 
 The simplest parser extends `Parser` with no type parameter:
 
 ```scala sc:nocompile
 import alpaca.*
 
-object CalcParser extends Parser:            // ParserCtx.Empty default
+object Parser extends Parser:            // ParserCtx.Empty default
   val Expr: Rule[Double] = rule(
-    { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
-    { case CalcLexer.float(x) => x.value },
-    { case CalcLexer.int(n) => n.value.toDouble },
+    { case (Expr(a), Lexer.`\\+`(_), Expr(b)) => a + b },
+    { case Lexer.float(x) => x.value },
+    { case Lexer.int(n) => n.value.toDouble },
   )
   val root: Rule[Double] = rule:
     case Expr(v) => v
@@ -38,13 +40,13 @@ case class CalcContext(
   names: mutable.Map[String, Int] = mutable.Map.empty,
 ) extends ParserCtx derives Copyable
 
-object CalcParser extends Parser[CalcContext]:
+object Parser extends Parser[CalcContext]:
   val Expr: Rule[Int] = rule(
-    { case CalcLexer.NUMBER(n) => n.value },
-    { case CalcLexer.ID(id) => ctx.names.getOrElse(id.value, 0) },
+    { case Lexer.NUMBER(n) => n.value },
+    { case Lexer.ID(id) => ctx.names.getOrElse(id.value, 0) },
   )
   val Statement: Rule[Unit | Int] = rule(
-    { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
+    { case (Lexer.ID(id), Lexer.ASSIGN(_), Expr(expr)) =>
         ctx.names(id.value) = expr },
     { case Expr(expr) => expr },
   )
@@ -70,12 +72,12 @@ import alpaca.*
 object ArithParser extends Parser:
   // Single production — colon syntax
   val Num: Rule[Int] = rule:
-    case CalcLexer.NUMBER(n) => n.value
+    case Lexer.NUMBER(n) => n.value
 
   // Multiple productions — argument list
   val Expr: Rule[Int] = rule(
-    { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },   // multi-symbol: tuple
-    { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
+    { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },   // multi-symbol: tuple
+    { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
     { case Num(n) => n },                                         // single-symbol: direct
   )
 
@@ -84,10 +86,10 @@ object ArithParser extends Parser:
 ```
 
 Each production is a partial function (`ProductionDefinition[R]`).
-Multi-symbol productions match a tuple in the case arm; single-symbol productions match the symbol directly — not as a tuple.
+Multi-symbol productions match a tuple in the case branch; single-symbol productions match the symbol directly — not as a tuple.
 
-**Guards** (`if ...`) in case arms are not supported and cause a compile error: "Guards are not supported yet."
-Each `{ case ... }` block must contain exactly one alternative — multiple `case` arms in one production block are not supported; each alternative must be a separate argument to `rule(...)`.
+**Guards** (`if ...`) in case branches are not supported (yet?) and cause a compile error: "Guards are not supported yet."
+Each `{ case ... }` block must contain exactly one alternative — multiple `case` branches in one production block are not supported; each alternative must be a separate argument to `rule(...)`.
 
 ## Terminal and Non-Terminal Matching
 
@@ -100,30 +102,30 @@ For tokens used only for structural matching (operators, punctuation), use `_` t
 
 ```scala sc:nocompile
 // Value-bearing token: use binding.value
-{ case CalcLexer.NUMBER(n) => n.value }   // n.value: Int
+{ case Lexer.NUMBER(n) => n.value }   // n.value: Int
 
 // Structural token: discard the binding with _
-{ case (CalcLexer.PLUS(_), Expr(b)) => b }
+{ case (Lexer.PLUS(_), Expr(b)) => b }
 
 // Backtick quoting for special-character token names
-{ case CalcLexer.`\\+`(_) => () }
-{ case (CalcLexer.`\\(`(_), Expr(e), CalcLexer.`\\)`(_)) => e }
+{ case Lexer.`\\+`(_) => () }
+{ case (Lexer.`\\(`(_), Expr(e), Lexer.`\\)`(_)) => e }
 ```
 
 Token names that are not valid Scala identifiers — names containing `+`, `(`, `)`, reserved words like `if`, etc. — must be quoted with backticks when used as accessors.
 See the [Lexer](lexer.html) page for the full token naming rules.
 
-**Pitfall:** After `CalcLexer.NUMBER(n)`, the binding `n` is a `Lexeme`, not the extracted value.
-The semantic content is `n.value`. The `Lexeme` also provides `n.text` (matched string), `n.position`, and `n.line`.
+**Pitfall:** After `Lexer.NUMBER(n)`, the binding `n` is a `Lexeme`, not the extracted value.
+The semantic content is `n.value`. The `Lexeme` also provides context fields, like `n.text` (matched string), `n.position`, and `n.line`.
 Using `n` directly where an `Int` is expected is a type error.
 
 ### Non-Terminals
 
 Non-terminals use the rule name in unapply position.
-Each `Rule[R]` implements `unapply`, so a rule reference in a case arm extracts the value produced by that rule during the parse:
+Each `Rule[R]` implements `unapply`, so a rule reference in a case branch extracts the value produced by that rule during the parse:
 
 ```scala sc:nocompile
-{ case (Expr(left), CalcLexer.PLUS(_), Expr(right)) => left + right }
+{ case (Expr(left), Lexer.PLUS(_), Expr(right)) => left + right }
 // Expr(left): Rule[Int].unapply — extracts the Int produced by the Expr rule
 ```
 
@@ -143,10 +145,10 @@ import alpaca.*
 
 object ApiParser extends Parser:
   val Num: Rule[Int] = rule:
-    case CalcLexer.NUMBER(n) => n.value
+    case Lexer.NUMBER(n) => n.value
 
   val root = rule:
-    case (Num(n), CalcLexer.COMMA(_), Num.Option(opt), CalcLexer.COMMA(_), Num.List(lst)) =>
+    case (Num(n), Lexer.COMMA(_), Num.Option(opt), Lexer.COMMA(_), Num.List(lst)) =>
       (n, opt, lst)
       // opt: Option[Int]  — None if no number follows the first comma
       // lst: List[Int]    — zero or more numbers after the second comma
@@ -158,52 +160,9 @@ object ApiParser extends Parser:
 `.Option` and `.List` are compile-time pattern extractors — they instruct the macro to generate the appropriate synthetic productions.
 They appear inside `case` patterns only. They cannot be called directly at runtime.
 
-A real-world example from the JSON parser shows `.List` via hand-rolled recursive rules (before `.List` was available for every rule type):
-
-```scala sc:nocompile
-import alpaca.*
-
-object JsonParser extends Parser:
-  val root: Rule[Any] = rule:
-    case Value(value) => value
-
-  val Value: Rule[Any] = rule(
-    { case JsonLexer.Bool(b) => b.value },
-    { case JsonLexer.Number(n) => n.value },
-    { case JsonLexer.String(s) => s.value },
-    { case Object(obj) => obj },
-    { case Array(arr) => arr },
-  )
-
-  val Object: Rule[Map[String, Any]] = rule(
-    { case (JsonLexer.`{`(_), JsonLexer.`}`(_)) => Map.empty[String, Any] },
-    { case (JsonLexer.`{`(_), ObjectMembers(members), JsonLexer.`}`(_)) => members.toMap },
-  )
-
-  val ObjectMembers: Rule[List[(String, Any)]] = rule(
-    { case ObjectMember(member) => scala.List(member) },
-    { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
-  )
-
-  val ObjectMember: Rule[(String, Any)] = rule:
-    case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) => (s.value, v)
-
-  val Array: Rule[List[Any]] = rule(
-    { case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil },
-    { case (JsonLexer.`[`(_), ArrayElements(elems), JsonLexer.`]`(_)) => elems },
-  )
-
-  val ArrayElements: Rule[List[Any]] = rule(
-    { case Value(v) => scala.List(v) },
-    { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
-  )
-```
-
-This parser handles nested objects and arrays recursively — the macro builds the LR(1) table for the entire grammar, including all mutual recursion, at compile time.
-
 ## Parsing Input
 
-Call `MyParser.parse(lexemes)` where `lexemes` is the `List[Lexeme]` from `MyLexer.tokenize(input).lexemes`.
+Call `MyParser.parse(lexemes)` where `lexemes` is the `List[Lexeme]` from `Lexer.tokenize(input).lexemes`.
 The `parse()` method appends `Lexeme.EOF` internally before running the shift/reduce loop.
 
 The return type is a named tuple `(ctx: Ctx, result: T | Null)`:
@@ -213,25 +172,18 @@ The return type is a named tuple `(ctx: Ctx, result: T | Null)`:
 ```scala sc:nocompile
 import alpaca.*
 
-val (ctx, result) = CalcParser.parse(CalcLexer.tokenize("1 + 2").lexemes)
+val (ctx, result) = CalcParser.parse(Lexer.tokenize("1 + 2").lexemes)
 // ctx:    ParserCtx.Empty (or CalcContext if parser has custom state)
-// result: Double | Null   — 3.0 for valid input, null for invalid input
-
-// Always check result for null before using
-if result != null then println(result)
-```
-
-You can also pass the lexemes inline, accessing the named tuple field from `tokenize()` directly:
-
-```scala sc:nocompile
-import alpaca.*
-
-CalcParser.parse(CalcLexer.tokenize("1 + 2").lexemes)
+// result: Double | Null   — 3 for valid input, null for invalid input
 ```
 
 > **Pitfall:** `result` is `T | Null`, not `Option[T]`. If the input does not match the grammar, `result` is `null` — not an exception. Always check for null before using the result. (Parser error reporting with structured failure information is tracked in GH #65 and GH #51.)
 
+[//]: # (todo: add links to GH refs)
+
 ## Conflict Resolution
+
+[//]: # (todo: t should be moved to the another chapter)
 
 Ambiguous grammars produce compile-time errors.
 `ShiftReduceConflict` is reported when the parser cannot decide whether to shift the next token or reduce the current production.
@@ -244,16 +196,16 @@ import alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Int] = rule(
-    "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },
-    "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
-    { case CalcLexer.NUMBER(n) => n.value },
+    "plus"  { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },
+    "minus" { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
+    { case Lexer.NUMBER(n) => n.value },
   )
   val root = rule:
     case Expr(e) => e
 
   override val resolutions = Set(            // resolutions must be last
-    production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.plus.after(CalcLexer.TIMES),
+    production.plus.before(Lexer.PLUS, Lexer.MINUS),
+    production.plus.after(Lexer.TIMES),
   )
 ```
 
