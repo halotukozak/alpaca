@@ -9,7 +9,7 @@ object BenchmarkUtils:
   def formatTime(seconds: Double): String =
     if seconds < 0.001 then f"${seconds * 1_000_000}%.2f µs"
     else if seconds < 1 then f"${seconds * 1_000}%.2f ms"
-    else f"${seconds}%.2f s"
+    else f"$seconds%.2f s"
 
   def timed(iterations: Int = Iterations, warmup: Int = WarmupIterations)(block: => Unit): Double =
     for _ <- 0 until warmup do block

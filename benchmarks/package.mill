@@ -7,7 +7,7 @@ trait BenchmarkScalaModule extends ScalaModule:
   override def sources = Task {
     super.sources() ++ Seq(sharedSources())
   }
-  override def forkWorkingDir = Task { moduleDir / os.up }
+  override def forkWorkingDir = Task(moduleDir / os.up)
   override def scalacOptions = Seq("-deprecation", "-feature", "-unchecked")
 
 object alpaca extends BenchmarkScalaModule:

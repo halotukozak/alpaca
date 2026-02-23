@@ -1,12 +1,12 @@
 import alpaca.*
 
 val MathLexer = lexer {
-  case "\\s+"                                          => Token.Ignored
+  case "\\s+" => Token.Ignored
   case x @ ("\\+" | "-" | "\\*" | "/" | "\\(" | "\\)") => Token[x.type]
   case num @ "\\d+" => Token["num"](num.toInt)
 }
 
-object MathParser extends Parser {
+object MathParser extends Parser:
   val Expr: Rule[Int] = rule(
     "mul" { case (Expr(a), MathLexer.`\\*`(_), Expr(b)) => a * b },
     "div" { case (Expr(a), MathLexer.`/`(_), Expr(b)) => a / b },
@@ -29,14 +29,13 @@ object MathParser extends Parser {
     production.plus.before(MathLexer.`\\+`, MathLexer.`-`),
     production.minus.before(MathLexer.`\\+`, MathLexer.`-`),
   )
-}
 
 @main def mathParserMain(): Unit =
   import java.nio.file.{Files, Paths}
 
   val filePathIterative = s"inputs/iterative_math_3.txt"
   val fileContentIterative = new String(
-    Files.readAllBytes(Paths.get(filePathIterative))
+    Files.readAllBytes(Paths.get(filePathIterative)),
   )
 
   try
@@ -50,7 +49,7 @@ object MathParser extends Parser {
 
   val filePathRecursive = s"inputs/recursive_math_3.txt"
   val fileContentRecursive = new String(
-    Files.readAllBytes(Paths.get(filePathRecursive))
+    Files.readAllBytes(Paths.get(filePathRecursive)),
   )
 
   try

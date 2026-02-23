@@ -9,14 +9,14 @@ val JsonLexer = lexer {
 
   // literals
   case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
-  case "null"                 => Token["Null"](null)
+  case "null" => Token["Null"](null)
 
   // numbers and strings
   case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
-  case x @ """"(\\.|[^"])*""""    => Token["String"](x.slice(1, x.length - 1))
+  case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 }
 
-object JsonParser extends Parser {
+object JsonParser extends Parser:
   val root: Rule[Any] = rule { case Value(value) => value }
 
   val Value: Rule[Any] = rule(
@@ -25,47 +25,45 @@ object JsonParser extends Parser {
     { case JsonLexer.Number(n) => n.value },
     { case JsonLexer.String(s) => s.value },
     { case Object(obj) => obj },
-    { case Array(arr) => arr }
+    { case Array(arr) => arr },
   )
 
   val Object: Rule[Map[String, Any]] = rule(
     { case (JsonLexer.`\\{`(_), JsonLexer.`\\}`(_)) => Map.empty[String, Any] },
     { case (JsonLexer.`\\{`(_), ObjectMembers(members), JsonLexer.`\\}`(_)) =>
       members.toMap
-    }
+    },
   )
 
   val ObjectMembers: Rule[List[(String, Any)]] = rule(
     { case ObjectMember(member) => scala.List(member) },
     { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) =>
       members :+ member
-    }
+    },
   )
 
-  val ObjectMember: Rule[(String, Any)] = rule {
-    case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) =>
-      (s.value, v)
+  val ObjectMember: Rule[(String, Any)] = rule { case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) =>
+    (s.value, v)
   }
 
   val Array: Rule[List[Any]] = rule(
     { case (JsonLexer.`\\[`(_), JsonLexer.`\\]`(_)) => Nil },
     { case (JsonLexer.`\\[`(_), ArrayElements(elems), JsonLexer.`\\]`(_)) =>
       elems
-    }
+    },
   )
 
   val ArrayElements: Rule[List[Any]] = rule(
     { case Value(v) => scala.List(v) },
-    { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v }
+    { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
   )
-}
 
 @main def jsonParserMain(): Unit =
   import java.nio.file.{Files, Paths}
 
   val filePathIterative = s"inputs/iterative_json_3.txt"
   val fileContentIterative = new String(
-    Files.readAllBytes(Paths.get(filePathIterative))
+    Files.readAllBytes(Paths.get(filePathIterative)),
   )
 
   try
@@ -79,7 +77,7 @@ object JsonParser extends Parser {
 
   val filePathRecursive = s"inputs/recursive_json_3.txt"
   val fileContentRecursive = new String(
-    Files.readAllBytes(Paths.get(filePathRecursive))
+    Files.readAllBytes(Paths.get(filePathRecursive)),
   )
 
   try
