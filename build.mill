@@ -3,6 +3,7 @@
 //| mvnDeps:
 //| - com.lihaoyi::mill-contrib-scoverage:$MILL_VERSION
 //| - com.lihaoyi::mill-contrib-sonatypecentral:$MILL_VERSION
+//| - com.lihaoyi::mill-contrib-jmh:$MILL_VERSION
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
 
@@ -10,6 +11,7 @@ import mill.*
 import mill.scalalib.*
 import mill.scalalib.publish.*
 import mill.contrib.scoverage.ScoverageModule
+import mill.contrib.jmh.JmhModule
 import mill.util.VcsVersion
 
 object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
@@ -93,3 +95,8 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
 
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
+
+object benchmarks extends ScalaModule with JmhModule:
+  def scalaVersion = "3.8.1"
+  def moduleDeps = Seq(`package`)
+  def jmhCoreVersion = "1.37"
