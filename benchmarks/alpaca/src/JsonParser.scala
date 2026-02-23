@@ -63,7 +63,7 @@ object JsonParser extends Parser {
 object JsonParserMain extends App {
   import java.nio.file.{Files, Paths}
 
-  val filePathIterative = s"../inputs/iterative_json_3.txt"
+  val filePathIterative = s"inputs/iterative_json_3.txt"
   val fileContentIterative = new String(
     Files.readAllBytes(Paths.get(filePathIterative))
   )
@@ -78,7 +78,7 @@ object JsonParserMain extends App {
       e.printStackTrace()
   }
 
-  val filePathRecursive = s"../inputs/recursive_json_3.txt"
+  val filePathRecursive = s"inputs/recursive_json_3.txt"
   val fileContentRecursive = new String(
     Files.readAllBytes(Paths.get(filePathRecursive))
   )
