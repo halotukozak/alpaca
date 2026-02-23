@@ -2,6 +2,8 @@
 
 The Alpaca lexer provides two layers of error feedback: compile-time validation that catches many problems before your program runs, and a runtime error for input that does not match any pattern. Understanding what can go wrong -- and what feedback you get -- helps you build reliable tokenizers and debug failures quickly.
 
+> **Compile-time processing:** The `lexer` block is a Scala 3 macro that validates your token definitions at compile time. Pattern shadowing (`ShadowException`), invalid regex syntax, and unsupported guards are all caught during compilation. The macro performs pairwise regex inclusion checks to ensure every pattern is reachable. At runtime, only unmatched input characters can cause errors.
+
 ## Compile-Time Errors
 
 The `lexer` block is a Scala 3 macro. Several classes of errors are caught at compile time, before any input is ever processed.

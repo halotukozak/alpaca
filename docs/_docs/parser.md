@@ -21,9 +21,8 @@ import alpaca.*
 
 object Parser extends Parser:            // ParserCtx.Empty default
   val Expr: Rule[Double] = rule(
-    { case (Expr(a), Lexer.`\\+`(_), Expr(b)) => a + b },
-    { case Lexer.float(x) => x.value },
-    { case Lexer.int(n) => n.value.toDouble },
+    { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
+    { case CalcLexer.NUMBER(n) => n.value },
   )
   val root: Rule[Double] = rule:
     case Expr(v) => v
