@@ -2,12 +2,9 @@ package alpaca
 package internal
 package parser
 
-import NonEmptyList as NEL
-
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
-
-import scala.reflect.NameTransformer
+import ox.*
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -50,8 +47,11 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
-private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
-  : Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withTimeout:
+private def createTablesImpl[Ctx <: ParserCtx: Type](
+  using quotes: Quotes,
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
+  timeoutOnTooLongCompilation()
+
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
@@ -68,15 +68,16 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
   def extractEBNF(ruleName: String)
     : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>
-      def createAction(binds: List[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
+      def createAction(binds: Seq[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
           val replacements = (find = ctxSymbol, replace = ctx) ::
-            binds.zipWithIndex
+            binds.iterator.zipWithIndex
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
                   Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
+              .toList
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
 
@@ -86,7 +87,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
         case other =>
           other.asTerm -> null
 
-      cases
+      cases.iterator
         .map(extractProductionName)
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
@@ -111,34 +112,37 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
             (
               production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
               action = createAction(binds, rhs),
-            ) :: others.flatten
+            ) :: (others.flatten)
+        .toList
 
-  val rules = parserTpe.typeSymbol.declarations.collect:
+  val rules = parserTpe.typeSymbol.declarations.iterator.collect:
     case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
 
-  logger.trace("Rules extracted, building parse table...")
+  logger.trace("Rules extracted, building parse table.")
 
   val table = rules
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-      case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
+      case DefDef(ruleName, _, _, Some(rhs)) =>
+        extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
+    .toList
     .tap: table =>
       // csv may be not the best format for this due to the commas
       logger.toFile(show"$parserName/actionTable.dbg.csv", true)(table.toCsv)
 
-  logger.trace("Productions extracted, building conflict resolution table...")
+  logger.trace("Productions extracted, building conflict resolution table.")
 
   val productions = table
     .map(_.production)
     .tap: table =>
       logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
 
-  logger.trace("Productions extracted, building parse and action tables...")
+  logger.trace("Productions extracted, building parse and action tables.")
 
   val findProduction: Expr[Production] => Production =
-    val productionsByName = productions.collect { case p if p.name != null => p.name -> p }.toMap
-    val productionsByRhs = productions.collect(p => p.rhs -> p).toMap
+    val productionsByName = productions.iterator.collect { case p if p.name != null => p.name -> p }.toMap
+    val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
     {
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         logger.trace(show"Looking for production with name '$name'")
@@ -161,7 +165,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
       case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
     }
 
-  logger.trace("Conflict resolution rules extracted, building conflict resolution table...")
+  logger.trace("Conflict resolution rules extracted, building conflict resolution table.")
 
   val resolutionExprs = scala.util
     .Try:
@@ -177,10 +181,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     case '{ $prod: Production } => ConflictKey(findProduction(prod))
     case '{ $_ : Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
 
-  logger.trace("Building conflict resolution table...")
+  logger.trace("Building conflict resolution table.")
 
   val conflictResolutionTable = ConflictResolutionTable(
-    resolutionExprs.view
+    resolutionExprs.iterator
       .unsafeFlatMap:
         case '{ ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } => befores.map((_, after))
         case '{ ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*) } => afters.map((before, _))
@@ -193,26 +197,24 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](using quotes: Quotes)
     table.verifyNoConflicts()
     logger.toFile(show"$parserName/conflictResolutions.dbg", true)(table)
 
-  logger.trace("Conflict resolution table built, identifying root production...")
+  logger.trace("Conflict resolution table built, identifying root production.")
 
   val root = table
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
     .get
 
-  logger.trace("Root production identified, generating parse and action tables...")
+  logger.trace("Root production identified, generating parse and action tables.")
 
-  val parseTable = Expr(
+  val parseTable = Expr:
     ParseTable(
-      Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
+      (Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs))) :: table.map(_.production),
       conflictResolutionTable,
     ).tap: parseTable =>
-      logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv),
-  )
+      logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv)
 
-  val actionTable = Expr.ofList(
+  val actionTable = Expr.ofList:
     table.map:
-      case (production, action) => Expr.ofTuple(Expr(production) -> action),
-  )
+      case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }

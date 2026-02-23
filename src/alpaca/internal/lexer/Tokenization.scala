@@ -84,7 +84,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val totalGroups = matcher.groupCount
     val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
 
-    tokens.iterator.foreach: token =>
+    tokens.foreach: token =>
       val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
       if groupIndex != null then map(groupIndex) = token
     map

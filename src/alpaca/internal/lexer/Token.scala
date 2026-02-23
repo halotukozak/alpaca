@@ -24,7 +24,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-//todo: should it contain info about ignored? for perf?
+//todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
 private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
 
 private[lexer] object TokenInfo:
@@ -41,7 +41,7 @@ private[lexer] object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
-  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
+  def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (
@@ -95,7 +95,7 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  * @param ctxManipulation function to update context
  * @param remapping function to extract value from context
  */
-//todo: may be invariant?
+//todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
 final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],

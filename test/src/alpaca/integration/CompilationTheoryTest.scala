@@ -1,8 +1,6 @@
 package alpaca
 package integration
 
-import Production as P
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class CompilationTheoryTest extends AnyFunSuite:
@@ -74,8 +72,8 @@ final class CompilationTheoryTest extends AnyFunSuite:
     val Statement: Rule[ASTNode] = rule(
       { case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)) },
       { case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)) },
-      { case (CTLexer.break(_)) => ASTNode("BREAK", Nil) },
-      { case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil) },
+      { case CTLexer.break(_) => ASTNode("BREAK", Nil) },
+      { case CTLexer.continue(_) => ASTNode("CONTINUE", Nil) },
       { case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)) },
       { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
         ASTNode(fname.value, args)
@@ -89,7 +87,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
       case (Expression(start), CTLexer.`:`(_), Expression(end)) => ASTNode(":", scala.List(start, end))
 
     val Arguments: Rule[List[ASTNode]] = rule(
-      { case (Expression(expr)) => scala.List(expr) },
+      { case Expression(expr) => scala.List(expr) },
       { case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr },
     )
 

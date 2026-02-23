@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import NonEmptyList as NEL
-
 import alpaca.internal.lexer.Token
 import alpaca.internal.parser.ParserExtractors.*
 
@@ -19,10 +17,7 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](
-  using val quotes: Q,
-)(using DebugSettings,
-):
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
   val skipTypedOrTest: PartialFunction[Tree, Tree] =
@@ -93,7 +88,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           (production = Production.Empty(fresh), action = '{ noneAction }),
           (
             production = Production.NonEmpty(fresh, NEL(NonTerminal(name))),
-            action = '{ someAction(using ${ Expr(summon[DebugSettings]) }) },
+            action = '{ someAction },
           ),
         ),
       )
@@ -108,7 +103,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           (production = Production.Empty(fresh), action = '{ emptyRepeatedAction }),
           (
             production = Production.NonEmpty(fresh, NEL(fresh, NonTerminal(name))),
-            action = '{ repeatedAction(using ${ Expr(summon[DebugSettings]) }) },
+            action = '{ repeatedAction },
           ),
         ),
       )
@@ -121,14 +116,14 @@ private object ParserExtractors:
     final val Option = "Option"
     final val AsInstanceOf = "$asInstanceOf$"
 
-  val repeatedAction: DebugSettings ?=> Action[ParserCtx] =
+  val repeatedAction: Action[ParserCtx] =
     case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case x => raiseShouldNeverBeCalled[List[?]](x)
+    case _ => dummy
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
-  val someAction: DebugSettings ?=> Action[ParserCtx] =
+  val someAction: Action[ParserCtx] =
     case (_, Seq(elem)) => Some(elem)
-    case x => raiseShouldNeverBeCalled[Option[?]](x)
+    case _ => dummy
 
   val noneAction: Action[ParserCtx] = (_, _) => None

@@ -2,6 +2,7 @@ package alpaca
 package integration
 
 import org.scalatest.funsuite.AnyFunSuite
+import annotation.nowarn
 
 final class JsonTest extends AnyFunSuite:
   test("e2e json test") {
@@ -19,7 +20,7 @@ final class JsonTest extends AnyFunSuite:
 
       // literals
       case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
-      case "null" => Token["Null"](null)
+      case "null" => Token["Null"](null: @nowarn("msg=unused explicit parameter")) // todo: why needs @nowarn?
 
       // numbers and strings
       case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
