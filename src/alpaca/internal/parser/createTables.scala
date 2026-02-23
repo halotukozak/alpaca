@@ -123,7 +123,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val table = rules
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-      case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
+      case DefDef(ruleName, _, _, Some(rhs)) =>
+        extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
     .toList
     .tap: table =>
