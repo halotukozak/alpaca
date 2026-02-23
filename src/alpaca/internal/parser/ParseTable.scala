@@ -58,7 +58,7 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  // todo: can be parallelized with Ox?
+  // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
     logger.trace("building first set...")
     val firstSet = FirstSet(productions)

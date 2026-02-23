@@ -150,7 +150,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
               extractName(rhs.asExprOf[Rule[?]])
             case DefDef(name, _, _, Some(rhs)) =>
               logger.trace(show"Extracting production names from rule $name")
-              extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+              extractName(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
             case _ =>
               report.error("Define resolutions as the last field of the parser.")
               Nil
