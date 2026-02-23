@@ -52,6 +52,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Run Current Benchmarks
+        continue-on-error: true
         run: |
           echo "::group::Benchmarking current"
           (
@@ -61,6 +62,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Upsert PR Comment
+        if: always()
         uses: actions/github-script@v8
         with:
           script: |

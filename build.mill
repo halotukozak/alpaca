@@ -98,5 +98,5 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
 
 object benchmarks extends ScalaModule with JmhModule:
   def scalaVersion = "3.8.1"
-  def moduleDeps = Seq(`package`)
+  def moduleDeps = Seq(build.`package`)
   def jmhCoreVersion = "1.37"

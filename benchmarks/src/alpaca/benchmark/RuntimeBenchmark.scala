@@ -13,7 +13,7 @@ private val JsonLexer = lexer:
   case ":" => Token[":"]
   case "," => Token[","]
   case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
-  case "null" => Token["Null"]
+  case "null" => Token["Null"](null)
   case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
   case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 
@@ -79,12 +79,14 @@ class RuntimeBenchmark:
     }"""
 
   @Benchmark
-  def tokenizeSimpleJson(): Unit =
-    JsonLexer.tokenize(simpleJson)
+  def tokenizeSimpleJson(): Int =
+    val (_, lexemes) = JsonLexer.tokenize(simpleJson)
+    lexemes.size
 
   @Benchmark
-  def tokenizeComplexJson(): Unit =
-    JsonLexer.tokenize(complexJson)
+  def tokenizeComplexJson(): Int =
+    val (_, lexemes) = JsonLexer.tokenize(complexJson)
+    lexemes.size
 
   @Benchmark
   def parseSimpleJson(): Any =
