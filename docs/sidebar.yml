@@ -20,3 +20,33 @@ subsection:
     page: extractors.md
   - title: Debug Settings
     page: debug-settings.md
+  - title: Compiler Theory
+    subsection:
+      - title: The Compilation Pipeline
+        page: theory/pipeline.md
+      - title: Tokens and Lexemes
+        page: theory/tokens.md
+      - title: The Lexer — Regex to Finite Automata
+        page: theory/lexer-fa.md
+      - title: Context-Free Grammars
+        page: theory/cfg.md
+      - title: Why LR Parsing?
+        page: theory/why-lr.md
+      - title: Shift-Reduce Parsing
+        page: theory/shift-reduce.md
+      - title: Conflicts and Disambiguation
+        page: theory/conflicts.md
+      - title: Semantic Actions
+        page: theory/semantic-actions.md
+      - title: Full Calculator Example
+        page: theory/full-example.md
+  - title: Cookbook
+    subsection:
+      - title: Expression Evaluator
+        page: cookbook/expression-evaluator.md
+      - title: Error Messages
+        page: cookbook/error-messages.md
+      - title: Multi-Pass Processing
+        page: cookbook/multi-pass.md
+      - title: Whitespace-Sensitive Syntax
+        page: cookbook/whitespace-sensitive.md

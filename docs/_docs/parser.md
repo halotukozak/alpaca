@@ -99,7 +99,7 @@ For tokens used only for structural matching (operators, punctuation), use `_` t
 
 ```scala sc:nocompile
 // Value-bearing token: use binding.value
-{ case CalcLexer.NUMBER(n) => n.value }   // n.value: Int
+{ case CalcLexer.NUMBER(n) => n.value }   // n.value: Double
 
 // Structural token: discard the binding with _
 { case (CalcLexer.PLUS(_), Expr(b)) => b }
@@ -114,7 +114,7 @@ See the [Lexer](lexer.html) page for the full token naming rules.
 
 **Pitfall:** After `CalcLexer.NUMBER(n)`, the binding `n` is a `Lexeme`, not the extracted value.
 The semantic content is `n.value`. The `Lexeme` also provides `n.text` (matched string), `n.position`, and `n.line`.
-Using `n` directly where an `Int` is expected is a type error.
+Using `n` directly where a `Double` is expected is a type error.
 
 ### Non-Terminals
 
@@ -242,7 +242,7 @@ To resolve conflicts, name individual productions with a string literal placed b
 import alpaca.*
 
 object CalcParser extends Parser:
-  val Expr: Rule[Int] = rule(
+  val Expr: Rule[Double] = rule(
     "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },
     "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
     { case CalcLexer.NUMBER(n) => n.value },
@@ -269,3 +269,5 @@ See [Conflict Resolution](conflict-resolution.html) for full details on shift/re
 See [Parsing Input with Context](parser-context.html) for how to maintain state during parsing with `ParserCtx`.
 
 See [Extractors](extractors.html) for detailed coverage of terminal and non-terminal matching, EBNF patterns, and Lexeme field access in parser rules.
+
+See [Debug Settings](debug-settings.html) for compile-time debug output, log levels, and timeout configuration.

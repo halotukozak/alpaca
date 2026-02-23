@@ -79,10 +79,10 @@ The parse tree is never exposed directly — Alpaca builds it internally and imm
 
 The rest of the Compiler Theory Tutorial builds on this mental model:
 
-- Next: [Tokens & Lexemes](theory/tokens.md) — what the lexer produces: token classes, token instances, and how they are represented in Alpaca
-- [The Lexer: Regex to Finite Automata](theory/lexer-fa.md) — how regular expressions define token classes and how Alpaca compiles them
+- Next: [Tokens & Lexemes](tokens.md) — what the lexer produces: token classes, token instances, and how they are represented in Alpaca
+- [The Lexer: Regex to Finite Automata](lexer-fa.md) — how regular expressions define token classes and how Alpaca compiles them
 
 For the full API, see the reference pages:
 
-- See [Lexer](lexer.md) for how `CalcLexer` is defined.
-- See [Parser](parser.md) for how `CalcParser` is defined and how grammar rules produce a typed result.
+- See [Lexer](../lexer.md) for how `CalcLexer` is defined.
+- See [Parser](../parser.md) for how `CalcParser` is defined and how grammar rules produce a typed result.
