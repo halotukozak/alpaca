@@ -3,13 +3,14 @@ package alpaca
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
+
 final class CtxRemappingTest extends AnyFunSuite with Matchers:
   test("remapping maps matched text to custom values using ctx.text") {
-    val L = lexer {
+    val L = lexer:
       case "\\s+" => Token.Ignored
       case x @ "[0-9]+" => Token["int"](x.toInt)
       case s @ "[a-z]+" => Token["id"](s.toUpperCase)
-    }
 
     val (_, res) = L.tokenize("12 abc 7")
     res.map(_.name) shouldBe List("int", "id", "int")
@@ -17,7 +18,8 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
   }
 
   test("ctx manipulation influences error position after ignored token") {
-    val L2 = lexer {
+    @unused
+    val L2 = lexer:
       case "A" => Token["A"]
       case "!" =>
         ctx.position += 5
@@ -25,7 +27,6 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
       case x @ "\n+" =>
         ctx.position += x.count(_ == '\n')
         Token.Ignored
-    }
 
     // todo: https://github.com/halotukozak/alpaca/issues/51
     // val ex = intercept[RuntimeException] {

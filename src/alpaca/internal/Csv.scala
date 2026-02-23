@@ -29,6 +29,8 @@ private[internal] object Csv:
    * The output has headers on the first line followed by data rows,
    * with values separated by commas.
    */
+
+  /// todo it should be printed to the code lazy
   given Showable[Csv] = Showable: csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
@@ -45,14 +47,14 @@ private[internal] object Csv:
      * @return a Csv representation of the named tuples
      */
 
-    inline def toCsv: Csv =
+    inline def toCsv(using Log): Csv =
       Csv(
         compiletime.constValueTuple[N].toShowableList,
         rows.map(_.toTuple.toShowableList),
       )
 
   extension [T <: Tuple](tuple: T)
-    inline private def toShowableList = compiletime
+    inline private def toShowableList(using Log) = compiletime
       .summonAll[Tuple.Map[T, Showable]]
       .zip(tuple)
       .toList

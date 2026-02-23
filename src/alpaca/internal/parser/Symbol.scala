@@ -89,10 +89,10 @@ private[parser] object Symbol:
 
   given Showable[Symbol] = Showable: symbol =>
     NameTransformer.encode(symbol.name) match
-      case encoded if !summon[DebugSettings].verboseNames || encoded == symbol.name =>
-        if symbol.name.contains(SyntheticInfix) then s"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
+      case encoded if !summon[Log].debugSettings.enableVerboseNames || encoded == symbol.name =>
+        if symbol.name.contains(SyntheticInfix) then show"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
         else symbol.name
-      case encoded => s"${symbol.name} ($encoded)"
+      case encoded => show"${symbol.name} ($encoded)"
 
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =

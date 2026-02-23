@@ -1,6 +1,9 @@
-package alpaca.internal.lexer
+package alpaca
+package internal
+package lexer
 
 import dregex.Regex
+import ox.par
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
@@ -19,16 +22,16 @@ private[lexer] object RegexChecker:
    * meaning the earlier pattern would always match first and the
    * shadowed pattern would never be used.
    *
-   * @param patterns the regex patterns to check
-   * @return a sequence of error messages describing any shadowing issues
+   * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: Seq[String]): Seq[String] = patterns match
-    case Nil => Nil
-    case _ =>
+  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
+    case Nil => ()
+    case patterns =>
+      logger.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
-      for
-        i <- patterns.indices
-        j <- (i + 1) until regexes.size
-        if regexes.get(j).isSubsetOf(regexes.get(i))
-      yield s"Pattern ${patterns(j)} is shadowed by ${patterns(i)}"
+      par:
+        for
+          i <- patterns.indices
+          j <- (i + 1) until regexes.size
+        yield () => if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))

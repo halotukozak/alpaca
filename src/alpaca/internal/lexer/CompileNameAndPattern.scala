@@ -2,6 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import ox.tap
+
 import scala.annotation.tailrec
 
 /**
@@ -14,7 +16,7 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using DebugSettings):
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
   /**
@@ -27,38 +29,53 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
+  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
+    logger.trace("compiling name and pattern")
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
+      logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
-        case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
-          TokenInfo.unsafe(regex, regex) :: Nil
+        case (TermRef(_, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
+          logger.trace(show"matched simple regex with bind $bind and regex $regex")
+          (TokenInfo(regex, regex)) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
-        case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
+        case (TermRef(_, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
+          logger.trace(
+            show"matched alternative regex with bind $bind and alternatives ${alternatives.mkShow("[", ", ", "]")}",
+          )
           alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
+            case Literal(StringConstant(str)) => TokenInfo(str, str)
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
+          logger.trace(show"matched bind with tpe=$tpe and tree=$tree")
           loop(tpe, tree)
         // case x : "regex" => Token.Ignored
         case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
-          TokenInfo.unsafe(str, str) :: Nil
+          logger.trace(show"matched ignored token with tpe=$tpe and str=$str")
+          (TokenInfo(str, str)) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
+          logger.trace(show"matched ignored token with tpe=$tpe and alternatives ${alternatives.mkShow}")
           alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo.unsafe(str, str)
+            case Literal(StringConstant(str)) => TokenInfo(str, str)
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
-          TokenInfo.unsafe(name, regex) :: Nil
+          logger.trace(show"matched named token with name=$name and regex=$regex")
+          (TokenInfo(name, regex)) :: Nil
         // case x : ("regex" | "regex2") => Token["name"]
         case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
-          TokenInfo.unsafe(
-            str,
-            alternatives
-              .unsafeMap:
-                case Literal(StringConstant(str)) => str
-              .mkString("|"),
+          logger.trace(show"matched named token with name=$str and alternatives ${alternatives.mkShow}")
+          (
+            TokenInfo(
+              str,
+              alternatives
+                .unsafeMap:
+                  case Literal(StringConstant(str)) => str
+                .mkShow("|"),
+            )
           ) :: Nil
-        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
+        case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
+      .tap: res =>
+        logger.trace(show"compiled name and pattern to ${res.mkShow}")

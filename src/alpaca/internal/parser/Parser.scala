@@ -74,20 +74,16 @@ abstract class Parser[Ctx <: ParserCtx](
   inline protected final def ctx: Ctx = dummy
 
   /**
-   * Parses a list of lexems using the defined grammar.
+   * Parses a list of lexemes using the defined grammar.
    *
    * This method builds the parse table at compile time and uses it to
-   * parse the input lexems using an LR parsing algorithm.
+   * parse the input lexemes using an LR parsing algorithm.
    *
    * @tparam R the result type
-   * @param lexems   the list of lexems to parse
-   * @param debugSettings parser settings (optional)
+   * @param lexemes   the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](
-    lexems: List[Lexeme[?, ?]],
-  )(using debugSettings: DebugSettings,
-  ): (ctx: Ctx, result: R | Null) =
+  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) = supervisedWithLog:
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
@@ -123,40 +119,50 @@ abstract class Parser[Ctx <: ParserCtx](
             (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack,
           )
 
-    ctx -> loop(lexems :+ Lexeme.EOF, (0, null) :: Nil)
+    (ctx, loop(lexems :+ Lexeme.EOF, (0, null) :: Nil))
 
-private val cachedProductions: mutable.Map[Type[? <: AnyKind], Type[? <: AnyKind]] = mutable.Map.empty
+private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
+  mutable.Map.empty
 
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] =
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
   import quotes.reflect.*
-
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
-  cachedProductions.getOrElseUpdate(
-    parserTpe.asType, {
-      val rules = parserTpe.typeSymbol.declarations.collect:
-        case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+  logger.trace(show"Generating production selector for $parserSymbol")
 
-      val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
-        case '{ rule(${ Varargs(cases) }*) } =>
-          cases.flatMap:
-            case '{ ($name: ValidName).apply($production: ProductionDefinition[?]) } => name.value
-            case _ => None
+  cachedProductions
+    .getOrElseUpdate(
+      parserTpe.asType, {
+        val rules = parserTpe.typeSymbol.declarations.iterator.collect:
+          case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
-      rules
-        .unsafeFlatMap:
-          case ValDef(_, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]])
-          case DefDef(_, _, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
-          case _ =>
-            report.error(s"Define resolutions as the last field of the parser.")
-            Nil
-        .unsafeFoldLeft(TypeRepr.of[ProductionSelector]):
-          case (tpe, name) => Refinement(tpe, name, TypeRepr.of[Production])
-        .asType
-    },
-  ) match
-    case '[type refinedTpe <: ProductionSelector; refinedTpe] => '{ DummyProductionSelector.asInstanceOf[refinedTpe] }
+        val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
+          case '{ rule(${ Varargs(cases) }*) } =>
+            cases.flatMap:
+              case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
+              case _ => None
+
+        val fields = rules
+          .flatMap:
+            case ValDef(name, _, Some(rhs)) =>
+              logger.trace(show"Extracting production names from rule $name")
+              extractName(rhs.asExprOf[Rule[?]])
+            case DefDef(name, _, _, Some(rhs)) =>
+              logger.trace(show"Extracting production names from rule $name")
+              extractName(rhs.asExprOf[Rule[?]]) // todo: or error?
+            case _ =>
+              report.error("Define resolutions as the last field of the parser.")
+              Nil
+          .map(name => (name, TypeRepr.of[Production]))
+          .toList
+
+        (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType)
+      },
+    )
+    .runtimeChecked match
+    case ('[refinement], '[fields]) =>
+      '{ DummyProductionSelector.asInstanceOf[ProductionSelector { type Fields = fields } & refinement] }
 
 private object DummyProductionSelector extends ProductionSelector:
-  def selectDynamic(name: String): Any = dummy
+  override def selectDynamic(name: String): Any = dummy
