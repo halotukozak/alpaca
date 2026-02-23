@@ -37,7 +37,7 @@ object MathParser extends Parser[Int] {
 object MathParserMain extends App {
   import java.nio.file.{Files, Paths}
 
-  val filePathIterative = s"../inputs/iterative_math_3.txt"
+  val filePathIterative = s"inputs/iterative_math_3.txt"
   val fileContentIterative = new String(
     Files.readAllBytes(Paths.get(filePathIterative))
   )
@@ -47,7 +47,7 @@ object MathParserMain extends App {
     case Left(error)   => println(s"\nError Iterative: $error")
   }
 
-  val filePathRecursive = s"../inputs/recursive_math_3.txt"
+  val filePathRecursive = s"inputs/recursive_math_3.txt"
   val fileContentRecursive = new String(
     Files.readAllBytes(Paths.get(filePathRecursive))
   )
