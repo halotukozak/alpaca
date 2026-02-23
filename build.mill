@@ -97,7 +97,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     def scalaTestVersion = "3.2.19"
 
   object benchmarks extends ScalaModule with JmhModule:
-    def scalaVersion = "3.8.1"
+    def scalaVersion = build.scalaVersion()
     def moduleDeps = Seq(build)
     def jmhCoreVersion = "1.37"
 
@@ -107,7 +107,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
         super.sources() ++ Seq(sharedSources())
       }
       override def forkWorkingDir = Task(moduleDir / os.up)
-      override def scalacOptions = Seq("-deprecation", "-feature", "-unchecked")
+      override def scalacOptions = build.scalacOptions()
 
     object alpaca extends BenchmarkScalaModule:
       def scalaVersion = build.scalaVersion()
