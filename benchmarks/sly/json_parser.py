@@ -29,7 +29,7 @@ class JsonParser(Parser):
     
     @_('BOOL')
     def value(self, p):
-        return bool(p.BOOL)
+        return p.BOOL == "true"
     
     @_('NUM')
     def value(self, p):
