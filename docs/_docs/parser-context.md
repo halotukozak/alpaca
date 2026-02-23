@@ -3,11 +3,13 @@
 Parser context lets you carry mutable state through parsing reductions.
 Stateless parsers use `ParserCtx.Empty` by default; custom contexts carry domain-specific state like symbol tables, error accumulators, or any state that evolves as productions are reduced.
 
+[//]: # (todo: these sections should be at the bottom)
+
 > **Compile-time processing:** When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx`, has `Copyable` derived, and generates the appropriate context threading code. At runtime, the initial context is created via `Empty[Ctx]` (using default constructor values) and the same object is passed to every rule reduction in a single `parse()` call.
 
 ## ParserCtx.Empty (Default)
 
-When you extend `Parser` without a type parameter, the lexer uses `ParserCtx.Empty` internally.
+When you extend `Parser` without a type parameter, the parser uses `ParserCtx.Empty` internally.
 No context definition is needed — this is the right choice for parsers that only care about the parsed value, not accumulated state.
 
 ```scala sc:nocompile
@@ -75,11 +77,7 @@ object CalcParser extends Parser[CalcContext]:
     case Statement(stmt) => stmt
 ```
 
-`ctx` is `@compileTimeOnly` — it is only valid syntactically inside `rule` bodies:
-
-- Cannot use `ctx` in `resolutions = Set(...)` — compile error.
-- Cannot use `ctx` at class body level or in field initializers — compile error.
-- Cannot use `ctx` in companion object methods — compile error.
+`ctx` is `@compileTimeOnly` — it is only valid syntactically inside `rule` bodies.
 
 ## Shared State Across Reductions
 
@@ -108,19 +106,7 @@ There is no per-rule copy — mutations accumulate across all reductions.
 
 `ParserCtx` and `LexerCtx` are completely independent.
 The parser context has **no** `text`, `position`, or `line` fields.
-To access positional information in parser rule bodies, use the fields on the `Lexeme` binding — not `ctx`:
-
-```scala sc:nocompile
-import alpaca.*
-
-// WRONG: ParserCtx has no position field
-{ case CalcLexer.NUMBER(n) => ctx.position }  // compile error: value position is not a member
-
-// CORRECT: use the lexeme's context snapshot
-{ case CalcLexer.ID(id) =>
-    ctx.errors.append(("undefined", id, id.line))  // id.line from the lexeme snapshot
-}
-```
+To access positional information in parser rule bodies, use the fields on the `Lexeme` binding — not `ctx`.
 
 Every terminal binding (e.g., `id` in `CalcLexer.ID(id)`) is a `Lexeme` object carrying a snapshot of the lexer context at match time.
 The available fields are:
@@ -132,39 +118,9 @@ The available fields are:
 | `binding.position` | `Int` | Character position from the lexer context snapshot |
 | `binding.line` | `Int` | Line number from the lexer context snapshot |
 
-See [Extractors](extractors.html) for the full `Lexeme` field reference and how custom lexer context fields appear in bindings.
-
-## The parse() Return Value
-
-`parse()` returns a named tuple `(ctx: Ctx, result: T | Null)`:
-
-- `ctx` — the **final** context after all reductions in the parse are complete
-- `result` — the value produced by `root`, or `null` if the input was rejected by the grammar
-
-```scala sc:nocompile
-import alpaca.*
-
-val (ctx, result) = CalcParser.parse(CalcLexer.tokenize("x = 42").lexemes)
-// ctx.names now contains "x" -> 42 (accumulated across all reductions)
-// result: Int | Null
-
-// Always check result for null before using
-if result != null then println(s"Result: $result, names: ${ctx.names}")
-```
-
-For stateless parsers, the context is `ParserCtx.Empty` and can be discarded:
-
-```scala sc:nocompile
-import alpaca.*
-
-val (_, result) = StatelessParser.parse(StatelessLexer.tokenize("1 + 2").lexemes)
-// result: Double | Null  -- 3.0 for valid input, null for invalid input
-```
-
-`result` is `T | Null`, not `Option[T]`.
-If parsing fails (the input does not match the grammar), `result` is `null` — not an exception.
-Always check for null before using the result.
+[//]: # (todo dodaj, że to line, position pochodzi stricte z Default Context)
 
 ---
 
+See [Extractors](extractors.html) for the full `Lexeme` field reference and how custom lexer context fields appear in bindings.
 See [Parser](parser.html) for grammar rules and EBNF operators.
