@@ -7,9 +7,9 @@
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
 
-import mill.*
-import mill.scalalib.*
-import mill.scalalib.publish.*
+import mill._
+import mill.scalalib._
+import mill.scalalib.publish._
 import mill.contrib.scoverage.ScoverageModule
 import mill.contrib.jmh.JmhModule
 import mill.util.VcsVersion
@@ -96,7 +96,33 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
 
-object benchmarks extends ScalaModule with JmhModule:
-  def scalaVersion = "3.8.1"
-  def moduleDeps = Seq(build.`package`)
-  def jmhCoreVersion = "1.37"
+  object benchmarks extends ScalaModule with JmhModule:
+    def scalaVersion = "3.8.1"
+    def moduleDeps = Seq(build)
+    def jmhCoreVersion = "1.37"
+
+    trait BenchmarkScalaModule extends ScalaModule:
+      def sharedSources = Task.Source(moduleDir / os.up / "shared" / "src")
+      override def sources = Task {
+        super.sources() ++ Seq(sharedSources())
+      }
+      override def forkWorkingDir = Task(moduleDir / os.up)
+      override def scalacOptions = Seq("-deprecation", "-feature", "-unchecked")
+
+    object alpaca extends BenchmarkScalaModule:
+      def scalaVersion = build.scalaVersion()
+      override def scalacOptions = super.scalacOptions() ++ Seq("-experimental", "-Yretain-trees")
+      def moduleDeps = Seq(build)
+
+    object fastparse extends BenchmarkScalaModule:
+      def scalaVersion = "3.3.1"
+      def mvnDeps = Seq(mvn"com.lihaoyi::fastparse:3.0.2")
+
+    def runAll() = Task.Command {
+      val root = moduleDir
+      os.call(("python3", "inputs/generate_tests.py"), cwd = root, stdout = os.Inherit)
+      os.call((root / os.up / "mill", "benchmarks.alpaca.run"), cwd = root / os.up, stdout = os.Inherit)
+      os.call((root / os.up / "mill", "benchmarks.fastparse.run"), cwd = root / os.up, stdout = os.Inherit)
+      os.call(("python3", "sly/benchmark.py"), cwd = root, stdout = os.Inherit)
+      println("\n=== All benchmarks completed. Results in outputs/ ===")
+    }
