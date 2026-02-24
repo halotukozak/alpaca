@@ -102,6 +102,36 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     def jmhCoreVersion = "1.37"
     override def scalacOptions = Seq("-experimental", "-preview", "-Yretain-trees")
 
+    // Override to use ASM mode instead of the default "reflection" mode.
+    // The "reflection" generator uses Java's Class.getDeclaredMethods() which only
+    // sees RetentionPolicy.RUNTIME annotations; @Benchmark has RetentionPolicy.CLASS
+    // and is therefore invisible to Java reflection. The ASM generator reads class
+    // file bytecode directly and finds all annotations regardless of retention policy.
+    override def generateBenchmarkSources = Task {
+      val dest = Task.ctx().dest
+      val sourcesDir = dest / "jmh_sources"
+      val resourcesDir = dest / "jmh_resources"
+      os.remove.all(sourcesDir)
+      os.makeDir.all(sourcesDir)
+      os.remove.all(resourcesDir)
+      os.makeDir.all(resourcesDir)
+      Jvm.callProcess(
+        mainClass = "org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator",
+        classPath = (runClasspath() ++ generatorDeps()).map(_.path),
+        mainArgs = Seq(
+          compile().classes.path.toString,
+          sourcesDir.toString,
+          resourcesDir.toString,
+          "asm"
+        ),
+        javaHome = javaHome().map(_.path),
+        jvmArgs = forkArgs().toSeq,
+        stdin = os.Inherit,
+        stdout = os.Inherit
+      )
+      (PathRef(sourcesDir), PathRef(resourcesDir))
+    }
+
     trait BenchmarkScalaModule extends ScalaModule:
       def sharedSources = Task.Source(moduleDir / os.up / "shared" / "src")
       override def sources = Task {
