@@ -123,7 +123,7 @@ val (_, lexemes) = Lexer.tokenize("hi there")
 // lexemes(0).text      // "hi"  (the matched string, not remaining input)
 ```
 
-[//]: # (todo more about type safe Selectable)
+The type safety comes from `Selectable`: the `tokenize()` return type carries a structural refinement that encodes every context field and its type. The compiler resolves `lexemes(0).position` to `Int` at compile time — not by casting from `Any` at runtime. If you access a field that does not exist on the context type (e.g., `.indent` when the lexer uses `LexerCtx.Default`), the compiler reports a type error.
 
 Two important details:
 

@@ -28,7 +28,7 @@ final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbo
           |Shift \"$symbol\" vs Reduce $red
           |In situation like:
           |${path.filter(_ != Symbol.EOF).mkShow("", " ", " ...")}
-          |Consider marking production $red to be alwaysBefore or alwaysAfter "$symbol"
+          |Consider marking production $red to be before or after "$symbol"
           |""".stripMargin,
   )
 
@@ -44,7 +44,7 @@ final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Sy
           |Reduce $red1 vs Reduce $red2
           |In situation like:
           |${path.filter(_ != Symbol.EOF).mkShow("", " ", " ...")}
-          |Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+          |Consider marking one of the productions to be before or after the other
           |""".stripMargin,
   )
 
