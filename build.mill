@@ -7,9 +7,9 @@
 //| - org.scala-steward::scala-steward-mill-plugin::0.19.0
 package build
 
-import mill._
-import mill.scalalib._
-import mill.scalalib.publish._
+import mill.*
+import mill.scalalib.*
+import mill.scalalib.publish.*
 import mill.contrib.scoverage.ScoverageModule
 import mill.contrib.jmh.JmhModule
 import mill.util.VcsVersion
