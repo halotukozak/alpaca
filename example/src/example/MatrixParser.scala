@@ -2,11 +2,9 @@ package example
 
 import MatrixLexer as ML
 
-import alpaca.{Production as P, *}
+import alpaca.*
 
-import java.util.jar.Attributes.Name
-import scala.util.chaining.scalaUtilChainingOps
-
+@annotation.nowarn("msg=unused import")
 object MatrixParser extends Parser:
   val root: Rule[AST.Tree] = rule { case Instruction.List(is) =>
     AST.Block(is, is.head.line)

@@ -2,7 +2,6 @@ package example
 
 import scala.collection.mutable
 import scala.compiletime.ops.boolean.*
-import scala.compiletime.ops.int.*
 
 sealed trait Type(val isFinal: Boolean = true):
   def |(other: Type): Type = Type.Or(this, other)
@@ -44,8 +43,8 @@ object Type:
   type Numerical = Numerical.type
 
   def Or(left: Type, right: Type): Type = (left, right) match
-    case (left: Any, _) => Any
-    case (_, right: Any) => Any
+    case (_: Any, _) => Any
+    case (_, _: Any) => Any
     case (left: AnyOf, right: AnyOf) => AnyOf(left.all ++ right.all)
     case (left: AnyOf, right) => AnyOf(left.all + right)
     case (left, right: AnyOf) => AnyOf(right.all + left)

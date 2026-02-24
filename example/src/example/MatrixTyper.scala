@@ -96,7 +96,7 @@ object MatrixTyper extends TreeMapper[TypeEnv]:
       for
         (typedRef, env) <- ref.visit(env)
         (typedArgs, env) <- args.visitAll(env)
-        argTypes = typedArgs.map(_.tpe)
+        _ = typedArgs.map(_.tpe)
         typedResult <- ref.tpe match
           case func: Type.Function => func.checkArgs(typedArgs)(line)
 

@@ -3,7 +3,6 @@ package example
 import example.runtime.*
 
 import scala.collection.mutable
-import scala.reflect.Typeable
 import scala.util.control.Breaks.{break, breakable}
 import scala.util.control.NoStackTrace
 
@@ -97,11 +96,11 @@ object MatrixInterpreter extends TreeTraverser[Environment, ScalaResult]:
   override given Process[AST.Return] = env =>
     case AST.Return(expr, _) => throw Exit.ReturnException(expr.visit(env))
 
-  override given Process[AST.Continue] = env => throw Exit.ContinueException
+  override given Process[AST.Continue] = _ => throw Exit.ContinueException
 
-  override given Process[AST.Break] = env => throw Exit.BreakException
+  override given Process[AST.Break] = _ => throw Exit.BreakException
 
-  override given Process[AST.Literal] = env =>
+  override given Process[AST.Literal] = _ =>
     case AST.Literal(tpe, value, _) =>
       value
 

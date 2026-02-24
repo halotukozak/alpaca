@@ -1,7 +1,5 @@
 package example
 
-import example.AST.*
-
 object TreePrinter extends TreeVisitor[Int]:
   override val handleNull: Int => Unit = _ => ()
 

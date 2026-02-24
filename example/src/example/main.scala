@@ -27,7 +27,7 @@ def main(): Unit =
           false,
           runtime.Function.values.map(func => (func.productPrefix, func.toRef)).toMap,
         )
-        val scoped = MatrixScoper.visitNullable(ast)(globalScope).get
+        val _ = MatrixScoper.visitNullable(ast)(globalScope).get
         val initialTypeEnv = runtime.Function.values
           .map: func =>
             (func.productPrefix, func.tpe)
