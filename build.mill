@@ -96,17 +96,10 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
 
-  object benchmarks extends ScalaModule with JmhModule:
-    def scalaVersion = build.scalaVersion()
-    def moduleDeps = Seq(build)
-    def jmhCoreVersion = "1.37"
-    override def scalacOptions = Seq("-experimental", "-preview", "-Yretain-trees")
+  object benchmarks extends Module:
 
-    trait BenchmarkScalaModule extends ScalaModule:
-      def sharedSources = Task.Source(moduleDir / os.up / "shared" / "src")
-      override def sources = Task {
-        super.sources() ++ Seq(sharedSources())
-      }
+    trait BenchmarkScalaModule extends ScalaModule with JmhModule:
+      def jmhCoreVersion = "1.37"
       override def forkWorkingDir = Task(moduleDir / os.up)
       override def scalacOptions = build.scalacOptions()
 
@@ -120,10 +113,19 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
       def mvnDeps = Seq(mvn"com.lihaoyi::fastparse:3.0.2")
 
     def runAll() = Task.Command {
-      val root = moduleDir
+      val root = alpaca.moduleDir / os.up
       os.call(("python3", "inputs/generate_tests.py"), cwd = root, stdout = os.Inherit)
-      os.call((root / os.up / "mill", "benchmarks.alpaca.run"), cwd = root / os.up, stdout = os.Inherit)
-      os.call((root / os.up / "mill", "benchmarks.fastparse.run"), cwd = root / os.up, stdout = os.Inherit)
+      os.call(
+        (root / os.up / "mill", "benchmarks.alpaca.runJmh",
+         "-rf", "json", "-rff", (root / "outputs" / "alpaca_results.json").toString),
+        cwd = root / os.up, stdout = os.Inherit,
+      )
+      os.call(
+        (root / os.up / "mill", "benchmarks.fastparse.runJmh",
+         "-rf", "json", "-rff", (root / "outputs" / "fastparse_results.json").toString),
+        cwd = root / os.up, stdout = os.Inherit,
+      )
       os.call(("python3", "sly/benchmark.py"), cwd = root, stdout = os.Inherit)
+      os.call(("python3", "plot_results.py"), cwd = root, stdout = os.Inherit)
       println("\n=== All benchmarks completed. Results in outputs/ ===")
     }
