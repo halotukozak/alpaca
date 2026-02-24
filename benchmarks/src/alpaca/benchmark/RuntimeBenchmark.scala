@@ -3,6 +3,7 @@ package alpaca.benchmark
 import alpaca.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.TimeUnit
+import annotation.nowarn
 
 private val JsonLexer = lexer:
   case "\\s+" => Token.Ignored
@@ -13,7 +14,7 @@ private val JsonLexer = lexer:
   case ":" => Token[":"]
   case "," => Token[","]
   case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
-  case "null" => Token["Null"](null)
+  case "null" =>  Token["Null"](null: @nowarn("msg=unused explicit parameter")) // todo: why needs @nowarn?
   case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
   case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 
