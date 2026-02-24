@@ -1,0 +1,143 @@
+name: Runtime Benchmark
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  benchmark:
+    name: Runtime Benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v6
+        with:
+          path: current
+
+      - name: Checkout Base Branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Cache Mill dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('current/build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+
+      - name: Run Base Benchmarks
+        id: base_bench
+        continue-on-error: true #todo: remove
+        run: |
+          echo "::group::Benchmarking base"
+          (
+            cd base
+            ./mill benchmarks.runJmh -rf json -rff ../base-results.json -wi 1 -i 3 -f 1
+          )
+          echo "::endgroup::"
+
+      - name: Run Current Benchmarks
+        run: |
+          echo "::group::Benchmarking current"
+          (
+            cd current
+            ./mill benchmarks.runJmh -rf json -rff ../current-results.json -wi 1 -i 3 -f 1
+          )
+          echo "::endgroup::"
+
+      - name: Upsert PR Comment
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+
+            const hasBase = fs.existsSync('base-results.json');
+            const hasCurrent = fs.existsSync('current-results.json');
+
+            let body;
+
+            if (!hasCurrent) {
+              body = '### 🏃 Runtime Benchmark\n\n❌ Benchmark run failed on the current branch.';
+            } else {
+              const currResults = JSON.parse(fs.readFileSync('current-results.json', 'utf8'));
+              const baseResults = hasBase
+                ? JSON.parse(fs.readFileSync('base-results.json', 'utf8'))
+                : [];
+
+              const baseMap = Object.fromEntries(
+                baseResults.map(r => [r.benchmark, r.primaryMetric])
+              );
+
+              const baseRef = context.payload.pull_request.base.ref;
+              const headRef = context.payload.pull_request.head.ref;
+
+              const rows = currResults.map(r => {
+                const name = r.benchmark.split('.').pop();
+                const unit = r.primaryMetric.scoreUnit;
+                const curr = r.primaryMetric.score;
+                const base = baseMap[r.benchmark];
+
+                if (!base) {
+                  return `| \`${name}\` | N/A | ${curr.toFixed(3)} ${unit} | N/A | ℹ️ |`;
+                }
+
+                const diff = curr - base.score;
+                const perc = (diff / base.score) * 100;
+                const sign = diff > 0 ? '+' : '';
+                let emoji = '✅';
+                if (perc > 5) emoji = '⚠️';
+                else if (Math.abs(perc) <= 5) emoji = 'ℹ️';
+
+                return `| \`${name}\` | ${base.score.toFixed(3)} ${unit} | ${curr.toFixed(3)} ${unit} | ${sign}${diff.toFixed(3)} (${sign}${perc.toFixed(1)}%) | ${emoji} |`;
+              });
+
+              body = [
+                '### 🏃 Runtime Benchmark',
+                '',
+                `| Benchmark | Base (${baseRef}) | Current (${headRef}) | Diff | |`,
+                '| :--- | :--- | :--- | :--- | :--- |',
+                ...rows,
+                '',
+                ...(hasBase ? [] : ['> ⚠️ Base branch has no benchmarks module — showing current results only.']),
+              ].join('\n');
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c => c.body.includes('### 🏃 Runtime Benchmark'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
