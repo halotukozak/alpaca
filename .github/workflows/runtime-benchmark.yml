@@ -42,7 +42,6 @@ jobs:
 
       - name: Run Base Benchmarks
         id: base_bench
-        continue-on-error: true #todo: remove
         run: |
           echo "::group::Benchmarking base"
           (
