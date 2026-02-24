@@ -77,6 +77,70 @@ def generate_recursive_json(num_objects: int, output_file: str):
 
     print(f"  Generated {output_file}: {num_objects} objects")
 
+
+# Generates big-grammar input files containing whitespace-separated token
+# keywords from {tok0..tok29} plus integers, arranged in valid sequences
+# that the big-grammar parser rules accept across all three libraries.
+#
+# The generated patterns cycle through:
+#   - pair rules:    tok0 tok1, tok2 tok3, ..., tok28 tok29
+#   - triple rules:  tok0 tok1 tok2, tok3 tok4 tok5, ...
+#   - quad rules:    tok0 tok1 tok2 tok3, tok4 tok5 tok6 tok7, ...
+#   - quint rules:   tok0 tok1 tok2 tok3 tok4, tok5 tok6 tok7 tok8 tok9, ...
+#   - numeric rules: 42, tok0 99, tok10 55, tok20 77
+#   - single tokens: tok0, tok5, tok10, tok15, tok20
+PATTERNS = [
+    # Pair rules (15 patterns)
+    "tok0 tok1", "tok2 tok3", "tok4 tok5", "tok6 tok7", "tok8 tok9",
+    "tok10 tok11", "tok12 tok13", "tok14 tok15", "tok16 tok17", "tok18 tok19",
+    "tok20 tok21", "tok22 tok23", "tok24 tok25", "tok26 tok27", "tok28 tok29",
+    # Triple rules (10 patterns)
+    "tok0 tok1 tok2", "tok3 tok4 tok5", "tok6 tok7 tok8",
+    "tok9 tok10 tok11", "tok12 tok13 tok14", "tok15 tok16 tok17",
+    "tok18 tok19 tok20", "tok21 tok22 tok23", "tok24 tok25 tok26",
+    "tok27 tok28 tok29",
+    # Quad rules (10 patterns)
+    "tok0 tok1 tok2 tok3", "tok4 tok5 tok6 tok7",
+    "tok8 tok9 tok10 tok11", "tok12 tok13 tok14 tok15",
+    "tok16 tok17 tok18 tok19", "tok20 tok21 tok22 tok23",
+    "tok24 tok25 tok26 tok27",
+    "tok0 tok5 tok10 tok15", "tok1 tok6 tok11 tok16", "tok2 tok7 tok12 tok17",
+    # Quint rules (10 patterns)
+    "tok0 tok1 tok2 tok3 tok4", "tok5 tok6 tok7 tok8 tok9",
+    "tok10 tok11 tok12 tok13 tok14", "tok15 tok16 tok17 tok18 tok19",
+    "tok20 tok21 tok22 tok23 tok24", "tok25 tok26 tok27 tok28 tok29",
+    "tok0 tok3 tok6 tok9 tok12", "tok1 tok4 tok7 tok10 tok13",
+    "tok2 tok5 tok8 tok11 tok14", "tok15 tok18 tok21 tok24 tok27",
+    # Numeric rules (5 patterns)
+    "42", "99 77", "tok0 55", "tok10 88", "tok20 33",
+    # Single-token rules (5 patterns)
+    "tok0", "tok5", "tok10", "tok15", "tok20",
+]
+
+
+def generate_big_grammar(num_tokens: int, output_file: str):
+    """Generate big-grammar input with approximately num_tokens token instances.
+
+    Cycles through all valid patterns to exercise many parser rules.
+    """
+    with open(output_file, 'w') as f:
+        tokens_written = 0
+        pattern_idx = 0
+        first = True
+        while tokens_written < num_tokens:
+            pattern = PATTERNS[pattern_idx % len(PATTERNS)]
+            pattern_tokens = len(pattern.split())
+            if not first:
+                f.write("\n")
+            f.write(pattern)
+            tokens_written += pattern_tokens
+            pattern_idx += 1
+            first = False
+        f.write("\n")
+
+    print(f"  Generated {output_file}: ~{num_tokens} tokens")
+
+
 if __name__ == "__main__":
     inputs_dir = Path(__file__).parent
 
@@ -85,6 +149,7 @@ if __name__ == "__main__":
         (generate_recursive_math, "recursive_math"),
         (generate_iterative_json, "iterative_json"),
         (generate_recursive_json, "recursive_json"),
+        (generate_big_grammar, "big_grammar"),
     ]
 
     for func, description in tests:
