@@ -47,7 +47,7 @@ jobs:
           echo "::group::Benchmarking base"
           (
             cd base
-            ./mill benchmarks.runJmh -- -rf json -rff ../base-results.json -wi 1 -i 3 -f 1
+            ./mill benchmarks.runJmh -rf json -rff ../base-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
 
@@ -56,7 +56,7 @@ jobs:
           echo "::group::Benchmarking current"
           (
             cd current
-            ./mill benchmarks.runJmh -- -rf json -rff ../current-results.json -wi 1 -i 3 -f 1
+            ./mill benchmarks.runJmh -rf json -rff ../current-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
 
