@@ -1,3 +1,5 @@
+package bench.alpaca
+
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
@@ -35,7 +37,13 @@ class AlpacaBenchmark:
 
   @Setup(Level.Trial)
   def setup(): Unit =
-    val inputPath = Paths.get(s"inputs/${scenario}_${size}.txt")
+    // Try multiple base directories: forkWorkingDir may point to benchmarks/ or project root
+    val candidates = Seq(
+      Paths.get(s"inputs/${scenario}_${size}.txt"),                     // benchmarks/ as cwd
+      Paths.get(s"benchmarks/inputs/${scenario}_${size}.txt"),          // project root as cwd
+    )
+    val inputPath = candidates.find(Files.exists(_))
+      .getOrElse(sys.error(s"Input file not found for $scenario/$size. Tried: ${candidates.mkString(", ")}"))
     input = new String(Files.readAllBytes(inputPath))
 
     scenario match

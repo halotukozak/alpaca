@@ -5,7 +5,9 @@ Designed as a stress test for grammar complexity with 30+ token types
 and 50+ parser rules. Matches the structure of the Alpaca/Fastparse
 BigGrammar implementations so all three libraries parse the same inputs.
 
-Input format: whitespace-separated keywords from {tok0..tok29, integers}.
+Input format: whitespace-separated keywords from {ka..kz, la..ld, integers}.
+Token names are 2-char codes to match Alpaca/Fastparse which use short codes
+to avoid prefix shadowing in the regex lexer.
 """
 
 from pathlib import Path
@@ -14,45 +16,45 @@ from sly import Lexer, Parser
 
 class BigGrammarLexer(Lexer):
     tokens = {
-        TOK0, TOK1, TOK2, TOK3, TOK4, TOK5, TOK6, TOK7, TOK8, TOK9,
-        TOK10, TOK11, TOK12, TOK13, TOK14, TOK15, TOK16, TOK17, TOK18, TOK19,
-        TOK20, TOK21, TOK22, TOK23, TOK24, TOK25, TOK26, TOK27, TOK28, TOK29,
+        KA, KB, KC, KD, KE, KF, KG, KH, KI, KJ,
+        KK, KL, KM, KN, KO, KP, KQ, KR, KS, KT,
+        KU, KV, KW, KX, KY, KZ, LA, LB, LC, LD,
         NUM,
     }
     ignore = ' \t\n'
 
-    # Keywords: tok0 through tok29 (must be defined before NUM to take priority)
-    TOK0  = r'\btok0\b'
-    TOK1  = r'\btok1\b'
-    TOK2  = r'\btok2\b'
-    TOK3  = r'\btok3\b'
-    TOK4  = r'\btok4\b'
-    TOK5  = r'\btok5\b'
-    TOK6  = r'\btok6\b'
-    TOK7  = r'\btok7\b'
-    TOK8  = r'\btok8\b'
-    TOK9  = r'\btok9\b'
-    TOK10 = r'\btok10\b'
-    TOK11 = r'\btok11\b'
-    TOK12 = r'\btok12\b'
-    TOK13 = r'\btok13\b'
-    TOK14 = r'\btok14\b'
-    TOK15 = r'\btok15\b'
-    TOK16 = r'\btok16\b'
-    TOK17 = r'\btok17\b'
-    TOK18 = r'\btok18\b'
-    TOK19 = r'\btok19\b'
-    TOK20 = r'\btok20\b'
-    TOK21 = r'\btok21\b'
-    TOK22 = r'\btok22\b'
-    TOK23 = r'\btok23\b'
-    TOK24 = r'\btok24\b'
-    TOK25 = r'\btok25\b'
-    TOK26 = r'\btok26\b'
-    TOK27 = r'\btok27\b'
-    TOK28 = r'\btok28\b'
-    TOK29 = r'\btok29\b'
-    NUM   = r'\d+'
+    # Keywords: ka through kz, la through ld (2-char codes, no prefix conflicts)
+    KA = r'\bka\b'
+    KB = r'\bkb\b'
+    KC = r'\bkc\b'
+    KD = r'\bkd\b'
+    KE = r'\bke\b'
+    KF = r'\bkf\b'
+    KG = r'\bkg\b'
+    KH = r'\bkh\b'
+    KI = r'\bki\b'
+    KJ = r'\bkj\b'
+    KK = r'\bkk\b'
+    KL = r'\bkl\b'
+    KM = r'\bkm\b'
+    KN = r'\bkn\b'
+    KO = r'\bko\b'
+    KP = r'\bkp\b'
+    KQ = r'\bkq\b'
+    KR = r'\bkr\b'
+    KS = r'\bks\b'
+    KT = r'\bkt\b'
+    KU = r'\bku\b'
+    KV = r'\bkv\b'
+    KW = r'\bkw\b'
+    KX = r'\bkx\b'
+    KY = r'\bky\b'
+    KZ = r'\bkz\b'
+    LA = r'\bla\b'
+    LB = r'\blb\b'
+    LC = r'\blc\b'
+    LD = r'\bld\b'
+    NUM = r'\d+'
 
     def error(self, t):
         self.index += 1
@@ -82,147 +84,147 @@ class BigGrammarParser(Parser):
     # ---------------------------------------------------------------
 
     # --- Pair rules (2-token sequences): rules 0-14 ---
-    @_('TOK0 TOK1')
+    @_('KA KB')
     def statement(self, p):
-        return ('pair01', p.TOK0, p.TOK1)
+        return ('pair_ab', p.KA, p.KB)
 
-    @_('TOK2 TOK3')
+    @_('KC KD')
     def statement(self, p):
-        return ('pair23', p.TOK2, p.TOK3)
+        return ('pair_cd', p.KC, p.KD)
 
-    @_('TOK4 TOK5')
+    @_('KE KF')
     def statement(self, p):
-        return ('pair45', p.TOK4, p.TOK5)
+        return ('pair_ef', p.KE, p.KF)
 
-    @_('TOK6 TOK7')
+    @_('KG KH')
     def statement(self, p):
-        return ('pair67', p.TOK6, p.TOK7)
+        return ('pair_gh', p.KG, p.KH)
 
-    @_('TOK8 TOK9')
+    @_('KI KJ')
     def statement(self, p):
-        return ('pair89', p.TOK8, p.TOK9)
+        return ('pair_ij', p.KI, p.KJ)
 
-    @_('TOK10 TOK11')
+    @_('KK KL')
     def statement(self, p):
-        return ('pair1011', p.TOK10, p.TOK11)
+        return ('pair_kl', p.KK, p.KL)
 
-    @_('TOK12 TOK13')
+    @_('KM KN')
     def statement(self, p):
-        return ('pair1213', p.TOK12, p.TOK13)
+        return ('pair_mn', p.KM, p.KN)
 
-    @_('TOK14 TOK15')
+    @_('KO KP')
     def statement(self, p):
-        return ('pair1415', p.TOK14, p.TOK15)
+        return ('pair_op', p.KO, p.KP)
 
-    @_('TOK16 TOK17')
+    @_('KQ KR')
     def statement(self, p):
-        return ('pair1617', p.TOK16, p.TOK17)
+        return ('pair_qr', p.KQ, p.KR)
 
-    @_('TOK18 TOK19')
+    @_('KS KT')
     def statement(self, p):
-        return ('pair1819', p.TOK18, p.TOK19)
+        return ('pair_st', p.KS, p.KT)
 
-    @_('TOK20 TOK21')
+    @_('KU KV')
     def statement(self, p):
-        return ('pair2021', p.TOK20, p.TOK21)
+        return ('pair_uv', p.KU, p.KV)
 
-    @_('TOK22 TOK23')
+    @_('KW KX')
     def statement(self, p):
-        return ('pair2223', p.TOK22, p.TOK23)
+        return ('pair_wx', p.KW, p.KX)
 
-    @_('TOK24 TOK25')
+    @_('KY KZ')
     def statement(self, p):
-        return ('pair2425', p.TOK24, p.TOK25)
+        return ('pair_yz', p.KY, p.KZ)
 
-    @_('TOK26 TOK27')
+    @_('LA LB')
     def statement(self, p):
-        return ('pair2627', p.TOK26, p.TOK27)
+        return ('pair_la_lb', p.LA, p.LB)
 
-    @_('TOK28 TOK29')
+    @_('LC LD')
     def statement(self, p):
-        return ('pair2829', p.TOK28, p.TOK29)
+        return ('pair_lc_ld', p.LC, p.LD)
 
     # --- Triple rules (3-token sequences): rules 15-24 ---
-    @_('TOK0 TOK1 TOK2')
+    @_('KA KB KC')
     def statement(self, p):
-        return ('triple012', p.TOK0, p.TOK1, p.TOK2)
+        return ('triple_abc', p.KA, p.KB, p.KC)
 
-    @_('TOK3 TOK4 TOK5')
+    @_('KD KE KF')
     def statement(self, p):
-        return ('triple345', p.TOK3, p.TOK4, p.TOK5)
+        return ('triple_def', p.KD, p.KE, p.KF)
 
-    @_('TOK6 TOK7 TOK8')
+    @_('KG KH KI')
     def statement(self, p):
-        return ('triple678', p.TOK6, p.TOK7, p.TOK8)
+        return ('triple_ghi', p.KG, p.KH, p.KI)
 
-    @_('TOK9 TOK10 TOK11')
+    @_('KJ KK KL')
     def statement(self, p):
-        return ('triple91011', p.TOK9, p.TOK10, p.TOK11)
+        return ('triple_jkl', p.KJ, p.KK, p.KL)
 
-    @_('TOK12 TOK13 TOK14')
+    @_('KM KN KO')
     def statement(self, p):
-        return ('triple121314', p.TOK12, p.TOK13, p.TOK14)
+        return ('triple_mno', p.KM, p.KN, p.KO)
 
-    @_('TOK15 TOK16 TOK17')
+    @_('KP KQ KR')
     def statement(self, p):
-        return ('triple151617', p.TOK15, p.TOK16, p.TOK17)
+        return ('triple_pqr', p.KP, p.KQ, p.KR)
 
-    @_('TOK18 TOK19 TOK20')
+    @_('KS KT KU')
     def statement(self, p):
-        return ('triple181920', p.TOK18, p.TOK19, p.TOK20)
+        return ('triple_stu', p.KS, p.KT, p.KU)
 
-    @_('TOK21 TOK22 TOK23')
+    @_('KV KW KX')
     def statement(self, p):
-        return ('triple212223', p.TOK21, p.TOK22, p.TOK23)
+        return ('triple_vwx', p.KV, p.KW, p.KX)
 
-    @_('TOK24 TOK25 TOK26')
+    @_('KY KZ LA')
     def statement(self, p):
-        return ('triple242526', p.TOK24, p.TOK25, p.TOK26)
+        return ('triple_yz_la', p.KY, p.KZ, p.LA)
 
-    @_('TOK27 TOK28 TOK29')
+    @_('LB LC LD')
     def statement(self, p):
-        return ('triple272829', p.TOK27, p.TOK28, p.TOK29)
+        return ('triple_lb_lc_ld', p.LB, p.LC, p.LD)
 
     # --- Quad rules (4-token sequences): rules 25-34 ---
-    @_('TOK0 TOK1 TOK2 TOK3')
+    @_('KA KB KC KD')
     def statement(self, p):
-        return ('quad0123', p.TOK0, p.TOK1, p.TOK2, p.TOK3)
+        return ('quad_abcd', p.KA, p.KB, p.KC, p.KD)
 
-    @_('TOK4 TOK5 TOK6 TOK7')
+    @_('KE KF KG KH')
     def statement(self, p):
-        return ('quad4567', p.TOK4, p.TOK5, p.TOK6, p.TOK7)
+        return ('quad_efgh', p.KE, p.KF, p.KG, p.KH)
 
-    @_('TOK8 TOK9 TOK10 TOK11')
+    @_('KI KJ KK KL')
     def statement(self, p):
-        return ('quad891011', p.TOK8, p.TOK9, p.TOK10, p.TOK11)
+        return ('quad_ijkl', p.KI, p.KJ, p.KK, p.KL)
 
-    @_('TOK12 TOK13 TOK14 TOK15')
+    @_('KM KN KO KP')
     def statement(self, p):
-        return ('quad12131415', p.TOK12, p.TOK13, p.TOK14, p.TOK15)
+        return ('quad_mnop', p.KM, p.KN, p.KO, p.KP)
 
-    @_('TOK16 TOK17 TOK18 TOK19')
+    @_('KQ KR KS KT')
     def statement(self, p):
-        return ('quad16171819', p.TOK16, p.TOK17, p.TOK18, p.TOK19)
+        return ('quad_qrst', p.KQ, p.KR, p.KS, p.KT)
 
-    @_('TOK20 TOK21 TOK22 TOK23')
+    @_('KU KV KW KX')
     def statement(self, p):
-        return ('quad20212223', p.TOK20, p.TOK21, p.TOK22, p.TOK23)
+        return ('quad_uvwx', p.KU, p.KV, p.KW, p.KX)
 
-    @_('TOK24 TOK25 TOK26 TOK27')
+    @_('KY KZ LA LB')
     def statement(self, p):
-        return ('quad24252627', p.TOK24, p.TOK25, p.TOK26, p.TOK27)
+        return ('quad_yz_la_lb', p.KY, p.KZ, p.LA, p.LB)
 
-    @_('TOK0 TOK5 TOK10 TOK15')
+    @_('KA KF KK KP')
     def statement(self, p):
-        return ('quad_skip0', p.TOK0, p.TOK5, p.TOK10, p.TOK15)
+        return ('quad_skip0', p.KA, p.KF, p.KK, p.KP)
 
-    @_('TOK1 TOK6 TOK11 TOK16')
+    @_('KB KG KL KQ')
     def statement(self, p):
-        return ('quad_skip1', p.TOK1, p.TOK6, p.TOK11, p.TOK16)
+        return ('quad_skip1', p.KB, p.KG, p.KL, p.KQ)
 
-    @_('TOK2 TOK7 TOK12 TOK17')
+    @_('KC KH KM KR')
     def statement(self, p):
-        return ('quad_skip2', p.TOK2, p.TOK7, p.TOK12, p.TOK17)
+        return ('quad_skip2', p.KC, p.KH, p.KM, p.KR)
 
     # --- Numeric rules: rules 35-39 ---
     @_('NUM')
@@ -233,79 +235,79 @@ class BigGrammarParser(Parser):
     def statement(self, p):
         return ('num_pair', int(p.NUM0), int(p.NUM1))
 
-    @_('TOK0 NUM')
+    @_('KA NUM')
     def statement(self, p):
-        return ('tok0_num', p.TOK0, int(p.NUM))
+        return ('ka_num', p.KA, int(p.NUM))
 
-    @_('TOK10 NUM')
+    @_('KK NUM')
     def statement(self, p):
-        return ('tok10_num', p.TOK10, int(p.NUM))
+        return ('kk_num', p.KK, int(p.NUM))
 
-    @_('TOK20 NUM')
+    @_('KU NUM')
     def statement(self, p):
-        return ('tok20_num', p.TOK20, int(p.NUM))
+        return ('ku_num', p.KU, int(p.NUM))
 
     # --- Five-token rules: rules 40-49 ---
-    @_('TOK0 TOK1 TOK2 TOK3 TOK4')
+    @_('KA KB KC KD KE')
     def statement(self, p):
-        return ('quint01234',)
+        return ('quint_abcde',)
 
-    @_('TOK5 TOK6 TOK7 TOK8 TOK9')
+    @_('KF KG KH KI KJ')
     def statement(self, p):
-        return ('quint56789',)
+        return ('quint_fghij',)
 
-    @_('TOK10 TOK11 TOK12 TOK13 TOK14')
+    @_('KK KL KM KN KO')
     def statement(self, p):
-        return ('quint1011121314',)
+        return ('quint_klmno',)
 
-    @_('TOK15 TOK16 TOK17 TOK18 TOK19')
+    @_('KP KQ KR KS KT')
     def statement(self, p):
-        return ('quint1516171819',)
+        return ('quint_pqrst',)
 
-    @_('TOK20 TOK21 TOK22 TOK23 TOK24')
+    @_('KU KV KW KX KY')
     def statement(self, p):
-        return ('quint2021222324',)
+        return ('quint_uvwxy',)
 
-    @_('TOK25 TOK26 TOK27 TOK28 TOK29')
+    @_('KZ LA LB LC LD')
     def statement(self, p):
-        return ('quint2526272829',)
+        return ('quint_z_la_lb_lc_ld',)
 
-    @_('TOK0 TOK3 TOK6 TOK9 TOK12')
+    @_('KA KD KG KJ KM')
     def statement(self, p):
         return ('quint_step3a',)
 
-    @_('TOK1 TOK4 TOK7 TOK10 TOK13')
+    @_('KB KE KH KK KN')
     def statement(self, p):
         return ('quint_step3b',)
 
-    @_('TOK2 TOK5 TOK8 TOK11 TOK14')
+    @_('KC KF KI KL KO')
     def statement(self, p):
         return ('quint_step3c',)
 
-    @_('TOK15 TOK18 TOK21 TOK24 TOK27')
+    @_('KP KS KV KY LB')
     def statement(self, p):
         return ('quint_step3d',)
 
     # --- Single-token rules: rules 50-54 ---
-    @_('TOK0')
+    @_('KA')
     def statement(self, p):
-        return ('single', p.TOK0)
+        return ('single', p.KA)
 
-    @_('TOK10')
+    @_('KK')
     def statement(self, p):
-        return ('single', p.TOK10)
+        return ('single', p.KK)
 
-    @_('TOK20')
+    @_('KU')
     def statement(self, p):
-        return ('single', p.TOK20)
+        return ('single', p.KU)
 
-    @_('TOK5')
+    @_('KF')
     def statement(self, p):
-        return ('single', p.TOK5)
+        return ('single', p.KF)
 
-    @_('TOK15')
+    @_('KP')
     def statement(self, p):
-        return ('single', p.TOK15)
+        return ('single', p.KP)
 
     def error(self, p):
         if p:
@@ -319,7 +321,7 @@ if __name__ == "__main__":
     parser = BigGrammarParser()
 
     # Small test input using various rule patterns
-    test_input = "tok0 tok1 tok2 tok3 42 tok10 tok11 tok20 tok21 tok5 tok6 tok7 tok8 tok9"
+    test_input = "ka kb kc kd 42 kk kl ku kv kf kg kh ki kj"
 
     print(f"Test input: {test_input}")
     try:

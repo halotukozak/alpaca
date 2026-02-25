@@ -1,3 +1,5 @@
+package bench.fastparse
+
 // Based on: https://com-lihaoyi.github.io/fastparse/#Json
 import fastparse.*
 import MultiLineWhitespace.*

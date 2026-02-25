@@ -1,3 +1,5 @@
+package bench.alpaca
+
 import alpaca.*
 
 // Synthetic big-grammar lexer with 30 keyword token types plus numbers and whitespace.
