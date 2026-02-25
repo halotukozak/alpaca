@@ -37,13 +37,14 @@ class AlpacaBenchmark:
 
   @Setup(Level.Trial)
   def setup(): Unit =
-    // Try multiple base directories: forkWorkingDir may point to benchmarks/ or project root
-    val candidates = Seq(
-      Paths.get(s"inputs/${scenario}_${size}.txt"),                     // benchmarks/ as cwd
-      Paths.get(s"benchmarks/inputs/${scenario}_${size}.txt"),          // project root as cwd
-    )
+    val fileName = s"${scenario}_${size}.txt"
+    // Walk up from CWD to find benchmarks/inputs/ — JMH fork CWD varies by Mill version
+    val cwd = Paths.get("").toAbsolutePath
+    val candidates = Iterator.iterate(cwd)(_.getParent).takeWhile(_ != null).take(5).flatMap { dir =>
+      Seq(dir.resolve(s"inputs/$fileName"), dir.resolve(s"benchmarks/inputs/$fileName"))
+    }.toSeq
     val inputPath = candidates.find(Files.exists(_))
-      .getOrElse(sys.error(s"Input file not found for $scenario/$size. Tried: ${candidates.mkString(", ")}"))
+      .getOrElse(sys.error(s"Input file not found for $scenario/$size. CWD=$cwd, tried: ${candidates.mkString(", ")}"))
     input = new String(Files.readAllBytes(inputPath))
 
     scenario match
