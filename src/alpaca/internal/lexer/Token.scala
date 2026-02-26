@@ -49,7 +49,6 @@ private[lexer] object TokenInfo:
       ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
       TokenInfo(name, nextRegexGroupName(), pattern),
     )
-// $COVERAGE-ON$
 
   /**
    * Generates a unique name for a regex capture group.
@@ -65,7 +64,7 @@ private[lexer] object TokenInfo:
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
-
+// $COVERAGE-ON$
 /**
  * Base trait for all token types.
  *
