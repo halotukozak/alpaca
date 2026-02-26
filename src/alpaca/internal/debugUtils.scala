@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.util.Try
+// $COVERAGE-OFF$
 
 /**
  * Generates a detailed string representation of a symbol during macro expansion.
@@ -254,7 +255,5 @@ inline private[alpaca] def showRawAst(inline body: Any) = ${ showRawAstImpl('{ b
 
 private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Unit] = supervisedWithLog:
   import quotes.reflect.*
-// $COVERAGE-OFF$
-
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
 // $COVERAGE-ON$

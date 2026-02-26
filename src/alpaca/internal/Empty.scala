@@ -24,13 +24,12 @@ private[alpaca] object Empty:
    */
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
+  // $COVERAGE-OFF$
 
   private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
     timeoutOnTooLongCompilation()
 
     import quotes.reflect.*
-
-// $COVERAGE-OFF$
 
     val tpe = TypeRepr.of[T]
     logger.trace(show"deriving Empty for $tpe")

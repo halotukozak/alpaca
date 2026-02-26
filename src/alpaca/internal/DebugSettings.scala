@@ -26,9 +26,9 @@ object DebugSettings:
   private final val Timeout = "compilationTimeout"
   private final val EnableVerboseNames = "enableVerboseNames"
 
+  // $COVERAGE-OFF$
   given (quotes: Quotes) => DebugSettings =
     import quotes.reflect.*
-// $COVERAGE-OFF$
 
     val settings = CompilationInfo.XmacroSettings
       .flatMap:

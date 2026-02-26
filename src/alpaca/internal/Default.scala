@@ -39,6 +39,7 @@ private[internal] object Default:
   given Default[IterableOnce[Nothing]] = () => Iterable.empty
   given Default[Option[Nothing]] = () => None
 
+  // $COVERAGE-OFF$
   given [T] => (quotes: Quotes) => Default[Expr[T]] = () => '{ ??? }
 
   given [T <: AnyKind] => (quotes: Quotes) => Default[Type[T]] = () => Type.of[Nothing].asInstanceOf[Type[T]]
@@ -49,13 +50,11 @@ private[internal] object Default:
 
   given (quotes: Quotes) => Default[quotes.reflect.Symbol] =
     import quotes.reflect.*
-// $COVERAGE-OFF$
-
     () => Symbol.noSymbol
+  // $COVERAGE-ON$
 
   given [H: Default as head, T <: Tuple: Default as tail] => Default[H *: T] = () => head() *: tail()
 
   given Default[EmptyTuple] = () => EmptyTuple
 
   given [T] => Default[Flow[T]] = () => Flow.empty
-// $COVERAGE-ON$

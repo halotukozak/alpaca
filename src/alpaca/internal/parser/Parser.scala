@@ -124,9 +124,9 @@ abstract class Parser[Ctx <: ParserCtx](
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
 
+// $COVERAGE-OFF$
 def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
   import quotes.reflect.*
-// $COVERAGE-OFF$
 
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef

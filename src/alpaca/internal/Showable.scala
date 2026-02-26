@@ -71,6 +71,7 @@ private[internal] object Showable:
   // todo: add names https://github.com/halotukozak/alpaca/issues/233
   given [N <: Tuple, V <: Tuple: Showable] => Showable[NamedTuple[N, V]] = Showable(_.toTuple.show)
 
+  // $COVERAGE-OFF$
   given [T] => (quotes: Quotes) => Showable[Expr[T]] = Showable:
     import quotes.reflect.*
     expr => expr.asTerm.show
@@ -88,7 +89,6 @@ private[internal] object Showable:
   @targetName("given_Type_bounds")
   given [T] => (quotes: Quotes) => Showable[Type[? <: T]] = Showable: tpe =>
     import quotes.reflect.*
-// $COVERAGE-OFF$
 
     TypeRepr.of(using tpe).show
 
@@ -97,6 +97,7 @@ private[internal] object Showable:
 
   given (quotes: Quotes) => Showable[quotes.reflect.Symbol] = Showable: symbol =>
     symbol.name
+  // $COVERAGE-ON$
 
   given [A: Showable, B: Showable] => Showable[(A, B)] = Showable: (a, b) =>
     show"$a : $b"
@@ -151,4 +152,3 @@ extension [T: Showable](it: Iterator[T])(using Log)
   private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)
   private[internal] def mkShow(sep: String): Shown = mkShow("", sep, "")
   private[internal] def mkShow: Shown = mkShow("")
-// $COVERAGE-ON$

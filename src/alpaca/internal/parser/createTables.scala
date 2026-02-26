@@ -47,6 +47,7 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
+// $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
 ): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
@@ -64,9 +65,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val createLambda = new CreateLambda[quotes.type]
   val parserExtractor = new ParserExtractors[quotes.type, Ctx]
   import parserExtractor.*
-
-// $COVERAGE-OFF$
-
+  
   def extractEBNF(ruleName: String)
     : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>

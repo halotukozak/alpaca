@@ -41,15 +41,16 @@ private[lexer] object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
+// $COVERAGE-OFF$
   def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
-// $COVERAGE-OFF$
-
     ValidName.check(name)
     (
       ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
       TokenInfo(name, nextRegexGroupName(), pattern),
     )
+// $COVERAGE-ON$
+
 
   /**
    * Generates a unique name for a regex capture group.
@@ -127,4 +128,3 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
-// $COVERAGE-ON$

@@ -7,7 +7,6 @@ import alpaca.internal.parser.Symbol.SyntheticInfix
 import scala.reflect.NameTransformer
 import scala.util.Random
 
-// $COVERAGE-OFF$
 
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
@@ -96,6 +95,7 @@ private[parser] object Symbol:
         else symbol.name
       case encoded => show"${symbol.name} ($encoded)"
 
+  // $COVERAGE-OFF$
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =
       x.match

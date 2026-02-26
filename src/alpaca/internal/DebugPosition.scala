@@ -22,10 +22,9 @@ private[internal] object DebugPosition:
   private def hereImpl(using quotes: Quotes): Expr[DebugPosition] =
     import quotes.reflect.*
 // $COVERAGE-OFF$
-
     val pos = Position.ofMacroExpansion
     Expr((pos.startLine + 1, pos.sourceFile.name))
+  // $COVERAGE-ON$
 
   given Showable[DebugPosition] = Showable: (line, file) =>
     show"line $line in $file"
-// $COVERAGE-ON$
