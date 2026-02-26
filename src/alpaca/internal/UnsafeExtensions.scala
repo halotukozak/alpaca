@@ -4,7 +4,6 @@ package internal
 import scala.collection.IterableOnceOps
 import scala.quoted.*
 
-
 /**
  * Raises a compilation error or runtime exception for unreachable code.
  *

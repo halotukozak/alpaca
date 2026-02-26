@@ -4,7 +4,6 @@ package parser
 
 import scala.reflect.TypeTest
 
-
 /**
  * Represents a parse action in the LR parse table.
  *

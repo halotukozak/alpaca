@@ -1,7 +1,6 @@
 package alpaca
 package internal
 
-
 /**
  * An opaque type representing a non-empty list.
  *

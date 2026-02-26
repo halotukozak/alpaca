@@ -65,7 +65,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val createLambda = new CreateLambda[quotes.type]
   val parserExtractor = new ParserExtractors[quotes.type, Ctx]
   import parserExtractor.*
-  
+
   def extractEBNF(ruleName: String)
     : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>

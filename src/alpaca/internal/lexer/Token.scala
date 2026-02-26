@@ -51,7 +51,6 @@ private[lexer] object TokenInfo:
     )
 // $COVERAGE-ON$
 
-
   /**
    * Generates a unique name for a regex capture group.
    *

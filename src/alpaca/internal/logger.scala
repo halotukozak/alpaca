@@ -9,7 +9,6 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.duration.DurationInt
 
-
 /**
  * A logging facility for Alpaca macro compilation.
  *

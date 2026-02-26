@@ -7,7 +7,6 @@ import alpaca.internal.parser.Symbol.SyntheticInfix
 import scala.reflect.NameTransformer
 import scala.util.Random
 
-
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
  *

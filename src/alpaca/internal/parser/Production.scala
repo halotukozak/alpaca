@@ -2,7 +2,6 @@ package alpaca
 package internal
 package parser
 
-
 /**
  * Represents a grammar production rule.
  *

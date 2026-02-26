@@ -153,7 +153,7 @@ private[parser] object ParseTable:
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
-      
+
       type BuilderTpe = mutable.Builder[
         ((state: Int, stepSymbol: parser.Symbol), Shift | Reduction),
         Map[(state: Int, stepSymbol: parser.Symbol), Shift | Reduction],

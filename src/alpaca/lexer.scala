@@ -6,7 +6,6 @@ import alpaca.internal.lexer.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
 
-
 /**
  * Creates a lexer from a DSL-based definition.
  *
