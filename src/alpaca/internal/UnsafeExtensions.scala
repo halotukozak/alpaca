@@ -4,6 +4,8 @@ package internal
 import scala.collection.IterableOnceOps
 import scala.quoted.*
 
+// $COVERAGE-OFF$
+
 /**
  * Raises a compilation error or runtime exception for unreachable code.
  *
@@ -114,3 +116,4 @@ extension [A, B: Default](pf: PartialFunction[A, B])(using Log, DebugPosition)
    */
   inline private[alpaca] def unsafeApply(a: A): B =
     pf.applyOrElse(a, raiseShouldNeverBeCalled)
+// $COVERAGE-ON$

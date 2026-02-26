@@ -9,6 +9,8 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.duration.DurationInt
 
+// $COVERAGE-OFF$
+
 /**
  * A logging facility for Alpaca macro compilation.
  *
@@ -132,3 +134,4 @@ private[internal] object logger:
         case '{ Out.file } => Some(Out.file)
         case '{ Out.disabled } => Some(Out.disabled)
         case _ => None
+// $COVERAGE-ON$

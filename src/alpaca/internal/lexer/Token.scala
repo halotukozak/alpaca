@@ -43,6 +43,8 @@ private[lexer] object TokenInfo:
    */
   def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
+// $COVERAGE-OFF$
+
     ValidName.check(name)
     (
       ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
@@ -125,3 +127,4 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
+// $COVERAGE-ON$

@@ -126,6 +126,8 @@ private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKin
 
 def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
   import quotes.reflect.*
+// $COVERAGE-OFF$
+
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
@@ -166,3 +168,4 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
 
 private object DummyProductionSelector extends ProductionSelector:
   override def selectDynamic(name: String): Any = dummy
+// $COVERAGE-ON$

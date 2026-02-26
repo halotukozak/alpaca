@@ -209,6 +209,8 @@ def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quote
 def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
+// $COVERAGE-OFF$
+
   TypeRepr
     .of[NamedTuple]
     .appliedTo(
@@ -228,3 +230,4 @@ def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.re
  * This constant is used for parallel operations during compilation.
  */
 val threads = Runtime.getRuntime.availableProcessors
+// $COVERAGE-ON$

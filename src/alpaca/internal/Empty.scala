@@ -30,6 +30,8 @@ private[alpaca] object Empty:
 
     import quotes.reflect.*
 
+// $COVERAGE-OFF$
+
     val tpe = TypeRepr.of[T]
     logger.trace(show"deriving Empty for $tpe")
 
@@ -68,3 +70,4 @@ private[alpaca] object Empty:
       new Empty[T]:
         def apply(): T = $value
     }
+// $COVERAGE-ON$

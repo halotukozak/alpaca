@@ -88,6 +88,8 @@ private[internal] object Showable:
   @targetName("given_Type_bounds")
   given [T] => (quotes: Quotes) => Showable[Type[? <: T]] = Showable: tpe =>
     import quotes.reflect.*
+// $COVERAGE-OFF$
+
     TypeRepr.of(using tpe).show
 
   given (quotes: Quotes) => Showable[quotes.reflect.Tree] = Showable:
@@ -149,3 +151,4 @@ extension [T: Showable](it: Iterator[T])(using Log)
   private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)
   private[internal] def mkShow(sep: String): Shown = mkShow("", sep, "")
   private[internal] def mkShow: Shown = mkShow("")
+// $COVERAGE-ON$

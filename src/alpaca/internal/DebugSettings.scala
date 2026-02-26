@@ -28,6 +28,8 @@ object DebugSettings:
 
   given (quotes: Quotes) => DebugSettings =
     import quotes.reflect.*
+// $COVERAGE-OFF$
+
     val settings = CompilationInfo.XmacroSettings
       .flatMap:
         case s"$key=$value" => Some((key, value))
@@ -63,3 +65,4 @@ object DebugSettings:
         ${ Expr(x.logOut) },
       )
     }
+// $COVERAGE-ON$

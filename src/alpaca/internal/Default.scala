@@ -49,6 +49,8 @@ private[internal] object Default:
 
   given (quotes: Quotes) => Default[quotes.reflect.Symbol] =
     import quotes.reflect.*
+// $COVERAGE-OFF$
+
     () => Symbol.noSymbol
 
   given [H: Default as head, T <: Tuple: Default as tail] => Default[H *: T] = () => head() *: tail()
@@ -56,3 +58,4 @@ private[internal] object Default:
   given Default[EmptyTuple] = () => EmptyTuple
 
   given [T] => Default[Flow[T]] = () => Flow.empty
+// $COVERAGE-ON$

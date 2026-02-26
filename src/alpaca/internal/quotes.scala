@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+// $COVERAGE-OFF$
+
 /**
  * Exports commonly used types and functions from the Scala quoted API.
  *
@@ -13,3 +15,4 @@ export scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
  * Exports the Mirror type for type-class derivation.
  */
 export scala.deriving.Mirror
+// $COVERAGE-ON$

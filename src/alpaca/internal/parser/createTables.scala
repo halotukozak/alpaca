@@ -65,6 +65,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val parserExtractor = new ParserExtractors[quotes.type, Ctx]
   import parserExtractor.*
 
+// $COVERAGE-OFF$
+
   def extractEBNF(ruleName: String)
     : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
     case '{ rule(${ Varargs(cases) }*) } =>
@@ -218,3 +220,4 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+// $COVERAGE-ON$

@@ -4,6 +4,8 @@ package parser
 
 import scala.reflect.TypeTest
 
+// $COVERAGE-OFF$
+
 /**
  * Represents a parse action in the LR parse table.
  *
@@ -57,3 +59,4 @@ private[parser] object ParseAction:
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
       case shift: Int => '{ ${ Expr(shift) }: ParseAction.Shift }
       case production: Production => '{ ${ Expr(production) }: ParseAction.Reduction }
+// $COVERAGE-ON$

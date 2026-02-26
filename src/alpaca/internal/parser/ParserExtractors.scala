@@ -20,6 +20,8 @@ import scala.reflect.NameTransformer
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
+// $COVERAGE-OFF$
+
   val skipTypedOrTest: PartialFunction[Tree, Tree] =
     case TypedOrTest(tree, _) => tree
     case tree => tree
@@ -127,3 +129,4 @@ private object ParserExtractors:
     case _ => dummy
 
   val noneAction: Action[ParserCtx] = (_, _) => None
+// $COVERAGE-ON$

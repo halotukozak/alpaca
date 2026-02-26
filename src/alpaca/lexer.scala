@@ -6,6 +6,8 @@ import alpaca.internal.lexer.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
 
+// $COVERAGE-OFF$
+
 /**
  * Creates a lexer from a DSL-based definition.
  *
@@ -213,3 +215,4 @@ trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]
  */
 //todo: it's a scala bug, that it cannot be an opaque type https://github.com/halotukozak/alpaca/issues/229
 trait IgnoredToken[+Ctx <: LexerCtx] extends Token[ValidName, Ctx, Nothing]
+// $COVERAGE-ON$

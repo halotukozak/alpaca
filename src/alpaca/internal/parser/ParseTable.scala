@@ -153,6 +153,8 @@ private[parser] object ParseTable:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
 
+// $COVERAGE-OFF$
+
       type BuilderTpe = mutable.Builder[
         ((state: Int, stepSymbol: parser.Symbol), Shift | Reduction),
         Map[(state: Int, stepSymbol: parser.Symbol), Shift | Reduction],
@@ -181,3 +183,4 @@ private[parser] object ParseTable:
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
+// $COVERAGE-ON$

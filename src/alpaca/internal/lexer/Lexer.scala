@@ -18,6 +18,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
+// $COVERAGE-OFF$
+
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
@@ -142,3 +144,4 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
+// $COVERAGE-ON$

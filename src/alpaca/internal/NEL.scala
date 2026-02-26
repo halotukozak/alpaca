@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+// $COVERAGE-OFF$
+
 /**
  * An opaque type representing a non-empty list.
  *
@@ -50,3 +52,4 @@ object NEL:
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
     def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
       '{ NEL(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
+// $COVERAGE-ON$

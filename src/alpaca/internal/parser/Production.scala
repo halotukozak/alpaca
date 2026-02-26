@@ -2,6 +2,8 @@ package alpaca
 package internal
 package parser
 
+// $COVERAGE-OFF$
+
 /**
  * Represents a grammar production rule.
  *
@@ -52,3 +54,4 @@ object Production:
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
       case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }
+// $COVERAGE-ON$

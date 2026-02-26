@@ -7,6 +7,8 @@ import alpaca.internal.parser.Symbol.SyntheticInfix
 import scala.reflect.NameTransformer
 import scala.util.Random
 
+// $COVERAGE-OFF$
+
 /**
  * Represents a grammar symbol (either terminal or non-terminal).
  *
@@ -106,3 +108,4 @@ private[parser] object Symbol:
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
+// $COVERAGE-ON$

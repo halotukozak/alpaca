@@ -28,6 +28,9 @@ object ValidName:
    */
   def check(name: String)(using quotes: Quotes)(using Log): Unit =
     import quotes.reflect.*
+// $COVERAGE-OFF$
+
     name match
       case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")
       case _ =>
+// $COVERAGE-ON$
