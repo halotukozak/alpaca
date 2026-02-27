@@ -91,5 +91,6 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match
+    case ocs: OffsetCharSequence => ocs.from(pos)
     case lfr: LazyReader => lfr.from(pos)
     case _ => input.subSequence(pos, input.length)
