@@ -1,7 +1,5 @@
 index: index.html
 subsection:
-  - title: Getting Started
-    page: getting-started.md
   - title: Lexer
     page: lexer.md
   - title: Lexer Context
