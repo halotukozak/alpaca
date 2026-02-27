@@ -26,8 +26,10 @@ object DebugSettings:
   private final val Timeout = "compilationTimeout"
   private final val EnableVerboseNames = "enableVerboseNames"
 
+  // $COVERAGE-OFF$
   given (quotes: Quotes) => DebugSettings =
     import quotes.reflect.*
+
     val settings = CompilationInfo.XmacroSettings
       .flatMap:
         case s"$key=$value" => Some((key, value))
@@ -63,3 +65,4 @@ object DebugSettings:
         ${ Expr(x.logOut) },
       )
     }
+// $COVERAGE-ON$

@@ -47,6 +47,8 @@ object NEL:
     if list.isEmpty then throw IllegalArgumentException("Empty list cannot be converted to NEL")
     list
 
+  // $COVERAGE-OFF$
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
     def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
       '{ NEL(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
+// $COVERAGE-ON$
