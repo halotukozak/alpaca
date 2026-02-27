@@ -22,6 +22,7 @@ import scala.collection.mutable
 final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable:
   private val buffer = mutable.ArrayDeque.empty[Char]
   private val chunk = new Array[Char](8192)
+  private var offset: Int = 0 // logical offset into buffer
 
   /**
    * Gets the character at the specified position.
@@ -33,8 +34,8 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @throws IndexOutOfBoundsException if the position is beyond the end of input
    */
   def charAt(pos: Int): Char =
-    ensure(pos)
-    buffer(pos)
+    ensure(pos + offset)
+    buffer(pos + offset)
 
   /**
    * Gets the length of the input.
@@ -51,20 +52,26 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    * @return a string containing the subsequence
    */
   def subSequence(start: Int, end: Int): CharSequence =
-    ensure(end - 1)
-    buffer.slice(start, end).mkString
+    ensure(end - 1 + offset)
+    buffer.slice(start + offset, end + offset).mkString
 
   /**
    * Skips the first count characters.
    *
    * This is used to advance past tokens that have been processed.
+   * Uses O(1) logical offset advancement instead of O(n) buffer shifting.
+   * Periodically compacts the buffer when offset exceeds 64KB to bound memory waste.
    *
    * @param count the number of characters to skip
    * @return this LazyReader for chaining
    */
   def from(count: Int): LazyReader =
-    buffer.remove(0, count)
+    offset += count
     size -= count
+    // Compact when offset exceeds 64KB to bound memory waste
+    if offset > 65536 then
+      buffer.remove(0, offset)
+      offset = 0
     this
 
   override def toString: String = subSequence(0, length).toString
