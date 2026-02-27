@@ -71,9 +71,11 @@ inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): 
 private[internal] object logger:
 
   inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
+  // $COVERAGE-OFF$
   private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
     val debugSettings = Expr(summon[DebugSettings])
     '{ new Log(using $debugSettings)(using $ox) }
+  // $COVERAGE-ON$
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)
@@ -94,6 +96,7 @@ private[internal] object logger:
 
   object Level:
     given Showable[Level] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Level]:
       def apply(x: Level)(using Quotes): Expr[Level] =
@@ -113,12 +116,14 @@ private[internal] object logger:
           case '{ Level.warn } => Some(Level.warn)
           case '{ Level.error } => Some(Level.error)
           case _ => None
+  // $COVERAGE-ON$
 
   enum Out:
     case stdout, file, disabled
 
   object Out:
     given Showable[Out] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Out]:
       def apply(x: Out)(using Quotes): Expr[Out] = x match
@@ -132,3 +137,4 @@ private[internal] object logger:
         case '{ Out.file } => Some(Out.file)
         case '{ Out.disabled } => Some(Out.disabled)
         case _ => None
+  // $COVERAGE-ON$

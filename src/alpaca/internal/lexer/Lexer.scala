@@ -10,6 +10,7 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
+// $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
@@ -18,6 +19,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
+
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
@@ -142,3 +144,4 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
+// $COVERAGE-ON$
