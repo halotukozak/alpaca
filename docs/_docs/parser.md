@@ -11,9 +11,6 @@ Like the lexer, the grammar is analyzed at compile time — the macro builds an 
 Extend `Parser` for a stateless parser (uses `ParserCtx.Empty` by default), or `Parser[Ctx]` to carry custom state through parsing.
 The required entry point is a `val root: Rule[R]` — the macro uses this as the grammar start symbol.
 
-[//]: # (todo: sprawdzić czy to prawda)
-[//]: # (Note: `root` must be a `val`, not a `def`. Using `def root` causes the macro to miss the declaration.)
-
 The simplest parser extends `Parser` with no type parameter:
 
 ```scala sc:nocompile
@@ -176,13 +173,9 @@ val (ctx, result) = CalcParser.parse(Lexer.tokenize("1 + 2").lexemes)
 // result: Double | Null   — 3 for valid input, null for invalid input
 ```
 
-> **Pitfall:** `result` is `T | Null`, not `Option[T]`. If the input does not match the grammar, `result` is `null` — not an exception. Always check for null before using the result. (Parser error reporting with structured failure information is tracked in GH #65 and GH #51.)
-
-[//]: # (todo: add links to GH refs)
+> **Pitfall:** `result` is `T | Null`, not `Option[T]`. If the input does not match the grammar, `result` is `null` — not an exception. Always check for null before using the result. (Parser error reporting with structured failure information is tracked in [#65](https://github.com/halotukozak/alpaca/issues/65) and [#51](https://github.com/halotukozak/alpaca/issues/51).)
 
 ## Conflict Resolution
-
-[//]: # (todo: t should be moved to the another chapter)
 
 Ambiguous grammars produce compile-time errors.
 `ShiftReduceConflict` is reported when the parser cannot decide whether to shift the next token or reduce the current production.

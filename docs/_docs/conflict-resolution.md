@@ -30,7 +30,7 @@ Shift/reduce conflict message:
 Shift "+" vs Reduce Expr -> Expr + Expr
 In situation like:
 Expr + Expr + ...
-Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
+Consider marking production Expr -> Expr + Expr to be before or after "+"
 ```
 
 Reduce/reduce conflict message:
@@ -39,19 +39,13 @@ Reduce/reduce conflict message:
 Reduce Integer -> Num vs Reduce Float -> Num
 In situation like:
 Num ...
-Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+Consider marking one of the productions to be before or after the other
 ```
 
-> **Known issue: error messages suggest `alwaysBefore`/`alwaysAfter`.** The compile error text says _"Consider marking production X to be alwaysBefore or alwaysAfter Y"_. These method names do **not** exist in the Alpaca API. The correct methods are `before` and `after`. This is a known discrepancy between the error message text and the public API.
->
-> When you see this message, use `before` and `after` — not `alwaysBefore` or `alwaysAfter`.
-
-[//]: # (todo: fix these names in API)
-
-Concretely — the error message and its fix:
+Concretely — the shift/reduce error message and its fix:
 
 ```
-Error: Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
+Error: Consider marking production Expr -> Expr + Expr to be before or after "+"
 Fix:   production.plus.before(Lexer.PLUS)
 ```
 
@@ -92,7 +86,7 @@ Rules:
 
 ## The before/after DSL
 
-Three resolution forms are available:
+Four resolution forms are available:
 
 **1. `production.name.before(tokens*)`** — this production takes precedence; prefer reducing this production over shifting any of the listed tokens.
 
@@ -100,7 +94,9 @@ Three resolution forms are available:
 
 **3. `Token.before(productions*)`** — shifting this token takes precedence over reducing any of the listed productions (the token-side spelling of the same rule).
 
-[//]: # (todo: da się też ustawiać produkcje w kolejności)
+**4. `production.name.before(productions*)`** — this production takes precedence over those productions. Use this to resolve reduce/reduce conflicts where two different productions can reduce the same token sequence. The `after` direction works symmetrically.
+
+The `before`/`after` methods accept any mix of tokens and productions — the four forms above are just the common patterns.
 
 Full `resolutions` example for a calculator with `+`, `-`, `*`, `/`:
 
@@ -119,11 +115,16 @@ Reading `production.plus.before(Lexer.PLUS, Lexer.MINUS)`:
 when the parser has reduced the `plus` production and the next token is `+` or `-`, prefer the reduction — do not shift.
 This gives `+` left associativity and equal precedence with `-`.
 
-**Transitivity:** `before`/`after` constraints are transitive.
+### Transitivity
+
+`before`/`after` constraints are transitive.
 If A is before B and B is before C, then A is implicitly before C.
 This is how hierarchical precedence works: you only need to state the direct relationships, and the compiler derives the full order.
 
-[//]: # (todo: Transitivity should be e bigger subsection)
+In the calculator example above, `production.plus.after(Lexer.TIMES, Lexer.DIVIDE)` and `production.minus.after(Lexer.TIMES, Lexer.DIVIDE)` establish that `*` and `/` bind tighter than `+` and `-`.
+Because `plus` and `minus` are `before(Lexer.PLUS, Lexer.MINUS)`, the compiler derives the complete precedence chain: `*`/`/` > `+`/`-` — without you listing every pair explicitly.
+
+If the transitive closure produces a cycle (A before B before C before A), the compiler reports an `InconsistentConflictResolution` error. See the [Conflict Cycle Detection](#conflict-cycle-detection) section below.
 
 **Note:** `production` is a `@compileTimeOnly` compile-time construct — it is only valid inside the `resolutions` value.
 Using it anywhere else (in a rule body, in a companion, in a method) is a compile error.
@@ -223,8 +224,6 @@ Consider revising the before/after rules to eliminate cycles
 ```
 
 The message shows the full cycle path.
-
-[//]: # (todo: sprwadzic czy to prawda, jeśli nie to sprawić, żeby było)
 
 ## Ordering Constraint
 
