@@ -53,5 +53,6 @@ debug/
 !thesis/src/alpaca.tex
 
 benchmarks/inputs/*.txt
+benchmarks/outputs/profiling/
 
 .planning/
