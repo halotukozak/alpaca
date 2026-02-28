@@ -1,0 +1,2864 @@
+[
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.687251104656778,
+            "scoreError" : 1.3351931929608656,
+            "scoreConfidence" : [
+                -0.6479420883040876,
+                2.0224442976176435
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.44958574666367107,
+                "50.0" : 0.5363507218202284,
+                "90.0" : 1.284122968304889,
+                "95.0" : 1.284122968304889,
+                "99.0" : 1.284122968304889,
+                "99.9" : 1.284122968304889,
+                "99.99" : 1.284122968304889,
+                "99.999" : 1.284122968304889,
+                "99.9999" : 1.284122968304889,
+                "100.0" : 1.284122968304889
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.6920064654409732,
+                    1.284122968304889,
+                    0.4741896210541284,
+                    0.5363507218202284,
+                    0.44958574666367107
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 2.3737650998575726,
+            "scoreError" : 2.7571993687225302,
+            "scoreConfidence" : [
+                -0.3834342688649577,
+                5.130964468580103
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.894215954932778,
+                "50.0" : 2.169006586079792,
+                "90.0" : 3.6199132597684516,
+                "95.0" : 3.6199132597684516,
+                "99.0" : 3.6199132597684516,
+                "99.9" : 3.6199132597684516,
+                "99.99" : 3.6199132597684516,
+                "99.999" : 3.6199132597684516,
+                "99.9999" : 3.6199132597684516,
+                "100.0" : 3.6199132597684516
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    3.6199132597684516,
+                    2.169006586079792,
+                    1.894215954932778,
+                    1.9081576625977494,
+                    2.2775320359090907
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 5.518474166452618,
+            "scoreError" : 3.948024320694034,
+            "scoreConfidence" : [
+                1.570449845758584,
+                9.466498487146652
+            ],
+            "scorePercentiles" : {
+                "0.0" : 3.8654585583011585,
+                "50.0" : 5.996244982025165,
+                "90.0" : 6.466641861021332,
+                "95.0" : 6.466641861021332,
+                "99.0" : 6.466641861021332,
+                "99.9" : 6.466641861021332,
+                "99.99" : 6.466641861021332,
+                "99.999" : 6.466641861021332,
+                "99.9999" : 6.466641861021332,
+                "100.0" : 6.466641861021332
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    5.232423110240334,
+                    5.996244982025165,
+                    6.466641861021332,
+                    3.8654585583011585,
+                    6.0316023206751055
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 8.830702992981994,
+            "scoreError" : 4.692326417984308,
+            "scoreConfidence" : [
+                4.138376574997686,
+                13.523029410966302
+            ],
+            "scorePercentiles" : {
+                "0.0" : 7.603687594984803,
+                "50.0" : 8.59608115193133,
+                "90.0" : 10.340816330578512,
+                "95.0" : 10.340816330578512,
+                "99.0" : 10.340816330578512,
+                "99.9" : 10.340816330578512,
+                "99.99" : 10.340816330578512,
+                "99.999" : 10.340816330578512,
+                "99.9999" : 10.340816330578512,
+                "100.0" : 10.340816330578512
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    8.59608115193133,
+                    7.78237033437014,
+                    10.340816330578512,
+                    7.603687594984803,
+                    9.830559553045187
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.713185709997174,
+            "scoreError" : 0.4840555153873688,
+            "scoreConfidence" : [
+                0.22913019460980522,
+                1.1972412253845428
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.6072008456029617,
+                "50.0" : 0.6560703280645372,
+                "90.0" : 0.9231411606055012,
+                "95.0" : 0.9231411606055012,
+                "99.0" : 0.9231411606055012,
+                "99.9" : 0.9231411606055012,
+                "99.99" : 0.9231411606055012,
+                "99.999" : 0.9231411606055012,
+                "99.9999" : 0.9231411606055012,
+                "100.0" : 0.9231411606055012
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.9231411606055012,
+                    0.6560703280645372,
+                    0.6072008456029617,
+                    0.731804087144216,
+                    0.6477121285686541
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 3.233214866560136,
+            "scoreError" : 4.305893573379537,
+            "scoreConfidence" : [
+                -1.072678706819401,
+                7.539108439939673
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2.5489542568152865,
+                "50.0" : 2.7117639566395666,
+                "90.0" : 5.185320265422499,
+                "95.0" : 5.185320265422499,
+                "99.0" : 5.185320265422499,
+                "99.9" : 5.185320265422499,
+                "99.99" : 5.185320265422499,
+                "99.999" : 5.185320265422499,
+                "99.9999" : 5.185320265422499,
+                "100.0" : 5.185320265422499
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    3.1535604711629373,
+                    2.7117639566395666,
+                    5.185320265422499,
+                    2.56647538276039,
+                    2.5489542568152865
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 6.43983832537724,
+            "scoreError" : 3.5058090917921056,
+            "scoreConfidence" : [
+                2.934029233585134,
+                9.945647417169345
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.230792167799268,
+                "50.0" : 6.273199373040752,
+                "90.0" : 7.6511038971820255,
+                "95.0" : 7.6511038971820255,
+                "99.0" : 7.6511038971820255,
+                "99.9" : 7.6511038971820255,
+                "99.99" : 7.6511038971820255,
+                "99.999" : 7.6511038971820255,
+                "99.9999" : 7.6511038971820255,
+                "100.0" : 7.6511038971820255
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    5.230792167799268,
+                    6.937629725449516,
+                    6.106466463414634,
+                    7.6511038971820255,
+                    6.273199373040752
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 18.22531319070012,
+            "scoreError" : 11.504030250100662,
+            "scoreConfidence" : [
+                6.721282940599458,
+                29.729343440800783
+            ],
+            "scorePercentiles" : {
+                "0.0" : 14.147823799435029,
+                "50.0" : 18.269826718978102,
+                "90.0" : 22.177134586283184,
+                "95.0" : 22.177134586283184,
+                "99.0" : 22.177134586283184,
+                "99.9" : 22.177134586283184,
+                "99.99" : 22.177134586283184,
+                "99.999" : 22.177134586283184,
+                "99.9999" : 22.177134586283184,
+                "100.0" : 22.177134586283184
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    16.951741383050848,
+                    14.147823799435029,
+                    22.177134586283184,
+                    18.269826718978102,
+                    19.580039465753426
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 2.429622436412915,
+            "scoreError" : 3.6238394442647994,
+            "scoreConfidence" : [
+                -1.1942170078518846,
+                6.053461880677714
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.4263339988592614,
+                "50.0" : 2.326657676354336,
+                "90.0" : 3.8831981102941175,
+                "95.0" : 3.8831981102941175,
+                "99.0" : 3.8831981102941175,
+                "99.9" : 3.8831981102941175,
+                "99.99" : 3.8831981102941175,
+                "99.999" : 3.8831981102941175,
+                "99.9999" : 3.8831981102941175,
+                "100.0" : 3.8831981102941175
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    2.675654940342429,
+                    3.8831981102941175,
+                    2.326657676354336,
+                    1.8362674562144299,
+                    1.4263339988592614
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 12.596427430335336,
+            "scoreError" : 13.562144465989615,
+            "scoreConfidence" : [
+                -0.9657170356542792,
+                26.15857189632495
+            ],
+            "scorePercentiles" : {
+                "0.0" : 8.921997217275155,
+                "50.0" : 12.113890788135594,
+                "90.0" : 17.875181548214286,
+                "95.0" : 17.875181548214286,
+                "99.0" : 17.875181548214286,
+                "99.9" : 17.875181548214286,
+                "99.99" : 17.875181548214286,
+                "99.999" : 17.875181548214286,
+                "99.9999" : 17.875181548214286,
+                "100.0" : 17.875181548214286
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    8.921997217275155,
+                    13.957837168758717,
+                    17.875181548214286,
+                    10.11323042929293,
+                    12.113890788135594
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 16.621686763232987,
+            "scoreError" : 15.433121452330989,
+            "scoreConfidence" : [
+                1.188565310901998,
+                32.05480821556397
+            ],
+            "scorePercentiles" : {
+                "0.0" : 14.31328516881259,
+                "50.0" : 15.004417728635682,
+                "90.0" : 23.769835016627077,
+                "95.0" : 23.769835016627077,
+                "99.0" : 23.769835016627077,
+                "99.9" : 23.769835016627077,
+                "99.99" : 23.769835016627077,
+                "99.999" : 23.769835016627077,
+                "99.9999" : 23.769835016627077,
+                "100.0" : 23.769835016627077
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    15.114405589123868,
+                    14.906490312965722,
+                    14.31328516881259,
+                    15.004417728635682,
+                    23.769835016627077
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 53.506849706967955,
+            "scoreError" : 69.93729177525599,
+            "scoreConfidence" : [
+                -16.43044206828803,
+                123.44414148222394
+            ],
+            "scorePercentiles" : {
+                "0.0" : 39.009174610894945,
+                "50.0" : 43.59402445652174,
+                "90.0" : 82.15479335772358,
+                "95.0" : 82.15479335772358,
+                "99.0" : 82.15479335772358,
+                "99.9" : 82.15479335772358,
+                "99.99" : 82.15479335772358,
+                "99.999" : 82.15479335772358,
+                "99.9999" : 82.15479335772358,
+                "100.0" : 82.15479335772358
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    43.59402445652174,
+                    39.009174610894945,
+                    41.86512378242678,
+                    60.911132327272725,
+                    82.15479335772358
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 2.0698952604914598,
+            "scoreError" : 2.9796351779336656,
+            "scoreConfidence" : [
+                -0.9097399174422058,
+                5.049530438425125
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.418552569422777,
+                "50.0" : 1.6528258907799074,
+                "90.0" : 3.0818080970425137,
+                "95.0" : 3.0818080970425137,
+                "99.0" : 3.0818080970425137,
+                "99.9" : 3.0818080970425137,
+                "99.99" : 3.0818080970425137,
+                "99.999" : 3.0818080970425137,
+                "99.9999" : 3.0818080970425137,
+                "100.0" : 3.0818080970425137
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    2.719159780646915,
+                    1.4771299645651852,
+                    1.418552569422777,
+                    1.6528258907799074,
+                    3.0818080970425137
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 9.538190138189291,
+            "scoreError" : 5.620128196557787,
+            "scoreConfidence" : [
+                3.918061941631504,
+                15.15831833474708
+            ],
+            "scorePercentiles" : {
+                "0.0" : 8.22672330756579,
+                "50.0" : 8.946631218945488,
+                "90.0" : 11.179023044692737,
+                "95.0" : 11.179023044692737,
+                "99.0" : 11.179023044692737,
+                "99.9" : 11.179023044692737,
+                "99.99" : 11.179023044692737,
+                "99.999" : 11.179023044692737,
+                "99.9999" : 11.179023044692737,
+                "100.0" : 11.179023044692737
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    8.946631218945488,
+                    8.22672330756579,
+                    11.033895007709251,
+                    11.179023044692737,
+                    8.304678112033194
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 24.561669875476646,
+            "scoreError" : 32.817624220747895,
+            "scoreConfidence" : [
+                -8.255954345271249,
+                57.37929409622454
+            ],
+            "scorePercentiles" : {
+                "0.0" : 19.371609042553192,
+                "50.0" : 20.6304706185567,
+                "90.0" : 39.45090764566929,
+                "95.0" : 39.45090764566929,
+                "99.0" : 39.45090764566929,
+                "99.9" : 39.45090764566929,
+                "99.99" : 39.45090764566929,
+                "99.999" : 39.45090764566929,
+                "99.9999" : 39.45090764566929,
+                "100.0" : 39.45090764566929
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    20.6304706185567,
+                    19.46117080155642,
+                    23.89419126904762,
+                    39.45090764566929,
+                    19.371609042553192
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.fullParse",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 80.73154937473018,
+            "scoreError" : 166.905056168809,
+            "scoreConfidence" : [
+                -86.17350679407883,
+                247.6366055435392
+            ],
+            "scorePercentiles" : {
+                "0.0" : 49.22506944117647,
+                "50.0" : 61.138011176829266,
+                "90.0" : 154.1750718,
+                "95.0" : 154.1750718,
+                "99.0" : 154.1750718,
+                "99.9" : 154.1750718,
+                "99.99" : 154.1750718,
+                "99.999" : 154.1750718,
+                "99.9999" : 154.1750718,
+                "100.0" : 154.1750718
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    49.22506944117647,
+                    61.138011176829266,
+                    53.82886424731183,
+                    85.29073020833333,
+                    154.1750718
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.1622897931303215,
+            "scoreError" : 0.05521477259700612,
+            "scoreConfidence" : [
+                0.10707502053331537,
+                0.21750456572732763
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.15176367794990062,
+                "50.0" : 0.15409744303231968,
+                "90.0" : 0.18496857883744572,
+                "95.0" : 0.18496857883744572,
+                "99.0" : 0.18496857883744572,
+                "99.9" : 0.18496857883744572,
+                "99.99" : 0.18496857883744572,
+                "99.999" : 0.18496857883744572,
+                "99.9999" : 0.18496857883744572,
+                "100.0" : 0.18496857883744572
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.16813127566440855,
+                    0.15248799016753303,
+                    0.15409744303231968,
+                    0.15176367794990062,
+                    0.18496857883744572
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 1.0377858634978305,
+            "scoreError" : 0.7189209082908506,
+            "scoreConfidence" : [
+                0.3188649552069799,
+                1.7567067717886813
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.8969110851788756,
+                "50.0" : 0.9496079052411698,
+                "90.0" : 1.3517487616860309,
+                "95.0" : 1.3517487616860309,
+                "99.0" : 1.3517487616860309,
+                "99.9" : 1.3517487616860309,
+                "99.99" : 1.3517487616860309,
+                "99.999" : 1.3517487616860309,
+                "99.9999" : 1.3517487616860309,
+                "100.0" : 1.3517487616860309
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    1.3517487616860309,
+                    0.8969110851788756,
+                    0.9496079052411698,
+                    1.0647250949037133,
+                    0.9259364704793633
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 2.3924642925454362,
+            "scoreError" : 3.437283203026163,
+            "scoreConfidence" : [
+                -1.0448189104807266,
+                5.829747495571599
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.7152785757160007,
+                "50.0" : 1.8849112387048192,
+                "90.0" : 3.6972655463612853,
+                "95.0" : 3.6972655463612853,
+                "99.0" : 3.6972655463612853,
+                "99.9" : 3.6972655463612853,
+                "99.99" : 3.6972655463612853,
+                "99.999" : 3.6972655463612853,
+                "99.9999" : 3.6972655463612853,
+                "100.0" : 3.6972655463612853
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    1.7152785757160007,
+                    1.7154230742328134,
+                    1.8849112387048192,
+                    3.6972655463612853,
+                    2.949443027712264
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 4.666972715628402,
+            "scoreError" : 8.437553314134238,
+            "scoreConfidence" : [
+                -3.770580598505836,
+                13.10452602976264
+            ],
+            "scorePercentiles" : {
+                "0.0" : 3.0978637349024467,
+                "50.0" : 3.8477959296153847,
+                "90.0" : 8.43642481703204,
+                "95.0" : 8.43642481703204,
+                "99.0" : 8.43642481703204,
+                "99.9" : 8.43642481703204,
+                "99.99" : 8.43642481703204,
+                "99.999" : 8.43642481703204,
+                "99.9999" : 8.43642481703204,
+                "100.0" : 8.43642481703204
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    3.0978637349024467,
+                    3.8477959296153847,
+                    4.650851735471874,
+                    3.3019273611202635,
+                    8.43642481703204
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.2946313864141641,
+            "scoreError" : 0.22050337070579343,
+            "scoreConfidence" : [
+                0.07412801570837066,
+                0.5151347571199575
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.2566592435687199,
+                "50.0" : 0.2721319499224764,
+                "90.0" : 0.3960807655650109,
+                "95.0" : 0.3960807655650109,
+                "99.0" : 0.3960807655650109,
+                "99.9" : 0.3960807655650109,
+                "99.99" : 0.3960807655650109,
+                "99.999" : 0.3960807655650109,
+                "99.9999" : 0.3960807655650109,
+                "100.0" : 0.3960807655650109
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.26984135557951483,
+                    0.2566592435687199,
+                    0.2784436174350984,
+                    0.2721319499224764,
+                    0.3960807655650109
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 1.3129513194709725,
+            "scoreError" : 1.0486101707844386,
+            "scoreConfidence" : [
+                0.2643411486865339,
+                2.3615614902554114
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.0429973759774789,
+                "50.0" : 1.243512190280885,
+                "90.0" : 1.6871239952790422,
+                "95.0" : 1.6871239952790422,
+                "99.0" : 1.6871239952790422,
+                "99.9" : 1.6871239952790422,
+                "99.99" : 1.6871239952790422,
+                "99.999" : 1.6871239952790422,
+                "99.9999" : 1.6871239952790422,
+                "100.0" : 1.6871239952790422
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    1.0429973759774789,
+                    1.0976633156682027,
+                    1.6871239952790422,
+                    1.243512190280885,
+                    1.4934597201492537
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 2.5419362714375664,
+            "scoreError" : 1.8283849616379184,
+            "scoreConfidence" : [
+                0.713551309799648,
+                4.370321233075485
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2.1974956522407734,
+                "50.0" : 2.2690625518258107,
+                "90.0" : 3.2860106870279147,
+                "95.0" : 3.2860106870279147,
+                "99.0" : 3.2860106870279147,
+                "99.9" : 3.2860106870279147,
+                "99.99" : 3.2860106870279147,
+                "99.999" : 3.2860106870279147,
+                "99.9999" : 3.2860106870279147,
+                "100.0" : 3.2860106870279147
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    2.749718397911514,
+                    3.2860106870279147,
+                    2.2690625518258107,
+                    2.2073940681818183,
+                    2.1974956522407734
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 5.02641238692585,
+            "scoreError" : 2.6791926200137106,
+            "scoreConfidence" : [
+                2.3472197669121395,
+                7.70560500693956
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4.324038623595506,
+                "50.0" : 5.049159914689551,
+                "90.0" : 5.894109015910431,
+                "95.0" : 5.894109015910431,
+                "99.0" : 5.894109015910431,
+                "99.9" : 5.894109015910431,
+                "99.99" : 5.894109015910431,
+                "99.999" : 5.894109015910431,
+                "99.9999" : 5.894109015910431,
+                "100.0" : 5.894109015910431
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    5.894109015910431,
+                    5.512031416070446,
+                    5.049159914689551,
+                    4.324038623595506,
+                    4.352722964363321
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.6846438006867707,
+            "scoreError" : 0.20658086372213455,
+            "scoreConfidence" : [
+                0.4780629369646361,
+                0.8912246644089052
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.6418266775724917,
+                "50.0" : 0.6569352936773685,
+                "90.0" : 0.7695194040147669,
+                "95.0" : 0.7695194040147669,
+                "99.0" : 0.7695194040147669,
+                "99.9" : 0.7695194040147669,
+                "99.99" : 0.7695194040147669,
+                "99.999" : 0.7695194040147669,
+                "99.9999" : 0.7695194040147669,
+                "100.0" : 0.7695194040147669
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.6491429907221177,
+                    0.6569352936773685,
+                    0.6418266775724917,
+                    0.7695194040147669,
+                    0.7057946374471086
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 3.593803211161449,
+            "scoreError" : 1.7162149718268334,
+            "scoreConfidence" : [
+                1.8775882393346157,
+                5.310018182988283
+            ],
+            "scorePercentiles" : {
+                "0.0" : 3.14008363422292,
+                "50.0" : 3.6935079520118124,
+                "90.0" : 4.2279733134769755,
+                "95.0" : 4.2279733134769755,
+                "99.0" : 4.2279733134769755,
+                "99.9" : 4.2279733134769755,
+                "99.99" : 4.2279733134769755,
+                "99.999" : 4.2279733134769755,
+                "99.9999" : 4.2279733134769755,
+                "100.0" : 4.2279733134769755
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    3.7157947466567607,
+                    3.14008363422292,
+                    3.1916564094387754,
+                    4.2279733134769755,
+                    3.6935079520118124
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 6.854491976613181,
+            "scoreError" : 3.9780123599696244,
+            "scoreConfidence" : [
+                2.8764796166435564,
+                10.832504336582804
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.867915762463343,
+                "50.0" : 6.899565344827586,
+                "90.0" : 8.37049079497908,
+                "95.0" : 8.37049079497908,
+                "99.0" : 8.37049079497908,
+                "99.9" : 8.37049079497908,
+                "99.99" : 8.37049079497908,
+                "99.999" : 8.37049079497908,
+                "99.9999" : 8.37049079497908,
+                "100.0" : 8.37049079497908
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    8.37049079497908,
+                    6.899565344827586,
+                    7.211586427541456,
+                    5.867915762463343,
+                    5.922901553254438
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 15.82837152613713,
+            "scoreError" : 13.19255363261407,
+            "scoreConfidence" : [
+                2.6358178935230594,
+                29.020925158751197
+            ],
+            "scorePercentiles" : {
+                "0.0" : 13.028889430989583,
+                "50.0" : 14.34121641654779,
+                "90.0" : 21.155868306553913,
+                "95.0" : 21.155868306553913,
+                "99.0" : 21.155868306553913,
+                "99.9" : 21.155868306553913,
+                "99.99" : 21.155868306553913,
+                "99.999" : 21.155868306553913,
+                "99.9999" : 21.155868306553913,
+                "100.0" : 21.155868306553913
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    13.310566046542553,
+                    14.34121641654779,
+                    13.028889430989583,
+                    17.305317430051815,
+                    21.155868306553913
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.9475107873703873,
+            "scoreError" : 0.7746781617050384,
+            "scoreConfidence" : [
+                0.17283262566534885,
+                1.7221889490754259
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.7438620663197026,
+                "50.0" : 0.9464796259816445,
+                "90.0" : 1.1800111451822148,
+                "95.0" : 1.1800111451822148,
+                "99.0" : 1.1800111451822148,
+                "99.9" : 1.1800111451822148,
+                "99.99" : 1.1800111451822148,
+                "99.999" : 1.1800111451822148,
+                "99.9999" : 1.1800111451822148,
+                "100.0" : 1.1800111451822148
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.9464796259816445,
+                    1.1800111451822148,
+                    1.1152301814736372,
+                    0.7438620663197026,
+                    0.7519709178947368
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 4.631487941412246,
+            "scoreError" : 0.28986598609134523,
+            "scoreConfidence" : [
+                4.341621955320901,
+                4.921353927503591
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4.549337634379263,
+                "50.0" : 4.674565409621672,
+                "90.0" : 4.69664972629108,
+                "95.0" : 4.69664972629108,
+                "99.0" : 4.69664972629108,
+                "99.9" : 4.69664972629108,
+                "99.99" : 4.69664972629108,
+                "99.999" : 4.69664972629108,
+                "99.9999" : 4.69664972629108,
+                "100.0" : 4.69664972629108
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    4.69664972629108,
+                    4.674565409621672,
+                    4.549610492272727,
+                    4.687276444496487,
+                    4.549337634379263
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 11.759911461510708,
+            "scoreError" : 1.4055108071179618,
+            "scoreConfidence" : [
+                10.354400654392746,
+                13.165422268628669
+            ],
+            "scorePercentiles" : {
+                "0.0" : 11.494513250287026,
+                "50.0" : 11.706094005847953,
+                "90.0" : 12.383710602722772,
+                "95.0" : 12.383710602722772,
+                "99.0" : 12.383710602722772,
+                "99.9" : 12.383710602722772,
+                "99.99" : 12.383710602722772,
+                "99.999" : 12.383710602722772,
+                "99.9999" : 12.383710602722772,
+                "100.0" : 12.383710602722772
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    12.383710602722772,
+                    11.717337772833723,
+                    11.706094005847953,
+                    11.494513250287026,
+                    11.49790167586207
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 39.82901289482685,
+            "scoreError" : 27.793547335486075,
+            "scoreConfidence" : [
+                12.035465559340778,
+                67.62256023031293
+            ],
+            "scorePercentiles" : {
+                "0.0" : 34.4563274604811,
+                "50.0" : 35.94486439426523,
+                "90.0" : 51.91701274093264,
+                "95.0" : 51.91701274093264,
+                "99.0" : 51.91701274093264,
+                "99.9" : 51.91701274093264,
+                "99.99" : 51.91701274093264,
+                "99.999" : 51.91701274093264,
+                "99.9999" : 51.91701274093264,
+                "100.0" : 51.91701274093264
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    34.4563274604811,
+                    41.088522528455286,
+                    51.91701274093264,
+                    35.94486439426523,
+                    35.73833735
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "big_grammar",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.04592913441640113,
+            "scoreError" : 9.109927455856889E-4,
+            "scoreConfidence" : [
+                0.04501814167081544,
+                0.04684012716198682
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.045593151051137266,
+                "50.0" : 0.04588501245178659,
+                "90.0" : 0.04617263921479936,
+                "95.0" : 0.04617263921479936,
+                "99.0" : 0.04617263921479936,
+                "99.9" : 0.04617263921479936,
+                "99.99" : 0.04617263921479936,
+                "99.999" : 0.04617263921479936,
+                "99.9999" : 0.04617263921479936,
+                "100.0" : 0.04617263921479936
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.04613961065815687,
+                    0.04585525870612557,
+                    0.04617263921479936,
+                    0.045593151051137266,
+                    0.04588501245178659
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "big_grammar",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 0.23775947195482025,
+            "scoreError" : 0.1518274498565767,
+            "scoreConfidence" : [
+                0.08593202209824355,
+                0.389586921811397
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.2004812859548197,
+                "50.0" : 0.22336947861434348,
+                "90.0" : 0.2995671163312972,
+                "95.0" : 0.2995671163312972,
+                "99.0" : 0.2995671163312972,
+                "99.9" : 0.2995671163312972,
+                "99.99" : 0.2995671163312972,
+                "99.999" : 0.2995671163312972,
+                "99.9999" : 0.2995671163312972,
+                "100.0" : 0.2995671163312972
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.22336947861434348,
+                    0.2004812859548197,
+                    0.2520584441394248,
+                    0.21332103473421607,
+                    0.2995671163312972
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "big_grammar",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 1.016003708084032,
+            "scoreError" : 1.1718815814601546,
+            "scoreConfidence" : [
+                -0.15587787337612258,
+                2.1878852895441865
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.5642070831876375,
+                "50.0" : 1.0685147678762006,
+                "90.0" : 1.3983029448621553,
+                "95.0" : 1.3983029448621553,
+                "99.0" : 1.3983029448621553,
+                "99.9" : 1.3983029448621553,
+                "99.99" : 1.3983029448621553,
+                "99.999" : 1.3983029448621553,
+                "99.9999" : 1.3983029448621553,
+                "100.0" : 1.3983029448621553
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.5642070831876375,
+                    1.0685147678762006,
+                    1.1175075609156895,
+                    1.3983029448621553,
+                    0.931486183578477
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.lex",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "big_grammar",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 0.8307360953367627,
+            "scoreError" : 0.24771990590441045,
+            "scoreConfidence" : [
+                0.5830161894323522,
+                1.0784560012411732
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.7665489857449418,
+                "50.0" : 0.804583179148902,
+                "90.0" : 0.9340333885724955,
+                "95.0" : 0.9340333885724955,
+                "99.0" : 0.9340333885724955,
+                "99.9" : 0.9340333885724955,
+                "99.99" : 0.9340333885724955,
+                "99.999" : 0.9340333885724955,
+                "99.9999" : 0.9340333885724955,
+                "100.0" : 0.9340333885724955
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.7665489857449418,
+                    0.8019390144265448,
+                    0.8465759087909298,
+                    0.804583179148902,
+                    0.9340333885724955
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.5337950350054274,
+            "scoreError" : 0.300322845081274,
+            "scoreConfidence" : [
+                0.23347218992415336,
+                0.8341178800867013
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.48533911996119333,
+                "50.0" : 0.505510018094516,
+                "90.0" : 0.6723014016261255,
+                "95.0" : 0.6723014016261255,
+                "99.0" : 0.6723014016261255,
+                "99.9" : 0.6723014016261255,
+                "99.99" : 0.6723014016261255,
+                "99.999" : 0.6723014016261255,
+                "99.9999" : 0.6723014016261255,
+                "100.0" : 0.6723014016261255
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.5096963833494675,
+                    0.505510018094516,
+                    0.6723014016261255,
+                    0.49612825199583477,
+                    0.48533911996119333
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 4.252780924395308,
+            "scoreError" : 4.493359015557805,
+            "scoreConfidence" : [
+                -0.2405780911624964,
+                8.746139939953114
+            ],
+            "scorePercentiles" : {
+                "0.0" : 3.0284951298701297,
+                "50.0" : 3.778708616459041,
+                "90.0" : 6.002450434913017,
+                "95.0" : 6.002450434913017,
+                "99.0" : 6.002450434913017,
+                "99.9" : 6.002450434913017,
+                "99.99" : 6.002450434913017,
+                "99.999" : 6.002450434913017,
+                "99.9999" : 6.002450434913017,
+                "100.0" : 6.002450434913017
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    3.0284951298701297,
+                    3.652475036509675,
+                    3.778708616459041,
+                    6.002450434913017,
+                    4.801775404224676
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 7.5745102499664085,
+            "scoreError" : 7.642739175454552,
+            "scoreConfidence" : [
+                -0.06822892548814341,
+                15.21724942542096
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.388895238556812,
+                "50.0" : 7.5220792293233085,
+                "90.0" : 10.642533067021276,
+                "95.0" : 10.642533067021276,
+                "99.0" : 10.642533067021276,
+                "99.9" : 10.642533067021276,
+                "99.99" : 10.642533067021276,
+                "99.999" : 10.642533067021276,
+                "99.9999" : 10.642533067021276,
+                "100.0" : 10.642533067021276
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    10.642533067021276,
+                    7.940799503968254,
+                    5.388895238556812,
+                    7.5220792293233085,
+                    6.3782442109623965
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 12.78125127701962,
+            "scoreError" : 27.480014523482247,
+            "scoreConfidence" : [
+                -14.698763246462626,
+                40.26126580050187
+            ],
+            "scorePercentiles" : {
+                "0.0" : 7.578071315669947,
+                "50.0" : 11.005837688668867,
+                "90.0" : 24.956946177057358,
+                "95.0" : 24.956946177057358,
+                "99.0" : 24.956946177057358,
+                "99.9" : 24.956946177057358,
+                "99.99" : 24.956946177057358,
+                "99.999" : 24.956946177057358,
+                "99.9999" : 24.956946177057358,
+                "100.0" : 24.956946177057358
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    7.759963861132661,
+                    11.005837688668867,
+                    12.60543734256927,
+                    7.578071315669947,
+                    24.956946177057358
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 0.6329801734177323,
+            "scoreError" : 0.4867483474261772,
+            "scoreConfidence" : [
+                0.1462318259915551,
+                1.1197285208439094
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.5450615474906,
+                "50.0" : 0.5711998434574104,
+                "90.0" : 0.8488310083107191,
+                "95.0" : 0.8488310083107191,
+                "99.0" : 0.8488310083107191,
+                "99.9" : 0.8488310083107191,
+                "99.99" : 0.8488310083107191,
+                "99.999" : 0.8488310083107191,
+                "99.9999" : 0.8488310083107191,
+                "100.0" : 0.8488310083107191
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    0.8488310083107191,
+                    0.6422646296938186,
+                    0.5711998434574104,
+                    0.5575438381361129,
+                    0.5450615474906
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 2.6133590354740535,
+            "scoreError" : 0.824187411472761,
+            "scoreConfidence" : [
+                1.7891716240012925,
+                3.4375464469468144
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2.3395419588400372,
+                "50.0" : 2.600365043681747,
+                "90.0" : 2.9257252558479534,
+                "95.0" : 2.9257252558479534,
+                "99.0" : 2.9257252558479534,
+                "99.9" : 2.9257252558479534,
+                "99.99" : 2.9257252558479534,
+                "99.999" : 2.9257252558479534,
+                "99.9999" : 2.9257252558479534,
+                "100.0" : 2.9257252558479534
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    2.600365043681747,
+                    2.6720191922563417,
+                    2.529143726744186,
+                    2.9257252558479534,
+                    2.3395419588400372
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 4.675820992115224,
+            "scoreError" : 0.6593046070856673,
+            "scoreConfidence" : [
+                4.016516385029556,
+                5.335125599200891
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4.378466666958425,
+                "50.0" : 4.735616638902035,
+                "90.0" : 4.813134720538721,
+                "95.0" : 4.813134720538721,
+                "99.0" : 4.813134720538721,
+                "99.9" : 4.813134720538721,
+                "99.99" : 4.813134720538721,
+                "99.999" : 4.813134720538721,
+                "99.9999" : 4.813134720538721,
+                "100.0" : 4.813134720538721
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    4.6995852315641145,
+                    4.752301702612827,
+                    4.735616638902035,
+                    4.378466666958425,
+                    4.813134720538721
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_math",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 10.481870619759537,
+            "scoreError" : 3.7629552922516094,
+            "scoreConfidence" : [
+                6.718915327507927,
+                14.244825912011146
+            ],
+            "scorePercentiles" : {
+                "0.0" : 9.600709212847555,
+                "50.0" : 10.136707700101317,
+                "90.0" : 11.909849702380953,
+                "95.0" : 11.909849702380953,
+                "99.0" : 11.909849702380953,
+                "99.9" : 11.909849702380953,
+                "99.99" : 11.909849702380953,
+                "99.999" : 11.909849702380953,
+                "99.9999" : 11.909849702380953,
+                "100.0" : 11.909849702380953
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    9.600709212847555,
+                    11.909849702380953,
+                    10.136707700101317,
+                    11.038635520396912,
+                    9.723450963070942
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 1.3192386492566406,
+            "scoreError" : 0.356122914477088,
+            "scoreConfidence" : [
+                0.9631157347795526,
+                1.6753615637337287
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.2583111952967807,
+                "50.0" : 1.2890034149484537,
+                "90.0" : 1.4825645595079295,
+                "95.0" : 1.4825645595079295,
+                "99.0" : 1.4825645595079295,
+                "99.9" : 1.4825645595079295,
+                "99.99" : 1.4825645595079295,
+                "99.999" : 1.4825645595079295,
+                "99.9999" : 1.4825645595079295,
+                "100.0" : 1.4825645595079295
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    1.2707531819567979,
+                    1.2955608945732418,
+                    1.2890034149484537,
+                    1.4825645595079295,
+                    1.2583111952967807
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 7.679290326612718,
+            "scoreError" : 4.763819251389117,
+            "scoreConfidence" : [
+                2.915471075223601,
+                12.443109578001835
+            ],
+            "scorePercentiles" : {
+                "0.0" : 6.665469992671552,
+                "50.0" : 7.072609971711457,
+                "90.0" : 9.721087746355686,
+                "95.0" : 9.721087746355686,
+                "99.0" : 9.721087746355686,
+                "99.9" : 9.721087746355686,
+                "99.99" : 9.721087746355686,
+                "99.999" : 9.721087746355686,
+                "99.9999" : 9.721087746355686,
+                "100.0" : 9.721087746355686
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    6.984610432658758,
+                    9.721087746355686,
+                    7.952673489666137,
+                    7.072609971711457,
+                    6.665469992671552
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 14.746873909570818,
+            "scoreError" : 1.007227324634117,
+            "scoreConfidence" : [
+                13.7396465849367,
+                15.754101234204935
+            ],
+            "scorePercentiles" : {
+                "0.0" : 14.474191234104046,
+                "50.0" : 14.732150735294118,
+                "90.0" : 15.122243580060424,
+                "95.0" : 15.122243580060424,
+                "99.0" : 15.122243580060424,
+                "99.9" : 15.122243580060424,
+                "99.99" : 15.122243580060424,
+                "99.999" : 15.122243580060424,
+                "99.9999" : 15.122243580060424,
+                "100.0" : 15.122243580060424
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    15.122243580060424,
+                    14.474191234104046,
+                    14.732150735294118,
+                    14.867724430906389,
+                    14.538059567489114
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "iterative_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 42.59860768711438,
+            "scoreError" : 35.987239884813256,
+            "scoreConfidence" : [
+                6.611367802301125,
+                78.58584757192764
+            ],
+            "scorePercentiles" : {
+                "0.0" : 33.91548078983051,
+                "50.0" : 41.75518541666667,
+                "90.0" : 57.97696579768786,
+                "95.0" : 57.97696579768786,
+                "99.0" : 57.97696579768786,
+                "99.9" : 57.97696579768786,
+                "99.99" : 57.97696579768786,
+                "99.999" : 57.97696579768786,
+                "99.9999" : 57.97696579768786,
+                "100.0" : 57.97696579768786
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    33.91548078983051,
+                    57.97696579768786,
+                    36.53821563138686,
+                    42.8071908,
+                    41.75518541666667
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "100"
+        },
+        "primaryMetric" : {
+            "score" : 1.4546070040454158,
+            "scoreError" : 0.27627697367272247,
+            "scoreConfidence" : [
+                1.1783300303726933,
+                1.7308839777181382
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.3900600796275708,
+                "50.0" : 1.4222774677281773,
+                "90.0" : 1.55855887211838,
+                "95.0" : 1.55855887211838,
+                "99.0" : 1.55855887211838,
+                "99.9" : 1.55855887211838,
+                "99.99" : 1.55855887211838,
+                "99.999" : 1.55855887211838,
+                "99.9999" : 1.55855887211838,
+                "100.0" : 1.55855887211838
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    1.4987595568539327,
+                    1.4222774677281773,
+                    1.3900600796275708,
+                    1.4033790438990181,
+                    1.55855887211838
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "500"
+        },
+        "primaryMetric" : {
+            "score" : 9.195269566929664,
+            "scoreError" : 2.7515812858706226,
+            "scoreConfidence" : [
+                6.443688281059041,
+                11.946850852800287
+            ],
+            "scorePercentiles" : {
+                "0.0" : 8.143777868185516,
+                "50.0" : 9.128109869525547,
+                "90.0" : 9.958753233830846,
+                "95.0" : 9.958753233830846,
+                "99.0" : 9.958753233830846,
+                "99.9" : 9.958753233830846,
+                "99.99" : 9.958753233830846,
+                "99.999" : 9.958753233830846,
+                "99.9999" : 9.958753233830846,
+                "100.0" : 9.958753233830846
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    9.958753233830846,
+                    8.994464660377359,
+                    9.128109869525547,
+                    9.751242202729046,
+                    8.143777868185516
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "1000"
+        },
+        "primaryMetric" : {
+            "score" : 20.316466091640883,
+            "scoreError" : 4.479176395682078,
+            "scoreConfidence" : [
+                15.837289695958805,
+                24.79564248732296
+            ],
+            "scorePercentiles" : {
+                "0.0" : 19.222284230326295,
+                "50.0" : 20.18112021169355,
+                "90.0" : 21.947158899122808,
+                "95.0" : 21.947158899122808,
+                "99.0" : 21.947158899122808,
+                "99.9" : 21.947158899122808,
+                "99.99" : 21.947158899122808,
+                "99.999" : 21.947158899122808,
+                "99.9999" : 21.947158899122808,
+                "100.0" : 21.947158899122808
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    20.18112021169355,
+                    21.947158899122808,
+                    20.969469601677147,
+                    19.262297515384617,
+                    19.222284230326295
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "bench.alpaca.AlpacaBenchmark.parseOnly",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/Users/bartlomiejkozak/Library/Caches/Coursier/arc/https/cdn.azul.com/zulu/bin/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64.tar.gz/zulu21.46.19-ca-jdk21.0.9-macosx_aarch64/zulu-21.jdk/Contents/Home/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.9",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.9+10-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "10 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "10 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "scenario" : "recursive_json",
+            "size" : "2000"
+        },
+        "primaryMetric" : {
+            "score" : 52.4033644732635,
+            "scoreError" : 22.95944801316457,
+            "scoreConfidence" : [
+                29.44391646009893,
+                75.36281248642807
+            ],
+            "scorePercentiles" : {
+                "0.0" : 49.12486764705882,
+                "50.0" : 49.540061985221676,
+                "90.0" : 62.958175836477984,
+                "95.0" : 62.958175836477984,
+                "99.0" : 62.958175836477984,
+                "99.9" : 62.958175836477984,
+                "99.99" : 62.958175836477984,
+                "99.999" : 62.958175836477984,
+                "99.9999" : 62.958175836477984,
+                "100.0" : 62.958175836477984
+            },
+            "scoreUnit" : "ms/op",
+            "rawData" : [
+                [
+                    49.12486764705882,
+                    51.2256923877551,
+                    62.958175836477984,
+                    49.16802450980392,
+                    49.540061985221676
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
+
+

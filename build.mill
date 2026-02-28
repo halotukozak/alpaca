@@ -110,9 +110,10 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
       override def forkWorkingDir = Task(moduleDir / os.up)
       override def scalacOptions = build.scalacOptions()
 
-    object alpaca extends BenchmarkScalaModule:
+    object alpaca extends BenchmarkScalaModule with JmhModule:
       def scalaVersion = build.scalaVersion()
-      override def scalacOptions = super.scalacOptions() ++ Seq("-experimental", "-Yretain-trees")
+      def jmhCoreVersion = "1.37"
+      override def scalacOptions = Seq("-experimental", "-preview", "-Yretain-trees")
       def moduleDeps = Seq(build)
 
     object fastparse extends BenchmarkScalaModule:

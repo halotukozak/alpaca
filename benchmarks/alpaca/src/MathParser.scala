@@ -1,3 +1,5 @@
+package bench.alpaca
+
 import alpaca.*
 
 val MathLexer = lexer {

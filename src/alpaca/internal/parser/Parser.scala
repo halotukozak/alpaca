@@ -7,7 +7,7 @@ import alpaca.internal.lexer.Lexeme
 import alpaca.internal.parser.*
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.{compileTimeOnly, tailrec}
+import scala.annotation.compileTimeOnly
 import scala.collection.mutable
 
 /**
@@ -83,43 +83,51 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param lexemes   the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) = supervisedWithLog:
+  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
+    val input: Array[Lexeme[?, ?]] = (lexems :+ Lexeme.EOF).toArray
 
-    @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null =
-      val nextSymbol = Terminal(lexems.head.name)
-      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
+    var pos = 0
+    var stack: List[(index: Int, node: Node)] = (0, null) :: Nil
+    var result: R | Null = null.asInstanceOf[R | Null]
+    var done = false
+
+    while !done do
+      val nextSymbol = Terminal(input(pos).name)
+      tables.parseTable.runtimeApply(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
-          loop(lexems.tail, (gotoState, lexems.head) :: stack)
+          stack = (gotoState, input(pos)) :: stack
+          pos += 1
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
-          if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+          if lhs == Symbol.Start && newState.index == 0 then
+            result = stack.head.node.asInstanceOf[R | Null]
+            done = true
           else
-            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
-            val children = stack.take(rhs.size).map(_.node).reverse
-            loop(
-              lexems,
-              (
-                gotoState,
-                tables.actionTable(prod)(ctx, children).asInstanceOf[Node],
-              ) :: newStack,
-            )
+            val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(newState.index, lhs).runtimeChecked
+            // Single-pass children extraction: traverse stack and prepend to build correct order
+            var children: List[Any] = Nil
+            var s = stack
+            var i = 0
+            while i < rhs.size do
+              children = s.head.node.asInstanceOf[Any] :: children
+              s = s.tail
+              i += 1
+            stack = (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: newStack
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
-          stack.head.node.asInstanceOf[R | Null]
+          result = stack.head.node.asInstanceOf[R | Null]
+          done = true
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
-          loop(
-            lexems,
-            (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack,
-          )
+          val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(stack.head.index, lhs).runtimeChecked
+          stack = (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack
 
-    (ctx, loop(lexems :+ Lexeme.EOF, (0, null) :: Nil))
+    (ctx, result)
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
