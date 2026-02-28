@@ -83,13 +83,13 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param lexemes   the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) = supervisedWithLog:
+  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
 
     @tailrec def loop(lexems: List[Lexeme[?, ?]], stack: List[(index: Int, node: Node)]): R | Null =
       val nextSymbol = Terminal(lexems.head.name)
-      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
+      tables.parseTable.runtimeApply(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
           loop(lexems.tail, (gotoState, lexems.head) :: stack)
 
@@ -99,7 +99,7 @@ abstract class Parser[Ctx <: ParserCtx](
 
           if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else
-            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
+            val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(newState.index, lhs).runtimeChecked
             val children = stack.take(rhs.size).map(_.node).reverse
             loop(
               lexems,
@@ -113,7 +113,7 @@ abstract class Parser[Ctx <: ParserCtx](
           stack.head.node.asInstanceOf[R | Null]
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
+          val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(stack.head.index, lhs).runtimeChecked
           loop(
             lexems,
             (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack,
