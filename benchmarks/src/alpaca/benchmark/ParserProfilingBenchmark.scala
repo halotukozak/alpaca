@@ -89,11 +89,13 @@ class ParserProfilingBenchmark:
 
   @Setup(Level.Trial)
   def setup(): Unit =
-    // Walk up from working directory to find inputs/
+    // Walk up from working directory to find benchmarks/inputs/
     var dir = Paths.get(System.getProperty("user.dir"))
-    while dir != null && !Files.exists(dir.resolve("inputs")) do
+    while dir != null && !Files.exists(dir.resolve("benchmarks/inputs")) do
       dir = dir.getParent
-    val inputsDir = if dir != null then dir.resolve("inputs") else Paths.get("inputs")
+    val inputsDir =
+      if dir != null then dir.resolve("benchmarks/inputs")
+      else Paths.get("benchmarks/inputs")
 
     val inputPath = inputsDir.resolve(s"${scenario}_${size}.txt")
     input = new String(Files.readAllBytes(inputPath))
