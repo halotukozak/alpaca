@@ -53,7 +53,9 @@ private[parser] object ParseAction:
 
     extension (red: Reduction) inline def production: Production = red
 
+  // $COVERAGE-OFF$
   given ToExpr[ParseAction] with
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
       case shift: Int => '{ ${ Expr(shift) }: ParseAction.Shift }
       case production: Production => '{ ${ Expr(production) }: ParseAction.Reduction }
+// $COVERAGE-ON$
