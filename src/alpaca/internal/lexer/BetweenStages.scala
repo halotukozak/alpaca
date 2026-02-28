@@ -30,8 +30,10 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
+  // $COVERAGE-OFF$
   private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
     import quotes.reflect.*
+
     logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
@@ -59,3 +61,4 @@ private[alpaca] object BetweenStages:
       $derivedBetweenStages.foreach(_.apply(token, m, ctx))
       // todo: do not init List https://github.com/halotukozak/alpaca/issues/232
     }
+// $COVERAGE-ON$

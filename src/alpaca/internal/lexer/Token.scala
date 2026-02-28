@@ -41,6 +41,7 @@ private[lexer] object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
+// $COVERAGE-OFF$
   def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
@@ -63,7 +64,7 @@ private[lexer] object TokenInfo:
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
-
+// $COVERAGE-ON$
 /**
  * Base trait for all token types.
  *
