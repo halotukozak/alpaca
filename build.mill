@@ -15,6 +15,8 @@ import mill.contrib.jmh.JmhModule
 import mill.util.VcsVersion
 
 object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
+  root =>
+
   def scalaVersion = "3.8.3-RC1"
 
   def scoverageVersion = "2.5.2"
@@ -96,9 +98,17 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   object test extends ScalaTests with TestModule.ScalaTest with ScoverageTests:
     def scalaTestVersion = "3.2.19"
 
+
+  object example extends ScalaModule:
+    def scalaVersion = root.scalaVersion
+
+    def moduleDeps = Seq(root)
+
+    def scalacOptions = root.scalacOptions() ++ Seq("-Yretain-trees")
+    
   object benchmarks extends ScalaModule with JmhModule:
-    def scalaVersion = build.scalaVersion()
-    def moduleDeps = Seq(build)
+    def scalaVersion = root.scalaVersion
+    def moduleDeps = Seq(root)
     def jmhCoreVersion = "1.37"
     override def scalacOptions = Seq("-experimental", "-preview", "-Yretain-trees")
 
@@ -108,12 +118,12 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
         super.sources() ++ Seq(sharedSources())
       }
       override def forkWorkingDir = Task(moduleDir / os.up)
-      override def scalacOptions = build.scalacOptions()
+      override def scalacOptions = root.scalacOptions()
 
     object alpaca extends BenchmarkScalaModule:
-      def scalaVersion = build.scalaVersion()
+      def scalaVersion = root.scalaVersion
       override def scalacOptions = super.scalacOptions() ++ Seq("-experimental", "-Yretain-trees")
-      def moduleDeps = Seq(build)
+      def moduleDeps = Seq(root)
 
     object fastparse extends BenchmarkScalaModule:
       def scalaVersion = "3.8.2"
