@@ -25,7 +25,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param pattern the regex pattern that matches this token
  */
 //todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
-private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String)
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -126,3 +126,6 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
+
+def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())
