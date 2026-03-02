@@ -14,6 +14,8 @@ import scala.reflect.NameTransformer
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
+  errorHandling: Expr[ErrorHandling[Ctx]],
+  empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
   timeoutOnTooLongCompilation()
@@ -136,7 +138,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       '{
         {
-          new Tokenization[Ctx](using $betweenStages):
+          new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
             override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
