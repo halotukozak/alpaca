@@ -73,6 +73,16 @@ final class ErrorHandlingStrategyTest extends AnyFunSuite with Matchers:
     ignoredTokens shouldBe 1
   }
 
+  test("default ErrorHandling for LexerCtx throws on unexpected character") {
+    val L = lexer[LexerCtx.Empty]:
+      case "a" => Token["A"]
+
+    val exception = intercept[RuntimeException]:
+      L.tokenize("b")
+
+    exception.getMessage should include("Unexpected character: 'b'")
+  }
+
   test("Strategy.IgnoreChar should update position correctly") {
     given ErrorHandling[LexerCtx.Default] = _ => ErrorHandling.Strategy.IgnoreChar
 
