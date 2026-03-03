@@ -51,13 +51,12 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
 
       val root = rule:
        case Expr(expr) => expr
-    """).loneElement.message should
-      include("""
-                |Reduce Integer -> Num vs Reduce Float -> Num
-                |In situation like:
-                |Num ...
-                |Consider marking one of the productions to be before or after the other
-                |""".stripMargin)
+    """).loneElement.message should include("""
+                                              |Reduce Integer -> Num vs Reduce Float -> Num
+                                              |In situation like:
+                                              |Num ...
+                                              |Consider marking one of the productions to be before or after the other
+                                              |""".stripMargin)
   }
 
   test("conflict resolution cycle detection") {
