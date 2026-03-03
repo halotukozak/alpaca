@@ -2,7 +2,7 @@ package alpaca
 package internal
 package lexer
 
-import java.util.regex.Matcher
+import scala.annotation.implicitNotFound
 
 /**
  * A hook for updating context between lexing stages.
@@ -14,7 +14,8 @@ import java.util.regex.Matcher
  * @tparam Ctx the global context type
  */
 // todo: i do not like this name https://github.com/halotukozak/alpaca/issues/235
-private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
+@implicitNotFound("Define BetweenStages for ${Ctx} (or its subclasses)")
+private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
 
 private[alpaca] object BetweenStages:
 
@@ -29,8 +30,10 @@ private[alpaca] object BetweenStages:
    */
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
+  // $COVERAGE-OFF$
   private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
     import quotes.reflect.*
+
     logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
@@ -58,3 +61,4 @@ private[alpaca] object BetweenStages:
       $derivedBetweenStages.foreach(_.apply(token, m, ctx))
       // todo: do not init List https://github.com/halotukozak/alpaca/issues/232
     }
+// $COVERAGE-ON$

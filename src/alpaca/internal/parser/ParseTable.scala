@@ -149,6 +149,7 @@ private[parser] object ParseTable:
     result.append('\n')
     result.result()
 
+  // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
@@ -181,3 +182,4 @@ private[parser] object ParseTable:
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
+// $COVERAGE-ON$

@@ -29,6 +29,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
+// $COVERAGE-OFF$
 private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -117,7 +118,7 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
   def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
     case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
-
+// $COVERAGE-ON$
 /**
  * Creates a cancellable timeout for compilation.
  *
@@ -147,6 +148,7 @@ private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
+// $COVERAGE-OFF$
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -170,6 +172,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
         owner
 
     body(using owner.asQuotes)(owner)
+// $COVERAGE-ON$
 
 /**
  * Type-level operator for adding named fields to a type.
@@ -191,6 +194,7 @@ infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple]
  * @param refn sequence of label and type pairs
  * @return a refined TypeRepr
  */
+// $COVERAGE-OFF$
 def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
@@ -209,6 +213,7 @@ def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quote
 def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
+
   TypeRepr
     .of[NamedTuple]
     .appliedTo(
@@ -221,6 +226,7 @@ def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.re
             )
         .toList,
     )
+// $COVERAGE-ON$
 
 /**
  * The number of available processor threads.

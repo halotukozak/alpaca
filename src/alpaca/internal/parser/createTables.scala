@@ -47,6 +47,7 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
+// $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
 ): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
@@ -218,3 +219,4 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+// $COVERAGE-ON$
