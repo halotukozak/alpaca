@@ -53,7 +53,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val initialContext = empty()
     initialContext.text = input match
       case s: String => OffsetCharSequence(s)
-      case other     => other
+      case other => other
 
     val matcher = compiled.matcher(initialContext.text)
 

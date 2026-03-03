@@ -8,13 +8,10 @@ import alpaca.*
 val BigGrammarLexer = lexer {
   case "\\s+" => Token.Ignored
   case x @ (
-    "ka" | "kb" | "kc" | "kd" | "ke" |
-    "kf" | "kg" | "kh" | "ki" | "kj" |
-    "kk" | "kl" | "km" | "kn" | "ko" |
-    "kp" | "kq" | "kr" | "ks" | "kt" |
-    "ku" | "kv" | "kw" | "kx" | "ky" |
-    "kz" | "la" | "lb" | "lc" | "ld"
-  ) => Token[x.type]
+        "ka" | "kb" | "kc" | "kd" | "ke" | "kf" | "kg" | "kh" | "ki" | "kj" | "kk" | "kl" | "km" | "kn" | "ko" | "kp" |
+        "kq" | "kr" | "ks" | "kt" | "ku" | "kv" | "kw" | "kx" | "ky" | "kz" | "la" | "lb" | "lc" | "ld"
+      ) =>
+    Token[x.type]
   case num @ "\\d+" => Token["num"](num.toInt)
 }
 
@@ -158,6 +155,4 @@ object BigGrammarParser extends Parser:
   )
 
   // --- Root: a single statement ---
-  val root: Rule[Any] = rule(
-    { case Statement(v) => v },
-  )
+  val root: Rule[Any] = rule { case Statement(v) => v }

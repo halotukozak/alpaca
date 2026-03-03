@@ -16,11 +16,15 @@ import alpaca.*
 @Fork(1)
 class AlpacaBenchmark:
 
-  @Param(Array(
-    "iterative_math", "recursive_math",
-    "iterative_json", "recursive_json",
-    "big_grammar",
-  ))
+  @Param(
+    Array(
+      "iterative_math",
+      "recursive_math",
+      "iterative_json",
+      "recursive_json",
+      "big_grammar",
+    ),
+  )
   var scenario: String = uninitialized
 
   @Param(Array("100", "500", "1000", "2000", "5000", "10000"))
@@ -37,13 +41,19 @@ class AlpacaBenchmark:
 
   @Setup(Level.Trial)
   def setup(): Unit =
-    val fileName = s"${scenario}_${size}.txt"
+    val fileName = s"${scenario}_$size.txt"
     // Walk up from CWD to find benchmarks/inputs/ — JMH fork CWD varies by Mill version
     val cwd = Paths.get("").toAbsolutePath
-    val candidates = Iterator.iterate(cwd)(_.getParent).takeWhile(_ != null).take(5).flatMap { dir =>
-      Seq(dir.resolve(s"inputs/$fileName"), dir.resolve(s"benchmarks/inputs/$fileName"))
-    }.toSeq
-    val inputPath = candidates.find(Files.exists(_))
+    val candidates = Iterator
+      .iterate(cwd)(_.getParent)
+      .takeWhile(_ != null)
+      .take(5)
+      .flatMap { dir =>
+        Seq(dir.resolve(s"inputs/$fileName"), dir.resolve(s"benchmarks/inputs/$fileName"))
+      }
+      .toSeq
+    val inputPath = candidates
+      .find(Files.exists(_))
       .getOrElse(sys.error(s"Input file not found for $scenario/$size. CWD=$cwd, tried: ${candidates.mkString(", ")}"))
     input = new String(Files.readAllBytes(inputPath))
 
@@ -77,21 +87,15 @@ class AlpacaBenchmark:
 
   @Benchmark
   def lex(bh: Blackhole): Unit =
-    try
-      bh.consume(lexFn(input))
-    catch
-      case _: StackOverflowError => bh.consume("StackOverflowError")
+    try bh.consume(lexFn(input))
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
 
   @Benchmark
   def parseOnly(bh: Blackhole): Unit =
-    try
-      bh.consume(parseFn(input))
-    catch
-      case _: StackOverflowError => bh.consume("StackOverflowError")
+    try bh.consume(parseFn(input))
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
 
   @Benchmark
   def fullParse(bh: Blackhole): Unit =
-    try
-      bh.consume(fullParseFn(input))
-    catch
-      case _: StackOverflowError => bh.consume("StackOverflowError")
+    try bh.consume(fullParseFn(input))
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
