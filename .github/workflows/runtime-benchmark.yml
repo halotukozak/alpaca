@@ -41,10 +41,12 @@ jobs:
 
       - name: Run Base Benchmarks
         id: base_bench
+        continue-on-error: true
         run: |
           echo "::group::Benchmarking base"
           (
             cd base
+            ./mill benchmarks.alpaca.runJmh -rf json -rff $GITHUB_WORKSPACE/base-results.json -wi 1 -i 3 -f 1 ||
             ./mill benchmarks.runJmh -rf json -rff $GITHUB_WORKSPACE/base-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
@@ -54,6 +56,7 @@ jobs:
           echo "::group::Benchmarking current"
           (
             cd current
+            ./mill benchmarks.alpaca.runJmh -rf json -rff $GITHUB_WORKSPACE/current-results.json -wi 1 -i 3 -f 1 ||
             ./mill benchmarks.runJmh -rf json -rff $GITHUB_WORKSPACE/current-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
