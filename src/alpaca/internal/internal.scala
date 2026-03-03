@@ -183,7 +183,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
  * @tparam B the base type with a Fields member
  * @tparam A the named tuple type representing the fields
  */
-private[alpaca] infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
+infix private[alpaca] type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
 
 /**
  * Creates a refinement type from a sequence of labeled types.

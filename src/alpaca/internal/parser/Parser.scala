@@ -18,7 +18,7 @@ import scala.collection.mutable
  *
  * @note This is a compile-time only feature and should be used within parser definitions.
  */
-private[alpaca] transparent trait ProductionSelector extends Selectable:
+transparent private[alpaca] trait ProductionSelector extends Selectable:
   def selectDynamic(name: String): Any
 
 /**

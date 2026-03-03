@@ -100,12 +100,16 @@ private[internal] object logger:
   enum Level:
     /** Finest-grained informational events. Disabled by default. */
     case trace
+
     /** Detailed debug information. Disabled by default. */
     case debug
+
     /** General informational messages. Disabled by default. */
     case info
+
     /** Potentially harmful situations. Logged to stdout by default. */
     case warn
+
     /** Error events that might still allow the compilation to continue. Logged to stdout by default. */
     case error
 
