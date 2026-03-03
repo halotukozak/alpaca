@@ -60,6 +60,13 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     if replace then this.replace(file)(content) else this.append(file)(content)
 
+  /**
+   * Logs a message at the given level.
+   *
+   * @param level the severity level
+   * @param msg   the message to log
+   * @param pos   the source position (provided implicitly by the compiler)
+   */
   def log(level: Level, msg: Shown)(using pos: DebugPosition): Unit = debugSettings.logOut(level) match
     case Out.stdout => println(show"$level: $pos\t$msg")
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
@@ -71,9 +78,11 @@ inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): 
 private[internal] object logger:
 
   inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
+  // $COVERAGE-OFF$
   private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
     val debugSettings = Expr(summon[DebugSettings])
     '{ new Log(using $debugSettings)(using $ox) }
+  // $COVERAGE-ON$
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)
@@ -85,8 +94,24 @@ private[internal] object logger:
   inline def toFile(path: String, replace: Boolean)(content: Shown)(using Log): Unit =
     summon[Log].toFile(path, replace)(content)
 
+  /**
+   * Logging severity levels, ordered from most to least verbose.
+   */
   enum Level:
-    case trace, debug, info, warn, error
+    /** Finest-grained informational events. Disabled by default. */
+    case trace
+
+    /** Detailed debug information. Disabled by default. */
+    case debug
+
+    /** General informational messages. Disabled by default. */
+    case info
+
+    /** Potentially harmful situations. Logged to stdout by default. */
+    case warn
+
+    /** Error events that might still allow the compilation to continue. Logged to stdout by default. */
+    case error
 
     lazy val default: Out = this match
       case Level.trace | Level.debug | Level.info => Out.disabled
@@ -94,6 +119,7 @@ private[internal] object logger:
 
   object Level:
     given Showable[Level] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Level]:
       def apply(x: Level)(using Quotes): Expr[Level] =
@@ -113,12 +139,14 @@ private[internal] object logger:
           case '{ Level.warn } => Some(Level.warn)
           case '{ Level.error } => Some(Level.error)
           case _ => None
+  // $COVERAGE-ON$
 
   enum Out:
     case stdout, file, disabled
 
   object Out:
     given Showable[Out] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Out]:
       def apply(x: Out)(using Quotes): Expr[Out] = x match
@@ -132,3 +160,4 @@ private[internal] object logger:
         case '{ Out.file } => Some(Out.file)
         case '{ Out.disabled } => Some(Out.disabled)
         case _ => None
+  // $COVERAGE-ON$

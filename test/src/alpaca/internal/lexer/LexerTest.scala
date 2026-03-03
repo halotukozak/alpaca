@@ -46,7 +46,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val exception = intercept[RuntimeException]:
       Lexer.tokenize("123abc")
 
-    assert(exception.getMessage.contains("Unexpected character: 'a'"))
+    assert(exception.getMessage.contains("Unexpected character at line 1, position 4: 'a'"))
   }
 
   test("tokenize complex expression") {
@@ -82,6 +82,22 @@ final class LexerTest extends AnyFunSuite with Matchers:
       case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
       case "[a-zA-Z]+" => Token["ALPHABETIC"]
     """ shouldNot compile
+  }
+
+  test("track line and position across newlines") {
+    val Lexer = lexer:
+      case id @ "[a-zA-Z]+" => Token["IDENTIFIER"](id)
+      case "\\s+" => Token.Ignored
+
+    val (ctx, lexemes) = Lexer.tokenize("abc\ndef")
+    assert(
+      lexemes == List(
+        Lexeme("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
+        Lexeme("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
+      ),
+    )
+    ctx.line shouldBe 2
+    ctx.position shouldBe 4
   }
 
   test("tokenize file") {

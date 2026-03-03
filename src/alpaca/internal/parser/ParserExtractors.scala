@@ -17,6 +17,7 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
+// $COVERAGE-OFF$
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -107,6 +108,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           ),
         ),
       )
+// $COVERAGE-ON$
 
 private object ParserExtractors:
   private object Names:
