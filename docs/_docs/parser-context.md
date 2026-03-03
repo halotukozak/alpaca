@@ -118,7 +118,7 @@ The available fields are:
 | `binding.position` | `Int` | Character position from the lexer context snapshot |
 | `binding.line` | `Int` | Line number from the lexer context snapshot |
 
-[//]: # (todo dodaj, że to line, position pochodzi stricte z Default Context)
+The `position` and `line` fields are available because the lexer uses `LexerCtx.Default`, which includes `PositionTracking` and `LineTracking`. If your lexer uses a custom context without those traits, the corresponding fields will not be present on the lexeme. See [Lexer Context](lexer-context.html) for details on which traits provide which fields.
 
 ---
 
