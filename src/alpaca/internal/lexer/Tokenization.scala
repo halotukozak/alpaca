@@ -5,7 +5,6 @@ package lexer
 import alpaca.internal.lexer.ErrorHandling.Strategy
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
@@ -50,61 +49,52 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @return a list of lexems representing the tokenized input
    */
   final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
-    val initialContext = empty()
-    initialContext.text = input match
-      case s: String => OffsetCharSequence(s)
-      case other => other
+    val globalCtx = empty()
+    globalCtx.text = OffsetCharSequence(input)
 
-    val matcher = compiled.matcher(initialContext.text)
+    val matcher = compiled.matcher(globalCtx.text)
     val acc = mutable.ListBuffer.empty[Lexeme]
 
-    @tailrec def loop(globalCtx: Ctx): List[Lexeme] = globalCtx.text.length match
-      case 0 =>
-        acc.toList
-      case _ =>
-        matcher.reset(globalCtx.text)
+    while !globalCtx.text.isEmpty do
+      matcher.reset(globalCtx.text)
 
-        val (token, matched) = if matcher.lookingAt then
-          val matched = matcher.group(0)
-          globalCtx.lastRawMatched = matched
-          globalCtx.text = globalCtx.text.from(matcher.end)
-          Iterator
-            .range(1, matcher.groupCount + 1)
-            .collectFirst:
-              case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
-            .getOrElse:
-              throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-        else
-          errorHandling(globalCtx) match
-            case Strategy.Throw(ex) =>
-              throw ex
+      val (token, matched) = if matcher.lookingAt then
+        val matched = matcher.group(0)
+        globalCtx.lastRawMatched = matched
+        globalCtx.text = globalCtx.text.from(matcher.end)
+        Iterator
+          .range(1, matcher.groupCount + 1)
+          .collectFirst:
+            case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
+          .getOrElse:
+            throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+      else
+        errorHandling(globalCtx) match
+          case Strategy.Throw(ex) =>
+            throw ex
 
-            case Strategy.IgnoreToken if matcher.find =>
-              val firstMatching = matcher.start
-              val matched = globalCtx.text.subSequence(0, firstMatching).toString
-              globalCtx.lastRawMatched = matched
-              globalCtx.text = globalCtx.text.from(firstMatching)
-              (RecoveredToken(matched), matched)
+          case Strategy.IgnoreToken if matcher.find =>
+            val firstMatching = matcher.start
+            val matched = globalCtx.text.subSequence(0, firstMatching).toString
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(firstMatching)
+            (RecoveredToken(matched), matched)
 
-            case Strategy.IgnoreChar | Strategy.IgnoreToken =>
-              val matched = globalCtx.text.charAt(0).toString
-              globalCtx.lastRawMatched = matched
-              globalCtx.text = globalCtx.text.from(1)
-              (RecoveredToken(matched), matched)
+          case Strategy.IgnoreChar | Strategy.IgnoreToken =>
+            val matched = globalCtx.text.charAt(0).toString
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(1)
+            (RecoveredToken(matched), matched)
 
-            case Strategy.Stop =>
-              globalCtx.text = ""
-              return loop(globalCtx)
+          case Strategy.Stop =>
+            globalCtx.text = ""
+            (null, null)
 
+      if token != null && matched != null then
         betweenStages(token, matched, globalCtx)
+        if token.isInstanceOf[DefinedToken[?, Ctx, ?]] then acc.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
 
-        token match
-          case _: DefinedToken[?, Ctx, ?] => acc.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
-          case _ => ()
-
-        loop(globalCtx)
-
-    (initialContext, loop(initialContext))
+    (globalCtx, acc.toList)
 
   /** The compiled pattern that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern

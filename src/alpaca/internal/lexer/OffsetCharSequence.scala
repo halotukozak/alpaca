@@ -14,7 +14,7 @@ package lexer
  * @param offset     the current logical start position (advanced by `from`)
  */
 private[alpaca] final class OffsetCharSequence(
-  private val underlying: String,
+  private val underlying: CharSequence,
   private var offset: Int = 0,
 ) extends CharSequence:
 
@@ -23,7 +23,7 @@ private[alpaca] final class OffsetCharSequence(
   def charAt(index: Int): Char = underlying.charAt(index + offset)
 
   def subSequence(start: Int, end: Int): CharSequence =
-    underlying.substring(start + offset, end + offset)
+    underlying.subSequence(start + offset, end + offset)
 
   /**
    * Advances the logical start position by `count` characters.
@@ -38,4 +38,4 @@ private[alpaca] final class OffsetCharSequence(
     offset += count
     this
 
-  override def toString: String = underlying.substring(offset)
+  override def toString: String = underlying.subSequence(offset, underlying.length).toString
