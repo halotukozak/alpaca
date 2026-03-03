@@ -2,7 +2,6 @@ name: Runtime Benchmark
 
 on:
   pull_request:
-    branches: [ master ]
 
 jobs:
   benchmark:
