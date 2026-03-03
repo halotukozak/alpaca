@@ -32,7 +32,8 @@ private[parser] object ParseTable:
     /** Runtime lookup without Log dependency -- uses plain string interpolation for error messages. */
     def runtimeApply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
-      catch case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
+      catch
+        case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
 
     /**
      * Converts the parse table to CSV format for debugging.

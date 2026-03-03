@@ -61,12 +61,13 @@ private object ProfilingJsonParser extends Parser:
     { case (ArrayElements(elems), ProfilingJsonLexer.`,`(_), Value(v)) => elems :+ v },
   )
 
-/** JMH benchmark that isolates parser performance from lexer performance.
-  *
-  * Pre-tokenizes input in @Setup so that @Benchmark methods measure only the
-  * parse() call. Used for profiling with -prof gc and -prof stack to identify
-  * parser allocation hotspots and CPU-hot methods.
-  */
+/**
+ * JMH benchmark that isolates parser performance from lexer performance.
+ *
+ * Pre-tokenizes input in @Setup so that @Benchmark methods measure only the
+ * parse() call. Used for profiling with -prof gc and -prof stack to identify
+ * parser allocation hotspots and CPU-hot methods.
+ */
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -91,13 +92,12 @@ class ParserProfilingBenchmark:
   def setup(): Unit =
     // Walk up from working directory to find benchmarks/inputs/
     var dir = Paths.get(System.getProperty("user.dir"))
-    while dir != null && !Files.exists(dir.resolve("benchmarks/inputs")) do
-      dir = dir.getParent
+    while dir != null && !Files.exists(dir.resolve("benchmarks/inputs")) do dir = dir.getParent
     val inputsDir =
       if dir != null then dir.resolve("benchmarks/inputs")
       else Paths.get("benchmarks/inputs")
 
-    val inputPath = inputsDir.resolve(s"${scenario}_${size}.txt")
+    val inputPath = inputsDir.resolve(s"${scenario}_$size.txt")
     input = new String(Files.readAllBytes(inputPath))
 
     // Pre-tokenize: this happens once in setup, not during measurement
@@ -107,10 +107,8 @@ class ParserProfilingBenchmark:
   /** Pure parse benchmark -- measures only parser.parse() on pre-tokenized input. */
   @Benchmark
   def pureParseOnly(bh: Blackhole): Unit =
-    try
-      bh.consume(ProfilingJsonParser.parse(tokens))
-    catch
-      case _: StackOverflowError => bh.consume("StackOverflowError")
+    try bh.consume(ProfilingJsonParser.parse(tokens))
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
 
   /** Lex+parse benchmark for comparison -- measures tokenize() + parse(). */
   @Benchmark
@@ -118,5 +116,4 @@ class ParserProfilingBenchmark:
     try
       val (_, t) = ProfilingJsonLexer.tokenize(input)
       bh.consume(ProfilingJsonParser.parse(t))
-    catch
-      case _: StackOverflowError => bh.consume("StackOverflowError")
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
