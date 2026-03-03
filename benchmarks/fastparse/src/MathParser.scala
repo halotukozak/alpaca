@@ -1,3 +1,5 @@
+package bench.fastparse
+
 import fastparse.*
 import MultiLineWhitespace.*
 
