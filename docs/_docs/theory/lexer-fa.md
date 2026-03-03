@@ -109,4 +109,4 @@ integer-only pattern, so no shadowing occurs.
 
 - See [Lexer](../lexer.md) for the complete `lexer` DSL reference.
 - See [Tokens and Lexemes](tokens.md) for what the lexer produces — the lexeme stream.
-- Next: [Context-Free Grammars](theory/cfg.md) for how token streams are parsed.
+- Next: [Context-Free Grammars](cfg.md) for how token streams are parsed.

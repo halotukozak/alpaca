@@ -264,3 +264,5 @@ val IndentLexer = lexer[IndentCtx]:
 ```
 
 See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](between-stages.html) for how tokenized output flows into the parser.
+
+See [Debug Settings](debug-settings.html) for compile-time debug output, log levels, and timeout configuration.

@@ -98,3 +98,4 @@ The typed result flows naturally from the bottom up: each reduce step calls a se
 - See [Conflict Resolution](../conflict-resolution.md) for how Alpaca resolves the shift/reduce conflict in the grammar above.
 - See [Parser](../parser.md) for the complete `rule` DSL reference — how productions map to Alpaca syntax.
 - See [The Compilation Pipeline](pipeline.md) for where the shift-reduce loop fits in the broader tokenize → parse → result flow.
+- Next: [Conflicts and Disambiguation](conflicts.md) — why ambiguous grammars trigger shift/reduce conflicts

@@ -19,18 +19,18 @@ Token names that are not valid Scala identifiers (containing `+`, `(`, `)`, rese
 import alpaca.*
 
 // Value-bearing token: use binding.value for the semantic content
-{ case CalcLexer.NUMBER(n) => n.value }     // n: Lexeme, n.value: Int
+{ case CalcLexer.NUMBER(n) => n.value }     // n: Lexeme, n.value: Double
 
 // Structural token: discard the binding when the value is not needed
 { case CalcLexer.PLUS(_) => () }
 
 // Backtick quoting for special-character token names
-{ case CalcLexer.`\+`(_) => () }
-{ case (CalcLexer.`\(`(_), Expr(e), CalcLexer.`\)`(_)) => e }
+{ case CalcLexer.`\\+`(_) => () }
+{ case (CalcLexer.`\\(`(_), Expr(e), CalcLexer.`\\)`(_)) => e }
 ```
 
 **Pitfall:** After `CalcLexer.NUMBER(n)`, the variable `n` is a `Lexeme`, not an `Int`.
-Using `n` where an `Int` is expected is a type error. Always use `n.value` for the semantic content.
+Using `n` where a `Double` is expected is a type error. Always use `n.value` for the semantic content.
 
 ## Non-Terminal Extractors
 
@@ -59,12 +59,12 @@ import alpaca.*
 val Name:  Rule[String] = rule:
   case CalcLexer.ID(id) => id.value
 
-val Value: Rule[Int] = rule:
+val Value: Rule[Double] = rule:
   case CalcLexer.NUMBER(n) => n.value
 
 val root = rule:
   case (Name(key), CalcLexer.ASSIGN(_), Value(v)) => (key, v)
-  // key: String (from Rule[String]), v: Int (from Rule[Int])
+  // key: String (from Rule[String]), v: Double (from Rule[Double])
 ```
 
 ## Tuple Patterns (Multi-Symbol Productions)
