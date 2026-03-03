@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+// $COVERAGE-OFF$
+
 /**
  * Error message for methods that should only be called during parser definition.
  *
@@ -27,3 +29,5 @@ private[alpaca] final val RuleOnly = "Should never be called outside the rule de
  * conflict resolution methods are called outside the conflict resolution definition scope.
  */
 private[alpaca] final val ConflictResolutionOnly = "Should never be called outside the conflict resolution definition"
+
+// $COVERAGE-ON$
