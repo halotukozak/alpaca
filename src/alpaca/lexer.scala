@@ -86,6 +86,7 @@ object Token:
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
 
+/** Propagates the lexer context through the DSL so that token constructors can access it implicitly. */
 transparent inline given ctx(using c: LexerCtx): c.type = c
 
 /**
@@ -137,6 +138,7 @@ object LexerCtx:
     case (IgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)
 
+  /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
   given ErrorHandling[LexerCtx] = ctx =>
     ErrorHandling.Strategy.Throw(new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'"))
 
@@ -176,6 +178,7 @@ object LexerCtx:
       with LineTracking
 
   object Default:
+    /** Default error handler for [[Default]] that includes line and position information in the error message. */
     given ErrorHandling[Default] = ctx =>
       ErrorHandling.Strategy.Throw:
         new RuntimeException(

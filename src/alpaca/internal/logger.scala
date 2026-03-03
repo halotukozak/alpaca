@@ -60,6 +60,13 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
     val file = Path.of(debugSettings.debugDirectory).resolve(path)
     if replace then this.replace(file)(content) else this.append(file)(content)
 
+  /**
+   * Logs a message at the given level.
+   *
+   * @param level the severity level
+   * @param msg   the message to log
+   * @param pos   the source position (provided implicitly by the compiler)
+   */
   def log(level: Level, msg: Shown)(using pos: DebugPosition): Unit = debugSettings.logOut(level) match
     case Out.stdout => println(show"$level: $pos\t$msg")
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
@@ -87,8 +94,20 @@ private[internal] object logger:
   inline def toFile(path: String, replace: Boolean)(content: Shown)(using Log): Unit =
     summon[Log].toFile(path, replace)(content)
 
+  /**
+   * Logging severity levels, ordered from most to least verbose.
+   */
   enum Level:
-    case trace, debug, info, warn, error
+    /** Finest-grained informational events. Disabled by default. */
+    case trace
+    /** Detailed debug information. Disabled by default. */
+    case debug
+    /** General informational messages. Disabled by default. */
+    case info
+    /** Potentially harmful situations. Logged to stdout by default. */
+    case warn
+    /** Error events that might still allow the compilation to continue. Logged to stdout by default. */
+    case error
 
     lazy val default: Out = this match
       case Level.trace | Level.debug | Level.info => Out.disabled

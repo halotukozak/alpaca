@@ -18,7 +18,7 @@ import ox.*
 opaque private[alpaca] type Tables[Ctx <: ParserCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
-object Tables:
+private[alpaca] object Tables:
   /**
    * Automatically generates parse and action tables from a parser definition.
    *
