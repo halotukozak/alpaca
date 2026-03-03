@@ -2,6 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.internal.lexer.ErrorHandling.Strategy
+
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -17,6 +19,8 @@ import scala.collection.mutable.ListBuffer
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
+  errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ) extends Selectable:
   type Fields <: AnyNamedTuple
   type LexemeFields <: AnyNamedTuple
@@ -46,10 +50,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(
-    input: CharSequence,
-  )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme]) =
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
     val initialContext = empty()
     initialContext.text = input match
       case s: String => OffsetCharSequence(s)
@@ -64,19 +65,39 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
         case _ =>
           matcher.reset(globalCtx.text)
 
-          val token =
-            if matcher.lookingAt then
-              Iterator
-                .range(1, matcher.groupCount + 1)
-                .collectFirst:
-                  case i if matcher.start(i) != -1 => groupToTokenMap(i)
-                .getOrElse:
-                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else
-              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
+          val (token, matched) = if matcher.lookingAt then
+            val matched = matcher.group(0)
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(matcher.end)
+            Iterator
+              .range(1, matcher.groupCount + 1)
+              .collectFirst:
+                case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
+              .getOrElse:
+                throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+          else
+            errorHandling(globalCtx) match
+              case Strategy.Throw(ex) =>
+                throw ex
 
-          betweenStages(token, matcher, globalCtx)
+              case Strategy.IgnoreToken if matcher.find =>
+                val firstMatching = matcher.start
+                val matched = globalCtx.text.subSequence(0, firstMatching).toString
+                globalCtx.lastRawMatched = matched
+                globalCtx.text = globalCtx.text.from(firstMatching)
+                (RecoveredToken(matched), matched)
+
+              case Strategy.IgnoreChar | Strategy.IgnoreToken =>
+                val matched = globalCtx.text.charAt(0).toString
+                globalCtx.lastRawMatched = matched
+                globalCtx.text = globalCtx.text.from(1)
+                (RecoveredToken(matched), matched)
+
+              case Strategy.Stop =>
+                globalCtx.text = ""
+                return loop(globalCtx)(acc)
+
+          betweenStages(token, matched, globalCtx)
 
           token match
             case _: DefinedToken[?, Ctx, ?] =>

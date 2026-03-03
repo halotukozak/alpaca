@@ -13,13 +13,12 @@ import scala.collection.mutable
 /**
  * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
  *
- * This trait is used to provide compile-time access to named productions for use in conflict resolution definitions.
  * It is typically used when specifying conflict resolutions, enabling you to refer to productions
  * in a type-safe and compile-time-checked manner.
  *
  * @note This is a compile-time only feature and should be used within parser definitions.
  */
-transparent trait ProductionSelector extends Selectable:
+transparent private[alpaca] trait ProductionSelector extends Selectable:
   def selectDynamic(name: String): Any
 
 /**
@@ -44,6 +43,12 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   val root: Rule[?]
 
+  /**
+   * The set of conflict resolution rules for this parser.
+   *
+   * Override this to resolve shift/reduce or reduce/reduce conflicts
+   * by specifying precedence relationships between productions and tokens.
+   */
   val resolutions: Set[ConflictResolution] = Set.empty
 
   /**
@@ -124,8 +129,10 @@ abstract class Parser[Ctx <: ParserCtx](
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
 
+// $COVERAGE-OFF$
 def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
   import quotes.reflect.*
+
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
@@ -166,3 +173,4 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedW
 
 private object DummyProductionSelector extends ProductionSelector:
   override def selectDynamic(name: String): Any = dummy
+// $COVERAGE-ON$

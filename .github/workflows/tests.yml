@@ -56,13 +56,11 @@ jobs:
       - name: Code coverage
         run: ./mill scoverage.xmlCoberturaReport
 
-      - name: Code Coverage Report
-        uses: 5monkeys/cobertura-action@master
-        continue-on-error: true
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
         with:
-          path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 0 #todo: #51
-          fail_below_threshold: 'true'
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: halotukozak/alpaca
 
       - name: ScalaFmt
         run: ./mill mill.scalalib.scalafmt/checkFormatAll
