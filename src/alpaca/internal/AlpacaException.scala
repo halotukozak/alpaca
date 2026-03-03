@@ -11,7 +11,7 @@ import scala.util.control.NoStackTrace
  *
  * @param message the error message
  */
-abstract class AlpacaException(message: Shown) extends Exception(message) with NoStackTrace
+private[alpaca] abstract class AlpacaException(message: Shown) extends Exception(message) with NoStackTrace
 
 /**
  * Exception thrown when Alpaca macro compilation takes too long.
@@ -19,5 +19,5 @@ abstract class AlpacaException(message: Shown) extends Exception(message) with N
  * This exception is raised when the compilation timeout configured in
  * DebugSettings is exceeded during macro expansion.
  */
-class AlpacaTimeoutException(message: Shown) extends AlpacaException(message):
+private[alpaca] class AlpacaTimeoutException(message: Shown) extends AlpacaException(message):
   def this()(using Log) = this("Alpaca compilation timeout")
