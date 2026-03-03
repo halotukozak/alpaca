@@ -183,7 +183,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
  * @tparam B the base type with a Fields member
  * @tparam A the named tuple type representing the fields
  */
-infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
+infix private[alpaca] type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
 
 /**
  * Creates a refinement type from a sequence of labeled types.
@@ -195,7 +195,7 @@ infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple]
  * @return a refined TypeRepr
  */
 // $COVERAGE-OFF$
-def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
+private[internal] def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   refn.foldLeft(TypeRepr.of[Any]):
@@ -210,7 +210,7 @@ def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quote
  * @param refn sequence of label and type pairs
  * @return a NamedTuple TypeRepr
  */
-def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
+private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
 
@@ -233,4 +233,4 @@ def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.re
  *
  * This constant is used for parallel operations during compilation.
  */
-val threads = Runtime.getRuntime.availableProcessors
+private[internal] val threads = Runtime.getRuntime.availableProcessors

@@ -60,7 +60,6 @@ private[internal] object Showable:
   given Showable[Float] = fromToString
 
   /** Showable instance for Boolean. */
-
   given Showable[Boolean] = fromToString
 
   /** Showable instance for Char. */

@@ -14,7 +14,7 @@ import scala.concurrent.duration.{Duration, DurationInt}
  * @param enableVerboseNames whether to use verbose names in generated code
  * @param logOut mapping of log levels to output destinations
  */
-final case class DebugSettings(
+private[internal] final case class DebugSettings(
   debugDirectory: String | Null,
   compilationTimeout: Duration,
   enableVerboseNames: Boolean,

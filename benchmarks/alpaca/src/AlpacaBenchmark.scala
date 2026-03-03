@@ -45,7 +45,7 @@ class AlpacaBenchmark:
   @Setup(Level.Trial)
   def setup(): Unit =
     val fileName = s"${scenario}_$size.txt"
-    // Walk up from CWD to find benchmarks/inputs/ -- JMH fork CWD varies by Mill version
+    // Walk up from CWD to find benchmarks/inputs/ — JMH fork CWD varies by Mill version
     val cwd = Paths.get("").toAbsolutePath
     val candidates = Iterator
       .iterate(cwd)(_.getParent)
