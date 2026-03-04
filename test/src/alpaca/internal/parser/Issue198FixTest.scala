@@ -24,7 +24,7 @@ final class Issue198FixTest extends AnyFunSuite with Matchers:
       )
 
       override val resolutions = Set(
-        production.`if$minuselse`.after(MyLexer.Num)
+        production.`if-else`.after(MyLexer.Num)
       )
     
     assert(MyParser.resolutions.nonEmpty)
