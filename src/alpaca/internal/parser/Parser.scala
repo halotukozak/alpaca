@@ -88,28 +88,25 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param lexemes   the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](lexems: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
+  private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
     val ctx = empty()
-    val input: Array[Lexeme[?, ?]] = (lexems :+ Lexeme.EOF).toArray
+    val input: Array[Lexeme[?, ?]] = (lexemes :+ Lexeme.EOF).toArray
 
-    var pos = 0
-    var stack: List[(index: Int, node: Node)] = (0, null) :: Nil
-    var result: R | Null = null.asInstanceOf[R | Null]
+    val stack = mutable.ListBuffer((index = 0, node = null: Node))
 
-    @tailrec def loop(): Unit =
+    @tailrec def loop(pos: Int): R | Null =
       val nextSymbol = Terminal(input(pos).name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
-          stack = (gotoState, input(pos)) :: stack
-          pos += 1
-          loop()
+          stack.prepend((gotoState, input(pos)))
+          loop(pos + 1)
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
-          if lhs == Symbol.Start && newState.index == 0 then result = stack.head.node.asInstanceOf[R | Null]
+          if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else
             val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
             // Single-pass children extraction: traverse stack and prepend to build correct order
@@ -120,19 +117,18 @@ abstract class Parser[Ctx <: ParserCtx](
               children = s.head.node.asInstanceOf[Any] :: children
               s = s.tail
               i += 1
-            stack = (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: newStack
-            loop()
+            stack.prepend((gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]))
+            loop(pos)
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
-          result = stack.head.node.asInstanceOf[R | Null]
+          stack.head.node.asInstanceOf[R | Null]
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
           val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
-          stack = (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack
-          loop()
+          stack.prepend((gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]))
+          loop(pos)
 
-    loop()
-    (ctx, result)
+    (ctx, loop(pos = 0))
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
