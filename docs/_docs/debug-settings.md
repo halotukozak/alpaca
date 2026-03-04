@@ -184,7 +184,7 @@ This is a compile-time error -- it means the macro took too long to build the pa
 
 **How to fix:**
 - **Increase the timeout:** Set `compilationTimeout` to a longer duration (e.g., `180s` or `300s`) in your `-Xmacro-settings`
-- **Simplify the grammar:** Reduce the number of rules or split the parser into smaller components
+- **Simplify the grammar:** Reduce the number of rules
 - **Check for ambiguity:** Highly ambiguous grammars generate larger parse tables, which take longer to build
 
 The timeout is enforced by a background thread that runs during macro expansion. Setting `compilationTimeout` to `Inf` disables the timeout entirely (not recommended for CI environments).

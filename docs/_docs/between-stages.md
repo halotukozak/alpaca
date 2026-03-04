@@ -8,96 +8,8 @@ The `BetweenStages` hook is responsible for advancing the text cursor, construct
 Understanding this boundary helps you connect the two stages correctly and, when needed, customize what happens between them.
 
 Most Alpaca programs only need one thing from this layer: pass `tokenize().lexemes` to `parse()`.
-The rest of this page explains what is inside those lexemes, how context state is embedded in each one,
+The rest of this page explains what is inside those lexemes, how the context state is embedded in each one,
 and how to extend the pipeline when the defaults are not enough.
-
-> **Compile-time processing:** When you define a `lexer[Ctx]:` block, the Alpaca macro generates the `BetweenStages` hook that constructs each `Lexeme` with its context snapshot. The hook composition -- combining `PositionTracking`, `LineTracking`, and any custom `BetweenStages` instances from parent traits -- is resolved at compile time by inspecting the context type's linearized parents. At runtime, `tokenize()` simply executes the generated hook after each match.
-
-## The Lexeme Structure
-
-A `Lexeme` is the data record that crosses the lexer-to-parser boundary.
-Every matched and non-ignored token produces one lexeme; `Token.Ignored` tokens produce none.
-A `Lexeme` has three user-visible elements:
-
-- **`name`** -- the token name as a string literal type (e.g., `"NUM"`, `"PLUS"`), as declared in the `Token["NAME"]` constructor.
-- **`value`** -- the extracted value produced by the rule body (e.g., `Int` for `Token["NUM"](num.toInt)`, `Unit` for keyword tokens produced by `Token["KW"]`).
-- **`fields`** -- a `Map[String, Any]` containing a snapshot of all context fields at the time the token was matched.
-
-`Lexeme` extends `Selectable`, which lets you access fields by name with precise types through the tokenization result type, rather than extracting `Any` from the map.
-The type refinement is part of the `tokenize()` return type -- it encodes the exact set of context fields and their types, enabling compile-time field access.
-
-Here is a minimal lexer that produces three lexemes from `"42 + 13"`:
-
-```scala sc:nocompile
-import alpaca.*
-
-val MiniLang = lexer:
-  case num @ "[0-9]+" => Token["NUM"](num.toInt)
-  case "\\+" => Token["PLUS"]
-  case "\\s+" => Token.Ignored
-
-val (_, lexemes) = MiniLang.tokenize("42 + 13")
-// lexemes == List(
-//   Lexeme("NUM",  42, Map("text" -> "42", "position" -> 3, "line" -> 1)),
-//   Lexeme("PLUS", (), Map("text" -> "+",  "position" -> 5, "line" -> 1)),
-//   Lexeme("NUM",  13, Map("text" -> "13", "position" -> 8, "line" -> 1)),
-// )
-```
-
-Because the result type carries structural refinement, field access is type-safe:
-
-```scala sc:nocompile
-lexemes(0).position  // 3: Int  (not Any)
-lexemes(0).line      // 1: Int
-lexemes(0).text      // "42": String
-```
-
-Two details to keep in mind:
-
-- **`lexeme.text` is the matched string, not the remaining input.** During lexing, `ctx.text` holds the remaining input at each step. The snapshot overrides the `text` field with `ctx.lastRawMatched` -- the characters the rule actually consumed. After matching `"42"` from `"42 + 13"`, the snapshot records `text = "42"`, not `"+ 13"`.
-- **`lexeme.position` is the post-match position.** The cursor advances by the token length before the snapshot is taken. The token `"42"` starts at column 1 but the snapshot records `position = 3` (1 + 2 characters consumed).
-
-The parser appends `Lexeme.EOF` (name `""`, value `""`, empty fields) internally before running. The `tokenize()` call itself does not include it.
-You do not need to handle EOF in your lexer rules -- the parser manages it automatically.
-
-## Context Snapshots in Lexemes
-
-After each token match, `BetweenStages` captures a snapshot of **all** context fields and stores them in `lexeme.fields`.
-The snapshot includes every field from the context's `Product` element names, with the `"text"` field overridden by the matched string (as described above).
-
-For the default context (`LexerCtx.Default`), this means every lexeme carries `text`, `position`, and `line`.
-For a custom context, every additional `var` field you declare also appears in the snapshot.
-
-Here is a counter example showing how the snapshot captures the state *after* the rule body runs:
-
-```scala sc:nocompile
-import alpaca.*
-
-case class StateCtx(
-  var text: CharSequence = "",
-  var count: Int = 0,
-) extends LexerCtx
-
-val CountingLexer = lexer[StateCtx]:
-  case "inc" =>
-    ctx.count += 1
-    Token["inc"](ctx.count)
-  case "check" =>
-    Token["check"](ctx.count)
-  case " " => Token.Ignored
-
-val (_, lexemes) = CountingLexer.tokenize("inc check inc inc check")
-// lexemes.map(_.value)  == List(1, 1, 2, 3, 3)
-// lexemes(0).fields     == Map("text" -> "inc", "count" -> 1)
-// lexemes(1).fields     == Map("text" -> "check", "count" -> 1)
-// count captured AFTER the rule body ran (ctx.count += 1 happens before snapshot)
-```
-
-Note that `Token.Ignored` tokens (here `" "`) still trigger `BetweenStages` for context tracking -- position and line counters advance, and the cursor moves forward -- but they do **not** appear in the output list.
-`Token.Ignored` is how you consume whitespace or comments without producing a lexeme.
-
-Snapshots are also independent: each lexeme holds its own map, captured at its own match time.
-Modifying context fields after a match does not retroactively alter earlier lexemes.
 
 ## Connecting Lexer Output to Parser Input
 
@@ -114,13 +26,10 @@ You can destructure or access it by name:
 import alpaca.*
 
 // tokenize() returns a named tuple: (ctx: Ctx, lexemes: List[Lexeme])
-val (ctx, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
+val (ctx, lexemes) = Lexer.tokenize("3 + 4 * 2")
 
 // Pass the lexeme list to the parser
-val result = CalcParser.parse(lexemes)
-
-// Or inline -- access the named tuple field directly:
-CalcParser.parse(CalcLexer.tokenize("3 + 4 * 2").lexemes)
+val result = Parser.parse(lexemes)
 ```
 
 The parser accepts `List[Lexeme[?, ?]]` -- the type refinement from the tokenization result is widened at the `parse()` call site.
@@ -165,7 +74,7 @@ case class MyCtx(
 ) extends LexerCtx with IndentTracking
 
 // Step 4: Pass MyCtx to lexer -- auto composition happens at compile time
-val MyLexer = lexer[MyCtx]:
+valLexer = lexer[MyCtx]:
   case "\\n" => Token.Ignored
   case id @ "[a-z]+" => Token["ID"](id)
 ```
