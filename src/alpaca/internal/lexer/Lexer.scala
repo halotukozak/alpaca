@@ -10,14 +10,18 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
+// $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
+  errorHandling: Expr[ErrorHandling[Ctx]],
+  empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
+
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
@@ -100,14 +104,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  val definedTokens = tokens.filter(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
-
   logger.trace("checking regex patterns")
   RegexChecker.checkPatterns(infos.map(_.pattern))
 
-  val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
+  val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
 
-  val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
+  val selectDynamicLambda = createLambda[String => Token[?, Ctx, ?]]:
     case (methSym, List(fieldName: Term)) =>
       Match(
         Typed(
@@ -117,7 +119,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             '{ new annotation.switch }.asTerm.changeOwner(methSym),
           ),
         ),
-        definedTokens.map: (expr, name) =>
+        tokens.map: (expr, name) =>
           CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
@@ -134,11 +136,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       '{
         {
-          new Tokenization[Ctx](using $betweenStages):
+          new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
-            override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
+            override def selectDynamic(name: String): Token[?, Ctx, ?] = $selectDynamicLambda(name)
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
+// $COVERAGE-ON$

@@ -8,10 +8,11 @@ package internal
  * compile-time type safety.
  */
 
-//todo: make it opaque with ban on underscore
+//todo: make it opaque with ban on underscore https://github.com/halotukozak/alpaca/issues/223
 type ValidName = String & Singleton
 
 object ValidName:
+  // $COVERAGE-OFF$
   def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
     import quotes.reflect.*
     logger.trace(show"extracting ValidName from ${Type.of[Name]}")
@@ -28,6 +29,8 @@ object ValidName:
    */
   def check(name: String)(using quotes: Quotes)(using Log): Unit =
     import quotes.reflect.*
+
     name match
       case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")
       case _ =>
+// $COVERAGE-ON$
