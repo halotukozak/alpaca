@@ -109,7 +109,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
 
-  val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
+  val selectDynamicLambda = createLambda[String => Token[?, Ctx, ?]]:
     case (methSym, List(fieldName: Term)) =>
       Match(
         Typed(
@@ -139,7 +139,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
           new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
-            override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
+            override def selectDynamic(name: String): Token[?, Ctx, ?] = $selectDynamicLambda(name)
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
