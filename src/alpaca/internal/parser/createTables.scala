@@ -18,7 +18,7 @@ import ox.*
 opaque private[alpaca] type Tables[Ctx <: ParserCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
-object Tables:
+private[alpaca] object Tables:
   /**
    * Automatically generates parse and action tables from a parser definition.
    *
@@ -47,6 +47,7 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
+// $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
 ): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
@@ -76,7 +77,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
-                  Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
+                  Some((find = bind, replace = '{ ${ param.asExprOf[RevertedArray[Any]] }($idx).asInstanceOf[t] }.asTerm))
               .toList
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
@@ -123,7 +124,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val table = rules
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-      case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
+      case DefDef(ruleName, _, _, Some(rhs)) =>
+        extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
     .toList
     .tap: table =>
@@ -221,3 +223,4 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+// $COVERAGE-ON$

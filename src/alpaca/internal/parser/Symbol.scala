@@ -94,6 +94,7 @@ private[parser] object Symbol:
         else symbol.name
       case encoded => show"${symbol.name} ($encoded)"
 
+  // $COVERAGE-OFF$
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =
       x.match
@@ -106,3 +107,4 @@ private[parser] object Symbol:
 
   given ToExpr[Terminal] with
     def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
+// $COVERAGE-ON$
