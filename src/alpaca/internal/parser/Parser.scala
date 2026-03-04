@@ -7,7 +7,7 @@ import alpaca.internal.lexer.Lexeme
 import alpaca.internal.parser.*
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
 
 /**
@@ -96,24 +96,22 @@ abstract class Parser[Ctx <: ParserCtx](
     var pos = 0
     var stack: List[(index: Int, node: Node)] = (0, null) :: Nil
     var result: R | Null = null.asInstanceOf[R | Null]
-    var done = false
 
-    while !done do
+    @tailrec def loop(): Unit =
       val nextSymbol = Terminal(input(pos).name)
-      tables.parseTable.runtimeApply(stack.head.index, nextSymbol).runtimeChecked match
+      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
           stack = (gotoState, input(pos)) :: stack
           pos += 1
+          loop()
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
-          if lhs == Symbol.Start && newState.index == 0 then
-            result = stack.head.node.asInstanceOf[R | Null]
-            done = true
+          if lhs == Symbol.Start && newState.index == 0 then result = stack.head.node.asInstanceOf[R | Null]
           else
-            val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(newState.index, lhs).runtimeChecked
+            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
             // Single-pass children extraction: traverse stack and prepend to build correct order
             var children: List[Any] = Nil
             var s = stack
@@ -123,15 +121,17 @@ abstract class Parser[Ctx <: ParserCtx](
               s = s.tail
               i += 1
             stack = (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: newStack
+            loop()
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
           result = stack.head.node.asInstanceOf[R | Null]
-          done = true
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = tables.parseTable.runtimeApply(stack.head.index, lhs).runtimeChecked
+          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
           stack = (gotoState, tables.actionTable(prod)(ctx, Nil).asInstanceOf[Node]) :: stack
+          loop()
 
+    loop()
     (ctx, result)
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
