@@ -10,14 +10,18 @@ import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
+// $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
+  errorHandling: Expr[ErrorHandling[Ctx]],
+  empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
 ): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
+
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
@@ -134,7 +138,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       '{
         {
-          new Tokenization[Ctx](using $betweenStages):
+          new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
             override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
@@ -142,3 +146,4 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
+// $COVERAGE-ON$

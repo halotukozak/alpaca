@@ -10,6 +10,8 @@ Debug settings are configured using the Scala compiler's `-Xmacro-settings` flag
 - Verbose naming
 - Log levels and outputs
 
+> **Compile-time processing:** Debug settings are read by the Alpaca macro during compilation via `-Xmacro-settings`. They control what the macro logs, where it writes output files, and how long it is allowed to run before timing out. These settings have no effect at runtime -- they only influence the compile-time macro expansion process.
+
 ## Available Settings
 
 ### Core Settings
@@ -169,6 +171,23 @@ This configuration:
 - Displays warnings and errors on the console
 
 **Finding log files:** When using `file` output mode, log files are created in the `debugDirectory` with names based on your source files (e.g., `MyLexer.scala.log`). The full path will be `$moduleDir/debug/MyLexer.scala.log` for Mill projects.
+
+## Compilation Timeout Errors
+
+When macro expansion exceeds the `compilationTimeout` duration (default: 90 seconds), the compiler throws an `AlpacaTimeoutException` with the message:
+
+```
+Alpaca compilation timeout
+```
+
+This is a compile-time error -- it means the macro took too long to build the parse table or validate patterns. Complex grammars with many rules and conflict resolutions are the most common trigger.
+
+**How to fix:**
+- **Increase the timeout:** Set `compilationTimeout` to a longer duration (e.g., `180s` or `300s`) in your `-Xmacro-settings`
+- **Simplify the grammar:** Reduce the number of rules
+- **Check for ambiguity:** Highly ambiguous grammars generate larger parse tables, which take longer to build
+
+The timeout is enforced by a background thread that runs during macro expansion. Setting `compilationTimeout` to `Inf` disables the timeout entirely (not recommended for CI environments).
 
 ## Notes
 

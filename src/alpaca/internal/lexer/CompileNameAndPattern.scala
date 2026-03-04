@@ -19,6 +19,8 @@ import scala.annotation.tailrec
 private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
+// $COVERAGE-OFF$
+
   /**
    * Compiles a pattern tree into token information.
    *
@@ -79,3 +81,4 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
     loop(TypeRepr.of[T], pattern)
       .tap: res =>
         logger.trace(show"compiled name and pattern to ${res.mkShow}")
+// $COVERAGE-ON$
