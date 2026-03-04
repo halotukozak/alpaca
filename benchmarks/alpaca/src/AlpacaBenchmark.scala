@@ -39,6 +39,9 @@ class AlpacaBenchmark:
   private var parseFn: String => Any = uninitialized
   private var fullParseFn: String => Any = uninitialized
 
+  // Pre-tokenized input for pureParseOnly benchmark
+  private var preTokenizedParseFn: () => Any = uninitialized
+
   @Setup(Level.Trial)
   def setup(): Unit =
     val fileName = s"${scenario}_$size.txt"
@@ -66,6 +69,8 @@ class AlpacaBenchmark:
         fullParseFn = (in: String) =>
           val (_, tokens) = MathLexer.tokenize(in)
           MathParser.parse(tokens)
+        val (_, preTokenized) = MathLexer.tokenize(input)
+        preTokenizedParseFn = () => MathParser.parse(preTokenized)
 
       case s if s.contains("json") =>
         lexFn = (in: String) => JsonLexer.tokenize(in)
@@ -75,6 +80,8 @@ class AlpacaBenchmark:
         fullParseFn = (in: String) =>
           val (_, tokens) = JsonLexer.tokenize(in)
           JsonParser.parse(tokens)
+        val (_, preTokenized) = JsonLexer.tokenize(input)
+        preTokenizedParseFn = () => JsonParser.parse(preTokenized)
 
       case "big_grammar" =>
         lexFn = (in: String) => BigGrammarLexer.tokenize(in)
@@ -84,6 +91,8 @@ class AlpacaBenchmark:
         fullParseFn = (in: String) =>
           val (_, tokens) = BigGrammarLexer.tokenize(in)
           BigGrammarParser.parse(tokens)
+        val (_, preTokenized) = BigGrammarLexer.tokenize(input)
+        preTokenizedParseFn = () => BigGrammarParser.parse(preTokenized)
 
   @Benchmark
   def lex(bh: Blackhole): Unit =
@@ -98,4 +107,9 @@ class AlpacaBenchmark:
   @Benchmark
   def fullParse(bh: Blackhole): Unit =
     try bh.consume(fullParseFn(input))
+    catch case _: StackOverflowError => bh.consume("StackOverflowError")
+
+  @Benchmark
+  def pureParseOnly(bh: Blackhole): Unit =
+    try bh.consume(preTokenizedParseFn())
     catch case _: StackOverflowError => bh.consume("StackOverflowError")

@@ -77,7 +77,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
-                  Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
+                  Some((find = bind, replace = '{ ${ param.asExprOf[RevertedArray[Any]] }($idx).asInstanceOf[t] }.asTerm))
               .toList
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
