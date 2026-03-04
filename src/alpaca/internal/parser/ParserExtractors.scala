@@ -119,13 +119,13 @@ private object ParserExtractors:
     final val AsInstanceOf = "$asInstanceOf$"
 
   val repeatedAction: Action[ParserCtx] =
-    case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
+    case (_, RevertedArray(currList: List[?], newElem)) => currList.appended(newElem)
     case _ => dummy
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
   val someAction: Action[ParserCtx] =
-    case (_, Seq(elem)) => Some(elem)
+    case (_, RevertedArray(elem)) => Some(elem)
     case _ => dummy
 
   val noneAction: Action[ParserCtx] = (_, _) => None
