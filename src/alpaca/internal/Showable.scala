@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.NamedTuple.NamedTuple
+import scala.annotation.targetName
 
 /**
  * A type class for converting values to their string representation.
@@ -18,7 +19,7 @@ private[internal] trait Showable[-T]:
    *
    * @return the string representation of the value
    */
-  extension (t: T) def show: Shown
+  extension (t: T)(using Log) def show: Shown
 
 /** String interpolator for values that have Showable instances. */
 extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = sc.s(args*)
@@ -28,43 +29,77 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
  *
  * Used to ensure type safety in string interpolation.
  */
-opaque private[internal] type Shown <: String = String
+opaque into private[internal] type Shown <: String = String
 
-object Shown {
+object Shown:
 
   /**
    * Implicit conversion from any Showable type to Shown.
    *
    * @tparam T the type with a Showable instance
    */
-  given [T: Showable]: Conversion[T, Shown] = _.show
-}
+  given [T: Showable] => Log => Conversion[T, Shown] = _.show
 
-private[internal] object Showable {
+private[internal] object Showable:
+  def apply[T](func: Log ?=> T => Shown): Showable[T] = new:
+    extension (t: T)(using Log) override def show: Shown = func(t)
 
   /** Showable instance for String (identity). */
-  given Showable[String] = _.asInstanceOf[Shown]
+  given Showable[String] = Showable(_.asInstanceOf[Shown])
 
   /** Showable instance for Int. */
   given Showable[Int] = fromToString
 
-  def fromToString[T]: Showable[T] = _.toString
+  /** Showable instance for Long. */
+  given Showable[Long] = fromToString
 
-  /** Showable instance for nullable types. */
-  given [T: Showable as showable]: Showable[T | Null] =
-    case null => ""
-    case value: T @unchecked => showable.show(value)
+  /** Showable instance for Double. */
+  given Showable[Double] = fromToString
 
-  // todo: add names
-  given [N <: Tuple, V <: Tuple: Showable]: Showable[NamedTuple[N, V]] = _.toTuple.show
+  /** Showable instance for Float. */
+  given Showable[Float] = fromToString
 
-  given [T](using quotes: Quotes): Showable[Expr[T]] =
+  /** Showable instance for Boolean. */
+  given Showable[Boolean] = fromToString
+
+  /** Showable instance for Char. */
+  given Showable[Char] = fromToString
+
+  def fromToString[T]: Showable[T] = Showable(_.toString)
+
+  // todo: add names https://github.com/halotukozak/alpaca/issues/233
+  given [N <: Tuple, V <: Tuple: Showable] => Showable[NamedTuple[N, V]] = Showable(_.toTuple.show)
+
+  // $COVERAGE-OFF$
+  given [T] => (quotes: Quotes) => Showable[Expr[T]] = Showable:
     import quotes.reflect.*
     expr => expr.asTerm.show
 
-  given (using quotes: Quotes): Showable[quotes.reflect.Tree] = quotes.reflect.Printer.TreeShortCode.show(_)
+  given [T] => (quotes: Quotes) => Showable[quotes.reflect.TypeRepr] = Showable: tpe =>
+    val short = show"[${quotes.reflect.Printer.TypeReprShortCode.show(tpe)}]"
+    if summon[Log].debugSettings.enableVerboseNames then
+      show"$short(${quotes.reflect.Printer.TypeReprStructure.show(tpe)})"
+    else short
 
-  given [A: Showable, B: Showable]: Showable[(A, B)] = (a, b) => show"$a : $b"
+  given [T] => (quotes: Quotes) => Showable[Type[T]] = Showable: tpe =>
+    import quotes.reflect.*
+    TypeRepr.of(using tpe).show
+
+  @targetName("given_Type_bounds")
+  given [T] => (quotes: Quotes) => Showable[Type[? <: T]] = Showable: tpe =>
+    import quotes.reflect.*
+
+    TypeRepr.of(using tpe).show
+
+  given (quotes: Quotes) => Showable[quotes.reflect.Tree] = Showable:
+    quotes.reflect.Printer.TreeShortCode.show(_)
+
+  given (quotes: Quotes) => Showable[quotes.reflect.Symbol] = Showable: symbol =>
+    symbol.name
+  // $COVERAGE-ON$
+
+  given [A: Showable, B: Showable] => Showable[(A, B)] = Showable: (a, b) =>
+    show"$a : $b"
 
   /**
    * Automatically derives a Showable instance for Product types (case classes).
@@ -75,17 +110,16 @@ private[internal] object Showable {
    * @param m the Mirror.ProductOf for type T
    * @return a Showable instance
    */
-  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = (t: T) =>
+  inline def derived[T <: Product](using m: Mirror.ProductOf[T & Product]): Showable[T] = Showable: t =>
     val name = compiletime.constValue[m.MirroredLabel]
     val fields = compiletime.constValueTuple[m.MirroredElemLabels].toList
     val showables =
       compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Showable]].toList.asInstanceOf[List[Showable[Any]]]
     val values = Tuple.fromProductTyped(t).toList
     val shown = showables.zip(values).map(_.show(_))
-    s"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkString(", ")})"
-}
+    show"$name(${fields.zip(shown).map((f, v) => s"$f: $v").mkShow(", ")})"
 
-extension [C[X] <: Iterable[X], T: Showable](c: C[T])
+extension [C[X] <: Iterable[X], T: Showable](c: C[T])(using Log)
 
   /**
    * Creates a string representation with custom start, separator, and end strings.
@@ -96,7 +130,7 @@ extension [C[X] <: Iterable[X], T: Showable](c: C[T])
    * @return the formatted string
    */
   private[internal] def mkShow(start: String, sep: String, end: String): Shown =
-    c.map(_.show).mkString(start, sep, end)
+    c.iterator.map(_.show).mkString(start, sep, end)
 
   /**
    * Creates a string representation with a custom separator.
@@ -111,4 +145,9 @@ extension [C[X] <: Iterable[X], T: Showable](c: C[T])
    *
    * @return the concatenated string
    */
+  private[internal] def mkShow: Shown = mkShow("")
+
+extension [T: Showable](it: Iterator[T])(using Log)
+  private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)
+  private[internal] def mkShow(sep: String): Shown = mkShow("", sep, "")
   private[internal] def mkShow: Shown = mkShow("")

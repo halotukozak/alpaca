@@ -4,10 +4,27 @@ import alpaca.internal.*
 import alpaca.internal.lexer.{Lexeme, Token}
 import alpaca.internal.parser.*
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, unused}
 import scala.deriving.Mirror
 
 type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
+
+/**
+ * Defines a single production in a grammar rule.
+ *
+ * A production definition is a partial function that matches a specific pattern of
+ * symbols (as a tuple of terminals and non-terminals, or a single lexeme) and produces
+ * a result value of type `R`. Productions are the building blocks of grammar rules,
+ * specifying how input sequences are recognized and transformed.
+ *
+ * Production definitions are typically passed to the [[rule]] function to define
+ * the possible ways a non-terminal can be parsed.
+ *
+ * See the documentation for [[rule]] for more details.
+ *
+ * @tparam R the result type produced by this production
+ */
+type ProductionDefinition[R] = PartialFunction[Tuple | Lexeme[?, ?], R]
 
 /**
  * Creates a grammar rule from one or more productions.
@@ -21,8 +38,8 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * Example:
  * {{{
  * val expr: Rule[Int] = rule(
- *   { case (a @ number(), "+", b @ number()) => a.toInt + b.toInt },
- *   { case (n @ number()) => n.toInt }
+ *   { case (number(a), Lexer.+(_), number(b)) => a.toInt + b.toInt },
+ *   { case (number(n)) => n.toInt }
  * )
  * }}}
  *
@@ -31,7 +48,35 @@ type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](productions: PartialFunction[Tuple | Lexeme[?, ?], R]*): Rule[R] = dummy
+inline def rule[R](@unused productions: ProductionDefinition[R]*): Rule[R] = dummy
+
+extension (name: String)
+  /**
+   * Defines a named production for use in grammar rules and conflict resolution.
+   *
+   * This extension method allows you to assign a name to a specific production within a rule.
+   * Named productions can be referenced in conflict resolution rules using the `Production` selector,
+   * enabling fine-grained control over precedence and associativity.
+   *
+   * Usage:
+   * {{{
+   * val add: Rule[Int] = rule(
+   *   "sum" { case (number(a), Lexer.+(_), number(b)) => a.toInt + b.toInt },
+   *   { case (number(n)) => n.toInt }
+   * )
+   *
+   * // In conflict resolution:
+   * override val resolutions = Set(
+   *   production.sum.after(Lexer.+),
+   * )
+   * }}}
+   *
+   * @param production the production to name
+   * @tparam R the result type produced by this production
+   * @return the original production, annotated with the given name
+   */
+  @compileTimeOnly(ParserOnly)
+  inline def apply[R](production: ProductionDefinition[R]): production.type = dummy
 
 /**
  * Represents a grammar rule in the parser.
@@ -45,7 +90,7 @@ inline def rule[R](productions: PartialFunction[Tuple | Lexeme[?, ?], R]*): Rule
  *
  * @tparam R the type of value produced when this rule is matched
  */
-trait Rule[R] {
+trait Rule[R]:
 
   /**
    * Pattern matching extractor for single occurrences of this rule.
@@ -56,7 +101,7 @@ trait Rule[R] {
    * @return Some(result) if the match succeeds
    */
   @compileTimeOnly(RuleOnly)
-  inline def unapply(x: Any): Option[R] = dummy
+  inline def unapply(@unused x: Any): Option[R] = dummy
 
   /**
    * Pattern matching extractor for lists of this rule.
@@ -77,7 +122,6 @@ trait Rule[R] {
    */
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[R]] = dummy
-}
 
 /**
  * Base trait for parser global context.
@@ -87,8 +131,6 @@ trait Rule[R] {
  * type information, or other semantic data.
  */
 trait ParserCtx
-
-final class name(name: ValidName) extends StaticAnnotation
 
 /**
  * Type representing conflict resolution rules for the parser.
@@ -113,7 +155,7 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -129,9 +171,9 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
 
-object Production {
+object Production:
 
   /**
    * Creates a production reference from symbols.
@@ -143,20 +185,7 @@ object Production {
    * @return a production reference
    */
   @compileTimeOnly(ConflictResolutionOnly)
-  inline def apply(inline symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
-
-  /**
-   * Creates a production reference from a name.
-   *
-   * This is compile-time only and used in conflict resolution definitions
-   * to refer to named productions.
-   *
-   * @param name the name of the production
-   * @return a production reference
-   */
-  @compileTimeOnly(ConflictResolutionOnly)
-  inline def ofName(name: ValidName): Production = dummy
-}
+  inline def apply(@unused symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
 
 object ParserCtx:
 
@@ -177,7 +206,7 @@ object ParserCtx:
   final case class Empty(
   ) extends ParserCtx
 
-extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
+extension [Ctx <: ParserCtx](parser: Parser[Ctx])
 
   /**
    * Parses a list of lexems using the defined grammar.
@@ -185,13 +214,11 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
    * This is a convenience method that infers the result type from the root rule.
    *
    * @param lexems the list of lexems to parse
-   * @param debugSettings parser settings (optional)
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  inline def parse(lexems: List[Lexeme[?, ?]])(using inline debugSettings: DebugSettings): (
+  inline def parse(lexems: List[Lexeme[?, ?]]): (
     ctx: Ctx,
     result: (parser.root.type match
       case Rule[t] => t
     ) | Null,
   ) = parser.unsafeParse(lexems)
-}

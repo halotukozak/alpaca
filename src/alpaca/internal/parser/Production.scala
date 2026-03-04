@@ -2,8 +2,6 @@ package alpaca
 package internal
 package parser
 
-import scala.annotation.StaticAnnotation
-
 /**
  * Represents a grammar production rule.
  *
@@ -13,7 +11,7 @@ import scala.annotation.StaticAnnotation
  *
  * @param rhs the right-hand side sequence of symbols
  */
-private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.Empty.type) {
+private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.type):
 
   /** The left-hand side non-terminal of the production. */
   val lhs: NonTerminal
@@ -27,11 +25,11 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
    * @param lookAhead the lookahead terminal (defaults to EOF)
    * @return an Item representing this production with the dot at position 0
    */
-  def toItem(lookAhead: Terminal = Symbol.EOF): Item = Item(this, 0, lookAhead)
+  def toItem(lookAhead: Terminal = Symbol.EOF)(using Log): Item = Item(this, 0, lookAhead)
 
   case NonEmpty(
     lhs: NonTerminal & Symbol.NonEmpty,
-    override val rhs: NonEmptyList[Symbol.NonEmpty],
+    override val rhs: NEL[Symbol.NonEmpty],
     name: ValidName | Null = null,
   ) extends Production(rhs)
 
@@ -39,20 +37,20 @@ private[alpaca] enum Production(val rhs: NonEmptyList[Symbol.NonEmpty] | Symbol.
     lhs: NonTerminal,
     name: ValidName | Null = null,
   ) extends Production(Symbol.Empty)
-}
 
-object Production {
+object Production:
 
   /** Showable instance for displaying productions in human-readable form. */
-  given Showable[Production] =
+  given Showable[Production] = Showable:
     case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
-    case NonEmpty(lhs, rhs, name) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
+    case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
-    case Empty(lhs, name) => show"$lhs -> ${Symbol.Empty} ($name)"
+    case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   /** ToExpr instance for lifting productions to compile-time expressions. */
+// $COVERAGE-OFF$
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
       case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }
-}
+// $COVERAGE-ON$

@@ -1,0 +1,119 @@
+name: Bug Report
+description: Report a bug or issue with Alpaca
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out this form as completely as possible.
+        
+        **Note:** Issues will be automatically labeled based on their content. You can help by:
+        - Mentioning the component (Parser/Lexer) in your description
+        - Being specific about the type of issue
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Parser
+        - Lexer
+        - Build System
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Tell us what went wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Define lexer with '...'
+        2. Create parser with '...'
+        3. Parse input '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: I expected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Instead, what happened was...
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code Sample
+      description: Please provide a minimal code sample that reproduces the issue
+      placeholder: |
+        ```scala
+        val MyLexer = lexer:
+          case "test" => Token["TEST"]
+        ```
+      render: scala
+    validations:
+      required: false
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Message
+      description: If applicable, paste the error message here
+      placeholder: |
+        Exception in thread "main" ...
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Alpaca Version
+      description: Which version of Alpaca are you using?
+      placeholder: e.g., 0.0.1
+    validations:
+      required: true
+
+  - type: input
+    id: scala-version
+    attributes:
+      label: Scala Version
+      description: Which version of Scala are you using?
+      placeholder: e.g., 3.7.4
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Any additional information that might help
+    validations:
+      required: false

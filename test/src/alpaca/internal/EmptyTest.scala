@@ -3,7 +3,7 @@ package alpaca.internal
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class EmptyTest extends AnyFunSuite with Matchers {
+final class EmptyTest extends AnyFunSuite with Matchers:
 
   inline def empty[T]: Empty[T] = compiletime.summonInline[Empty[T]]
 
@@ -16,7 +16,7 @@ final class EmptyTest extends AnyFunSuite with Matchers {
 
   case class Outer(inner: Inner = Inner(), tags: List[String] = Nil, opt: Option[Int] = None) derives Empty
 
-  case class Box[T](value: Option[T] = None) derives Empty
+  case class Box[T](value: Option[T] = None)
 
   case class Mixed(a: Int, b: String = "b") // has a param without default -> should fail
 
@@ -49,4 +49,3 @@ final class EmptyTest extends AnyFunSuite with Matchers {
       |class Regular(val x: Int) derives Empty
       |""".stripMargin shouldNot compile
   }
-}

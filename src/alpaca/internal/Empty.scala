@@ -1,4 +1,7 @@
-package alpaca.internal
+package alpaca
+package internal
+
+import scala.annotation.implicitNotFound
 
 /**
  * A type class for creating empty instances of types.
@@ -8,9 +11,10 @@ package alpaca.internal
  *
  * @tparam T the type to create empty instances of
  */
+@implicitNotFound("${T} should be a case class.")
 private[alpaca] trait Empty[T] extends (() => T)
 
-private[alpaca] object Empty {
+private[alpaca] object Empty:
 
   /**
    * Automatically derives an Empty instance for any Product type with default parameters.
@@ -23,29 +27,39 @@ private[alpaca] object Empty {
    */
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
+  // $COVERAGE-OFF$
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = {
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
+    timeoutOnTooLongCompilation()
+
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
+    logger.trace(show"deriving Empty for $tpe")
 
     val constructor = tpe.classSymbol.get.primaryConstructor
 
-    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers
+    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers.iterator
       .collect:
         case m if m.name.startsWith("$lessinit$greater$default$") =>
           m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
       .toMap
 
-    val parameters = constructor.paramSymss.collect:
-      case params if !params.exists(_.isTypeParam) =>
-        params.zipWithIndex.map:
-          case (param, idx) if param.flags.is(Flags.HasDefault) =>
-            defaultParameters(idx)
-          case (param, idx) =>
-            report.errorAndAbort(
-              s"Cannot derive Empty for ${Type.show[T]}: parameter ${param.name} does not have a default value",
-            )
+    logger.trace(show"found ${defaultParameters.size} default parameters")
+
+    val parameters = constructor.paramSymss
+      .collect:
+        case params if !params.exists(_.isTypeParam) =>
+          params.iterator.zipWithIndex
+            .map:
+              case (param, idx) if param.flags.is(Flags.HasDefault) =>
+                logger.trace(show"parameter $param has default value")
+                defaultParameters(idx)
+              case (param, _) =>
+                report.errorAndAbort(
+                  show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
+                )
+            .toList
 
     val value =
       New(TypeTree.of[T])
@@ -55,9 +69,7 @@ private[alpaca] object Empty {
         .asExprOf[T]
 
     '{
-      new Empty[T] {
+      new Empty[T]:
         def apply(): T = $value
-      }
     }
-  }
-}
+// $COVERAGE-ON$

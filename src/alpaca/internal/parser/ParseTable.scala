@@ -15,7 +15,7 @@ import scala.collection.mutable
  */
 opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
 
-private[parser] object ParseTable {
+private[parser] object ParseTable:
   extension (table: ParseTable)
     /**
      * Gets the parse action for a given state and symbol.
@@ -27,7 +27,8 @@ private[parser] object ParseTable {
      */
     def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
-      catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
+      catch
+        case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -37,9 +38,10 @@ private[parser] object ParseTable {
      *
      * @return a Csv representation of the parse table
      */
-    def toCsv: Csv =
+    // it shouldn't be eager
+    def toCsv(using Log): Csv =
       val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-      val states = table.keysIterator.map(_.state).distinct.toList.sorted
+      val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
 
       val headers = show"State" :: symbols.map(_.show)
       val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
@@ -57,14 +59,11 @@ private[parser] object ParseTable {
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  def apply(
-    productions: List[Production],
-    conflictResolutionTable: ConflictResolutionTable,
-  )(using quotes: Quotes,
-  ): ParseTable = {
-    import quotes.reflect.report
-
+  // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
+  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
+    logger.trace("building first set...")
     val firstSet = FirstSet(productions)
+    logger.trace("building states and parse table...")
     var currStateId = 0
     val states =
       mutable.ListBuffer(
@@ -83,6 +82,7 @@ private[parser] object ParseTable {
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
+              logger.trace(show"Conflict resolved: $action")
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
@@ -92,23 +92,22 @@ private[parser] object ParseTable {
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
                 case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
-    @tailrec def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+    @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          report.info(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
-    while states.sizeIs > currStateId do {
+    while states.sizeIs > currStateId do
       val currState = states(currStateId)
+      logger.trace(show"processing state $currStateId")
 
-      for item <- currState if item.isLastItem do {
-        addToTable(item.lookAhead, Reduction(item.production))
-      }
+      for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
-      for stepSymbol <- currState.possibleSteps do {
+      for stepSymbol <- currState.possibleSteps do
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
         states.indexOf(newState) match
@@ -117,50 +116,43 @@ private[parser] object ParseTable {
             states += newState
           case stateId =>
             addToTable(stepSymbol, Shift(stateId))
-      }
 
       currStateId += 1
-    }
 
     table.toMap
-  }
 
-  given Showable[ParseTable] = { table =>
+  given Showable[ParseTable] = Showable: table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-    val states = table.keysIterator.map(_.state).distinct.toList.sorted
+    val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
-      else {
+      else
         val padding = width - text.length
         val leftPad = padding / 2
         val rightPad = padding - leftPad
         (" " * leftPad) + text + (" " * rightPad)
-      }
 
     val result = new StringBuilder
     result.append(centerText("State"))
     result.append("|")
-    for (s <- symbols) {
+    for s <- symbols do
       result.append(centerText(s.show))
       result.append("|")
-    }
 
-    for (i <- states) {
+    for i <- states do
       result.append('\n')
       result.append(centerText(i.toString))
       result.append("|")
-      for (s <- symbols) {
+      for s <- symbols do
         result.append(centerText(table.get((i, s)).fold("")(_.show)))
         result.append("|")
-      }
-    }
     result.append('\n')
     result.result()
-  }
 
+  // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
-    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
+    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
 
       type BuilderTpe = mutable.Builder[
@@ -172,7 +164,7 @@ private[parser] object ParseTable {
         Symbol.spliceOwner,
         Symbol.freshName("builder"),
         TypeRepr.of[BuilderTpe],
-        Flags.Mutable,
+        Flags.Synthetic,
         Symbol.noSymbol,
       )
 
@@ -181,16 +173,14 @@ private[parser] object ParseTable {
       val builder = Ref(symbol).asExprOf[BuilderTpe]
 
       val additions = entries
-        .map(entry =>
+        .map: entry =>
           '{
             def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
             avoidTooLargeMethod()
-          }.asTerm,
-        )
+          }.asTerm
         .toList
 
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
-    }
-}
+// $COVERAGE-ON$

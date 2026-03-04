@@ -22,4 +22,6 @@ object LineTracking:
    * This is automatically composed with other BetweenStages instances
    * when the context extends LineTracking.
    */
-  given BetweenStages[LineTracking] = (token, m, ctx) => if m.matched == "\n" then ctx.line += 1
+  given BetweenStages[LineTracking] =
+    case (_, "\n", ctx) => ctx.line += 1
+    case _ => ()
