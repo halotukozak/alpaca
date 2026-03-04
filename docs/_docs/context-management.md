@@ -14,8 +14,7 @@ Alpaca provides `LexerCtx.Default`, which automatically tracks:
 
 ```scala
 val myLexer = lexer: // Uses LexerCtx.Default by default
-  case "
-" => 
+  case "\n" =>
     // The ctx is automatically updated for line and position
     Token.Ignored
 ```
@@ -30,7 +29,7 @@ case class MyCtx(
 ) extends LexerCtx
 
 val myLexer = lexer[MyCtx]:
-  case "\(" => 
+  case "\\(" =>
     ctx.braceDepth += 1
     Token["("]
 ```
@@ -67,7 +66,7 @@ case class MyParserCtx(
 object MyParser extends Parser[MyParserCtx]:
   val root = rule:
     case MyLexer.ID(id) => 
-      ctx.symbols += id.value
+      ctx.symbols = ctx.symbols + id.value
       id.value
 ```
 
@@ -82,7 +81,7 @@ When you call `myParser.parse(lexemes)`, the lexemes themselves carry a "snapsho
 ```scala
 // In the parser, accessing lexer context info:
 case MyLexer.NUM(n) => 
-  println(s"Matched number on line ${n.fields.line}")
+  println(s"Matched number on line ${n.line}")
   n.value
 ```
 

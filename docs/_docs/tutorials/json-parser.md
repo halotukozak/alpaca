@@ -17,7 +17,7 @@ val JsonLexer = lexer:
   case ":" => Token[":"]
   case "," => Token[","]
   case x@("false" | "true") => Token["Bool"](x.toBoolean)
-  case "null" => Token["Null"](null)
+  case "null" => Token["Null"](null: @annotation.nowarn("msg=unused explicit parameter"))
   case x@"""[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
   case x@""""(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 ```
@@ -82,14 +82,11 @@ Alpaca provides `.List` and `.Option` operators on **Rules** to simplify common 
 
 > `.List` and `.Option` work on `Rule` references, not on token references directly.
 
-For example, instead of writing explicit recursion for a list of arguments:
+For example, instead of writing explicit recursion for a list of statements:
 
 ```scala
-val FnCall: Rule[List[Any]] = rule:
-  case (MyLexer.`(`(_), Arg.List(args), MyLexer.`)`(_)) => args
-
-val Arg: Rule[Any] = rule:
-  case Value(v) => v
+val Block: Rule[List[Any]] = rule:
+  case Stmt.List(stmts) => stmts
 ```
 
 For separator-delimited lists (like JSON's comma-separated members), explicit recursion as shown in Section 2 is

@@ -1,7 +1,8 @@
 # Tutorial: Expression Evaluator
 
-This tutorial builds a math expression evaluator supporting arithmetic, exponentiation, unary operators, parentheses,
-constants, and trig functions. It highlights Alpaca's **operator precedence** and **conflict resolution**.
+This tutorial builds a math expression evaluator supporting basic arithmetic (`+`, `-`, `*`, `/`), exponentiation
+(`**`), unary minus, parentheses, constants (`pi`), and functions (`sin`, `atan2`). It highlights Alpaca's **operator
+precedence** and **conflict resolution**.
 
 ## 1. Defining the Lexer
 
@@ -12,10 +13,9 @@ val CalcLexer = lexer:
   case "\\s+" => Token.Ignored
   case "#.*" => Token.Ignored
   case "\\*\\*" => Token["exp"]   // multi-char operators first
-  case "//" => Token["fdiv"]
-  case literal@("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
+  case literal@("\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | ",") =>
     Token[literal.type]
-  case keyword@("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
+  case keyword@("pi" | "sin" | "atan2") =>
     Token[keyword.type]
   case x@"""(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
   case x@"\\d+" => Token["int"](x.toInt)

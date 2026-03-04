@@ -14,13 +14,12 @@ case MyLexer.NUM(n) => n.value              // n is a Lexeme
 ```
 [//]: # (@formatter:on)
 
-The `Lexeme` object contains `value`, `name`, and `fields` (a NamedTuple with context like `line` and `position`).
-
-You can match directly on context fields:
+The `Lexeme` object contains `value`, `name`, and context fields (such as `line`, `position`) exposed as dynamic
+members when provided by your lexer context.
 
 [//]: # (@formatter:off)
 ```scala
-case MyLexer.NUM(n @ { line = l }) => println(s"Found number on line $l")
+case MyLexer.NUM(n) => println(s"Found number on line ${n.line}")
 ```
 [//]: # (@formatter:on)
 
