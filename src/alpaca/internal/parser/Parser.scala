@@ -9,7 +9,7 @@ import alpaca.internal.parser.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
-import scala.reflect.{ ClassTag}
+import scala.reflect.ClassTag
 
 /**
  * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
@@ -91,10 +91,10 @@ abstract class Parser[Ctx <: ParserCtx](
    */
   private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
     type Node = R | Lexeme[?, ?] | Null
-    
+
     val ctx = empty()
-    val input: Array[Lexeme[?, ?]] = (lexemes :+ Lexeme.EOF).toArray
-    
+    val input= lexemes.toVector :+ Lexeme.EOF
+
     @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): R | Null =
       val nextSymbol = Terminal(input(pos).name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
@@ -108,8 +108,8 @@ abstract class Parser[Ctx <: ParserCtx](
           if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
           else
             val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
-            val children = stack.take(rhs.size).iterator.map(_.node: Any).to(RevertedArray)
-            loop(pos, (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: stack)
+            val children = stack.take(rhs.size).iterator.map[Any](_.node).to(RevertedArray)
+            loop(pos, (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: newStack)
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
           stack.head.node.asInstanceOf[R | Null]
