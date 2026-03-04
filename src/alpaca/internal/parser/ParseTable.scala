@@ -27,7 +27,9 @@ private[parser] object ParseTable:
      */
     def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
-      catch case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
+      catch
+        case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
+
     /**
      * Converts the parse table to CSV format for debugging.
      *

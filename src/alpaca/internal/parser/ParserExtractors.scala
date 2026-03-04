@@ -124,7 +124,6 @@ private object ParserExtractors:
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
-  val someAction: Action[ParserCtx] = (_, args) =>
-    Some(args.head)
+  val someAction: Action[ParserCtx] = (_, args) => Some(args.head)
 
   val noneAction: Action[ParserCtx] = (_, _) => None

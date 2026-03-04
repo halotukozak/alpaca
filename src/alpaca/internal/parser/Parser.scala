@@ -93,7 +93,7 @@ abstract class Parser[Ctx <: ParserCtx](
     type Node = R | Lexeme[?, ?] | Null
 
     val ctx = empty()
-    val input= lexemes.toVector :+ Lexeme.EOF
+    val input = lexemes.toVector :+ Lexeme.EOF
 
     @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): R | Null =
       val nextSymbol = Terminal(input(pos).name)
