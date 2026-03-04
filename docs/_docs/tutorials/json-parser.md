@@ -10,7 +10,6 @@ strings, numbers, booleans, and null.
 
 ```scala
 import alpaca.*
-import annotation.nowarn
 
 val JsonLexer = lexer:
   // Ignore whitespace
@@ -62,7 +61,7 @@ object JsonParser extends Parser:
 
   // Helper rule for a list of object members
   val ObjectMembers: Rule[List[(String, Any)]] = rule(
-    { case ObjectMember(member) => List(member) },
+    { case ObjectMember(member) => scala.List(member) },
     { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
   )
 
@@ -78,7 +77,7 @@ object JsonParser extends Parser:
 
   // Helper rule for a list of array elements
   val ArrayElements: Rule[List[Any]] = rule(
-    { case Value(v) => List(v) },
+    { case Value(v) => scala.List(v) },
     { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
   )
 ```
