@@ -25,9 +25,10 @@ private[parser] object ParseTable:
      * @return the parse action to take
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
-    def apply(state: Int, symbol: Symbol)(using Log): ParseAction =
+    def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
-      catch case _: NoSuchElementException => throw AlgorithmError(show"No action for state $state and symbol $symbol")
+      catch
+        case _: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol ${symbol.name}")
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -58,7 +59,7 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  // todo: can be parallelized with Ox?
+  // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
     logger.trace("building first set...")
     val firstSet = FirstSet(productions)
@@ -149,6 +150,7 @@ private[parser] object ParseTable:
     result.append('\n')
     result.result()
 
+  // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
@@ -181,3 +183,4 @@ private[parser] object ParseTable:
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
+// $COVERAGE-ON$

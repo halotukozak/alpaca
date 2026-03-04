@@ -17,6 +17,7 @@ import scala.reflect.NameTransformer
  * @tparam Q the Quotes type
  * @tparam Ctx the parser context type
  */
+// $COVERAGE-OFF$
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -107,6 +108,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           ),
         ),
       )
+// $COVERAGE-ON$
 
 private object ParserExtractors:
   private object Names:
@@ -116,14 +118,12 @@ private object ParserExtractors:
     final val Option = "Option"
     final val AsInstanceOf = "$asInstanceOf$"
 
-  val repeatedAction: Action[ParserCtx] =
-    case (_, Seq(currList: List[?], newElem)) => currList.appended(newElem)
-    case _ => dummy
+  val repeatedAction: Action[ParserCtx] = (_, args) =>
+    val RevertedArray(newElem, currList: List[?]) = args.runtimeChecked
+    currList.appended(newElem)
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 
-  val someAction: Action[ParserCtx] =
-    case (_, Seq(elem)) => Some(elem)
-    case _ => dummy
+  val someAction: Action[ParserCtx] = (_, args) => Some(args.head)
 
   val noneAction: Action[ParserCtx] = (_, _) => None

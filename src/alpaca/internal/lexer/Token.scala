@@ -24,8 +24,8 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
  */
-//todo: should it contain info about ignored? for perf?
-private[lexer] final case class TokenInfo private (name: String, regexGroupName: String, pattern: String)
+//todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String)
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -41,6 +41,7 @@ private[lexer] object TokenInfo:
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
+// $COVERAGE-OFF$
   def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
@@ -63,7 +64,7 @@ private[lexer] object TokenInfo:
   given ToExpr[TokenInfo]:
     def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
       '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
-
+// $COVERAGE-ON$
 /**
  * Base trait for all token types.
  *
@@ -95,7 +96,7 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  * @param ctxManipulation function to update context
  * @param remapping function to extract value from context
  */
-//todo: may be invariant?
+//todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
 final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
@@ -125,3 +126,6 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   info: TokenInfo,
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
+
+def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())
