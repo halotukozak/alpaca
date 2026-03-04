@@ -1,49 +1,36 @@
 # Tutorial: Building a JSON Parser
 
-In this tutorial, we will build a fully functional JSON parser using Alpaca. This will demonstrate how to define a
-lexer, a parser, and how to handle nested data structures.
+This tutorial builds a JSON parser with Alpaca, covering lexer definition, recursive grammar rules, and nested data
+structures.
 
 ## 1. Defining the Lexer
-
-First, we need to define the lexical tokens for JSON, including braces, brackets, colons, commas, and literals like
-strings, numbers, booleans, and null.
 
 ```scala
 import alpaca.*
 
 val JsonLexer = lexer:
-  // Ignore whitespace
   case "\\s+" => Token.Ignored
-
-  // Brackets and punctuation
   case "\\{" => Token["{"]
   case "\\}" => Token["}"]
   case "\\[" => Token["["]
   case "\\]" => Token["]"]
   case ":" => Token[":"]
   case "," => Token[","]
-
-  // Literals
   case x@("false" | "true") => Token["Bool"](x.toBoolean)
   case "null" => Token["Null"](null)
-
-  // Numbers and strings
   case x@"""[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
   case x@""""(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 ```
 
 ## 2. Defining the Parser
 
-Now we define the grammar rules for JSON. JSON has a recursive structure where a `Value` can be an `Object` or an
-`Array`, which in turn contain more `Value`s.
+JSON is recursive: a `Value` can be an `Object` or `Array`, which contain more `Value`s.
 
 ```scala
 object JsonParser extends Parser:
-  // The root of our grammar
   val root: Rule[Any] = rule:
     case Value(value) => value
 
-  // A JSON value can be any of the following
   val Value: Rule[Any] = rule(
     { case JsonLexer.Null(n) => n.value },
     { case JsonLexer.Bool(b) => b.value },
@@ -53,29 +40,24 @@ object JsonParser extends Parser:
     { case Array(arr) => arr },
   )
 
-  // Objects are collections of key-value pairs wrapped in braces
   val Object: Rule[Map[String, Any]] = rule(
     { case (JsonLexer.`{`(_), JsonLexer.`}`(_)) => Map.empty[String, Any] },
     { case (JsonLexer.`{`(_), ObjectMembers(members), JsonLexer.`}`(_)) => members.toMap },
   )
 
-  // Helper rule for a list of object members
   val ObjectMembers: Rule[List[(String, Any)]] = rule(
     { case ObjectMember(member) => scala.List(member) },
     { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
   )
 
-  // A single key-value pair
   val ObjectMember: Rule[(String, Any)] = rule:
     case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) => (s.value, v)
 
-  // Arrays are ordered lists of values wrapped in brackets
   val Array: Rule[List[Any]] = rule(
     { case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil },
     { case (JsonLexer.`[`(_), ArrayElements(elems), JsonLexer.`]`(_)) => elems },
   )
 
-  // Helper rule for a list of array elements
   val ArrayElements: Rule[List[Any]] = rule(
     { case Value(v) => scala.List(v) },
     { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
@@ -84,63 +66,31 @@ object JsonParser extends Parser:
 
 ## 3. Parsing Input
 
-With our lexer and parser defined, we can now parse JSON strings:
-
 ```scala
-val input =
-  """
-    |{
-    |  "name": "John Doe",
-    |  "age": 30,
-    |  "isStudent": false,
-    |  "courses": ["Math", "Science"],
-    |  "address": {
-    |    "city": "Anytown",
-    |    "zip": "12345"
-    |  },
-    |  "nullValue": null
-    |}
-    |""".stripMargin
+val input = """{"name": "Alice", "age": 30, "tags": ["a", "b"]}"""
 
 val (_, lexemes) = JsonLexer.tokenize(input)
 val (_, result) = JsonParser.parse(lexemes)
 
 println(result)
-// Output: Map(name -> John Doe, age -> 30.0, isStudent -> false, ...)
+// Map(name -> Alice, age -> 30.0, tags -> List(a, b))
 ```
 
 ## 4. Using EBNF Operators
 
-Alpaca provides `.List` and `.Option` operators on **Rules** for common EBNF patterns. These can simplify grammars
-by reducing boilerplate.
+Alpaca provides `.List` and `.Option` operators on **Rules** to simplify common patterns.
 
-> **Important:** `.List` and `.Option` work on `Rule` references, not on token references directly.
+> `.List` and `.Option` work on `Rule` references, not on token references directly.
 
-For example, you could simplify the argument list of a function call:
+For example, instead of writing explicit recursion for a list of arguments:
 
 ```scala
-// Instead of explicit recursion:
-val ArgList: Rule[List[Any]] = rule(
-  { case Value(v) => List(v) },
-  { case (ArgList(vs), JsonLexer.`,`(_), Value(v)) => vs :+ v },
-)
-
-// You can use .List and .Option on Rules:
 val FnCall: Rule[List[Any]] = rule:
-  case (JsonLexer.`(`(_), Arg.List(args), JsonLexer.`)`(_)) => args
+  case (MyLexer.`(`(_), Arg.List(args), MyLexer.`)`(_)) => args
 
 val Arg: Rule[Any] = rule:
   case Value(v) => v
 ```
 
-However, for separator-delimited lists (like JSON's comma-separated members), explicit recursion is often
-clearer and more correct than trying to use `.Option` on separator tokens.
-
-## Summary
-
-In this tutorial, we:
-
-1. Defined a `lexer` with regex patterns for JSON tokens.
-2. Defined a `Parser` with recursive rules for objects and arrays.
-3. Used `rule` blocks and pattern matching to transform tokens into Scala data structures.
-4. Explored how `List` and `Option` can simplify grammar definitions.
+For separator-delimited lists (like JSON's comma-separated members), explicit recursion as shown in Section 2 is
+often clearer.

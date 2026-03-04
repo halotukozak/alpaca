@@ -1,49 +1,29 @@
 # Tutorial: Expression Evaluator
 
-In this tutorial, we will build a powerful expression evaluator that supports:
-
-- Basic arithmetic (`+`, `-`, `*`, `/`, `%`)
-- Exponentiation (`**`) and Floor division (`//`)
-- Unary operators (`+`, `-`)
-- Parentheses for grouping
-- Math constants (`pi`, `e`, etc.)
-- Trigonometric functions (`sin`, `cos`, `atan2`, etc.)
-
-This tutorial highlights Alpaca's ability to handle **operator precedence** and **conflict resolution**.
+This tutorial builds a math expression evaluator supporting arithmetic, exponentiation, unary operators, parentheses,
+constants, and trig functions. It highlights Alpaca's **operator precedence** and **conflict resolution**.
 
 ## 1. Defining the Lexer
-
-The lexer for our calculator needs to handle various operators, keywords for functions, and numeric literals.
 
 ```scala
 import alpaca.*
 
 val CalcLexer = lexer:
-  // Ignore whitespace and comments
   case "\\s+" => Token.Ignored
   case "#.*" => Token.Ignored
-
-  // Multi-character operators FIRST to avoid partial matching
-  case "\\*\\*" => Token["exp"]
+  case "\\*\\*" => Token["exp"]   // multi-char operators first
   case "//" => Token["fdiv"]
-
-  // Single-character operators
   case literal@("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
     Token[literal.type]
-
-  // Keywords (constants and functions)
   case keyword@("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
     Token[keyword.type]
-
-  // Numbers (floats and ints)
   case x@"""(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
   case x@"\\d+" => Token["int"](x.toInt)
 ```
 
 ## 2. Defining the Parser
 
-The parser defines the grammar rules. Notice how we use **named productions** (e.g., `"plus"`, `"times"`) to make
-conflict resolution clearer.
+**Named productions** (e.g., `"plus"`, `"times"`) let us reference specific alternatives in conflict resolution.
 
 ```scala
 object CalcParser extends Parser:
@@ -78,8 +58,8 @@ object CalcParser extends Parser:
 
 ## 3. Conflict Resolution
 
-By default, the grammar above is ambiguous (e.g., does `1 + 2 * 3` mean `(1 + 2) * 3` or `1 + (2 * 3)`?). We resolve
-this by overriding the `resolutions` member.
+The grammar above is ambiguous — does `1 + 2 * 3` mean `(1 + 2) * 3` or `1 + (2 * 3)`? Override `resolutions` to
+disambiguate:
 
 ```scala
   override val resolutions = Set(
@@ -102,13 +82,11 @@ this by overriding the `resolutions` member.
 )
 ```
 
-### Key Concepts in Conflict Resolution:
+### Key Concepts:
 
-- `production.<name>.before(token1, token2)`: When this production could be reduced but the next token is `token1`/`token2`, **reduce** (choose this production over shifting). This gives the production **higher** precedence than those tokens.
-- `production.<name>.after(token1, token2)`: When this production could be reduced but the next token is `token1`/`token2`, **shift** (the token wins). This gives the production **lower** precedence than those tokens.
-- `CalcLexer.<TOKEN>.before(prod1, prod2)`: When seeing this token, prefer **shifting** over reducing the listed productions.
-- `production.<name>`: References a named production.
-- `CalcLexer.<TOKEN>`: References a terminal token.
+- `production.<name>.before(tokens...)` — **reduce** over shifting those tokens (higher precedence)
+- `production.<name>.after(tokens...)` — **shift** those tokens over reducing (lower precedence)
+- `CalcLexer.<TOKEN>.before(productions...)` — prefer **shifting** this token over reducing those productions
 
 ## 4. Evaluating Expressions
 
@@ -119,13 +97,3 @@ val (_, result) = CalcParser.parse(lexemes)
 
 println(result) // 33.0 (1.0 + 8.0 * 4.0)
 ```
-
-## Summary
-
-In this tutorial, we:
-
-1. Built a lexer for a wide range of mathematical symbols and keywords.
-2. Created a recursive parser for evaluating expressions.
-3. Used **named productions** to simplify grammar definitions.
-4. Applied **conflict resolution** rules to handle operator precedence and associativity, turning an ambiguous grammar
-   into a deterministic one.
