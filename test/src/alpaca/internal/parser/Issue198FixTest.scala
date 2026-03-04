@@ -20,12 +20,12 @@ final class Issue198FixTest extends AnyFunSuite with Matchers:
 
       val Expr: Rule[Int] = rule(
         "if-else" { case (MyLexer.IF(_), MyLexer.Num(n), MyLexer.ELSE(_)) => n.value },
-        { case MyLexer.Num(n) => n.value }
+        { case MyLexer.Num(n) => n.value },
       )
 
       override val resolutions = Set(
-        production.`if-else`.after(MyLexer.Num)
+        production.`if-else`.after(MyLexer.Num),
       )
-    
+
     assert(MyParser.resolutions.nonEmpty)
   }

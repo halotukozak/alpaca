@@ -146,7 +146,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         val decodedName = scala.reflect.NameTransformer.decode(name)
         logger.trace(show"Looking for production with name '$decodedName' (original: '$name')")
-        productionsByName.getOrElse(decodedName, report.errorAndAbort(show"Production with name '$decodedName' not found"))
+        productionsByName.getOrElse(
+          decodedName,
+          report.errorAndAbort(show"Production with name '$decodedName' not found"),
+        )
 
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
