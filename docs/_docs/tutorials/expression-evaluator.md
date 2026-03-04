@@ -1,6 +1,7 @@
 # Tutorial: Expression Evaluator
 
 In this tutorial, we will build a powerful expression evaluator that supports:
+
 - Basic arithmetic (`+`, `-`, `*`, `/`, `%`)
 - Exponentiation (`**`) and Floor division (`//`)
 - Unary operators (`+`, `-`)
@@ -27,21 +28,22 @@ val CalcLexer = lexer:
   case "//" => Token["fdiv"]
 
   // Single-character operators
-  case literal @ ("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
+  case literal@("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
     Token[literal.type]
 
   // Keywords (constants and functions)
-  case keyword @ ("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
+  case keyword@("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
     Token[keyword.type]
 
   // Numbers (floats and ints)
-  case x @ """(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
-  case x @ "\\d+" => Token["int"](x.toInt)
+  case x@"""(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
+  case x@"\\d+" => Token["int"](x.toInt)
 ```
 
 ## 2. Defining the Parser
 
-The parser defines the grammar rules. Notice how we use **named productions** (e.g., `"plus"`, `"times"`) to make conflict resolution clearer.
+The parser defines the grammar rules. Notice how we use **named productions** (e.g., `"plus"`, `"times"`) to make
+conflict resolution clearer.
 
 ```scala
 object CalcParser extends Parser:
@@ -50,21 +52,21 @@ object CalcParser extends Parser:
 
   val Expr: Rule[Double] = rule(
     // Binary arithmetic
-    "plus"  { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
+    "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
     "minus" { case (Expr(a), CalcLexer.`-`(_), Expr(b)) => a - b },
     "times" { case (Expr(a), CalcLexer.`\\*`(_), Expr(b)) => a * b },
-    "divide"{ case (Expr(a), CalcLexer.`//`(_), Expr(b)) => a / b },
-    "exp"   { case (Expr(a), CalcLexer.`exp`(_), Expr(b)) => math.pow(a, b) },
+    "divide" { case (Expr(a), CalcLexer.`/`(_), Expr(b)) => a / b },
+    "exp" { case (Expr(a), CalcLexer.`exp`(_), Expr(b)) => math.pow(a, b) },
 
     // Unary operators
-    "uminus"{ case (CalcLexer.`-`(_), Expr(a)) => -a },
+    "uminus" { case (CalcLexer.`-`(_), Expr(a)) => -a },
 
     // Constants and Functions
-    "pi"    { case CalcLexer.pi(_) => math.Pi },
-    "sin"   { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) },
-    "atan2" { 
-      case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) => 
-        math.atan2(y, x) 
+    "pi" { case CalcLexer.pi(_) => math.Pi },
+    "sin" { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) },
+    "atan2" {
+      case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
+        math.atan2(y, x)
     },
 
     // Parentheses and literals
@@ -76,26 +78,35 @@ object CalcParser extends Parser:
 
 ## 3. Conflict Resolution
 
-By default, the grammar above is ambiguous (e.g., does `1 + 2 * 3` mean `(1 + 2) * 3` or `1 + (2 * 3)`?). We resolve this by overriding the `resolutions` member.
+By default, the grammar above is ambiguous (e.g., does `1 + 2 * 3` mean `(1 + 2) * 3` or `1 + (2 * 3)`?). We resolve
+this by overriding the `resolutions` member.
 
 ```scala
   override val resolutions = Set(
-    // Multiplication and division have higher precedence than addition
-    production.times.after(CalcLexer.`\\+`, CalcLexer.`-`),
-    production.divide.after(CalcLexer.`\\+`, CalcLexer.`-`),
+  // Exponentiation: right-associative, highest binary precedence
+  CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
+  production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-    // Exponentiation has the highest precedence
-    production.exp.after(CalcLexer.`\\*`, CalcLexer.`/`),
+  // Unary minus binds tighter than * /
+  production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-    // Left-associativity for addition and subtraction
-    production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-    production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`)
-  )
+  // Multiplication/division: left-associative, higher than +/-
+  production.times.before(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`),
+
+  // Addition/subtraction: left-associative, lowest binary precedence
+  production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+  production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+)
 ```
 
 ### Key Concepts in Conflict Resolution:
-- `after`: Specifies that a production/token has **higher** precedence (is reduced later).
-- `before`: Specifies that a production/token has **lower** precedence (is reduced earlier).
+
+- `production.<name>.before(token1, token2)`: When this production could be reduced but the next token is `token1`/`token2`, **reduce** (choose this production over shifting). This gives the production **higher** precedence than those tokens.
+- `production.<name>.after(token1, token2)`: When this production could be reduced but the next token is `token1`/`token2`, **shift** (the token wins). This gives the production **lower** precedence than those tokens.
+- `CalcLexer.<TOKEN>.before(prod1, prod2)`: When seeing this token, prefer **shifting** over reducing the listed productions.
 - `production.<name>`: References a named production.
 - `CalcLexer.<TOKEN>`: References a terminal token.
 
@@ -112,7 +123,9 @@ println(result) // 33.0 (1.0 + 8.0 * 4.0)
 ## Summary
 
 In this tutorial, we:
+
 1. Built a lexer for a wide range of mathematical symbols and keywords.
 2. Created a recursive parser for evaluating expressions.
 3. Used **named productions** to simplify grammar definitions.
-4. Applied **conflict resolution** rules to handle operator precedence and associativity, turning an ambiguous grammar into a deterministic one.
+4. Applied **conflict resolution** rules to handle operator precedence and associativity, turning an ambiguous grammar
+   into a deterministic one.
