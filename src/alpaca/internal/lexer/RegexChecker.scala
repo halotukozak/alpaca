@@ -3,7 +3,6 @@ package internal
 package lexer
 
 import dregex.Regex
-import ox.par
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
@@ -30,8 +29,7 @@ private[lexer] object RegexChecker:
       logger.trace("checking regex patterns for shadowing...")
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
-      par:
-        for
-          i <- patterns.indices
-          j <- (i + 1) until regexes.size
-        yield () => if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))
+      for
+        i <- patterns.indices
+        j <- (i + 1) until regexes.size
+      do if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))
