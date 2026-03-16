@@ -118,14 +118,16 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 // $COVERAGE-ON$
 /**
- * Creates a cancellable timeout for compilation.
+ * Starts a background timeout watcher for compilation.
  *
- * This starts a background task that will throw AlpacaTimeoutException
- * if the configured compilation timeout is exceeded. Call cancelNow()
- * on the returned fork to prevent the timeout.
+ * This helper spawns a daemon thread that waits for the duration
+ * configured in [[Log.debugSettings.compilationTimeout]]. If the timeout
+ * is a finite [[scala.concurrent.duration.FiniteDuration]] and elapses
+ * without the watcher thread being interrupted, the thread will
+ * self-interrupt. For infinite timeouts, no action is taken.
  *
- * @param debugSettings the debug configuration
- * @return a cancellable fork that can be cancelled to prevent timeout
+ * This API is fire-and-forget: it returns `Unit`, and the timeout watcher
+ * thread cannot be cancelled through this method.
  */
 private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit = new Thread:
   override def run(): Unit =
