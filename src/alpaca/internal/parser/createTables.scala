@@ -90,14 +90,15 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       cases.iterator
         .map(extractProductionName)
         .map:
-          case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
-          case (Lambda(_, Match(_, _)), _) =>
-            report.errorAndAbort("Productions definition with multiple cases is not supported yet")
+          case (Lambda(_, Match(_, List(caseDef))), name) => (caseDef, name)
+          case (l @ Lambda(_, Match(_, _)), _) =>
+            report.errorAndAbort("Productions definition with multiple cases is not supported yet", l.pos)
           case (other, _) =>
-            report.errorAndAbort(show"Unexpected production definition: $other")
+            report.errorAndAbort(show"Unexpected production definition: $other", other.pos)
         .unsafeFlatMap:
-          case (CaseDef(_, Some(_), _), _) =>
-            throw new NotImplementedError("Guards are not supported yet")
+          case (c @ CaseDef(_, Some(_), _), _) =>
+            report.error("Guards are not supported yet", c.pos)
+            None
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
@@ -140,16 +141,16 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   logger.trace("Productions extracted, building parse and action tables.")
 
-  val findProduction: Expr[Production] => Production =
+  def findProduction(call: Expr[Production]): Production =
     val productionsByName = productions.iterator.collect { case p if p.name != null => p.name -> p }.toMap
     val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
-    {
+    call match
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
         val decodedName = scala.reflect.NameTransformer.decode(name)
         logger.trace(show"Looking for production with name '$decodedName' (original: '$name')")
         productionsByName.getOrElse(
           decodedName,
-          report.errorAndAbort(show"Production with name '$decodedName' not found"),
+          report.errorAndAbort(show"Production with name '$decodedName' not found", call),
         )
 
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
@@ -163,11 +164,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
         productionsByRhs.getOrElse(
           NEL.unsafe(args),
-          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
+          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found", call),
         )
 
       case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
-    }
 
   logger.trace("Conflict resolution rules extracted, building conflict resolution table.")
 
