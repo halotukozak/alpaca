@@ -15,7 +15,7 @@ import scala.concurrent.duration.{Duration, DurationInt}
  * @param logOut mapping of log levels to output destinations
  */
 private[internal] final case class DebugSettings(
-  debugDirectory: String | Null,
+  debugDirectory: Option[String],
   compilationTimeout: Duration,
   enableVerboseNames: Boolean,
   logOut: Map[logger.Level, logger.Out],
@@ -25,6 +25,13 @@ object DebugSettings:
   private final val Directory = "debugDirectory"
   private final val Timeout = "compilationTimeout"
   private final val EnableVerboseNames = "enableVerboseNames"
+
+  val default: DebugSettings = DebugSettings(
+    debugDirectory = None,
+    compilationTimeout = 90.seconds,
+    enableVerboseNames = false,
+    logOut = logger.Level.values.map(l => (l, l.default)).toMap,
+  )
 
   // $COVERAGE-OFF$
   given (quotes: Quotes) => DebugSettings =
@@ -39,7 +46,7 @@ object DebugSettings:
       .toMap
 
     DebugSettings(
-      debugDirectory = settings.get(Directory).orNull,
+      debugDirectory = settings.get(Directory),
       compilationTimeout = settings.get(Timeout).map(Duration.create).getOrElse(90.seconds),
       enableVerboseNames = settings.get(EnableVerboseNames).exists(_.toBoolean),
       logOut = logger.Level.values
@@ -55,14 +62,4 @@ object DebugSettings:
           )
         .toMap,
     )
-
-  given ToExpr[DebugSettings]:
-    def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] = '{
-      DebugSettings(
-        ${ Expr(x.debugDirectory) },
-        Duration.fromNanos(${ Expr(x.compilationTimeout.toNanos) }),
-        ${ Expr(x.enableVerboseNames) },
-        ${ Expr(x.logOut) },
-      )
-    }
 // $COVERAGE-ON$

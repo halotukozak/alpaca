@@ -7,6 +7,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
+  private given DebugSettings = DebugSettings.default
 
   test("checkPatterns should return None for non-overlapping patterns") {
     withLog:
