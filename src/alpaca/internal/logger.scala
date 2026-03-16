@@ -59,8 +59,9 @@ private[internal] class Log(using val debugSettings: DebugSettings) extends Auto
 
   // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
-    val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    if replace then this.replace(file)(content) else this.append(file)(content)
+    debugSettings.debugDirectory.foreach: dir =>
+      val file = Path.of(dir).resolve(path)
+      if replace then this.replace(file)(content) else this.append(file)(content)
 
   /**
    * Logs a message at the given level.
@@ -74,19 +75,12 @@ private[internal] class Log(using val debugSettings: DebugSettings) extends Auto
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
-inline private[internal] def withLog[T](inline op: Log ?=> T): T =
-  given log: Log = logger.materialize
+private[internal] def withLog[T](op: Log ?=> T)(using DebugSettings): T =
+  given log: Log = new Log
   try op
   finally log.close()
 
 private[internal] object logger:
-
-  inline private[internal] def materialize = ${ materializeImpl }
-  // $COVERAGE-OFF$
-  private def materializeImpl(using quotes: Quotes): Expr[Log] =
-    val debugSettings = Expr(summon[DebugSettings])
-    '{ new Log(using $debugSettings) }
-  // $COVERAGE-ON$
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)

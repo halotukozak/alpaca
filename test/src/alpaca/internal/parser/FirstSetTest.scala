@@ -6,6 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import Production.NonEmpty as NEP
 
 final class FirstSetTest extends AnyFunSuite:
+  private given DebugSettings = DebugSettings.default
   test("FirstSet should correctly identify first sets for simple grammar") {
     withLog:
       val productions: List[Production] = List(
