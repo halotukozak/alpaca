@@ -74,9 +74,9 @@ private[internal] class Log(using val debugSettings: DebugSettings) extends Auto
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
-inline private[internal] def supervisedWithLog[T](inline op: Log ?=> T): T =
-  val log = logger.materialize
-  try op(using log)
+inline private[internal] def withLog[T](inline op: Log ?=> T): T =
+  given log: Log = logger.materialize
+  try op
   finally log.close()
 
 private[internal] object logger:

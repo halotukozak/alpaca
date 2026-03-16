@@ -49,7 +49,7 @@ private[alpaca] object Tables:
 // $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*

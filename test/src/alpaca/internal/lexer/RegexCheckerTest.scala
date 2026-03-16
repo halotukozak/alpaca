@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
 
   test("checkPatterns should return None for non-overlapping patterns") {
-    supervisedWithLog:
+    withLog:
       val patterns = List(
         "[a-zA-Z_][a-zA-Z0-9_]*",
         "[+-]?[0-9]+",
@@ -21,7 +21,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   }
 
   test("checkPatterns should throw ShadowException for overlapping patterns") {
-    supervisedWithLog:
+    withLog:
       val patterns = List(
         "[a-zA-Z_][a-zA-Z0-9_]*",
         "\\*",
@@ -35,7 +35,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   }
 
   test("checkPatterns should report prefix shadowing") {
-    supervisedWithLog:
+    withLog:
       val patterns = List(
         "i",
         "\\*",
@@ -50,7 +50,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   }
 
   test("checkPatterns should report identical patterns as overlapping") {
-    supervisedWithLog:
+    withLog:
       val patterns = List(
         "[a-zA-Z_][a-zA-Z0-9_]*",
         "\\*",
@@ -64,7 +64,7 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   }
 
   test("checkPatterns should not report patterns in proper order") {
-    supervisedWithLog:
+    withLog:
       val patterns = List(
         "if",
         "\\*",
@@ -79,13 +79,13 @@ final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   }
 
   test("checkPatterns should handle empty pattern list") {
-    supervisedWithLog:
+    withLog:
       noException shouldBe thrownBy:
         RegexChecker.checkPatterns(Nil)
   }
 
   test("checkPatterns should handle single pattern") {
-    supervisedWithLog:
+    withLog:
       noException shouldBe thrownBy:
         RegexChecker.checkPatterns(List("[a-zA-Z_][a-zA-Z0-9_]*"))
   }

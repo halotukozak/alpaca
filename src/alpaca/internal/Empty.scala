@@ -29,7 +29,7 @@ private[alpaca] object Empty:
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
   // $COVERAGE-OFF$
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withLog:
     timeoutOnTooLongCompilation()
 
     import quotes.reflect.*

@@ -31,7 +31,7 @@ private[alpaca] object BetweenStages:
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
   // $COVERAGE-OFF$
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = withLog:
     import quotes.reflect.*
 
     logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
