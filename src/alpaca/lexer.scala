@@ -106,7 +106,7 @@ trait LexerCtx:
   var lastRawMatched: String = compiletime.uninitialized
 
   /** The remaining text to be tokenized. */
-  var text: CharSequence
+  var text: CharSequence = compiletime.uninitialized
 
 object LexerCtx:
 
@@ -147,12 +147,8 @@ object LexerCtx:
    *
    * This is the simplest context that only tracks the remaining text.
    * Use this when you don't need line or position tracking.
-   *
-   * @param text the remaining text to tokenize
    */
-  final case class Empty(
-    var text: CharSequence = "",
-  ) extends LexerCtx
+  final case class Empty() extends LexerCtx
 
   /**
    * The default lexer context with position and line tracking.
@@ -170,7 +166,6 @@ object LexerCtx:
    * @param line     the current line number (1-based)
    */
   final case class Default(
-    var text: CharSequence = "",
     var position: Int = 1,
     var line: Int = 1,
   ) extends LexerCtx
