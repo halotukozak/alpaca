@@ -3,7 +3,6 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
-import ox.*
 
 import java.util.regex.Pattern
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
@@ -63,7 +62,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
         case '{ type name <: ValidName; Token[name]($value: value)(using $_) } =>
           logger.trace("extractSimple(4)")
-          compileNameAndPattern[name](tree).mapPar(threads):
+          compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               // we need to widen here to avoid weird types
               TypeRepr.of[value].widen.asType match
@@ -92,7 +91,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .unzip
 
       val patterns = infos.map(_.pattern)
-      par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
+      RegexChecker.checkPatterns(patterns)
+      RegexChecker.checkPatterns(patterns.reverse)
 
       (
         tokens = accTokens ::: tokens.map:

@@ -1,8 +1,6 @@
 package alpaca
 package internal
 
-import ox.*
-
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -129,14 +127,18 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
  * @param debugSettings the debug configuration
  * @return a cancellable fork that can be cancelled to prevent timeout
  */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
-  forkDiscard:
+private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit = new Thread:
+  override def run(): Unit =
     summon[Log].debugSettings.compilationTimeout.runtimeChecked match
       case duration: FiniteDuration =>
-        sleep(duration)
-        throw AlpacaTimeoutException()
+        try Thread.sleep(duration.toMillis)
+        catch case _: InterruptedException => return
+        Thread.currentThread().interrupt()
       case Duration.Inf => ()
-      case Duration.MinusInf => throw AlpacaTimeoutException()
+      case Duration.MinusInf => Thread.currentThread().interrupt()
+.tap: t =>
+  t.setDaemon(true)
+  t.start()
 
 /**
  * A helper class for overriding symbols in macro expansion.
@@ -234,3 +236,8 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
  * This constant is used for parallel operations during compilation.
  */
 private[internal] val threads = Runtime.getRuntime.availableProcessors
+
+extension [T](t: T)
+  inline private[alpaca] def tap[U](inline f: T => U): T =
+    f(t)
+    t
