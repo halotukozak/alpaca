@@ -87,7 +87,7 @@ object Token:
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
 
 /** Propagates the lexer context through the DSL so that token constructors can access it implicitly. */
-transparent inline given ctx(using c: LexerCtx): c.type = c
+transparent inline def ctx(using c: LexerCtx): c.type = c
 
 /**
  * Base trait for lexer global context.
