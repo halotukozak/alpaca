@@ -5,7 +5,6 @@ package parser
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 
-
 /**
  * An opaque type containing the parse and action tables for the parser.
  *

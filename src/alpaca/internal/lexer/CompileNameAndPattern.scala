@@ -2,7 +2,6 @@ package alpaca
 package internal
 package lexer
 
-
 import scala.annotation.tailrec
 
 /**
