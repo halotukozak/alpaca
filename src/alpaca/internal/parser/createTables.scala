@@ -4,7 +4,6 @@ package parser
 
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
-import ox.*
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -50,7 +49,7 @@ private[alpaca] object Tables:
 // $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*

@@ -7,7 +7,7 @@ import Production.NonEmpty as NEP
 
 final class FirstSetTest extends AnyFunSuite:
   test("FirstSet should correctly identify first sets for simple grammar") {
-    supervisedWithLog:
+    withLog:
       val productions: List[Production] = List(
         NEP(NonTerminal("S"), NEL(NonTerminal("L"), Terminal("="), NonTerminal("R"))),
         NEP(NonTerminal("S"), NEL(NonTerminal("R"))),
@@ -26,7 +26,7 @@ final class FirstSetTest extends AnyFunSuite:
   }
 
   test("FirstSet should handle epsilon productions") {
-    supervisedWithLog:
+    withLog:
       val productions: List[Production] = List(
         NEP(NonTerminal("E"), NEL(NonTerminal("T"), NonTerminal("E'"))),
         NEP(NonTerminal("E'"), NEL(Terminal("+"), NonTerminal("T"), NonTerminal("E'"))),

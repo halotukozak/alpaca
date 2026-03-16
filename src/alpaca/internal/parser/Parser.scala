@@ -124,7 +124,7 @@ private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKin
   mutable.Map.empty
 
 // $COVERAGE-OFF$
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = supervisedWithLog:
+def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withLog:
   import quotes.reflect.*
 
   val parserSymbol = Symbol.spliceOwner.owner.owner

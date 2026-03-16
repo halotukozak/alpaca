@@ -1,8 +1,6 @@
 package alpaca
 package internal
 
-import ox.*
-
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -120,23 +118,32 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
 // $COVERAGE-ON$
 /**
- * Creates a cancellable timeout for compilation.
+ * Starts a background timeout watcher for compilation.
  *
- * This starts a background task that will throw AlpacaTimeoutException
- * if the configured compilation timeout is exceeded. Call cancelNow()
- * on the returned fork to prevent the timeout.
+ * This helper spawns a daemon thread that waits for the duration
+ * configured in [[Log.debugSettings.compilationTimeout]]. If the timeout
+ * is a finite [[scala.concurrent.duration.FiniteDuration]] and elapses
+ * without the watcher thread being interrupted, the thread will
+ * self-interrupt. For infinite timeouts, no action is taken.
  *
- * @param debugSettings the debug configuration
- * @return a cancellable fork that can be cancelled to prevent timeout
+ * This API is fire-and-forget: it returns `Unit`, and the timeout watcher
+ * thread cannot be cancelled through this method.
  */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
-  forkDiscard:
-    summon[Log].debugSettings.compilationTimeout.runtimeChecked match
-      case duration: FiniteDuration =>
-        sleep(duration)
-        throw AlpacaTimeoutException()
-      case Duration.Inf => ()
-      case Duration.MinusInf => throw AlpacaTimeoutException()
+private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit =
+  val callerThread = Thread.currentThread()
+
+  new Thread:
+    override def run(): Unit =
+      summon[Log].debugSettings.compilationTimeout.runtimeChecked match
+        case duration: FiniteDuration =>
+          try Thread.sleep(duration.toMillis)
+          catch case _: InterruptedException => return
+          callerThread.interrupt()
+        case Duration.Inf => ()
+        case Duration.MinusInf => callerThread.interrupt()
+  .tap: t =>
+    t.setDaemon(true)
+    t.start()
 
 /**
  * A helper class for overriding symbols in macro expansion.
@@ -234,3 +241,8 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
  * This constant is used for parallel operations during compilation.
  */
 private[internal] val threads = Runtime.getRuntime.availableProcessors
+
+extension [T](t: T)
+  inline private[alpaca] def tap[U](inline f: T => U): T =
+    f(t)
+    t
