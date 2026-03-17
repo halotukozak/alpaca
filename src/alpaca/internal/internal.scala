@@ -45,7 +45,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
     logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
     new TreeMap:
       // skip NoSymbol
-      private val filtered = queries.filter(!_.find.isNoSymbol)
+      private val filtered = queries.filterNot(_.find.isNoSymbol)
 
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         filtered
@@ -53,7 +53,11 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
             case (find, replace) if find == tree.symbol =>
               logger.trace(show"replacing reference to $find with $replace")
               replace
-          .getOrElse(super.transformTerm(tree)(owner))
+          .getOrElse:
+            val term = tree match
+              case block: Block => block.changeOwner(owner)
+              case other => other
+            super.transformTerm(term)(owner)
 
 /**
  * A helper for creating lambda expressions during macro expansion.
