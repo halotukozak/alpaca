@@ -214,7 +214,9 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
     .getOrElse:
-      report.errorAndAbort(show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }")
+      report.errorAndAbort(
+        show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }",
+      )
 
   logger.trace("Root production identified, generating parse and action tables.")
 

@@ -109,7 +109,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   logger.trace("checking for duplicate token names")
   infos
-    .groupBy(_.name).iterator
+    .groupBy(_.name)
+    .iterator
     .filter(_._2.sizeIs > 1)
     .foreach: (name, duplicates) =>
       report.errorAndAbort(
