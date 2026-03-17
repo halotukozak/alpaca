@@ -1,7 +1,7 @@
 package alpaca
 
 import alpaca.internal.*
-import alpaca.internal.lexer.*
+import alpaca.internal.lexer.{Token as _, IgnoredToken as InternalIgnoredToken, *}
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
@@ -135,7 +135,7 @@ object LexerCtx:
         ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
-    case (IgnoredToken(_, modifyCtx), _, ctx) =>
+    case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)
 
   /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
@@ -191,38 +191,3 @@ object LexerCtx:
 
 type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
 
-/**
- * Defines an opaque type `Token` that represents a token used in a lexer.
- *
- * This type has three type parameters:
- * - `Name`: The type of the token's name, restricted to a subtype of `ValidName`.
- * - `Ctx`: The type of the lexer context, restricted to a subtype of `LexerCtx`.
- * - `Value`: The type of the token's value.
- *
- * The exact implementation details of the underlying type are abstracted away by using `Any`.
- * Opaque types provide type safety without exposing the underlying representation.
- */
-//todo: it's a scala bug, that it cannot be an opaque type https://github.com/halotukozak/alpaca/issues/224
-trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]
-
-/**
- * Represents a specific type of token definition that denotes an ignored token during the lexing process.
- *
- * Ignored tokens typically refer to tokens that are matched and processed by the lexer but are
- * excluded from the final parsed token stream. Examples of ignored tokens include whitespace,
- * comments, or any other tokens that are syntactically meaningful but do not contribute to
- * the structured representation of the input source.
- *
- * This opaque type is parameterized by a context type `Ctx`, which must be a subtype of `LexerCtx`.
- * The `LexerCtx` trait serves as a base for maintaining global lexing state, such as the current
- * position, the last matched token, and the remaining input.
- *
- * The `ValidName` and `Nothing` type parameters are placeholder constraints inherited from
- * `Token`, but `IgnoredToken` does not provide its own additional constraints
- * or behavior beyond being excluded from normal processing.
- *
- * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
- * this type cannot be directly manipulated outside the context of its definition.
- */
-//todo: it's a scala bug, that it cannot be an opaque type https://github.com/halotukozak/alpaca/issues/229
-trait IgnoredToken[+Ctx <: LexerCtx] extends Token[ValidName, Ctx, Nothing]
