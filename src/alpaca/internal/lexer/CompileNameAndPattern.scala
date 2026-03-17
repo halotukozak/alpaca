@@ -37,7 +37,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         // case x @ "regex" => Token[x.type]
         case (TermRef(_, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
           logger.trace(show"matched simple regex with bind $bind and regex $regex")
-          (TokenInfo(regex, regex)) :: Nil
+          TokenInfo(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(_, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
           logger.trace(
@@ -52,7 +52,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         // case x : "regex" => Token.Ignored
         case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
           logger.trace(show"matched ignored token with tpe=$tpe and str=$str")
-          (TokenInfo(str, str)) :: Nil
+          TokenInfo(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
           logger.trace(show"matched ignored token with tpe=$tpe and alternatives ${alternatives.mkShow}")
@@ -61,19 +61,15 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
           logger.trace(show"matched named token with name=$name and regex=$regex")
-          (TokenInfo(name, regex)) :: Nil
+          TokenInfo(name, regex) :: Nil
         // case x : ("regex" | "regex2") => Token["name"]
         case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
           logger.trace(show"matched named token with name=$str and alternatives ${alternatives.mkShow}")
-          (
-            TokenInfo(
-              str,
-              alternatives
-                .unsafeMap:
-                  case Literal(StringConstant(str)) => str
-                .mkShow("|"),
-            )
-          ) :: Nil
+          val patterns = alternatives.unsafeMap:
+            case Literal(StringConstant(str)) => str
+          RegexChecker.checkPatterns(patterns)
+          RegexChecker.checkPatterns(patterns.reverse)
+          TokenInfo(str, patterns.mkShow("|")) :: Nil
         case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
