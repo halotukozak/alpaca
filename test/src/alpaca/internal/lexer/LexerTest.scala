@@ -84,6 +84,18 @@ final class LexerTest extends AnyFunSuite with Matchers:
     """ shouldNot compile
   }
 
+  test("throws on overlapping alternatives in same case - longer first") {
+    """val Lexer = lexer:
+      case ">=" | ">" => Token["GREATER"]
+    """ shouldNot compile
+  }
+
+  test("throws on overlapping alternatives in same case - shorter first") {
+    """val Lexer = lexer:
+      case ">" | ">=" => Token["GREATER"]
+    """ shouldNot compile
+  }
+
   test("track line and position across newlines") {
     val Lexer = lexer:
       case id @ "[a-zA-Z]+" => Token["IDENTIFIER"](id)
