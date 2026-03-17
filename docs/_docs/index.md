@@ -18,17 +18,17 @@ A modern, type-safe lexer and parser library for Scala 3, featuring compile-time
 Add Alpaca as a dependency in your `build.mill`:
 
 ```mill
-//| mill-version: 1.0.6
+//| mill-version: 1.1.3
 //| mill-jvm-version: 21
 
 import mill._
 import mill.scalalib._
 
 object myproject extends ScalaModule {
-  def scalaVersion = "3.7.4"
+  def scalaVersion = "3.8.3-RC1"
   
   def mvnDeps = Seq(
-    mvn"io.github.halotukozak::alpaca:0.0.2"
+    mvn"io.github.halotukozak::alpaca:0.0.7"
   )
 }
 ```
@@ -38,13 +38,13 @@ object myproject extends ScalaModule {
 Add Alpaca to your `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.2"
+libraryDependencies += "io.github.halotukozak" %% "alpaca" % "0.0.7"
 ```
 
-Make sure you're using Scala 3.7.4 or later:
+Make sure you're using Scala 3.8.3-RC1 or later:
 
 ```sbt
-scalaVersion := "3.7.4"
+scalaVersion := "3.8.3-RC1"
 ```
 
 ### Scala CLI
@@ -52,8 +52,8 @@ scalaVersion := "3.7.4"
 Use Alpaca directly in your Scala CLI scripts:
 
 ```scala sc:nocompile
-//> using scala "3.7.4"
-//> using dep "io.github.halotukozak::alpaca:0.0.2"
+//> using scala "3.8.3-RC1"
+//> using dep "io.github.halotukozak::alpaca:0.0.7"
 
 import alpaca.*
 
@@ -201,7 +201,7 @@ case "#.*" => Token.Ignored
 ### Prerequisites
 
 - JDK 21 or later
-- Mill 1.0.6 or later
+- Mill 1.1.3 or later
 
 ### Build Commands
 
