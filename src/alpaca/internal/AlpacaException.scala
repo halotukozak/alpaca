@@ -1,6 +1,7 @@
 package alpaca
 package internal
 
+import scala.annotation.constructorOnly
 import scala.util.control.NoStackTrace
 
 /**
@@ -19,5 +20,5 @@ private[alpaca] abstract class AlpacaException(message: Shown) extends Exception
  * This exception is raised when the compilation timeout configured in
  * DebugSettings is exceeded during macro expansion.
  */
-private[alpaca] class AlpacaTimeoutException(message: Shown) extends AlpacaException(message):
-  def this()(using Log) = this("Alpaca compilation timeout")
+private[alpaca] class AlpacaTimeoutException()(using @constructorOnly log: Log)
+  extends AlpacaException("Alpaca compilation timeout")
