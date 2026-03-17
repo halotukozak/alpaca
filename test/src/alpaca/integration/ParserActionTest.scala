@@ -4,7 +4,7 @@ package integration
 import alpaca.*
 import org.scalatest.funsuite.AnyFunSuite
 
-final class Bug148Test extends AnyFunSuite:
+final class ParserActionTest extends AnyFunSuite:
   test("multiline action in parser rule - single production") {
     val BugLexer = lexer:
       case "T" => Token["T"]
@@ -49,4 +49,23 @@ final class Bug148Test extends AnyFunSuite:
     val (_, lexemes) = BugLexer.tokenize("1 + 2")
     val (_, result) = Bug.parse(lexemes)
     assert(result == 6) // (1 + 2) * 2
+  }
+
+  test("lambda action in parser rule (#147)") {
+    val BugLexer = lexer:
+      case "T" => Token["T"]
+
+    object Bug extends Parser:
+      val R1: Rule[String] = rule:
+        case BugLexer.T(_) => "T"
+
+      val R2: Rule[Any => String] = rule:
+        case R1(op) => _ => op
+
+      override val root: Rule[Any] = rule:
+        case R2(f) => f(())
+
+    val (_, lexemes) = BugLexer.tokenize("T")
+    val (_, result) = Bug.parse(lexemes)
+    assert(result == "T")
   }
