@@ -54,10 +54,10 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
               logger.trace(show"replacing reference to $find with $replace")
               replace
           .getOrElse:
-            val tree1 = tree match
+            val term = tree match
               case block: Block => block.changeOwner(owner)
-              case block => block
-            super.transformTerm(tree1)(owner)
+              case other => other
+            super.transformTerm(term)(owner)
 
 /**
  * A helper for creating lambda expressions during macro expansion.
