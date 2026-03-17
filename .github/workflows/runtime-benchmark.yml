@@ -39,6 +39,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mill-
 
+      - name: Generate Benchmark Inputs
+        run: |
+          python3 current/benchmarks/inputs/generate_tests.py
+          mkdir -p base/benchmarks/inputs
+          cp current/benchmarks/inputs/*.txt base/benchmarks/inputs/ 2>/dev/null || true
+
       - name: Run Base Benchmarks
         id: base_bench
         continue-on-error: true
