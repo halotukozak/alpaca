@@ -13,5 +13,5 @@ import scala.annotation.constructorOnly
  * @param first the pattern that is shadowed
  * @param second the pattern that shadows it
  */
-final class ShadowException(first: String, second: String)(using @constructorOnly log: Log)
+private[alpaca] final class ShadowException(first: String, second: String)(using @constructorOnly log: Log)
   extends AlpacaException(show"Pattern $first is shadowed by $second")

@@ -31,7 +31,7 @@ extension (sc: StringContext) private[internal] def show(args: Shown*): Shown = 
  */
 opaque into private[internal] type Shown <: String = String
 
-object Shown:
+private[internal] object Shown:
 
   /**
    * Implicit conversion from any Showable type to Shown.

@@ -5,6 +5,7 @@ package parser
 import alpaca.internal.parser.ParseAction.{Reduction, Shift}
 
 import scala.annotation.tailrec
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 
 /**
@@ -29,7 +30,13 @@ private[parser] object ParseTable:
       try table((state, symbol))
       catch
         case _: NoSuchElementException =>
-          throw IllegalStateException(s"No action for state $state and symbol ${symbol.name}")
+          val expected = table.keysIterator
+            .collect:
+              case (`state`, sym) => sym.name
+            .to(SortedSet)
+            .mkString(", ")
+
+          throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
 
     /**
      * Converts the parse table to CSV format for debugging.

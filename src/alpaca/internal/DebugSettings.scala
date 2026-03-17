@@ -21,7 +21,7 @@ private[internal] final case class DebugSettings(
   logOut: Map[logger.Level, logger.Out],
 )
 
-object DebugSettings:
+private[internal] object DebugSettings:
   private final val Directory = "debugDirectory"
   private final val Timeout = "compilationTimeout"
   private final val EnableVerboseNames = "enableVerboseNames"
