@@ -28,15 +28,13 @@ final class Bug148Test extends AnyFunSuite:
 
     object Bug extends Parser:
       val Expr: Rule[Int] = rule(
-        "add" {
-          case (Expr(a), BugLexer.`+`(_), Expr(b)) =>
-            val sum = a + b
-            sum
+        "add" { case (Expr(a), BugLexer.`+`(_), Expr(b)) =>
+          val sum = a + b
+          sum
         },
-        {
-          case BugLexer.num(n) =>
-            val v = n.value
-            v
+        { case BugLexer.num(n) =>
+          val v = n.value
+          v
         },
       )
       override val root: Rule[Int] = rule:
