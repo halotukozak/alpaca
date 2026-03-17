@@ -22,8 +22,12 @@ private[alpaca] sealed class ConflictException(message: Shown) extends AlpacaExc
  * This occurs when the parser cannot decide whether to shift a symbol
  * or reduce by a production. It often indicates an ambiguous grammar.
  */
-private[alpaca] final class ShiftReduceConflict(symbol: Symbol, red: Reduction, path: List[Symbol])(using @constructorOnly log: Log)
-  extends ConflictException(
+private[alpaca] final class ShiftReduceConflict(
+  symbol: Symbol,
+  red: Reduction,
+  path: List[Symbol],
+)(using @constructorOnly log: Log,
+) extends ConflictException(
     show"""
           |Shift \"$symbol\" vs Reduce $red
           |In situation like:
@@ -38,8 +42,12 @@ private[alpaca] final class ShiftReduceConflict(symbol: Symbol, red: Reduction, 
  * This occurs when the parser cannot decide which of two productions
  * to reduce by. This always indicates an ambiguous grammar.
  */
-private[alpaca] final class ReduceReduceConflict(red1: Reduction, red2: Reduction, path: List[Symbol])(using @constructorOnly log: Log)
-  extends ConflictException(
+private[alpaca] final class ReduceReduceConflict(
+  red1: Reduction,
+  red2: Reduction,
+  path: List[Symbol],
+)(using @constructorOnly log: Log,
+) extends ConflictException(
     show"""
           |Reduce $red1 vs Reduce $red2
           |In situation like:
@@ -55,8 +63,11 @@ private[alpaca] final class ReduceReduceConflict(red1: Reduction, red2: Reductio
  * both preceding and following the same node, so the ordering
  * constraints cannot be satisfied.
  */
-private[alpaca] final class InconsistentConflictResolution(node: ConflictKey, path: List[ConflictKey])(using @constructorOnly log: Log)
-  extends ConflictException(
+private[alpaca] final class InconsistentConflictResolution(
+  node: ConflictKey,
+  path: List[ConflictKey],
+)(using @constructorOnly log: Log,
+) extends ConflictException(
     show"""
           |Inconsistent conflict resolution detected:
           |${path.dropWhile(_ != node).mkShow(" before ")} before $node
