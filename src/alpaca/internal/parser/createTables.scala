@@ -92,7 +92,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         .map:
           case (Lambda(_, Match(_, List(caseDef))), name) => (caseDef, name)
           case (l @ Lambda(_, Match(_, _)), _) =>
-            report.errorAndAbort("Productions definition with multiple cases is not supported yet", l.pos)
+            report.errorAndAbort(
+              """Each production must have exactly one case. Split multiple cases into separate productions:
+                |  rule(
+                |    { case (a(x)) => ... },
+                |    { case (b(y)) => ... }
+                |  )""".stripMargin,
+              l.pos,
+            )
           case (other, _) =>
             report.errorAndAbort(show"Unexpected production definition: $other", other.pos)
         .unsafeFlatMap:
@@ -206,7 +213,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val root = table
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
-    .get
+    .getOrElse:
+      report.errorAndAbort(show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }")
 
   logger.trace("Root production identified, generating parse and action tables.")
 
