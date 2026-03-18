@@ -7,7 +7,10 @@ final class BrainfuckTest extends AnyFunSuite:
 
   // --- Lexer Tests ---
 
-  private def tokenize(input: String) = BrainLexer.tokenize(input)
+  private def tokenize(input: String) =
+    val (ctx, tokens) = BrainLexer.tokenize(input)
+    require(ctx.brackets == 0 && ctx.squareBrackets == 0, "Mismatched brackets")
+    (ctx, tokens)
 
   test("tokenize basic operators") {
     val (_, tokens) = tokenize("><+-.,")
