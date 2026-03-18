@@ -16,7 +16,7 @@ enum BrainAST:
     case BrainAST.Inc => mem.underlying(mem.pointer) = (mem.underlying(mem.pointer) + 1) & 0xff
     case BrainAST.Dec => mem.underlying(mem.pointer) = (mem.underlying(mem.pointer) - 1) & 0xff
     case BrainAST.Print => print(mem.underlying(mem.pointer).toChar)
-    case BrainAST.Read => mem.underlying(mem.pointer) = scala.io.StdIn.readByte()
+    case BrainAST.Read => mem.underlying(mem.pointer) = scala.io.StdIn.readChar() & 0xff
     case BrainAST.While(ops) => while mem.underlying(mem.pointer) != 0 do ops.foreach(_.eval(mem))
     case BrainAST.FunctionDef(name, ops) => mem.functions += (name -> ops)
     case BrainAST.FunctionCall(name) =>
@@ -25,7 +25,7 @@ enum BrainAST:
         case _ => throw RuntimeException(s"Undefined function: $name")
 
 class Memory(
-  val underlying: Array[Int] = new Array(255),
+  val underlying: Array[Int] = new Array(256),
   var pointer: Int = 0,
   val functions: mutable.Map[String, List[BrainAST]] = mutable.Map.empty,
 )
