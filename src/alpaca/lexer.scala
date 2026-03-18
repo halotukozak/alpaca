@@ -1,7 +1,7 @@
 package alpaca
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{Token as _, IgnoredToken as InternalIgnoredToken, *}
+import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
@@ -190,4 +190,3 @@ object LexerCtx:
  */
 
 type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
-
