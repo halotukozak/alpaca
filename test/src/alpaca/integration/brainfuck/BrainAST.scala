@@ -16,7 +16,7 @@ enum BrainAST:
     case BrainAST.Inc => mem.underlying(mem.pointer.toInt) += 1
     case BrainAST.Dec => mem.underlying(mem.pointer.toInt) -= 1
     case BrainAST.Print => print(mem.underlying(mem.pointer.toInt))
-    case BrainAST.Read => mem.underlying(mem.pointer.toInt) = UByte(scala.io.StdIn.readChar().toInt)
+    case BrainAST.Read => mem.underlying(mem.pointer.toInt) = UByte(scala.io.StdIn.readByte())
     case BrainAST.While(ops) =>
       while mem.underlying(mem.pointer.toInt).toInt != 0 do ops.foreach(_.eval(mem))
     case BrainAST.FunctionDef(name, ops) => mem.functions += (name -> ops)

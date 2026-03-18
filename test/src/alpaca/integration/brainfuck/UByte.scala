@@ -2,10 +2,10 @@ package alpaca.integration.brainfuck
 
 import scala.reflect.ClassTag
 
-opaque type UByte = Byte
+opaque type UByte = Int
 
 object UByte:
-  given ClassTag[UByte] = ClassTag.Byte.asInstanceOf[ClassTag[UByte]]
+  given ClassTag[UByte] = ClassTag.Int.asInstanceOf[ClassTag[UByte]]
 
   def apply(value: Byte): UByte = value & 0xff
 

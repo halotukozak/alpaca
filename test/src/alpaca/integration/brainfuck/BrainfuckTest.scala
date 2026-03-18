@@ -1,9 +1,7 @@
-package alpaca.integration.brainfuck
+package alpaca
+package integration.brainfuck
 
-import brainfuck.*
 import org.scalatest.funsuite.AnyFunSuite
-
-import scala.reflect.ClassTag
 
 final class BrainfuckTest extends AnyFunSuite:
 
