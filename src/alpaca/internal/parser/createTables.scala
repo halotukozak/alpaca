@@ -5,6 +5,8 @@ package parser
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
 
+import scala.reflect.NameTransformer
+
 /**
  * An opaque type containing the parse and action tables for the parser.
  *
@@ -150,11 +152,15 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   logger.trace("Productions extracted, building parse and action tables.")
 
   def findProduction(call: Expr[Production]): Production =
-    val productionsByName = productions.iterator.collect { case p if p.name != null => p.name -> p }.toMap
+    val productionsByName = productions.iterator
+      .collect:
+        case p if p.name != null => (p.name, p)
+      .toMap
+    
     val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
     call match
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
-        val decodedName = scala.reflect.NameTransformer.decode(name)
+        val decodedName = NameTransformer.decode(name)
         logger.trace(show"Looking for production with name '$decodedName' (original: '$name')")
         productionsByName.getOrElse(
           decodedName,
