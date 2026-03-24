@@ -48,17 +48,15 @@ private[alpaca] object BetweenStages:
       .map(_.asType)
       .toList
 
-    val derivedBetweenStages = Expr.ofList:
-      parents
-        .map:
-          case '[type ctx >: Ctx <: LexerCtx; ctx] =>
-            logger.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
-            Expr
-              .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
-              .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
+    val derivedBetweenStages = parents
+      .map:
+        case '[type ctx >: Ctx <: LexerCtx; ctx] =>
+          logger.trace(show"summoning BetweenStages for parent ${Type.of[ctx]}")
+          Expr
+            .summonIgnoring[BetweenStages[ctx]]('{ BetweenStages }.asTerm.symbol.methodMember("auto")*)
+            .getOrElse(report.errorAndAbort(show"No BetweenStages instance found for ${Type.of[ctx]}"))
 
     '{ (token, m, ctx) =>
-      $derivedBetweenStages.foreach(_.apply(token, m, ctx))
-      // todo: do not init List https://github.com/halotukozak/alpaca/issues/232
+      ${ Expr.block(derivedBetweenStages.map(bs => '{ $bs.apply(token, m, ctx) }), '{}) }
     }
 // $COVERAGE-ON$
