@@ -70,13 +70,14 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     case '{ rule(${ Varargs(cases) }*) } =>
       def createAction(binds: Seq[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
         case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
+          val paramExpr = param.asExprOf[RevertedArray[Any]]
           val replacements = (find = ctxSymbol, replace = ctx) ::
             binds.iterator.zipWithIndex
               .collect:
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
-                  Some((find = bind, replace = '{ ${ param.asExprOf[RevertedArray[Any]] }($idx).asInstanceOf[t] }.asTerm))
+                  Some((find = bind, replace = '{ $paramExpr($idx).asInstanceOf[t] }.asTerm))
               .toList
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
@@ -120,7 +121,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
             (
               production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
               action = createAction(binds, rhs),
-            ) :: (others.flatten)
+            ) :: others.flatten
         .toList
 
   val rules = parserTpe.typeSymbol.declarations.iterator.collect:
@@ -222,7 +223,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   val parseTable = Expr:
     ParseTable(
-      (Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs))) :: table.map(_.production),
+      Production.NonEmpty(parser.Symbol.Start, NEL(root.lhs)) :: table.map(_.production),
       conflictResolutionTable,
     ).tap: parseTable =>
       logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv)
