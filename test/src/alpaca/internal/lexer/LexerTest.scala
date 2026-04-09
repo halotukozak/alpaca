@@ -7,17 +7,19 @@ import org.scalatest.matchers.should.Matchers
 final class LexerTest extends AnyFunSuite with Matchers:
 
   test("tokenize simple identifier") {
-    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
+    val Lexer = lexer:
+      case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
+
     val (_, lexemes) = Lexer.tokenize("hello")
     assert(lexemes == List(Lexeme("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
   }
 
   test("tokenize with whitespace ignored") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case "\\+" => Token["PLUS"]
       case "\\s+" => Token.Ignored
-    }
+
     val (_, lexemes) = Lexer.tokenize("42 + 13")
 
     assert(
@@ -30,22 +32,25 @@ final class LexerTest extends AnyFunSuite with Matchers:
   }
 
   test("tokenize empty string") {
-    val Lexer = lexer { case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id) }
+    val Lexer = lexer:
+      case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
+
     val (_, lexemes) = Lexer.tokenize("")
-    assert(lexemes == List.empty)
+    assert(lexemes == Nil)
   }
 
   test("throw exception for unexpected character") {
-    val Lexer = lexer { case number @ "[0-9]+" => Token["NUMBER"](number.toInt) }
+    val Lexer = lexer:
+      case number @ "[0-9]+" => Token["NUMBER"](number.toInt)
 
-    val exception = intercept[RuntimeException] {
+    val exception = intercept[RuntimeException]:
       Lexer.tokenize("123abc")
-    }
-    assert(exception.getMessage.contains("Unexpected character: 'a'"))
+
+    assert(exception.getMessage.contains("Unexpected character at line 1, position 4: 'a'"))
   }
 
   test("tokenize complex expression") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
@@ -54,7 +59,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
       case "\\(" => Token["LPAREN"]
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
-    }
+
     val (_, lexemes) = Lexer.tokenize("(x + 42) * y - 1")
 
     assert(
@@ -73,14 +78,42 @@ final class LexerTest extends AnyFunSuite with Matchers:
   }
 
   test("throws on overlapping regex patterns") {
-    """val Lexer = lexer {
+    """val Lexer = lexer:
       case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["IDENTIFIER"]
       case "[a-zA-Z]+" => Token["ALPHABETIC"]
-    }""" shouldNot compile
+    """ shouldNot compile
+  }
+
+  test("throws on overlapping alternatives in same case - longer first") {
+    """val Lexer = lexer:
+      case ">=" | ">" => Token["GREATER"]
+    """ shouldNot compile
+  }
+
+  test("throws on overlapping alternatives in same case - shorter first") {
+    """val Lexer = lexer:
+      case ">" | ">=" => Token["GREATER"]
+    """ shouldNot compile
+  }
+
+  test("track line and position across newlines") {
+    val Lexer = lexer:
+      case id @ "[a-zA-Z]+" => Token["IDENTIFIER"](id)
+      case "\\s+" => Token.Ignored
+
+    val (ctx, lexemes) = Lexer.tokenize("abc\ndef")
+    assert(
+      lexemes == List(
+        Lexeme("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
+        Lexeme("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
+      ),
+    )
+    ctx.line shouldBe 2
+    ctx.position shouldBe 4
   }
 
   test("tokenize file") {
-    val Lexer = lexer {
+    val Lexer = lexer:
       case number @ "[0-9]+" => Token["NUMBER"](number)
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
       case "\\+" => Token["PLUS"]
@@ -89,9 +122,8 @@ final class LexerTest extends AnyFunSuite with Matchers:
       case "\\(" => Token["LPAREN"]
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
-    }
 
-    withLazyReader("(x + 42) * y - 1") { reader =>
+    withLazyReader("(x + 42) * y - 1"): reader =>
       val (_, lexemes) = Lexer.tokenize(reader)
 
       assert(
@@ -107,5 +139,4 @@ final class LexerTest extends AnyFunSuite with Matchers:
           Lexeme("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
         ),
       )
-    }
   }

@@ -2,12 +2,11 @@ package alpaca
 package integration
 
 import org.scalatest.funsuite.AnyFunSuite
-import Production as P
 
 final class CompilationTheoryTest extends AnyFunSuite:
   final case class ASTNode(value: String, children: List[ASTNode])
 
-  val CTLexer = lexer {
+  val CTLexer = lexer:
     case "\\s+" => Token.Ignored
     case "#.*" => Token.Ignored
 
@@ -35,12 +34,10 @@ final class CompilationTheoryTest extends AnyFunSuite:
     case int @ "-?\\d+" => Token["int"](int.toInt)
 
     case string @ """"(\\.|[^"])*"""" => Token["string"](string.slice(1, string.length - 1))
-  }
 
   object ASTPrinterParser extends Parser:
-    val root: Rule[ASTNode] = rule { case Instruction.List(instructions) =>
-      ASTNode("program", instructions)
-    }
+    val root: Rule[ASTNode] = rule:
+      case Instruction.List(instructions) => ASTNode("program", instructions)
 
     val Block: Rule[ASTNode] = rule(
       { case Instruction(instruction) => ASTNode("block", scala.List(instruction)) },
@@ -75,30 +72,28 @@ final class CompilationTheoryTest extends AnyFunSuite:
     val Statement: Rule[ASTNode] = rule(
       { case (Element(elem), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(elem, expr)) },
       { case (CTLexer.id(id), AssignOp(op), Expression(expr)) => ASTNode(op, scala.List(ASTNode(id.value, Nil), expr)) },
-      { case (CTLexer.break(_)) => ASTNode("BREAK", Nil) },
-      { case (CTLexer.continue(_)) => ASTNode("CONTINUE", Nil) },
+      { case CTLexer.break(_) => ASTNode("BREAK", Nil) },
+      { case CTLexer.continue(_) => ASTNode("CONTINUE", Nil) },
       { case (CTLexer.`return`(_), Expression(expr)) => ASTNode("RETURN", scala.List(expr)) },
       { case (CTLexer.function(fname), CTLexer.`\\(`(_), Arguments(args), CTLexer.`\\)`(_)) =>
         ASTNode(fname.value, args)
       },
     )
 
-    val Condition: Rule[ASTNode] = rule { case (Expression(lhs), Comparator(op), Expression(rhs)) =>
-      ASTNode(op, scala.List(lhs, rhs))
-    }
+    val Condition: Rule[ASTNode] = rule:
+      case (Expression(lhs), Comparator(op), Expression(rhs)) => ASTNode(op, scala.List(lhs, rhs))
 
-    val Range: Rule[ASTNode] = rule { case (Expression(start), CTLexer.`:`(_), Expression(end)) =>
-      ASTNode(":", scala.List(start, end))
-    }
+    val Range: Rule[ASTNode] = rule:
+      case (Expression(start), CTLexer.`:`(_), Expression(end)) => ASTNode(":", scala.List(start, end))
 
     val Arguments: Rule[List[ASTNode]] = rule(
-      { case (Expression(expr)) => scala.List(expr) },
+      { case Expression(expr) => scala.List(expr) },
       { case (Arguments(args), CTLexer.`,`(_), Expression(expr)) => args :+ expr },
     )
 
-    val Element: Rule[ASTNode] = rule { case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
-      ASTNode("element", ASTNode(id.value, Nil) :: args)
-    }
+    val Element: Rule[ASTNode] = rule:
+      case (CTLexer.id(id), CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
+        ASTNode("element", ASTNode(id.value, Nil) :: args)
 
     val Expression: Rule[ASTNode] = rule(
       { case CTLexer.id(id) => ASTNode(id.value, Nil) },
@@ -129,9 +124,8 @@ final class CompilationTheoryTest extends AnyFunSuite:
       { case CTLexer.string(s) => ASTNode(s.value, Nil) },
     )
 
-    val Matrix: Rule[ASTNode] = rule { case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) =>
-      ASTNode("matrix", args)
-    }
+    val Matrix: Rule[ASTNode] = rule:
+      case (CTLexer.`\\[`(_), Arguments(args), CTLexer.`\\]`(_)) => ASTNode("matrix", args)
 
     val Comparator: Rule[String] = rule(
       { case CTLexer.`<`(_) => "<" },
@@ -195,7 +189,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
       x = 2;
       y = 2.5;
-      """) { input =>
+      """): input =>
       val (_, lexems) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexems)
 
@@ -253,7 +247,6 @@ final class CompilationTheoryTest extends AnyFunSuite:
       )
 
       assert(result == expected)
-    }
   }
 
   test("assignment operators, binary operators, transposition") {
@@ -273,7 +266,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     C -= B ;  # substract B from C
     C *= A ;  # multiply A with C
     C /= A ;  # divide A by C
-    """) { input =>
+    """): input =>
       val (_, lexemes) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexemes)
       val expected = ASTNode(
@@ -297,7 +290,6 @@ final class CompilationTheoryTest extends AnyFunSuite:
       )
 
       assert(result == expected)
-    }
   }
 
   test("control flow instruction") {
@@ -354,7 +346,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
         else if(i<=N/2)
             return 0;
     }
-    """) { input =>
+    """): input =>
       val (_, lexemes) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexemes)
       val expected = ASTNode(
@@ -616,5 +608,4 @@ final class CompilationTheoryTest extends AnyFunSuite:
         ),
       )
       assert(result == expected)
-    }
   }

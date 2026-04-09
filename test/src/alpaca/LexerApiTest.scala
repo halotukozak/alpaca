@@ -4,12 +4,9 @@ import alpaca.internal.lexer.Token
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.annotation.nowarn
-
-@nowarn("msg=A pure expression")
 final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer = lexer {
-    case comment @ "#.*" => Token.Ignored
+  val Lexer = lexer:
+    case "#.*" => Token.Ignored
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -28,7 +25,6 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
         "'" | "," | ";") =>
       Token[literal.type]
-  }
 
   test("Lexer recognizes basic tokens") {
     Lexer.tokens.map(_.info.pattern) shouldBe List(
@@ -95,10 +91,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer manipulates context") {
-    case class StateCtx(
-      var text: CharSequence = "",
-      var count: Int = 0,
-    ) extends LexerCtx
+    case class StateCtx(var count: Int = 0) extends LexerCtx
 
     val Lexer = lexer[StateCtx]:
       case "inc" =>

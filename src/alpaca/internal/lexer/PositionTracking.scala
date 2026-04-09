@@ -26,7 +26,6 @@ object PositionTracking:
    * This is automatically composed with other BetweenStages instances
    * when the context extends PositionTracking.
    */
-  given BetweenStages[PositionTracking] = (name, m, ctx) =>
-    m.matched match
-      case "\n" => ctx.position = 1
-      case matched => ctx.position += matched.nn.length
+  given BetweenStages[PositionTracking] =
+    case (_, "\n", ctx) => ctx.position = 1
+    case (_, matched, ctx) => ctx.position += matched.length

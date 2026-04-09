@@ -1,12 +1,12 @@
 package alpaca
 package integration
 
-import alpaca.{Production as P, Rule, Token}
+import alpaca.{Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
 final class MathTest extends AnyFunSuite:
   test("e2e math test") {
-    val CalcLexer = lexer {
+    val CalcLexer = lexer:
       // ignore whitespace/comments
       case _ @ "[ \t\r\n]+" => Token.Ignored
       case _ @ "#.*" => Token.Ignored
@@ -33,7 +33,6 @@ final class MathTest extends AnyFunSuite:
       // numbers
       case x @ "(\\d+\\.\\d*|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
       case x @ "\\d+" => Token["int"](x.toInt)
-    }
 
     object CalcParser extends Parser:
       val Expr: Rule[Double] = rule(
@@ -79,7 +78,8 @@ final class MathTest extends AnyFunSuite:
         { case CalcLexer.float(x) => x.value },
         { case CalcLexer.int(n) => n.value.toDouble },
       )
-      val root: Rule[Double] = rule { case Expr(v) => v }
+      val root: Rule[Double] = rule:
+        case Expr(v) => v
 
       override val resolutions = Set(
         CalcLexer.exp.before(
@@ -114,11 +114,10 @@ final class MathTest extends AnyFunSuite:
       * ((6 * (2 + 3) - (4 - 7) * (8 / 2)) + (9 + (10 - 4) * (3 + 2) / (6 - 1))) 
       - (24 / (3 + 1) * (7 - 5) + ((9 - 2 * (3 + 1)) * (8 / 4 - (6 - 2)))) 
       + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
-    """) { input =>
+    """): input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
       val (_, result) = CalcParser.parse(lexemes)
       assert(result == 2096.0)
-    }
 
     withLazyReader("""
       + sin(pi/6) + cos(pi/3) + tan(pi/4)
@@ -127,11 +126,10 @@ final class MathTest extends AnyFunSuite:
       - (-cos(0) + +sin(pi/2))
       + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
       + atan2(1, 0)
-    """) { input =>
+    """): input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
       val (_, result) = CalcParser.parse(lexemes)
       val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
 
       assert(result == expected, s"Multiple expression mismatch: $result vs $expected")
-    }
   }
