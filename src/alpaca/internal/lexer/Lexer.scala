@@ -3,21 +3,24 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
-import ox.*
 
-import java.util.regex.Pattern
+import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.switch
 import scala.reflect.NameTransformer
 
+// $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
   betweenStages: Expr[BetweenStages[Ctx]],
+  errorHandling: Expr[ErrorHandling[Ctx]],
+  empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = supervisedWithLog:
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = withLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
+
   type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
@@ -25,6 +28,9 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   val replaceRefs = new ReplaceRefs[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
+
+  if cases.isEmpty then report.errorAndAbort("Lexer definition must contain at least one case")
+
   val (tokens, infos) = cases.foldLeft(
     (
       tokens = List.empty[(expr: Expr[Token[?, Ctx, ?] & TokenRefn], name: ValidName)],
@@ -59,7 +65,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
         case '{ type name <: ValidName; Token[name]($value: value)(using $_) } =>
           logger.trace("extractSimple(4)")
-          compileNameAndPattern[name](tree).mapPar(threads):
+          compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               // we need to widen here to avoid weird types
               TypeRepr.of[value].widen.asType match
@@ -88,7 +94,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .unzip
 
       val patterns = infos.map(_.pattern)
-      par(RegexChecker.checkPatterns(patterns), RegexChecker.checkPatterns(patterns.reverse))
+      RegexChecker.checkPatterns(patterns)
+      RegexChecker.checkPatterns(patterns.reverse)
 
       (
         tokens = accTokens ::: tokens.map:
@@ -100,14 +107,22 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  val definedTokens = tokens.filter(_.expr.isExprOf[DefinedToken[?, Ctx, ?]])
+  logger.trace("checking for duplicate token names")
+  infos
+    .groupBy(_.name)
+    .iterator
+    .filter(_._2.sizeIs > 1)
+    .foreach: (name, duplicates) =>
+      report.errorAndAbort(
+        show"Token name \"$name\" is defined ${duplicates.size.toString} times. Combine the patterns into a single case using alternatives, e.g.: case x @ (\"pattern1\" | \"pattern2\") => Token[x]",
+      )
 
   logger.trace("checking regex patterns")
   RegexChecker.checkPatterns(infos.map(_.pattern))
 
-  val fields = definedTokens.map((expr, name) => (name, expr.asTerm.tpe))
+  val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
 
-  val selectDynamicLambda = createLambda[String => DefinedToken[?, Ctx, ?]]:
+  val selectDynamicLambda = createLambda[String => Token[?, Ctx, ?]]:
     case (methSym, List(fieldName: Term)) =>
       Match(
         Typed(
@@ -117,7 +132,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             '{ new annotation.switch }.asTerm.changeOwner(methSym),
           ),
         ),
-        definedTokens.map: (expr, name) =>
+        tokens.map: (expr, name) =>
           CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
       ).changeOwner(methSym)
 
@@ -125,6 +140,14 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
+      infos.iterator.foreach: info =>
+        try Pattern.compile(info.pattern)
+        catch
+          case e: PatternSyntaxException =>
+            report.errorAndAbort(
+              show"Invalid regex pattern \"${info.pattern}\" for token \"${info.name}\": ${e.getDescription}. If you meant to match a literal character, escape it with a backslash (e.g., \"\\\\+\" instead of \"+\")",
+            )
+
       val regex = Expr:
         infos
           .map:
@@ -134,11 +157,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       '{
         {
-          new Tokenization[Ctx](using $betweenStages):
+          new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
-            override def selectDynamic(name: String): DefinedToken[?, Ctx, ?] = $selectDynamicLambda(name)
+            override def selectDynamic(name: String): Token[?, Ctx, ?] = $selectDynamicLambda(name)
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
       }
+// $COVERAGE-ON$

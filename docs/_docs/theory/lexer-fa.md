@@ -2,10 +2,11 @@
 
 ## What Does a Lexer Do?
 
-A lexer reads a character stream from left to right and emits a token stream. Each scan step
-finds the longest prefix of the remaining input that matches one of the token class patterns —
-this is the *maximal munch* rule. When no pattern matches the current position, the lexer throws
-an error. The result is a flat list of lexemes that the parser consumes next.
+A lexer reads a character stream from left to right and emits a token stream. At each scan step,
+it tries the token class patterns in a fixed order and picks the first pattern whose regex
+matches at the current position, consuming that matched prefix. When no pattern matches the
+current position, the lexer throws an error. The result is a flat list of lexemes that the parser
+consumes next.
 
 ## Regular Languages
 
@@ -33,8 +34,8 @@ input, or transitions on the empty string. For simple patterns this is easy to v
 
 | State | Input `+` | Accept? |
 |-------|-----------|---------|
-| q₀ | q₁ | No |
-| q₁ | — | Yes |
+| q₀    | q₁        | No      |
+| q₁    | —         | Yes     |
 
 The machine starts at q₀, consumes a `+`, and moves to q₁ — an accepting state. Any other
 input from q₀ leads nowhere, meaning the string does not match.
@@ -79,8 +80,10 @@ backed by NFA/DFA machinery:
   the current input position. It then checks which named group matched using
   `matcher.start(i)` to determine the token class.
 
-This means Alpaca's lexer runs with the same O(n) guarantee as a hand-built DFA: one pass
-through the input, no backtracking.
+In practice, this combined-pattern approach lets Alpaca's lexer scan the input from left to
+right in a single pass, much like a hand-built DFA-based lexer. However, it still relies on
+Java's backtracking regex engine internally, so Alpaca does not claim a strict worst-case O(n)
+time guarantee or the complete absence of backtracking for arbitrary token patterns.
 
 ## Shadowing Detection
 
@@ -103,10 +106,8 @@ ordering mistake at compile time rather than silently producing wrong output at 
 In `CalcLexer`, the decimal pattern `"[0-9]+(\\.[0-9]+)?"` is listed first, before any simpler
 integer-only pattern, so no shadowing occurs.
 
-> **Compile-time processing:** The `lexer` macro validates all regex patterns, combines them into a single alternation pattern, and checks for shadowing using `dregex` — all at compile time. If a regex is invalid or one pattern shadows another, you get a compile error. At runtime, the generated `Tokenization` object runs the pre-compiled combined regex against your input string.
-
 ## Cross-links
 
 - See [Lexer](../lexer.md) for the complete `lexer` DSL reference.
 - See [Tokens and Lexemes](tokens.md) for what the lexer produces — the lexeme stream.
-- Next: [Context-Free Grammars](theory/cfg.md) for how token streams are parsed.
+- Next: [Context-Free Grammars](cfg.md) for how token streams are parsed.

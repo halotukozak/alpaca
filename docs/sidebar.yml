@@ -1,7 +1,5 @@
-index: index.html
+index: index.md
 subsection:
-  - title: Getting Started
-    page: getting-started.md
   - title: Lexer
     page: lexer.md
   - title: Lexer Context
@@ -20,3 +18,11 @@ subsection:
     page: extractors.md
   - title: Debug Settings
     page: debug-settings.md
+  - title: Theory
+    subsection:
+      - title: The Compilation Pipeline
+        page: theory/pipeline.md
+      - title: Tokens and Lexemes
+        page: theory/tokens.md
+      - title: "The Lexer: Regex to Finite Automata"
+        page: theory/lexer-fa.md
