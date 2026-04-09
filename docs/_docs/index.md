@@ -200,6 +200,26 @@ case "\\s+" => Token.Ignored
 case "#.*" => Token.Ignored 
 ```
 
+## Benchmarks
+
+Runtime benchmarks are **not** run automatically in CI on push or pull requests. They can be triggered manually:
+
+- **GitHub Actions** – go to *Actions → Runtime Benchmark → Run workflow* and select the branch.
+- **Locally** – run all benchmarks (JMH + Python) from the repository root:
+
+  ```bash
+  ./mill benchmarks.runAll
+  ```
+
+  Or run individual JMH suites directly:
+
+  ```bash
+  ./mill benchmarks.alpaca.runJmh
+  ./mill benchmarks.fastparse.runJmh
+  ```
+
+  Results are written to `benchmarks/outputs/`.
+
 ## Building from Source
 
 ### Prerequisites

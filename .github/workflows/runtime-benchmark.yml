@@ -1,7 +1,7 @@
 name: Runtime Benchmark
 
 on:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   benchmark:
