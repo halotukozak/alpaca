@@ -11,7 +11,7 @@ It is the end of the line for derivation — terminals represent the actual char
 that appear in source text. In a lexer, each token class acts as a terminal: it names a category
 of strings, and no lexer-level expansion applies below it.
 
-See [Context-Free Grammars](theory/cfg.md) for how terminals fit into production rules.
+See [Context-Free Grammars](cfg.md) for how terminals fit into production rules.
 
 ## Token Classes vs Token Instances
 
@@ -34,17 +34,12 @@ position in the source. Parsing `"3 + 4"` produces three lexemes:
 
 The word *lexeme* is used throughout this documentation to mean this complete record.
 
-> **Definition — Lexeme:**
-> A *lexeme* is a triple (T, w, pos) where T is a token class, w ∈ L(T) is the matched string
-> (a member of the language defined by T's regex), and pos is the position of the end of the
-> match in the source text.
-> In Alpaca: `Lexeme[Name, Value]` where `Name` is the token class name (a string literal type)
-> and `Value` is the Scala type of the extracted value.
-
 ## Alpaca's Lexeme Type
 
 In Alpaca, each matched token is represented as a `Lexeme[Name, Value]`. A lexeme carries four
 pieces of information:
+
+^ todo: it also carries the context
 
 - `name` — the token class name string, e.g., `"NUMBER"` or `"PLUS"`
 - `value` — the extracted value with its Scala type, e.g., `3.14: Double` for NUMBER, `(): Unit`
@@ -72,15 +67,17 @@ Whitespace matches `Token.Ignored` and does not produce a lexeme — it disappea
 
 The `CalcLexer` running example defines seven token classes:
 
-| Token Class | Regex Pattern | Value Type | Example Match |
-|-------------|--------------|------------|---------------|
-| `NUMBER` | `[0-9]+(\.[0-9]+)?` | `Double` | `"3.14"` → `3.14` |
-| `PLUS` | `\+` | `Unit` | `"+"` |
-| `MINUS` | `-` | `Unit` | `"-"` |
-| `TIMES` | `\*` | `Unit` | `"*"` |
-| `DIVIDE` | `/` | `Unit` | `"/"` |
-| `LPAREN` | `\(` | `Unit` | `"("` |
-| `RPAREN` | `\)` | `Unit` | `")"` |
+^ todo: come up a with better example
+
+| Token Class | Regex Pattern       | Value Type | Example Match     |
+|-------------|---------------------|------------|-------------------|
+| `NUMBER`    | `[0-9]+(\.[0-9]+)?` | `Double`   | `"3.14"` → `3.14` |
+| `PLUS`      | `\+`                | `Unit`     | `"+"`             |
+| `MINUS`     | `-`                 | `Unit`     | `"-"`             |
+| `TIMES`     | `\*`                | `Unit`     | `"*"`             |
+| `DIVIDE`    | `/`                 | `Unit`     | `"/"`             |
+| `LPAREN`    | `\(`                | `Unit`     | `"("`             |
+| `RPAREN`    | `\)`                | `Unit`     | `")"`             |
 
 Whitespace is ignored (`Token.Ignored`) and does not appear in the lexeme stream.
 
@@ -88,33 +85,6 @@ Whitespace is ignored (`Token.Ignored`) and does not appear in the lexeme stream
 string to a `Double`. The remaining six tokens carry `Unit` — their presence in the stream is
 enough; no value needs to be extracted.
 
-## Full CalcLexer Definition
-
-The canonical CalcLexer definition, which appears throughout the documentation as a running
-example:
-
-```scala sc:nocompile
-import alpaca.*
-
-val CalcLexer = lexer:
-  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
-  case "\\+" => Token["PLUS"]
-  case "-" => Token["MINUS"]
-  case "\\*" => Token["TIMES"]
-  case "/" => Token["DIVIDE"]
-  case "\\(" => Token["LPAREN"]
-  case "\\)" => Token["RPAREN"]
-  case "\\s+" => Token.Ignored
-```
-
-Each `case` arm maps a Java regex pattern to a token constructor. Patterns are tested in order;
-the first match wins. The `num @` binding in the first arm captures the matched text as a
-`String`, which `num.toDouble` converts to a `Double` before it is stored in the lexeme.
-
-This definition uses `sc:nocompile` because `lexer` is a Scala 3 macro: the macro runs at
-compile time, validates all regex patterns, checks for shadowing, and generates the
-`Tokenization` object. See [The Lexer: Regex to Finite Automata](lexer-fa.md) for what the
-macro does internally.
 
 ## Cross-links
 
