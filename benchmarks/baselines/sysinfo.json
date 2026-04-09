@@ -1,0 +1,11 @@
+{
+  "cpu_model": "Apple M2 Pro",
+  "cpu_cores": 10,
+  "ram_gb": 16.0,
+  "os": "Darwin 25.3.0",
+  "os_version": "Darwin Kernel Version 25.3.0: Wed Jan 28 20:53:05 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T6020",
+  "python_version": "3.14.3",
+  "jvm_version": "openjdk version \"21.0.10\" 2026-01-20",
+  "mill_version": "Mill Build Tool version 1.1.2",
+  "timestamp": "2026-02-26T23:44:32.981684+00:00"
+}

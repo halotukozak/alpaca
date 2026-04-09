@@ -38,7 +38,7 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
     name: ValidName | Null = null,
   ) extends Production(Symbol.Empty)
 
-object Production:
+private[alpaca] object Production:
 
   /** Showable instance for displaying productions in human-readable form. */
   given Showable[Production] = Showable:
@@ -48,7 +48,9 @@ object Production:
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   /** ToExpr instance for lifting productions to compile-time expressions. */
+// $COVERAGE-OFF$
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
       case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }
+// $COVERAGE-ON$

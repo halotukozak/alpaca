@@ -8,11 +8,12 @@ package internal
  * compile-time type safety.
  */
 
-//todo: make it opaque with ban on underscore
+//todo: make it opaque with ban on underscore https://github.com/halotukozak/alpaca/issues/223
 type ValidName = String & Singleton
 
-object ValidName:
-  def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
+private[alpaca] object ValidName:
+  // $COVERAGE-OFF$
+  private[alpaca] def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
     import quotes.reflect.*
     logger.trace(show"extracting ValidName from ${Type.of[Name]}")
     TypeRepr.of[Name] match
@@ -26,8 +27,10 @@ object ValidName:
    *
    * @param name the token name to validate
    */
-  def check(name: String)(using quotes: Quotes)(using Log): Unit =
+  private[alpaca] def check(name: String)(using quotes: Quotes)(using Log): Unit =
     import quotes.reflect.*
+
     name match
       case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")
       case _ =>
+// $COVERAGE-ON$

@@ -12,7 +12,7 @@ import scala.collection.mutable
  */
 opaque private[parser] type ConflictKey = Production | String
 
-object ConflictKey:
+private[parser] object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
   given Showable[ConflictKey] = Showable:
