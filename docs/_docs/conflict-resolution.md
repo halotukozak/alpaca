@@ -27,10 +27,10 @@ When a conflict occurs, the Alpaca compiler prints a message identifying the con
 Shift/reduce conflict message:
 
 ```
-Shift "+ ($plus)" vs Reduce Expr -> Expr + ($plus) Expr
+Shift "+" vs Reduce Expr -> Expr + Expr
 In situation like:
-Expr + ($plus) Expr + ($plus) ...
-Consider marking production Expr -> Expr + ($plus) Expr to be alwaysBefore or alwaysAfter "+ ($plus)"
+Expr + Expr + ...
+Consider marking production Expr -> Expr + Expr to be before or after "+"
 ```
 
 Reduce/reduce conflict message:
@@ -39,18 +39,14 @@ Reduce/reduce conflict message:
 Reduce Integer -> Num vs Reduce Float -> Num
 In situation like:
 Num ...
-Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+Consider marking one of the productions to be before or after the other
 ```
 
-> **Known issue: error messages suggest `alwaysBefore`/`alwaysAfter`.** The compile error text says _"Consider marking production X to be alwaysBefore or alwaysAfter Y"_. These method names do **not** exist in the Alpaca API. The correct methods are `before` and `after`. This is a known discrepancy between the error message text and the public API.
->
-> When you see this message, use `before` and `after` — not `alwaysBefore` or `alwaysAfter`.
-
-Concretely — the error message and its fix:
+Concretely — the shift/reduce error message and its fix:
 
 ```
-Error: Consider marking production Expr -> Expr + ($plus) Expr to be alwaysBefore or alwaysAfter "+ ($plus)"
-Fix:   production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS)
+Error: Consider marking production Expr -> Expr + Expr to be before or after "+"
+Fix:   production.plus.before(Lexer.PLUS)
 ```
 
 ## LR Parsing Basics
@@ -63,7 +59,7 @@ Just enough to reason about conflicts:
 - **Resolution** — a priority rule that tells the parser which action to prefer when a conflict exists.
 
 The LR algorithm processes input left-to-right with one token of lookahead (hence LR(1)).
-When you declare `production.plus.before(CalcLexer.PLUS)`, you tell the algorithm: in the conflict state, prefer reducing the `plus` production over shifting the `+` token.
+When you declare `production.plus.before(Lexer.PLUS)`, you tell the algorithm: in the conflict state, prefer reducing the `plus` production over shifting the `+` token.
 
 ## Naming Productions
 
@@ -74,10 +70,10 @@ import alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Int] = rule(
-    "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },
-    "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
-    "times" { case (Expr(a), CalcLexer.TIMES(_), Expr(b)) => a * b },
-    { case CalcLexer.NUMBER(n) => n.value },   // unnamed — no conflict to resolve
+    "plus"  { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },
+    "minus" { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
+    "times" { case (Expr(a), Lexer.TIMES(_), Expr(b)) => a * b },
+    { case Lexer.NUMBER(n) => n.value },   // unnamed
   )
   val root = rule:
     case Expr(e) => e
@@ -90,7 +86,7 @@ Rules:
 
 ## The before/after DSL
 
-Three resolution forms are available:
+Four resolution forms are available:
 
 **1. `production.name.before(tokens*)`** — this production takes precedence; prefer reducing this production over shifting any of the listed tokens.
 
@@ -98,26 +94,37 @@ Three resolution forms are available:
 
 **3. `Token.before(productions*)`** — shifting this token takes precedence over reducing any of the listed productions (the token-side spelling of the same rule).
 
+**4. `production.name.before(productions*)`** — this production takes precedence over those productions. Use this to resolve reduce/reduce conflicts where two different productions can reduce the same token sequence. The `after` direction works symmetrically.
+
+The `before`/`after` methods accept any mix of tokens and productions — the four forms above are just the common patterns.
+
 Full `resolutions` example for a calculator with `+`, `-`, `*`, `/`:
 
 ```scala sc:nocompile
 import alpaca.*
 
 override val resolutions = Set(
-  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-  production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-  production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.plus.before(Lexer.PLUS, Lexer.MINUS),
+  production.plus.after(Lexer.TIMES, Lexer.DIVIDE),
+  production.minus.before(Lexer.PLUS, Lexer.MINUS),
+  production.minus.after(Lexer.TIMES, Lexer.DIVIDE),
 )
 ```
 
-Reading `production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS)`:
+Reading `production.plus.before(Lexer.PLUS, Lexer.MINUS)`:
 when the parser has reduced the `plus` production and the next token is `+` or `-`, prefer the reduction — do not shift.
 This gives `+` left associativity and equal precedence with `-`.
 
-**Transitivity:** `before`/`after` constraints are transitive.
+### Transitivity
+
+`before`/`after` constraints are transitive.
 If A is before B and B is before C, then A is implicitly before C.
 This is how hierarchical precedence works: you only need to state the direct relationships, and the compiler derives the full order.
+
+In the calculator example above, `production.plus.after(Lexer.TIMES, Lexer.DIVIDE)` and `production.minus.after(Lexer.TIMES, Lexer.DIVIDE)` establish that `*` and `/` bind tighter than `+` and `-`.
+Because `plus` and `minus` are `before(Lexer.PLUS, Lexer.MINUS)`, the compiler derives the complete precedence chain: `*`/`/` > `+`/`-` — without you listing every pair explicitly.
+
+If the transitive closure produces a cycle (A before B before C before A), the compiler reports an `InconsistentConflictResolution` error. See the [Conflict Cycle Detection](#conflict-cycle-detection) section below.
 
 **Note:** `production` is a `@compileTimeOnly` compile-time construct — it is only valid inside the `resolutions` value.
 Using it anywhere else (in a rule body, in a companion, in a method) is a compile error.
@@ -131,8 +138,8 @@ import alpaca.*
 import alpaca.Production as P
 
 override val resolutions = Set(
-  P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.PLUS, CalcLexer.MINUS),
-  P(CalcLexer.MINUS, Expr).before(CalcLexer.PLUS, CalcLexer.MINUS),
+  P(Expr, Lexer.TIMES, Expr).before(Lexer.PLUS, Lexer.MINUS),
+  P(Lexer.MINUS, Expr).before(Lexer.PLUS, Lexer.MINUS),
 )
 ```
 
@@ -146,15 +153,13 @@ import alpaca.*
 import alpaca.Production as P
 
 override val resolutions = Set(
-  P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-  production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-  production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  P(Expr, Lexer.TIMES, Expr).before(Lexer.DIVIDE, Lexer.TIMES, Lexer.PLUS, Lexer.MINUS),
+  production.plus.before(Lexer.PLUS, Lexer.MINUS),
+  production.plus.after(Lexer.TIMES, Lexer.DIVIDE),
+  production.minus.before(Lexer.PLUS, Lexer.MINUS),
+  production.minus.after(Lexer.TIMES, Lexer.DIVIDE),
 )
 ```
-
-Use `production.name` when productions are named; use `Production(...)` for unnamed productions.
 
 ## Token-Side Resolution
 
@@ -165,7 +170,7 @@ This is the token-side spelling: "shifting this token wins over reducing those p
 import alpaca.*
 
 override val resolutions = Set(
-  CalcLexer.exp.before(
+  Lexer.exp.before(
     production.uplus,
     production.uminus,
     production.mod,
@@ -173,43 +178,8 @@ override val resolutions = Set(
 )
 ```
 
-`CalcLexer.exp.before(production.uplus, ...)` means: when the conflict is between shifting `exp` and reducing any of those productions, shift.
-This is equivalent to `production.uplus.after(CalcLexer.exp)` — choose whichever spelling reads more naturally for the case at hand.
-
-## Combined Example: Arithmetic Precedence
-
-A complete calculator parser with operator precedence (`*`, `/` before `+`, `-`) and left associativity:
-
-```scala sc:nocompile
-import alpaca.*
-
-object CalcParser extends Parser:
-  val Expr: Rule[Int] = rule(
-    "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },
-    "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
-    "times" { case (Expr(a), CalcLexer.TIMES(_), Expr(b)) => a * b },
-    "div"   { case (Expr(a), CalcLexer.DIVIDE(_), Expr(b)) => a / b },
-    { case CalcLexer.NUMBER(n) => n.value },
-  )
-  val root = rule:
-    case Expr(e) => e
-
-  override val resolutions = Set(
-    // + and - have equal precedence; left-associative
-    production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    // * and / have equal precedence; left-associative; bind tighter than + and -
-    production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
-    production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
-  )
-```
-
-Reading the `times` line: when the parser has reduced a `times` production and the next token is any operator, prefer reducing (not shifting).
-This makes `*` and `/` bind tighter than `+` and `-`, so `1 + 2 * 3` parses as `1 + (2 * 3)`.
-
-The `plus.before(PLUS, MINUS)` line ensures `1 + 2 + 3` is `(1 + 2) + 3` — left associativity.
+`Lexer.exp.before(production.uplus, ...)` means: when the conflict is between shifting `exp` and reducing any of those productions, shift.
+This is equivalent to `production.uplus.after(Lexer.exp)` — choose whichever spelling reads more naturally for the case at hand.
 
 ## Associativity
 
@@ -220,11 +190,11 @@ Associativity is a special case of precedence where the conflict involves the sa
 ```scala sc:nocompile
 import alpaca.*
 
-production.plus.before(CalcLexer.PLUS)  // same operator: reduce first
+production.plus.before(Lexer.PLUS)  // same operator: reduce first
 ```
 
 After reducing `1 + 2` to `Expr`, the next token is `+`.
-`before(CalcLexer.PLUS)` says: prefer reducing (so `1 + 2` becomes an `Expr`), then shift the second `+`.
+`before(Lexer.PLUS)` says: prefer reducing (so `1 + 2` becomes an `Expr`), then shift the second `+`.
 Result: left grouping.
 
 **Right-associative** (`a = b = c` means `a = (b = c)`): prefer shifting before reducing.
@@ -232,7 +202,7 @@ Result: left grouping.
 ```scala sc:nocompile
 import alpaca.*
 
-production.assign.after(CalcLexer.ASSIGN)  // same operator: shift first (right-associative)
+production.assign.after(Lexer.ASSIGN)  // same operator: shift first (right-associative)
 ```
 
 After matching `a =`, the parser shifts the next `b` and `=` before reducing `b = c`.
@@ -248,16 +218,12 @@ The `InconsistentConflictResolution` error message:
 
 ```
 Inconsistent conflict resolution detected:
-Reduction(A) before Shift(+) before Reduction(+ ($plus) -> B) before Reduction(A)
+Reduction(A) before Shift(+) before Reduction(+ -> B) before Reduction(A)
 There are elements being both before and after Reduction(A) at the same time.
 Consider revising the before/after rules to eliminate cycles
 ```
 
 The message shows the full cycle path.
-
-**How to fix:** sketch the precedence DAG (directed acyclic graph) before writing the `resolutions` set.
-Ensure there are no circular dependencies — every precedence chain must have a clear bottom.
-Cycles usually appear when mixing named-production and RHS-selector rules that refer to overlapping sets of productions.
 
 ## Ordering Constraint
 
@@ -271,14 +237,14 @@ import alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Int] = rule(         // rules first
-    "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case CalcLexer.NUMBER(n) => n.value },
+    "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+    { case Lexer.NUMBER(n) => n.value },
   )
   val root = rule:                    // root rule second
     case Expr(e) => e
 
   override val resolutions = Set(     // resolutions last
-    production.plus.before(CalcLexer.PLUS),
+    production.plus.before(Lexer.PLUS),
   )
 ```
 

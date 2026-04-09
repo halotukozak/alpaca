@@ -1,7 +1,7 @@
 package alpaca
 
 import alpaca.internal.*
-import alpaca.internal.lexer.*
+import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.compileTimeOnly
@@ -22,9 +22,10 @@ import scala.annotation.compileTimeOnly
  * }}}
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
- * @param rules         the lexer rules as a partial function
- * @param copy          implicit Copyable instance for the context
+ * @param rules the lexer rules as a partial function
  * @param betweenStages implicit BetweenStages for context updates
+ * @param errorHandling implicit ErrorHandling for custom error recovery
+ * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
  */
 transparent inline def lexer[Ctx <: LexerCtx](
@@ -34,8 +35,17 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(using
   betweenStages: BetweenStages[Ctx],
   m: Mirror.Of[Ctx],
+  errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
-  ${ lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]]('{ rules }, '{ betweenStages }) }
+  ${
+    lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
+      '{ rules },
+      '{ betweenStages },
+      '{ errorHandling },
+      '{ empty },
+    )
+  }
 
 /** Factory methods for creating token definitions in the lexer DSL. */
 object Token:
@@ -76,7 +86,8 @@ object Token:
   @compileTimeOnly("Should never be called outside the lexer definition")
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
 
-transparent inline given ctx(using c: LexerCtx): c.type = c
+/** Propagates the lexer context through the DSL so that token constructors can access it implicitly. */
+transparent inline def ctx(using c: LexerCtx): c.type = c
 
 /**
  * Base trait for lexer global context.
@@ -95,7 +106,7 @@ trait LexerCtx:
   var lastRawMatched: String = compiletime.uninitialized
 
   /** The remaining text to be tokenized. */
-  var text: CharSequence
+  var text: CharSequence = compiletime.uninitialized
 
 object LexerCtx:
 
@@ -117,32 +128,27 @@ object LexerCtx:
    * - Applies any context modifications
    */
   given BetweenStages[LexerCtx] =
-    case (DefinedToken(info, modifyCtx, remapping), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-
       val ctxAsProduct = ctx.asInstanceOf[Product]
       val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
         ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
-    case (IgnoredToken(_, modifyCtx), m, ctx) =>
-      ctx.lastRawMatched = m.group(0).nn
-      ctx.text = ctx.text.from(m.end)
+    case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)
+
+  /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
+  given ErrorHandling[LexerCtx] = ctx =>
+    ErrorHandling.Strategy.Throw(new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'"))
 
   /**
    * An empty lexer context with no extra state tracking.
    *
    * This is the simplest context that only tracks the remaining text.
    * Use this when you don't need line or position tracking.
-   *
-   * @param text the remaining text to tokenize
    */
-  final case class Empty(
-    var text: CharSequence = "",
-  ) extends LexerCtx
+  final case class Empty() extends LexerCtx
 
   /**
    * The default lexer context with position and line tracking.
@@ -160,12 +166,19 @@ object LexerCtx:
    * @param line     the current line number (1-based)
    */
   final case class Default(
-    var text: CharSequence = "",
     var position: Int = 1,
     var line: Int = 1,
   ) extends LexerCtx
       with PositionTracking
       with LineTracking
+
+  object Default:
+    /** Default error handler for [[Default]] that includes line and position information in the error message. */
+    given ErrorHandling[Default] = ctx =>
+      ErrorHandling.Strategy.Throw:
+        new RuntimeException(
+          s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
+        )
 
 /**
  * Type alias for lexer rule definitions.
@@ -177,39 +190,3 @@ object LexerCtx:
  */
 
 type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
-
-/**
- * Defines an opaque type `Token` that represents a token used in a lexer.
- *
- * This type has three type parameters:
- * - `Name`: The type of the token's name, restricted to a subtype of `ValidName`.
- * - `Ctx`: The type of the lexer context, restricted to a subtype of `LexerCtx`.
- * - `Value`: The type of the token's value.
- *
- * The exact implementation details of the underlying type are abstracted away by using `Any`.
- * Opaque types provide type safety without exposing the underlying representation.
- */
-//todo: it's a scala bug, that it cannot be an opaque type
-trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]
-
-/**
- * Represents a specific type of token definition that denotes an ignored token during the lexing process.
- *
- * Ignored tokens typically refer to tokens that are matched and processed by the lexer but are
- * excluded from the final parsed token stream. Examples of ignored tokens include whitespace,
- * comments, or any other tokens that are syntactically meaningful but do not contribute to
- * the structured representation of the input source.
- *
- * This opaque type is parameterized by a context type `Ctx`, which must be a subtype of `LexerCtx`.
- * The `LexerCtx` trait serves as a base for maintaining global lexing state, such as the current
- * position, the last matched token, and the remaining input.
- *
- * The `ValidName` and `Nothing` type parameters are placeholder constraints inherited from
- * `Token`, but `IgnoredToken` does not provide its own additional constraints
- * or behavior beyond being excluded from normal processing.
- *
- * The use of an opaque type ensures safe and restricted use within the scope of the lexer, as
- * this type cannot be directly manipulated outside the context of its definition.
- */
-//todo: it's a scala bug, that it cannot be an opaque type
-trait IgnoredToken[+Ctx <: LexerCtx] extends Token[ValidName, Ctx, Nothing]
