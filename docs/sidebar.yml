@@ -8,26 +8,34 @@ subsection:
         page: lexer-context.md
       - title: Error Recovery
         page: lexer-error-recovery.md
-  - title: Between Stages
-    page: between-stages.md
+      - title: Between Stages
+        page: between-stages.md
   - title: Parser
     subsection:
       - title: Parser
         page: parser.md
       - title: Parser Context
         page: parser-context.md
-      - title: Conflict Resolution
-        page: conflict-resolution.md
       - title: Extractors
         page: extractors.md
-  - title: Debug Settings
-    page: debug-settings.md
-  - title: Guides
-    subsection:
       - title: Conflict Resolution
-        page: guides/conflict-resolution.md
-      - title: Contextual Parsing
-        page: guides/contextual-parsing.md
+        page: conflict-resolution.md
+  - title: Tooling
+    subsection:
+      - title: Debug Settings
+        page: debug-settings.md
+  - title: Cookbook
+    subsection:
+      - title: Expression Evaluator
+        page: cookbook/expression-evaluator.md
+      - title: JSON Parser
+        page: cookbook/json-parser.md
+      - title: Conflict Resolution
+        page: cookbook/conflict-resolution.md
+      - title: Contextual Lexing
+        page: cookbook/contextual-lexing.md
+      - title: Lexer Error Handling
+        page: cookbook/lexer-error-handling.md
   - title: Theory
     subsection:
       - title: The Compilation Pipeline
