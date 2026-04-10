@@ -42,13 +42,13 @@ object CalcParser extends Parser:
     { case Term(t) => t },
   )
   val Term: Rule[Double] = rule(
-    { case (Term(a), CalcLexer.STAR(_), Factor(b)) => a * b },
-    { case (Term(a), CalcLexer.SLASH(_), Factor(b)) => a / b },
+    { case (Term(a), CalcLexer.TIMES(_), Factor(b)) => a * b },
+    { case (Term(a), CalcLexer.DIVIDE(_), Factor(b)) => a / b },
     { case Factor(f) => f },
   )
   val Factor: Rule[Double] = rule(
-    { case CalcLexer.NUM(n) => n.value },
-    { case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e },
+    { case CalcLexer.NUMBER(n) => n.value },
+    { case (CalcLexer.LPAREN(_), Expr(e), CalcLexer.RPAREN(_)) => e },
   )
   val root: Rule[Double] = rule:
     case Expr(e) => e
@@ -67,21 +67,21 @@ object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b))  => a + b },
     "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
-    "times" { case (Expr(a), CalcLexer.STAR(_), Expr(b))  => a * b },
-    "div"   { case (Expr(a), CalcLexer.SLASH(_), Expr(b)) => a / b },
-    { case CalcLexer.NUM(n) => n.value },
-    { case (CalcLexer.LP(_), Expr(e), CalcLexer.RP(_)) => e },
+    "times" { case (Expr(a), CalcLexer.TIMES(_), Expr(b))  => a * b },
+    "div"   { case (Expr(a), CalcLexer.DIVIDE(_), Expr(b)) => a / b },
+    { case CalcLexer.NUMBER(n) => n.value },
+    { case (CalcLexer.LPAREN(_), Expr(e), CalcLexer.RPAREN(_)) => e },
   )
   val root: Rule[Double] = rule:
     case Expr(e) => e
 
   override val resolutions = Set(
-    production.times.before(CalcLexer.STAR, CalcLexer.SLASH),
-    production.div.before(CalcLexer.STAR, CalcLexer.SLASH),
+    production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
+    production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
     production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
     production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.plus.after(CalcLexer.STAR, CalcLexer.SLASH),
-    production.minus.after(CalcLexer.STAR, CalcLexer.SLASH),
+    production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+    production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
   )
 ```
 
