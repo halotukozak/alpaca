@@ -8,7 +8,7 @@ It uses a powerful DSL based on Scala 3 macros to define lexical rules using reg
 A lexer is defined using the `lexer` block.
 Within this block, you use pattern matching where the patterns are regular expression strings and the results are token definitions.
 
-```scala
+```scala 3
 import alpaca.*
 
 val myLexer = lexer:
@@ -36,7 +36,7 @@ You can extract values from matched patterns using variable binding or custom ex
 
 ### Variable Binding
 
-```scala
+```scala 3
 val myLexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
   case id @ "[a-zA-Z]+" => Token["ID"](id)
@@ -54,7 +54,7 @@ The Lexer can maintain state during tokenization using a `LexerCtx`. This is use
 
 The `lexer` block uses `LexerCtx.Default` by default, which tracks `line` and `position`.
 
-```scala
+```scala 3
 val myLexer = lexer:
   case "\n" => 
     ctx.line += 1
@@ -69,7 +69,7 @@ val myLexer = lexer:
 
 You can define your own context by extending `LexerCtx`.
 
-```scala
+```scala 3
 case class MyCtx(
   var text: CharSequence = "",
   var indentLevel: Int = 0
@@ -89,7 +89,7 @@ val myLexer = lexer[MyCtx]:
 
 To tokenize a string, call the `tokenize` method on your lexer:
 
-```scala
+```scala 3
 val input = "foo 123"
 val (finalCtx, lexemes) = myLexer.tokenize(input)
 ```

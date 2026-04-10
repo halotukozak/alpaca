@@ -12,7 +12,7 @@ Since the lexer tokenizes the entire input before the parser starts, the lexer c
 
 You can use a context to track nesting levels of braces, parentheses, or brackets.
 
-```scala
+```scala 3
 import alpaca.*
 import scala.collection.mutable.Stack
 
@@ -37,7 +37,7 @@ Every `Lexeme` matched by the lexer carries a "snapshot" of the `LexerCtx` as it
 
 This is extremely useful for error reporting or for logic that depends on when a token appeared.
 
-```scala
+```scala 3
 val MyLexer = lexer:
   case id @ "[A-Z]+" => Token["ID"](id)
 
@@ -56,7 +56,7 @@ object MyParser extends Parser:
 `ParserCtx` is for maintaining state during the reduction process.
 This is where you build symbol tables, track variable declarations, or perform type checking.
 
-```scala
+```scala 3
 case class MyParserCtx(var symbols: Map[String, Type] = Map()) extends ParserCtx
 
 object MyParser extends Parser[MyParserCtx]:
@@ -76,7 +76,7 @@ Sometimes you need to change how the lexer behaves based on what it just matched
 
 While Alpaca doesn't support "real-time" feedback from the parser to the lexer (as the lexer finishes first), you can implement modes within the lexer using context state.
 
-```scala
+```scala 3
 case class ModeCtx(var inString: Boolean = false, var text: CharSequence = "") extends LexerCtx
 
 val modeLexer = lexer[ModeCtx]:
@@ -103,7 +103,7 @@ If your context extends `LineTracking` or `PositionTracking`, the defined hooks 
 ### Customizing `BetweenStages`
 If you need complex logic to run after every match regardless of which token was matched, you can provide a custom `given` instance of `BetweenStages`.
 
-```scala
+```scala 3
 
 trait CustomTrait extends LexerCtx:
   var indentLevel: Int

@@ -144,7 +144,7 @@ alpaca/
 
 Alpaca supports context-aware lexing and parsing, allowing you to maintain state during tokenization and parsing. Here's an example that tracks brace matching:
 
-```scala
+```scala 3
 import alpaca.*
 import scala.collection.mutable.Stack
 

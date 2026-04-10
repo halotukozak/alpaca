@@ -72,7 +72,7 @@ body:
       label: Code Sample
       description: Please provide a minimal code sample that reproduces the issue
       placeholder: |
-        ```scala
+        ```scala 3
         val MyLexer = lexer:
           case "test" => Token["TEST"]
         ```

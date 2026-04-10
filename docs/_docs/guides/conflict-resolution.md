@@ -11,7 +11,7 @@ Alpaca provides a declarative DSL to resolve these conflicts at compile-time, en
 Occurs when the parser can either **shift** (move the current token to the stack) or **reduce** (apply a grammar rule to symbols already on the stack).
 
 **Example (Dangling Else):**
-```scala
+```scala 3
 if (cond) if (cond) stmt else stmt
 ```
 Should the `else` belong to the first `if` or the second?
@@ -24,7 +24,7 @@ This usually indicates a more serious ambiguity in the grammar.
 
 Conflicts are resolved by overriding the `resolutions` member in your `Parser` object. This member is a `Set` of `ConflictResolution` rules.
 
-```scala
+```scala 3
 object MyParser extends Parser:
   // ... rules ...
 
@@ -43,7 +43,7 @@ Alpaca uses `before` and `after` to define precedence:
 You can use these operators with both **Tokens** (Terminals) and **Productions** (Rules).
 
 #### Operator Precedence Example
-```scala
+```scala 3
 override val resolutions = Set(
   MyLexer.STAR after MyLexer.PLUS,
   MyLexer.SLASH after MyLexer.PLUS
@@ -54,7 +54,7 @@ This tells the parser that `MyLexer.STAR` and `MyLexer.SLASH` have higher preced
 #### Associativity Example
 To define **left-associativity** (e.g., `1 + 2 + 3` is `(1 + 2) + 3`), a production should be "before" its own recursive tokens.
 
-```scala
+```scala 3
   val Expr: Rule[Int] = rule(
     "add" { case (Expr(l), MyLexer.PLUS(_), Expr(r)) => l + r }
   )
@@ -69,7 +69,7 @@ To define **left-associativity** (e.g., `1 + 2 + 3` is `(1 + 2) + 3`), a product
 For fine-grained control, you can assign names to specific productions within a rule.
 This allows you to reference that exact production in your `resolutions`.
 
-```scala
+```scala 3
 val Expr: Rule[Int] = rule(
   "mul" { case (Expr(l), MyLexer.STAR(_), Expr(r)) => l * r },
   "div" { case (Expr(l), MyLexer.SLASH(_), Expr(r)) => l / r },

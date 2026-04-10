@@ -11,28 +11,22 @@ You can use these extractors to match tokens and access their values.
 ### Basic Token Matching
 To match a token without caring about its value, use `_`:
 ```scala sc:nocompile
-import alpaca.*
-
 case (MyLexer.PLUS(_), Expr(e)) => ...
 ```
 
 ### Accessing Token Values
 To access the value captured by the token, bind it to a variable:
 ```scala sc:nocompile
-import alpaca.*
-
 case MyLexer.NUM(n) => n.value // n is a Lexem object
 ```
 The `Lexem` object contains:
 - `value`: The extracted value (e.g., `Double`, `Int`, `String`).
 - `name`: The name of the token.
-- `fields`: A NamedTuple containing context information (like `line` and `position`).
+- `fields`: A NamedTuple containing context information (like `line` and `position`). //todo: to juz nieaktualne
 
 ### Accessing Context Fields
 You can match directly on context fields if they are available in your lexer context. If such fields are not defined in your custom context, your code will not compile, ensuring type safety.
 ```scala sc:nocompile
-import alpaca.*
-
 case MyLexer.NUM(n) => println(s"Found number on line ${n.line}")
 ```
 
@@ -42,8 +36,6 @@ Rules defined with `val myRule = rule(...)` also act as extractors.
 When matched, they return the value produced by that rule.
 
 ```scala sc:nocompile
-import alpaca.*
-
 val Expr: Rule[Int] = rule(...)
 val Stmt: Rule[Unit] = rule:
   case Expr(e) => println(s"Expression result (Int): $e")
@@ -57,8 +49,6 @@ Alpaca provides special extractors for common EBNF patterns: `List` and `Option`
 Matches zero or more occurrences of a symbol. It returns a `List[T]`.
 
 ```scala sc:nocompile
-import alpaca.*
-
 val Block: Rule[List[Stmt]] = rule:
   case Stmt.List(stmts) => stmts
 ```
@@ -67,8 +57,6 @@ val Block: Rule[List[Stmt]] = rule:
 Matches zero or one occurrence of a symbol. It returns an `Option[T]`.
 
 ```scala sc:nocompile
-import alpaca.*
-
 val Decl: Rule[Val] = rule:
   case (MyLexer.VAL(_), MyLexer.ID(id), MyLexer.Type.Option(t)) => ...
 ```
@@ -78,12 +66,12 @@ val Decl: Rule[Val] = rule:
 For sequences of symbols, use tuples:
 
 ```scala sc:nocompile
-import alpaca.*
-
 case (MyLexer.IF(_), Expr(cond), MyLexer.THEN(_), Stmt(s)) => ...
 ```
 
 ## How it Works (Internal)
+
+//ta sekcja pewnie powinna byc jakos ujednolicona
 
 Alpaca's macros analyze these pattern matches at compile-time to:
 1. Identify the symbols (terminals and non-terminals) involved.

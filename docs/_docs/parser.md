@@ -7,7 +7,7 @@ It uses a type-safe DSL to define Context-Free Grammars (CFG) and uses an LR par
 
 To define a parser, create an object that extends the `Parser` class. You define grammar rules using the `rule` function.
 
-```scala
+```scala 3
 import alpaca.*
 
 object MyParser extends Parser:
@@ -51,7 +51,7 @@ Alpaca provides built-in support for common EBNF patterns:
 
 Use `.Option` to match a symbol zero or one time. It returns an `Option[T]`.
 
-```scala
+```scala 3
 val Decl: Rule[ValDecl] = rule:
   case (MyLexer.VAL(_), MyLexer.ID(id), MyLexer.COLON.Option(_), Type(t)) => 
     ValDecl(id.value, t)
@@ -61,7 +61,7 @@ val Decl: Rule[ValDecl] = rule:
 
 Use `.List` to match a symbol zero or more times. It returns a `List[T]`.
 
-```scala
+```scala 3
 val Block: Rule[List[Stmt]] = rule:
   case Stmt.List(stmts) => stmts
 ```
@@ -75,7 +75,7 @@ Alpaca allows you to resolve these by specifying precedence.
 
 Override the `resolutions` member in your parser:
 
-```scala
+```scala 3
 object MyParser extends Parser:
   // ... rules ...
 
@@ -90,7 +90,7 @@ object MyParser extends Parser:
 
 For more fine-grained control, you can name your productions:
 
-```scala
+```scala 3
   val Expr: Rule[Int] = rule(
     "add" { case (Expr(l), MyLexer.PLUS(_), Expr(r)) => l + r },
     "mul" { case (Expr(l), MyLexer.STAR(_), Expr(r)) => l * r },
@@ -106,7 +106,7 @@ For more fine-grained control, you can name your productions:
 
 Similar to the lexer, the parser can use a `ParserCtx` to maintain global state.
 
-```scala
+```scala 3
 case class MyParserCtx(var symbolCount: Int = 0) extends ParserCtx
 
 object MyParser extends Parser[MyParserCtx]:
@@ -120,7 +120,7 @@ object MyParser extends Parser[MyParserCtx]:
 
 To parse a list of lexemes, call the `parse` method:
 
-```scala
+```scala 3
 val (_, lexemes) = myLexer.tokenize("1 + 2")
 val (finalCtx, result) = MyParser.parse(lexemes)
 ```
