@@ -2,8 +2,10 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.internal.lexer.ErrorHandling.Strategy
+
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.annotation.tailrec
+import scala.collection.mutable
 
 /**
  * The result of compiling a lexer definition.
@@ -16,6 +18,8 @@ import scala.annotation.tailrec
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
   using betweenStages: BetweenStages[Ctx],
+  errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
 ) extends Selectable:
   type Fields <: AnyNamedTuple
   type LexemeFields <: AnyNamedTuple
@@ -32,7 +36,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @param fieldName the token name
    * @return the token definition
    */
-  def selectDynamic(fieldName: String): DefinedToken[?, Ctx, ?]
+  def selectDynamic(fieldName: String): Token[?, Ctx, ?]
 
   /**
    * Tokenizes the input character sequence.
@@ -42,39 +46,55 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * is encountered.
    *
    * @param input the input to tokenize
-   * @param empty implicit Empty instance to create the initial context
    * @return a list of lexems representing the tokenized input
    */
-  final def tokenize(
-    input: CharSequence,
-  )(using empty: Empty[Ctx],
-  ): (ctx: Ctx, lexemes: List[Lexeme]) =
-    @tailrec def loop(globalCtx: Ctx)(acc: List[Lexeme]): List[Lexeme] =
-      globalCtx.text.length match
-        case 0 =>
-          acc.reverse // todo: make it not reversed
-        case _ =>
-          val matcher = compiled.matcher(globalCtx.text)
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
+    val globalCtx = empty()
+    globalCtx.text = OffsetCharSequence(input)
 
-          val token =
-            if matcher.lookingAt then
-              Iterator
-                .range(1, matcher.groupCount + 1)
-                .collectFirst:
-                  case i if matcher.start(i) != -1 => groupToTokenMap(i)
-                .getOrElse:
-                  throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
-            else
-              // todo: custom error handling https://github.com/halotukozak/alpaca/issues/21
-              throw new RuntimeException(s"Unexpected character: '${globalCtx.text.charAt(0)}'")
-          betweenStages(token, matcher, globalCtx)
-          val lexem = List(token).collect:
-            case _: DefinedToken[?, Ctx, ?] => globalCtx.lastLexeme.nn.asInstanceOf[Lexeme]
-          loop(globalCtx)(lexem ::: acc)
+    val matcher = compiled.matcher(globalCtx.text)
+    val acc = mutable.ListBuffer.empty[Lexeme]
 
-    val initialContext = empty()
-    initialContext.text = input
-    (initialContext, loop(initialContext)(Nil))
+    while !globalCtx.text.isEmpty do
+      matcher.reset(globalCtx.text)
+
+      val (token, matched) = if matcher.lookingAt then
+        val matched = matcher.group(0)
+        globalCtx.lastRawMatched = matched
+        globalCtx.text = globalCtx.text.from(matcher.end)
+        Iterator
+          .range(1, matcher.groupCount + 1)
+          .collectFirst:
+            case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
+          .getOrElse:
+            throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+      else
+        errorHandling(globalCtx) match
+          case Strategy.Throw(ex) =>
+            throw ex
+
+          case Strategy.IgnoreToken if matcher.find =>
+            val firstMatching = matcher.start
+            val matched = globalCtx.text.subSequence(0, firstMatching).toString
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(firstMatching)
+            (RecoveredToken(matched), matched)
+
+          case Strategy.IgnoreChar | Strategy.IgnoreToken =>
+            val matched = globalCtx.text.charAt(0).toString
+            globalCtx.lastRawMatched = matched
+            globalCtx.text = globalCtx.text.from(1)
+            (RecoveredToken(matched), matched)
+
+          case Strategy.Stop =>
+            globalCtx.text = ""
+            (null, null)
+
+      if token != null && matched != null then
+        betweenStages(token, matched, globalCtx)
+        if token.isInstanceOf[DefinedToken[?, Ctx, ?]] then acc.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
+
+    (globalCtx, acc.toList)
 
   /** The compiled pattern that matches all defined tokens. */
   protected def compiled: java.util.regex.Pattern
@@ -91,5 +111,6 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match
+    case ocs: OffsetCharSequence => ocs.from(pos)
     case lfr: LazyReader => lfr.from(pos)
     case _ => input.subSequence(pos, input.length)

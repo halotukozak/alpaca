@@ -91,7 +91,7 @@ fi
 
 # If not already set, try to fetch newest from Github
 if [ -z "${MILL_VERSION}" ] ; then
-  # TODO: try to load latest version from release page
+  # TODO: try to load latest version from release page https://github.com/halotukozak/alpaca/issues/227
   echo "No mill version specified." 1>&2
   echo "You should provide a version via a '//| mill-version: ' comment or a '.mill-version' file." 1>&2
 
