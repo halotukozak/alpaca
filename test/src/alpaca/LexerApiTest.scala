@@ -91,10 +91,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer manipulates context") {
-    case class StateCtx(
-      var text: CharSequence = "",
-      var count: Int = 0,
-    ) extends LexerCtx
+    case class StateCtx(var count: Int = 0) extends LexerCtx
 
     val Lexer = lexer[StateCtx]:
       case "inc" =>

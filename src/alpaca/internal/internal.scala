@@ -1,8 +1,6 @@
 package alpaca
 package internal
 
-import ox.*
-
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -29,6 +27,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
+// $COVERAGE-OFF$
 private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -46,7 +45,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
     logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
     new TreeMap:
       // skip NoSymbol
-      private val filtered = queries.filter(!_.find.isNoSymbol)
+      private val filtered = queries.filterNot(_.find.isNoSymbol)
 
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         filtered
@@ -54,7 +53,11 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
             case (find, replace) if find == tree.symbol =>
               logger.trace(show"replacing reference to $find with $replace")
               replace
-          .getOrElse(super.transformTerm(tree)(owner))
+          .getOrElse:
+            val term = tree match
+              case block: Block => block.changeOwner(owner)
+              case other => other
+            super.transformTerm(term)(owner)
 
 /**
  * A helper for creating lambda expressions during macro expansion.
@@ -117,25 +120,34 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
   def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
     case '{ $_ : Null } => Some(null)
     case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
-
+// $COVERAGE-ON$
 /**
- * Creates a cancellable timeout for compilation.
+ * Starts a background timeout watcher for compilation.
  *
- * This starts a background task that will throw AlpacaTimeoutException
- * if the configured compilation timeout is exceeded. Call cancelNow()
- * on the returned fork to prevent the timeout.
+ * This helper spawns a daemon thread that waits for the duration
+ * configured in [[Log.debugSettings.compilationTimeout]]. If the timeout
+ * is a finite [[scala.concurrent.duration.FiniteDuration]] and elapses
+ * without the watcher thread being interrupted, the thread will
+ * self-interrupt. For infinite timeouts, no action is taken.
  *
- * @param debugSettings the debug configuration
- * @return a cancellable fork that can be cancelled to prevent timeout
+ * This API is fire-and-forget: it returns `Unit`, and the timeout watcher
+ * thread cannot be cancelled through this method.
  */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
-  forkDiscard:
-    summon[Log].debugSettings.compilationTimeout.runtimeChecked match
-      case duration: FiniteDuration =>
-        sleep(duration)
-        throw AlpacaTimeoutException()
-      case Duration.Inf => ()
-      case Duration.MinusInf => throw AlpacaTimeoutException()
+private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit =
+  val callerThread = Thread.currentThread()
+
+  new Thread:
+    override def run(): Unit =
+      summon[Log].debugSettings.compilationTimeout.runtimeChecked match
+        case duration: FiniteDuration =>
+          try Thread.sleep(duration.toMillis)
+          catch case _: InterruptedException => return
+          callerThread.interrupt()
+        case Duration.Inf => ()
+        case Duration.MinusInf => callerThread.interrupt()
+  .tap: t =>
+    t.setDaemon(true)
+    t.start()
 
 /**
  * A helper class for overriding symbols in macro expansion.
@@ -147,6 +159,7 @@ private[alpaca] def timeoutOnTooLongCompilation()(using Log)(using Ox): Unit =
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
+// $COVERAGE-OFF$
 private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
@@ -170,6 +183,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
         owner
 
     body(using owner.asQuotes)(owner)
+// $COVERAGE-ON$
 
 /**
  * Type-level operator for adding named fields to a type.
@@ -180,7 +194,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
  * @tparam B the base type with a Fields member
  * @tparam A the named tuple type representing the fields
  */
-infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
+infix private[alpaca] type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
 
 /**
  * Creates a refinement type from a sequence of labeled types.
@@ -191,7 +205,8 @@ infix type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple]
  * @param refn sequence of label and type pairs
  * @return a refined TypeRepr
  */
-def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
+// $COVERAGE-OFF$
+private[internal] def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
   refn.foldLeft(TypeRepr.of[Any]):
@@ -206,9 +221,10 @@ def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quote
  * @param refn sequence of label and type pairs
  * @return a NamedTuple TypeRepr
  */
-def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
+private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
   : quotes.reflect.TypeRepr =
   import quotes.reflect.*
+
   TypeRepr
     .of[NamedTuple]
     .appliedTo(
@@ -221,10 +237,16 @@ def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.re
             )
         .toList,
     )
+// $COVERAGE-ON$
 
 /**
  * The number of available processor threads.
  *
  * This constant is used for parallel operations during compilation.
  */
-val threads = Runtime.getRuntime.availableProcessors
+private[internal] val threads = Runtime.getRuntime.availableProcessors
+
+extension [T](t: T)
+  inline private[alpaca] def tap[U](inline f: T => U): T =
+    f(t)
+    t

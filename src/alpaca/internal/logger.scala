@@ -2,12 +2,10 @@ package alpaca
 package internal
 
 import alpaca.internal.logger.*
-import ox.*
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
-import scala.concurrent.duration.DurationInt
 
 /**
  * A logging facility for Alpaca macro compilation.
@@ -17,25 +15,29 @@ import scala.concurrent.duration.DurationInt
  * flushing based on the compilation timeout.
  *
  * @param debugSettings the debug configuration
- * @param ox the Ox context for concurrency
  */
-private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
+private[internal] class Log(using val debugSettings: DebugSettings) extends AutoCloseable:
   private given Log = this
 
   private val writerCache = new ConcurrentHashMap[Path, BufferedWriter]
 
-  private val flushing = forkCancellable:
-    if debugSettings.compilationTimeout.isFinite then
-      sleep(5.seconds)
-      writerCache.forEach(
-        threads,
-        (_, writer) =>
-          try writer.flush()
-          catch case _: Exception => (),
-      )
+  private val flushing: Thread = new Thread:
+    override def run(): Unit =
+      if debugSettings.compilationTimeout.isFinite then
+        try Thread.sleep(5000)
+        catch case _: InterruptedException => return
+        writerCache.forEach(
+          threads,
+          (_, writer) =>
+            try writer.flush()
+            catch case _: Exception => (),
+        )
+  .tap: t =>
+    t.setDaemon(true)
+    t.start()
 
   override def close(): Unit =
-    flushing.cancel()
+    flushing.interrupt()
     writerCache.forEach(threads, (_, writer) => writer.close())
 
   private def createWriter(path: Path, replace: Boolean): BufferedWriter =
@@ -57,23 +59,28 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
 
   // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
-    val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    if replace then this.replace(file)(content) else this.append(file)(content)
+    debugSettings.debugDirectory.foreach: dir =>
+      val file = Path.of(dir).resolve(path)
+      if replace then this.replace(file)(content) else this.append(file)(content)
 
+  /**
+   * Logs a message at the given level.
+   *
+   * @param level the severity level
+   * @param msg   the message to log
+   * @param pos   the source position (provided implicitly by the compiler)
+   */
   def log(level: Level, msg: Shown)(using pos: DebugPosition): Unit = debugSettings.logOut(level) match
     case Out.stdout => println(show"$level: $pos\t$msg")
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
-inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): T =
-  supervised(op(using logger.materialize))
+private[internal] def withLog[T](op: Log ?=> T)(using DebugSettings): T =
+  given log: Log = new Log
+  try op
+  finally log.close()
 
 private[internal] object logger:
-
-  inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
-  private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
-    val debugSettings = Expr(summon[DebugSettings])
-    '{ new Log(using $debugSettings)(using $ox) }
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)
@@ -85,8 +92,24 @@ private[internal] object logger:
   inline def toFile(path: String, replace: Boolean)(content: Shown)(using Log): Unit =
     summon[Log].toFile(path, replace)(content)
 
+  /**
+   * Logging severity levels, ordered from most to least verbose.
+   */
   enum Level:
-    case trace, debug, info, warn, error
+    /** Finest-grained informational events. Disabled by default. */
+    case trace
+
+    /** Detailed debug information. Disabled by default. */
+    case debug
+
+    /** General informational messages. Disabled by default. */
+    case info
+
+    /** Potentially harmful situations. Logged to stdout by default. */
+    case warn
+
+    /** Error events that might still allow the compilation to continue. Logged to stdout by default. */
+    case error
 
     lazy val default: Out = this match
       case Level.trace | Level.debug | Level.info => Out.disabled
@@ -94,6 +117,7 @@ private[internal] object logger:
 
   object Level:
     given Showable[Level] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Level]:
       def apply(x: Level)(using Quotes): Expr[Level] =
@@ -113,12 +137,14 @@ private[internal] object logger:
           case '{ Level.warn } => Some(Level.warn)
           case '{ Level.error } => Some(Level.error)
           case _ => None
+  // $COVERAGE-ON$
 
   enum Out:
     case stdout, file, disabled
 
   object Out:
     given Showable[Out] = Showable(_.toString)
+    // $COVERAGE-OFF$
 
     given ToExpr[Out]:
       def apply(x: Out)(using Quotes): Expr[Out] = x match
@@ -132,3 +158,4 @@ private[internal] object logger:
         case '{ Out.file } => Some(Out.file)
         case '{ Out.disabled } => Some(Out.disabled)
         case _ => None
+  // $COVERAGE-ON$
