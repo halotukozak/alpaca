@@ -10,7 +10,7 @@ Alpaca provides a declarative DSL to resolve these conflicts at compile-time, en
 Occurs when the parser can either **shift** (move the current token to the stack) or **reduce** (apply a grammar rule to symbols already on the stack).
 
 **Example (Dangling Else):**
-```scala
+```scala sc:nocompile
 if (cond) if (cond) stmt else stmt
 ```
 Should the `else` belong to the first `if` or the second?
@@ -22,7 +22,9 @@ Occurs when the parser has two or more different rules that could be applied to 
 
 Conflicts are resolved by overriding the `resolutions` member in your `Parser` object. This member is a `Set` of `ConflictResolution` rules.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 object MyParser extends Parser:
   // ... rules ...
 
@@ -41,7 +43,9 @@ Alpaca uses `before` and `after` to define precedence:
 You can use these operators with both **Tokens** (Terminals) and **Productions** (Rules).
 
 #### Operator Precedence Example
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 override val resolutions = Set(
   MyLexer.STAR after MyLexer.PLUS,
   MyLexer.SLASH after MyLexer.PLUS
@@ -52,21 +56,25 @@ This tells the parser that `*` and `/` have higher precedence than `+`.
 #### Associativity Example
 To define **left-associativity** (e.g., `1 + 2 + 3` is `(1 + 2) + 3`), a production should be "before" its own recursive tokens.
 
-```scala
-  val Expr: Rule[Int] = rule(
-    "add" { case (Expr(l), MyLexer.PLUS(_), Expr(r)) => l + r }
-  )
+```scala sc:nocompile
+import alpaca.*
 
-  override val resolutions = Set(
-    production.add before MyLexer.PLUS
-  )
+val Expr: Rule[Int] = rule(
+  "add" { case (Expr(l), MyLexer.PLUS(_), Expr(r)) => l + r }
+)
+
+override val resolutions = Set(
+  production.add before MyLexer.PLUS
+)
 ```
 
 ## 3. Named Productions
 
 For fine-grained control, you can assign names to specific productions within a rule. This allows you to reference that exact production in your `resolutions`.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val Expr: Rule[Int] = rule(
   "mul" { case (Expr(l), MyLexer.STAR(_), Expr(r)) => l * r },
   "div" { case (Expr(l), MyLexer.SLASH(_), Expr(r)) => l / r },

@@ -17,7 +17,9 @@ java.lang.RuntimeException: Unexpected character: '?'
 The most common strategy is to add a pattern at the **end** of your lexer that matches any single character.
 This "catch-all" pattern will only be reached if no other token matches.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val myLexer = lexer:
   case "[0-9]+" => Token["NUM"]
   // ... other tokens ...
@@ -34,7 +36,9 @@ Your parser can then decide how to handle these `ERROR` tokens.
 
 You can use a custom `LexerCtx` to track the number of errors encountered during tokenization.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 case class ErrorCtx(
   var text: CharSequence = "",
   var errorCount: Int = 0
@@ -54,7 +58,9 @@ val myLexer = lexer[ErrorCtx]:
 
 If you want to simply skip unexpected characters and proceed as if they weren't there, you can use `Token.Ignored` in your catch-all case.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val resilientLexer = lexer:
   case "[0-9]+" => Token["NUM"]
   case "\s+" => Token.Ignored
@@ -76,7 +82,9 @@ A catch-all `.` pattern can slightly impact performance if your input contains m
 ### Parser Integration
 If your lexer produces `ERROR` tokens, your parser rules should be prepared to handle them, or you should filter them out before passing the lexeme list to `parser.parse()`.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val (finalCtx, lexemes) = myLexer.tokenize(input)
 val validLexemes = lexemes.filter(_.name != "ERROR")
 val result = myParser.parse(validLexemes)

@@ -10,7 +10,7 @@ Most contextual logic in Alpaca happens at the lexer level. Since the lexer toke
 
 You can use a context to track nesting levels of braces, parentheses, or brackets.
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable.Stack
 
@@ -33,7 +33,10 @@ val myLexer = lexer[BraceCtx]:
 
 For languages like Python or Scala (with `braceless` syntax), you can track indentation levels in the context and emit virtual `INDENT` and `OUTDENT` tokens (or just adjust state for later use).
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+import scala.collection.mutable.Stack
+
 case class IndentCtx(
   var text: CharSequence = "",
   var currentIndent: Int = 0,
@@ -61,7 +64,9 @@ Every `Lexeme` matched by the lexer carries a "snapshot" of the `LexerCtx` as it
 
 This is extremely useful for error reporting or for logic that depends on when a token appeared.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 object MyParser extends Parser:
   val root = rule:
     case MyLexer.ID(id) => 
@@ -75,8 +80,10 @@ object MyParser extends Parser:
 
 `ParserCtx` is for maintaining state during the reduction process. This is where you build symbol tables, track variable declarations, or perform type checking.
 
-```scala
-case class MyParserCtx(var symbols: Map[String, Type] = Map()) extends ParserCtx
+```scala sc:nocompile
+import alpaca.*
+
+case class MyParserCtx(var symbols: Map[String, Type] = Map()) extends ParserCtx derives Copyable
 
 object MyParser extends Parser[MyParserCtx]:
   val root = rule:
@@ -95,8 +102,10 @@ Sometimes you need to change how the lexer behaves based on what it just matched
 
 While Alpaca doesn't support "real-time" feedback from the parser to the lexer (as the lexer finishes first), you can implement modes within the lexer using context state.
 
-```scala
-case class ModeCtx(var inString: Boolean = false, var text: CharSequence = "") extends LexerCtx
+```scala sc:nocompile
+import alpaca.*
+
+case class ModeCtx(var text: CharSequence = "", var inString: Boolean = false) extends LexerCtx
 
 val modeLexer = lexer[ModeCtx]:
   case """ => 
@@ -117,7 +126,9 @@ By default, Alpaca uses `BetweenStages` to automatically update the `text` field
 ### Customizing `BetweenStages`
 If you need complex logic to run after every match, you can provide a custom `given` instance of `BetweenStages`.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 given MyBetweenStages: BetweenStages[MyCtx] with
   def apply(token: Token[?, MyCtx, ?], matcher: Matcher, ctx: MyCtx): Unit =
     // Custom global logic
