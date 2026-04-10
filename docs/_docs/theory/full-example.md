@@ -113,6 +113,8 @@ For the full conflict resolution DSL — including `Production(symbols*)` select
 With conflict resolution in place, the compiler builds the LR(1) parse table without errors. The parser is ready:
 
 ```scala sc:nocompile
+import alpaca.*
+
 val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")
 val (_, result)  = CalcParser.parse(lexemes)
 // result: Double | Null = 7.0   (not 9.0 — * binds tighter than +)

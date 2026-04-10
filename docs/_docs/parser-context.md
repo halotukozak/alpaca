@@ -3,8 +3,6 @@
 Parser context lets you carry mutable state through parsing reductions.
 Stateless parsers use `ParserCtx.Empty` by default; custom contexts carry domain-specific state like symbol tables, error accumulators, or any state that evolves as productions are reduced.
 
-[//]: # (todo: these sections should be at the bottom)
-
 > **Compile-time processing:** When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx`, has `Copyable` derived, and generates the appropriate context threading code. At runtime, the initial context is created via `Empty[Ctx]` (using default constructor values) and the same object is passed to every rule reduction in a single `parse()` call.
 
 ## ParserCtx.Empty (Default)

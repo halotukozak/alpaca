@@ -37,6 +37,8 @@ Because patterns live inside Scala string literals, backslashes must be doubled:
 Common patterns:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // Digits
 case num @ "[0-9]+" => Token["NUM"](num.toInt)
 
@@ -174,6 +176,8 @@ Keywords like `if`, `else`, `while` always need backticks.
 Call `tokenize()` on your lexer with an input string:
 
 ```scala sc:nocompile
+import alpaca.*
+
 val (ctx, lexemes) = Lexer.tokenize("x + 42")
 ```
 
@@ -185,6 +189,8 @@ The `tokenize` method returns a Scala 3 **named tuple** `(ctx: Ctx, lexemes: Lis
 You can also destructure with field names:
 
 ```scala sc:nocompile
+import alpaca.*
+
 val result = Lexer.tokenize("x + 42")
 val context = result.ctx
 val tokens = result.lexemes
@@ -193,8 +199,6 @@ val tokens = result.lexemes
 If the input contains a character that does not match any pattern, `tokenize` throws a `RuntimeException` with a message like `Unexpected character: '!'`.
 
 ## Running Example: CalcLexer
-
-[//]: # (todo: przykłady powinny być w osobnym miejscu)
 
 The following lexer tokenizes arithmetic expressions. It appears throughout the documentation as a running example -- the [Between Stages](between-stages.html) page shows how its output feeds a parser, the [Parser](parser.html) page defines the grammar, and the [Extractors](extractors.html) page shows how to access values from the parsed result.
 
@@ -215,6 +219,8 @@ val CalcLexer = lexer:
 `CalcLexer` defines seven token types: `NUMBER` (with a `Double` value), four arithmetic operators (`PLUS`, `MINUS`, `TIMES`, `DIVIDE`), and two parentheses (`LPAREN`, `RPAREN`). Whitespace is ignored.
 
 ```scala sc:nocompile
+import alpaca.*
+
 val (_, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
 // lexemes: NUMBER(3.0), PLUS, NUMBER(4.0), TIMES, NUMBER(2.0)
 ```

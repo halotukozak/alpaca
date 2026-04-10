@@ -123,6 +123,8 @@ val root = rule:
 `.Option` and `.List` also work on terminals (from `DefinedToken`), not only rules:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // Token-level EBNF: zero or more NUMBER lexemes
 val root = rule:
   case CalcLexer.NUMBER.List(numbers) =>

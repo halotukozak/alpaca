@@ -50,6 +50,8 @@ pieces of information:
 The tokenization output for a simple expression illustrates this:
 
 ```scala sc:nocompile
+import alpaca.*
+
 val (_, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
 // lexemes: List[Lexeme] =
 //   NUMBER(3.0), PLUS, NUMBER(4.0), TIMES, NUMBER(2.0)
