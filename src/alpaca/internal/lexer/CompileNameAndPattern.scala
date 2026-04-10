@@ -14,10 +14,26 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using Log):
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using DebugSettings):
   import quotes.reflect.*
 
-// $COVERAGE-OFF$
+  private def extractOrTypes(tree: Tree, level: Int = 0): List[Tree] = tree match
+    case tree @ Applied(tpt, List(left, right)) if tpt.tpe =:= TypeRepr.of[|] =>
+      s"Level $level: ${tree.toString}\n".soft
+      extractOrTypes(left, level + 1) ++ extractOrTypes(right, level + 1)
+    case tree @ Typed(_, pattern) =>
+      s"Level $level: ${tree.toString}\n".soft
+      extractOrTypes(pattern, level + 1)
+    case pattern =>
+      s"Final Level $level: ${pattern.toString}\n".soft
+      List(pattern)
+
+  def treeToStr(tree: Tree): String | Char = tree match
+    case Literal(StringConstant(str)) => str
+    case Singleton(Literal(StringConstant(str))) => str
+    case Literal(CharConstant(char)) => char
+    case Singleton(Literal(CharConstant(char))) => char
+    case x => raiseShouldNeverBeCalled[String](x.toString)
 
   /**
    * Compiles a pattern tree into token information.
@@ -29,50 +45,46 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
-    logger.trace("compiling name and pattern")
-    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
-      logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
+  def apply[T <: ValidNameLike: Type](pattern: Tree): List[Expr[TokenInfo[?]]] =
+    @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[Expr[TokenInfo[?]]] =
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
-        case (TermRef(_, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
-          logger.trace(show"matched simple regex with bind $bind and regex $regex")
-          TokenInfo(regex, regex) :: Nil
-        // case x @ ("regex" | "regex2") => Token[x.type]
-        case (TermRef(_, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          logger.trace(
-            show"matched alternative regex with bind $bind and alternatives ${alternatives.mkShow("[", ", ", "]")}",
-          )
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo(str, str)
+        case (TermRef(qual, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
+          TokenInfo.unsafe(regex, Vector(regex)) :: Nil
+        // case x @ 'l' => Token[x.type]
+        case (TermRef(qual, name), Bind(bind, Literal(CharConstant(regex)))) if name == bind =>
+          TokenInfo.unsafe(regex.toString, Vector(regex)) :: Nil
+        // case x @ ("regex" | 'l') => Token[x.type]
+        case (TermRef(qual, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
+          alternatives.map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
-          logger.trace(show"matched bind with tpe=$tpe and tree=$tree")
           loop(tpe, tree)
         // case x : "regex" => Token.Ignored
         case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
-          logger.trace(show"matched ignored token with tpe=$tpe and str=$str")
-          TokenInfo(str, str) :: Nil
-        // case x : ("regex" | "regex2") => Token.Ignored
+          TokenInfo.unsafe(str, Vector(str)) :: Nil
+        // case x : 'l' => Token.Ignored
+        case (tpe, Literal(CharConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
+          TokenInfo.unsafe(str.toString, Vector(str)) :: Nil
+        // case x : ("regex" | 'l') => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
-          logger.trace(show"matched ignored token with tpe=$tpe and alternatives ${alternatives.mkShow}")
-          alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => TokenInfo(str, str)
+          alternatives.map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
-          logger.trace(show"matched named token with name=$name and regex=$regex")
-          TokenInfo(name, regex) :: Nil
-        // case x : ("regex" | "regex2") => Token["name"]
-        case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
-          logger.trace(show"matched named token with name=$str and alternatives ${alternatives.mkShow}")
-          val patterns = alternatives.unsafeMap:
-            case Literal(StringConstant(str)) => str
-          RegexChecker.checkPatterns(patterns)
-          RegexChecker.checkPatterns(patterns.reverse)
-          TokenInfo(str, patterns.mkShow("|")) :: Nil
-        case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
+          TokenInfo.unsafe(name, Vector(regex)) :: Nil
+        // case x : 'l' => Token["name"]
+        case (ConstantType(StringConstant(name)), Literal(CharConstant(regex))) =>
+          TokenInfo.unsafe(name, Vector(regex)) :: Nil
+        // case x : ("regex" | 'l') => Token["name"]
+        case (ConstantType(StringConstant(str)), alternatives) =>
+          TokenInfo.unsafe(
+            str,
+            extractOrTypes(alternatives).map(treeToStr).toVector,
+          ) :: Nil
+        // case x: ("regex" | 'l') => Token[x.type]
+        case (TermRef(qual, name), alternatives) =>
+          extractOrTypes(alternatives).map(treeToStr).map(str => TokenInfo.unsafe(str.toString, Vector(str)))
+
+        case x => raiseShouldNeverBeCalled[List[Expr[TokenInfo[?]]]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
-      .tap: res =>
-        logger.trace(show"compiled name and pattern to ${res.mkShow}")
-// $COVERAGE-ON$

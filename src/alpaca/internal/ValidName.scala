@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import compiletime.ops.any.ToString
+
 /**
  * Type alias for valid token names.
  *
@@ -8,14 +10,15 @@ package internal
  * compile-time type safety.
  */
 
-//todo: make it opaque with ban on underscore https://github.com/halotukozak/alpaca/issues/223
+//todo: make it opaque with ban on underscore
 type ValidName = String & Singleton
 
-private[alpaca] object ValidName:
-  // $COVERAGE-OFF$
-  private[alpaca] def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
+//todo: find better name
+type ValidNameLike = (Char | String) & Singleton
+
+object ValidName:
+  def from[Name <: ValidName: Type](using quotes: Quotes)(using DebugSettings): ValidName =
     import quotes.reflect.*
-    logger.trace(show"extracting ValidName from ${Type.of[Name]}")
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
       case x => raiseShouldNeverBeCalled(x.show)
@@ -26,11 +29,10 @@ private[alpaca] object ValidName:
    * Token names must not be an underscore (_) as that would be invalid.
    *
    * @param name the token name to validate
+   * @param quotes the Quotes instance
    */
-  private[alpaca] def check(name: String)(using quotes: Quotes)(using Log): Unit =
+  def check(name: String)(using quotes: Quotes): Unit =
     import quotes.reflect.*
-
     name match
-      case invalid @ "_" => report.errorAndAbort(show"Invalid token name: $invalid")
+      case invalid @ "_" => report.errorAndAbort(s"Invalid token name: $invalid")
       case _ =>
-// $COVERAGE-ON$

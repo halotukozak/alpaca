@@ -1,20 +1,9 @@
 package alpaca
 package internal
 
-import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.NamedTuple.NamedTuple
+import scala.concurrent.duration.FiniteDuration
 
-/**
- * A dummy value for compile-time placeholders.
- *
- * This function returns null cast to any type. It is used exclusively in
- * compile-time contexts (macros) as a placeholder value that should never
- * actually be evaluated at runtime.
- *
- * @tparam T the type to cast to
- * @return null cast to type T
- * @note This is for compile-time use only and should never be called at runtime
- */
 private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
 /**
@@ -27,8 +16,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-// $COVERAGE-OFF$
-private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(using Log):
+private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -41,23 +29,29 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
    * @param queries pairs of (symbol to find, replacement term)
    * @return a TreeMap that performs the replacements
    */
-  def apply(queries: (find: Symbol, replace: Term)*): TreeMap =
-    logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
-    new TreeMap:
-      // skip NoSymbol
-      private val filtered = queries.filterNot(_.find.isNoSymbol)
+  def apply(queries: (find: Tree, replace: Term)*): TreeMap = new TreeMap:
+    private val filtered = queries.view
+      .collect:
+        case (find, replace) if !find.symbol.isNoSymbol => (find.symbol, replace)
+      .toMap
 
-      override def transformTerm(tree: Term)(owner: Symbol): Term =
-        filtered
-          .collectFirst:
-            case (find, replace) if find == tree.symbol =>
-              logger.trace(show"replacing reference to $find with $replace")
-              replace
-          .getOrElse:
-            val term = tree match
-              case block: Block => block.changeOwner(owner)
-              case other => other
-            super.transformTerm(term)(owner)
+    private val singletons: Map[Constant | Null, Term] = queries.view
+      .collect:
+        case (Bind(_, Literal(term)), replace) => (term, replace)
+        case (Literal(term), replace) => (term, replace)
+      .toMap
+
+    override def transformTerm(tree: Term)(owner: Symbol): Term =
+      val term = tree match
+        case Bind(_, Literal(term)) => term
+        case Literal(term) => term
+        case _ => null
+
+      filtered
+        .get(tree.symbol)
+        .orElse(singletons.get(term))
+        .map(_.changeOwner(owner))
+        .getOrElse(super.transformTerm(tree)(owner))
 
 /**
  * A helper for creating lambda expressions during macro expansion.
@@ -68,7 +62,8 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using Log):
+
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using DebugSettings):
   import quotes.reflect.*
 
   /**
@@ -79,174 +74,70 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(usi
    * @return an expression of type F
    */
   def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
-    logger.trace(show"creating lambda of type ${Type.of[F]}")
-    require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
+    require(TypeRepr.of[F].isFunctionType, s"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
 
     Lambda(
       Symbol.spliceOwner,
-      MethodType(params.zipWithIndex.map((_, i) => show"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
+      MethodType(params.zipWithIndex.map((_, i) => s"$$arg$i"))(_ => params, _ => r),
+      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)).changeOwner(sym),
     ).asExprOf[F]
 
-/**
- * ToExpr instance for NamedTuple.
- *
- * Allows named tuples to be lifted to expressions during macro expansion
- * by converting them to regular tuples.
- */
-private[internal] given [K <: Tuple, V <: Tuple: ToExpr] => ToExpr[NamedTuple[K, V]]:
+private[internal] given [K <: Tuple, V <: Tuple: ToExpr]: ToExpr[NamedTuple[K, V]] with
   def apply(x: NamedTuple[K, V])(using Quotes): Expr[NamedTuple[K, V]] = Expr(x.toTuple)
 
-/**
- * ToExpr instance for nullable types.
- *
- * Handles conversion of nullable values to expressions, properly
- * distinguishing between null and non-null values.
- */
-private[internal] given [T: ToExpr as toExpr] => ToExpr[T | Null]:
+private[internal] given [T: ToExpr as toExpr]: ToExpr[T | Null] with
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
     case null => '{ null }
-    case value => toExpr.apply(value.asInstanceOf[T])
+    case value => toExpr(value.asInstanceOf[T])
 
-/**
- * FromExpr instance for nullable types.
- *
- * Handles extraction of nullable values from expressions during
- * macro expansion.
- */
-private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
-  def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
-    case '{ $_ : Null } => Some(null)
-    case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
-// $COVERAGE-ON$
-/**
- * Starts a background timeout watcher for compilation.
- *
- * This helper spawns a daemon thread that waits for the duration
- * configured in [[Log.debugSettings.compilationTimeout]]. If the timeout
- * is a finite [[scala.concurrent.duration.FiniteDuration]] and elapses
- * without the watcher thread being interrupted, the thread will
- * self-interrupt. For infinite timeouts, no action is taken.
- *
- * This API is fire-and-forget: it returns `Unit`, and the timeout watcher
- * thread cannot be cancelled through this method.
- */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit =
-  val callerThread = Thread.currentThread()
+// todo: it's temporary, remove when we have a proper timeout implementation
+inline private[alpaca] def withDebugSettings[T](inline block: DebugSettings ?=> T): T =
+  ${ withDebugSettingsImpl('{ block }) }
 
-  new Thread:
-    override def run(): Unit =
-      summon[Log].debugSettings.compilationTimeout.runtimeChecked match
-        case duration: FiniteDuration =>
-          try Thread.sleep(duration.toMillis)
-          catch case _: InterruptedException => return
-          callerThread.interrupt()
-        case Duration.Inf => ()
-        case Duration.MinusInf => callerThread.interrupt()
-  .tap: t =>
-    t.setDaemon(true)
-    t.start()
+def withDebugSettingsImpl[T: Type](block: Expr[DebugSettings ?=> T])(using Quotes): Expr[T] =
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import scala.concurrent.duration.*
+  import scala.concurrent.{Await, Future}
 
-/**
- * A helper class for overriding symbols in macro expansion.
- *
- * This class provides a way to create overriding symbols in a specific
- * parent context, which is useful for generating code that properly
- * respects symbol ownership.
- *
- * @tparam Q the Quotes type
- * @param quotes the Quotes instance
- */
-// $COVERAGE-OFF$
-private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log):
+  val debugSettings = Expr.summon[DebugSettings].get
+
+  '{
+    val future = Future($block(using $debugSettings))
+    Await.result(future, $debugSettings.timeout.seconds)
+  }
+
+private[internal] given FromExpr[DebugSettings] with
+
+  def unapply(expr: Expr[DebugSettings])(using quotes: Quotes): Option[DebugSettings] =
+    import quotes.reflect.*
+
+    val extractValue: Expr[DebugSettings] => Option[DebugSettings] =
+      case '{ DebugSettings($enabled, $directory, $timeout, $verboseNames) } =>
+        for
+          en <- enabled.value
+          dir <- directory.value
+          to <- timeout.value
+          vn <- verboseNames.value
+        yield DebugSettings(en, dir, to, vn)
+      case other => None
+
+    extractValue(expr)
+      .orElse:
+        extractValue:
+          expr.asTerm.symbol.tree match
+            case ValDef(_, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case DefDef(_, Nil, _, Some(rhs)) => rhs.asExprOf[DebugSettings]
+            case x => report.errorAndAbort("DebugSettings must be a given val")
+
+private[internal] given ToExpr[DebugSettings] with
+  def apply(x: DebugSettings)(using Quotes): Expr[DebugSettings] =
+    '{ DebugSettings(${ Expr(x.enabled) }, ${ Expr(x.directory) }, ${ Expr(x.timeout) }, ${ Expr(x.verboseNames) }) }
+
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
-  /**
-   * Creates and uses an overriding symbol.
-   *
-   * @tparam T the result type
-   * @param parent the parent symbol context
-   * @param symbol a function to create the base symbol
-   * @param body the code to execute with the overriding symbol
-   * @return the result of executing body
-   */
   def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
-    val baseSymbol = symbol(parent)
-    val owner = baseSymbol.overridingSymbol(parent) match
-      case owner if owner.isNoSymbol =>
-        logger.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
-        baseSymbol
-      case owner =>
-        logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
-        owner
-
+    val owner = symbol(parent).overridingSymbol(parent)
     body(using owner.asQuotes)(owner)
-// $COVERAGE-ON$
-
-/**
- * Type-level operator for adding named fields to a type.
- *
- * This infix type operator allows specifying that a type B has named fields
- * of type A, enabling compile-time tracking of field information.
- *
- * @tparam B the base type with a Fields member
- * @tparam A the named tuple type representing the fields
- */
-infix private[alpaca] type withFields[B <: { type Fields <: AnyNamedTuple }, A <: AnyNamedTuple] = B { type Fields = A }
-
-/**
- * Creates a refinement type from a sequence of labeled types.
- *
- * Builds a type with structural refinements for each label/type pair.
- * This is used for creating types with named members dynamically.
- *
- * @param refn sequence of label and type pairs
- * @return a refined TypeRepr
- */
-// $COVERAGE-OFF$
-private[internal] def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
-  : quotes.reflect.TypeRepr =
-  import quotes.reflect.*
-  refn.foldLeft(TypeRepr.of[Any]):
-    case (acc, (label, tpe)) => Refinement(acc, label, tpe)
-
-/**
- * Creates a NamedTuple type from a sequence of labeled types.
- *
- * Constructs a NamedTuple TypeRepr with the given labels and types.
- * This is used for dynamically creating named tuple types.
- *
- * @param refn sequence of label and type pairs
- * @return a NamedTuple TypeRepr
- */
-private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
-  : quotes.reflect.TypeRepr =
-  import quotes.reflect.*
-
-  TypeRepr
-    .of[NamedTuple]
-    .appliedTo(
-      refn
-        .foldLeft((TypeRepr.of[EmptyTuple], TypeRepr.of[EmptyTuple])):
-          case ((labels, types), (label, tpe)) =>
-            (
-              TypeRepr.of[*:].appliedTo(List(ConstantType(StringConstant(label)), labels)),
-              TypeRepr.of[*:].appliedTo(List(tpe, types)),
-            )
-        .toList,
-    )
-// $COVERAGE-ON$
-
-/**
- * The number of available processor threads.
- *
- * This constant is used for parallel operations during compilation.
- */
-private[internal] val threads = Runtime.getRuntime.availableProcessors
-
-extension [T](t: T)
-  inline private[alpaca] def tap[U](inline f: T => U): T =
-    f(t)
-    t

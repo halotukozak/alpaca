@@ -1,9 +1,9 @@
-package alpaca
-package internal
+package alpaca.internal
 package lexer
 
 import dregex.Regex
 
+import java.util.regex.Pattern
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 /**
@@ -14,6 +14,11 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
  */
 private[lexer] object RegexChecker:
 
+  def checkInfos(infos: Seq[TokenInfo[?]])(using quotes: Quotes): Unit = for
+    patterns = infos.map(_.toEscapedRegex)
+    (j, i) <- checkPatterns(patterns)
+  do quotes.reflect.report.error(s"Pattern ${infos(j).toRegex} is shadowed by ${infos(i).toRegex}")
+
   /**
    * Checks a sequence of regex patterns for shadowing.
    *
@@ -21,15 +26,16 @@ private[lexer] object RegexChecker:
    * meaning the earlier pattern would always match first and the
    * shadowed pattern would never be used.
    *
-   * @param patterns the regex patterns to check.
+   * @param patterns the regex patterns to check
+   * @return a sequence of error messages describing any shadowing issues
    */
-  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
-    case Nil => ()
-    case patterns =>
-      logger.trace("checking regex patterns for shadowing...")
+  def checkPatterns(patterns: Seq[String]): Seq[(Int, Int)] = patterns match
+    case Nil => Nil
+    case _ =>
       val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
 
       for
         i <- patterns.indices
         j <- (i + 1) until regexes.size
-      do if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))
+        if regexes.get(j).isSubsetOf(regexes.get(i))
+      yield (j, i)

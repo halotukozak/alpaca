@@ -221,4 +221,5 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx])
     result: (parser.root.type match
       case Rule[t] => t
     ) | Null,
-  ) = parser.unsafeParse(lexems)
+  ) = withDebugSettings:
+    parser.unsafeParse(lexems)

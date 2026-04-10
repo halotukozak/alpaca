@@ -4,9 +4,12 @@ import alpaca.internal.lexer.Token
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-final class LexerApiTest extends AnyFunSuite with Matchers {
-  val Lexer = lexer:
-    case "#.*" => Token.Ignored
+import scala.annotation.nowarn
+
+@nowarn("msg=A pure expression")
+final class LexerApiTest extends AnyFunSuite with Matchers:
+  val Lexer = lexer {
+    case comment: "#.*" => Token.Ignored
     case "\\.\\+" => Token["dotAdd"]
     case "\\.\\-" => Token["dotSub"]
     case "\\.\\*" => Token["dotMul"]
@@ -15,35 +18,35 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     case ">=" => Token["greaterEqual"]
     case "!=" => Token["notEqual"]
     case "==" => Token["equal"]
-    case x @ "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
-    case x @ "[0-9]+" => Token["int"](x.toInt)
-    case x @ "\"[^\"]*\"" => Token["string"](x)
-    case keyword @ ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
-        "print") =>
+    case x: "(d+(\\.\\d*)|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
+    case x: "[0-9]+" => Token["int"](x.toInt)
+    case x: "\"[^\"]*\"" => Token["string"](x)
+    case keyword: ("if" | "else" | "for" | "while" | "break" | "continue" | "return" | "eye" | "zeros" | "ones" |
+          "print") =>
       Token[keyword.type]
-    case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
-    case literal @ ("<" | ">" | "=" | "\\+" | "-" | "\\*" | "/" | "\\(" | "\\)" | "\\[" | "\\]" | "\\{" | "\\}" | ":" |
-        "'" | "," | ";") =>
-      Token[literal.type]
+    case x: "[a-zA-Z_][a-zA-Z0-9_]*" => Token["id"](x)
+    case lit: ('<' | '>' | '=' | '+' | '-' | '*' | '/' | '(' | ')' | '[' | ']' | '{' | '}' | ':' | '\\' | ',' | ';') =>
+      Token[lit.type]
+  }
 
   test("Lexer recognizes basic tokens") {
-    Lexer.tokens.map(_.info.pattern) shouldBe List(
+    Lexer.tokens.map(_.info.patterns) shouldBe List(
     //format: off
-      "#.*",
-      raw"\.\+",
-      raw"\.\-",
-      raw"\.\*",
-      raw"\.\/",
-      "<=",
-      ">=",
-      "!=",
-      "==",
-      raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?",
-      "[0-9]+",
-      "\"[^\"]*\"",
-      "if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print",
-      "[a-zA-Z_][a-zA-Z0-9_]*",
-      "<", ">", "=", "\\+", "-", "\\*", "/", "\\(", "\\)", "\\[", "\\]", "\\{", "\\}", ":", "'", ",", ";",
+      Seq("#.*"),
+      Seq(raw"\.\+"),
+      Seq(raw"\.\-"),
+      Seq(raw"\.\*"),
+      Seq(raw"\.\/"),
+      Seq("<="),
+      Seq(">="),
+      Seq("!="),
+      Seq("=="),
+      Seq(raw"(d+(\.\d*)|\.\d+)([eE][+-]?\d+)?"),
+      Seq("[0-9]+"),
+      Seq("\"[^\"]*\""),
+      Seq("if", "else", "for", "while", "break", "continue", "return", "eye", "zeros", "ones", "print"),
+      Seq("[a-zA-Z_][a-zA-Z0-9_]*"),
+      Seq('<', '>', '=', '+', '-', '*', '/', '(', ')', '[', ']', '{', '}', ':', '\'', ',', ';'),
     )
     //format: on
 
@@ -91,7 +94,10 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer manipulates context") {
-    case class StateCtx(var count: Int = 0) extends LexerCtx
+    case class StateCtx(
+      var text: CharSequence = "",
+      var count: Int = 0,
+    ) extends LexerCtx
 
     val Lexer = lexer[StateCtx]:
       case "inc" =>
@@ -104,4 +110,3 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     val (_, lexemes) = Lexer.tokenize("inc check inc inc check")
     lexemes.map(_.value) shouldBe List(1, 1, 2, 3, 3)
   }
-}
