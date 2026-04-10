@@ -4,7 +4,6 @@ package parser
 
 import alpaca.internal.Csv.toCsv
 import alpaca.internal.lexer.Token
-import ox.*
 
 /**
  * An opaque type containing the parse and action tables for the parser.
@@ -18,7 +17,7 @@ import ox.*
 opaque private[alpaca] type Tables[Ctx <: ParserCtx] <: (parseTable: ParseTable, actionTable: ActionTable[Ctx]) =
   (parseTable: ParseTable, actionTable: ActionTable[Ctx])
 
-object Tables:
+private[alpaca] object Tables:
   /**
    * Automatically generates parse and action tables from a parser definition.
    *
@@ -47,9 +46,10 @@ object Tables:
  * @param quotes the Quotes instance
  * @return an expression containing the parse and action tables
  */
+// $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = supervisedWithLog:
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withLog:
   timeoutOnTooLongCompilation()
 
   import quotes.reflect.*
@@ -76,7 +76,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
               .unsafeFlatMap:
                 case ((bind, '[t]), idx) =>
-                  Some((find = bind, replace = '{ ${ param.asExprOf[Seq[Any]] }($idx).asInstanceOf[t] }.asTerm))
+                  Some((find = bind, replace = '{ ${ param.asExprOf[RevertedArray[Any]] }($idx).asInstanceOf[t] }.asTerm))
               .toList
 
           replaceRefs(replacements*).transformTerm(rhs)(methSym)
@@ -90,14 +90,22 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       cases.iterator
         .map(extractProductionName)
         .map:
-          case (Lambda(_, Match(_, List(caseDef))), name) => caseDef -> name
-          case (Lambda(_, Match(_, _)), _) =>
-            report.errorAndAbort("Productions definition with multiple cases is not supported yet")
+          case (Lambda(_, Match(_, List(caseDef))), name) => (caseDef, name)
+          case (l @ Lambda(_, Match(_, _)), _) =>
+            report.errorAndAbort(
+              """Each production must have exactly one case. Split multiple cases into separate productions:
+                |  rule(
+                |    { case (a(x)) => ... },
+                |    { case (b(y)) => ... }
+                |  )""".stripMargin,
+              l.pos,
+            )
           case (other, _) =>
-            report.errorAndAbort(show"Unexpected production definition: $other")
+            report.errorAndAbort(show"Unexpected production definition: $other", other.pos)
         .unsafeFlatMap:
-          case (CaseDef(_, Some(_), _), _) =>
-            throw new NotImplementedError("Guards are not supported yet")
+          case (c @ CaseDef(_, Some(_), _), _) =>
+            report.error("Guards are not supported yet", c.pos)
+            None
           // Tuple1
           case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
             val (symbol, bind, others) = extractEBNFAndAction(pattern)
@@ -123,7 +131,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val table = rules
     .unsafeFlatMap:
       case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
-      case DefDef(ruleName, _, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error?
+      case DefDef(ruleName, _, _, Some(rhs)) =>
+        extractEBNF(ruleName)(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
       case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
     .toList
     .tap: table =>
@@ -139,13 +148,17 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
   logger.trace("Productions extracted, building parse and action tables.")
 
-  val findProduction: Expr[Production] => Production =
+  def findProduction(call: Expr[Production]): Production =
     val productionsByName = productions.iterator.collect { case p if p.name != null => p.name -> p }.toMap
     val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
-    {
+    call match
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
-        logger.trace(show"Looking for production with name '$name'")
-        productionsByName.getOrElse(name, report.errorAndAbort(show"Production with name '$name' not found"))
+        val decodedName = scala.reflect.NameTransformer.decode(name)
+        logger.trace(show"Looking for production with name '$decodedName' (original: '$name')")
+        productionsByName.getOrElse(
+          decodedName,
+          report.errorAndAbort(show"Production with name '$decodedName' not found", call),
+        )
 
       case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
         val args = rhs
@@ -158,11 +171,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
         productionsByRhs.getOrElse(
           NEL.unsafe(args),
-          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found"),
+          report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found", call),
         )
 
       case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
-    }
 
   logger.trace("Conflict resolution rules extracted, building conflict resolution table.")
 
@@ -201,7 +213,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   val root = table
     .collectFirst:
       case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
-    .get
+    .getOrElse:
+      report.errorAndAbort(
+        show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }",
+      )
 
   logger.trace("Root production identified, generating parse and action tables.")
 
@@ -217,3 +232,4 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
   '{ ($parseTable: ParseTable, ActionTable($actionTable.toMap)) }
+// $COVERAGE-ON$
