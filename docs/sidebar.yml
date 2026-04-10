@@ -42,3 +42,9 @@ subsection:
         page: theory/shift-reduce.md
       - title: Why LR Parsing
         page: theory/why-lr.md
+      - title: Conflicts and Disambiguation
+        page: theory/conflicts.md
+      - title: Semantic Actions
+        page: theory/semantic-actions.md
+      - title: Full Calculator Example
+        page: theory/full-example.md
