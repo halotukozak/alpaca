@@ -1,0 +1,97 @@
+name: Maintenance
+description: Report maintenance tasks like dependency updates, refactoring, or code cleanup
+title: "[Maintenance]: "
+labels: ["maintenance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping maintain the project! Please describe the maintenance task in detail.
+        
+        **Note:** Issues will be automatically labeled based on their content. You can help by:
+        - Being specific about the type of maintenance task
+        - Mentioning affected components if applicable
+
+  - type: dropdown
+    id: maintenance-type
+    attributes:
+      label: Maintenance Type
+      description: What type of maintenance task is this?
+      options:
+        - Dependency Update
+        - Refactoring
+        - Code Cleanup
+        - Performance Optimization
+        - Technical Debt
+        - Build System
+        - CI/CD
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Parser
+        - Lexer
+        - Build System
+        - Documentation
+        - CI/CD
+        - Dependencies
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: A clear and concise description of the maintenance task
+      placeholder: Describe what needs to be maintained or updated
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this maintenance task needed?
+      placeholder: This is needed because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope of Changes
+      description: What changes are expected to be made?
+      placeholder: |
+        - Update dependency X from version Y to Z
+        - Refactor module A to improve...
+        - Clean up unused code in...
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What is the expected impact of this maintenance?
+      placeholder: |
+        - Breaking changes: Yes/No
+        - Performance impact: Positive/Neutral/Negative
+        - Security improvements: Yes/No
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the maintenance task here
+      placeholder: Any additional information that might help
+    validations:
+      required: false

@@ -1,8 +1,9 @@
 name: Test
+
 on:
-  push:
   pull_request:
-    branches: [ "master" ]
+  push:
+    branches: [ master ]
 
 jobs:
   test:
@@ -18,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -26,11 +27,28 @@ jobs:
           java-version: 21
           distribution: 'temurin'
 
+      - name: Cache Mill dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+
       - name: Compile
         run: ./mill compile
 
       - name: Compile tests
-        run: ./mill test.compile
+        run: |
+          echo "Starting test compilation..."
+          START_TIME=$(date +%s)
+          ./mill test.compile
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "Test compilation completed in ${DURATION}s"
+          echo "TEST_COMPILE_TIME=${DURATION}" >> $GITHUB_ENV
 
       - name: Run tests
         run: ./mill test
@@ -38,12 +56,23 @@ jobs:
       - name: Code coverage
         run: ./mill scoverage.xmlCoberturaReport
 
-      - name: Code Coverage Report
-        uses: 5monkeys/cobertura-action@master
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v6
         with:
-          path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 0 #todo: #51
-          fail_below_threshold: 'true'
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: halotukozak/alpaca
+
+      - name: ScalaFmt
+        run: ./mill mill.scalalib.scalafmt/checkFormatAll
 
       - name: Generate Docs
         run: ./mill docJar
+
+      - name: Report Test Compilation Time
+        if: always()
+        run: |
+          if [ -n "$TEST_COMPILE_TIME" ]; then
+            echo "### ⏱️ Test Compilation Time" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Test compilation took **${TEST_COMPILE_TIME}s**" >> $GITHUB_STEP_SUMMARY
+          fi
