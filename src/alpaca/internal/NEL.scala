@@ -10,9 +10,9 @@ package internal
  *
  * @tparam A the element type
  */
-opaque type NEL[+A] <: List[A] = List[A]
+opaque private[alpaca] type NEL[+A] <: List[A] = List[A]
 
-object NEL:
+private[alpaca] object NEL:
 
   /**
    * Creates a non-empty list from a head element and optional tail elements.

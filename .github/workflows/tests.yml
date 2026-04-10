@@ -2,7 +2,6 @@ name: Test
 
 on:
   pull_request:
-    branches: [ master ]
   push:
     branches: [ master ]
 
@@ -63,16 +62,8 @@ jobs:
       - name: Code coverage
         run: ./mill scoverage.xmlCoberturaReport
 
-      - name: Code Coverage Report
-        uses: 5monkeys/cobertura-action@master
-        continue-on-error: true
-        with:
-          path: out/scoverage/xmlCoberturaReport.dest/cobertura.xml
-          minimum_coverage: 0 #todo: #51
-          fail_below_threshold: 'true'
-          
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: halotukozak/alpaca

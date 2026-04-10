@@ -1,8 +1,7 @@
 name: Runtime Benchmark
 
 on:
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   benchmark:
@@ -40,12 +39,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mill-
 
+      - name: Generate Benchmark Inputs
+        run: |
+          python3 current/benchmarks/inputs/generate_tests.py
+          mkdir -p base/benchmarks/inputs
+          cp current/benchmarks/inputs/*.txt base/benchmarks/inputs/ 2>/dev/null || true
+
       - name: Run Base Benchmarks
         id: base_bench
+        continue-on-error: true
         run: |
           echo "::group::Benchmarking base"
           (
             cd base
+            ./mill benchmarks.alpaca.runJmh -rf json -rff $GITHUB_WORKSPACE/base-results.json -wi 1 -i 3 -f 1 ||
             ./mill benchmarks.runJmh -rf json -rff $GITHUB_WORKSPACE/base-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
@@ -55,13 +62,14 @@ jobs:
           echo "::group::Benchmarking current"
           (
             cd current
+            ./mill benchmarks.alpaca.runJmh -rf json -rff $GITHUB_WORKSPACE/current-results.json -wi 1 -i 3 -f 1 ||
             ./mill benchmarks.runJmh -rf json -rff $GITHUB_WORKSPACE/current-results.json -wi 1 -i 3 -f 1
           )
           echo "::endgroup::"
 
       - name: Upsert PR Comment
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
