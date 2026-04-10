@@ -99,7 +99,7 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  */
 //todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
 private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
-  @publicInBinary private[lexer] info: TokenInfo,
+  @publicInBinary private[alpaca] info: TokenInfo,
   private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
   private[lexer] remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
@@ -124,7 +124,7 @@ private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCt
  * @param ctxManipulation function to update context
  */
 private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
-  @publicInBinary private[lexer] info: TokenInfo,
+  @publicInBinary private[alpaca] info: TokenInfo,
   private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
 
