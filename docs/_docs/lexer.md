@@ -237,7 +237,6 @@ You can define a custom context for stateful lexing (tracking indentation, nesti
 import alpaca.*
 
 case class IndentCtx(
-  var text: CharSequence = "",
   var indent: Int = 0,
 ) extends LexerCtx
 

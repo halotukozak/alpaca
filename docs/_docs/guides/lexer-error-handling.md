@@ -40,9 +40,9 @@ You can use a custom `LexerCtx` to track the number of errors encountered during
 import alpaca.*
 
 case class ErrorCtx(
-  var text: CharSequence = "",
-  var errorCount: Int = 0
-) extends LexerCtx
+  var errorCount: Int = 0,
+  var position: Int = 1,
+) extends LexerCtx with PositionTracking
 
 val myLexer = lexer[ErrorCtx]:
   case "[a-z]+" => Token["ID"]

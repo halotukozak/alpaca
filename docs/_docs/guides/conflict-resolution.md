@@ -109,6 +109,8 @@ Expr + Expr + ...
 Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
 ```
 
+> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These method names do not exist in the Alpaca API. The correct methods are `before` and `after`. See [Conflict Resolution](../conflict-resolution.md) for full details.
+
 ### How to read it:
 
 1. **The Conflict**: It tells you exactly which actions are clashing (Shift `+` vs Reduce `Expr`).
