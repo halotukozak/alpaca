@@ -2,12 +2,10 @@ package alpaca
 package internal
 
 import alpaca.internal.logger.*
-import ox.*
 
 import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
-import scala.concurrent.duration.DurationInt
 
 /**
  * A logging facility for Alpaca macro compilation.
@@ -17,25 +15,29 @@ import scala.concurrent.duration.DurationInt
  * flushing based on the compilation timeout.
  *
  * @param debugSettings the debug configuration
- * @param ox the Ox context for concurrency
  */
-private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) extends AutoCloseable:
+private[internal] class Log(using val debugSettings: DebugSettings) extends AutoCloseable:
   private given Log = this
 
   private val writerCache = new ConcurrentHashMap[Path, BufferedWriter]
 
-  private val flushing = forkCancellable:
-    if debugSettings.compilationTimeout.isFinite then
-      sleep(5.seconds)
-      writerCache.forEach(
-        threads,
-        (_, writer) =>
-          try writer.flush()
-          catch case _: Exception => (),
-      )
+  private val flushing: Thread = new Thread:
+    override def run(): Unit =
+      if debugSettings.compilationTimeout.isFinite then
+        try Thread.sleep(5000)
+        catch case _: InterruptedException => return
+        writerCache.forEach(
+          threads,
+          (_, writer) =>
+            try writer.flush()
+            catch case _: Exception => (),
+        )
+  .tap: t =>
+    t.setDaemon(true)
+    t.start()
 
   override def close(): Unit =
-    flushing.cancel()
+    flushing.interrupt()
     writerCache.forEach(threads, (_, writer) => writer.close())
 
   private def createWriter(path: Path, replace: Boolean): BufferedWriter =
@@ -57,8 +59,9 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
 
   // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: Shown): Unit =
-    val file = Path.of(debugSettings.debugDirectory).resolve(path)
-    if replace then this.replace(file)(content) else this.append(file)(content)
+    debugSettings.debugDirectory.foreach: dir =>
+      val file = Path.of(dir).resolve(path)
+      if replace then this.replace(file)(content) else this.append(file)(content)
 
   /**
    * Logs a message at the given level.
@@ -72,17 +75,12 @@ private[internal] class Log(using val debugSettings: DebugSettings)(using Ox) ex
     case Out.file => toFile(show"${pos.file}.log", false)(show"at ${pos.line}\t$msg\n")
     case Out.disabled => ()
 
-inline private[internal] def supervisedWithLog[T](inline op: Log ?=> Ox ?=> T): T =
-  supervised(op(using logger.materialize))
+private[internal] def withLog[T](op: Log ?=> T)(using DebugSettings): T =
+  given log: Log = new Log
+  try op
+  finally log.close()
 
 private[internal] object logger:
-
-  inline private[internal] def materialize(using ox: Ox) = ${ materializeImpl('{ ox }) }
-  // $COVERAGE-OFF$
-  private def materializeImpl(ox: Expr[Ox])(using quotes: Quotes): Expr[Log] =
-    val debugSettings = Expr(summon[DebugSettings])
-    '{ new Log(using $debugSettings)(using $ox) }
-  // $COVERAGE-ON$
 
   inline def trace(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.trace, msg)
   inline def debug(inline msg: Shown)(using DebugPosition, Log): Unit = summon[Log].log(Level.debug, msg)

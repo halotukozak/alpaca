@@ -127,5 +127,5 @@ final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
   ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
 
-def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
+private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
   IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())

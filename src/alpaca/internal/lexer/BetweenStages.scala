@@ -15,9 +15,9 @@ import scala.annotation.implicitNotFound
  */
 // todo: i do not like this name https://github.com/halotukozak/alpaca/issues/235
 @implicitNotFound("Define BetweenStages for ${Ctx} (or its subclasses)")
-private[alpaca] trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
+trait BetweenStages[Ctx <: LexerCtx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
 
-private[alpaca] object BetweenStages:
+object BetweenStages:
 
   /**
    * Automatically derives a BetweenStages instance for a context type.
@@ -31,7 +31,7 @@ private[alpaca] object BetweenStages:
   inline given auto[Ctx <: LexerCtx]: BetweenStages[Ctx] = ${ autoImpl[Ctx] }
 
   // $COVERAGE-OFF$
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = supervisedWithLog:
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[BetweenStages[Ctx]] = withLog:
     import quotes.reflect.*
 
     logger.trace(show"deriving BetweenStages for ${Type.of[Ctx]}")
