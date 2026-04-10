@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Label issues using GitHub Copilot
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
