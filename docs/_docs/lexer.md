@@ -302,3 +302,5 @@ You do not need to handle EOF in your lexer rules -- the parser manages it autom
 text fields after a match does not retroactively alter earlier lexemes.
 
 See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](between-stages.html) for how tokenized output flows into the parser.
+
+See [Debug Settings](debug-settings.html) for compile-time debug output, log levels, and timeout configuration.
