@@ -26,3 +26,9 @@ subsection:
         page: theory/tokens.md
       - title: "The Lexer: Regex to Finite Automata"
         page: theory/lexer-fa.md
+      - title: Context-Free Grammars
+        page: theory/cfg.md
+      - title: The Shift-Reduce Loop
+        page: theory/shift-reduce.md
+      - title: Why LR Parsing
+        page: theory/why-lr.md
