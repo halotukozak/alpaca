@@ -15,7 +15,7 @@ When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarc
 
 When you write a `lexer:` block without a type parameter, the lexer uses `LexerCtx.Default`. It tracks two fields:
 
-- `position` -- 1-based character offset, incremented by the length of each matched token
+- `position` -- 1-based column within the current line, incremented by the matched length and reset to 1 on newlines
 - `line` -- 1-based line number, incremented on each newline character
 
 ```scala sc:nocompile

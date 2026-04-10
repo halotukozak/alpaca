@@ -74,7 +74,7 @@ Tokens come in three forms.
 
 ### Named Tokens
 
-`Token["NAME"]` creates a token whose value is the matched text as a `String`. The token name becomes both the lexeme's `.name` field and the accessor on the lexer object.
+`Token["NAME"]` creates a token with a `Unit` value. The token name becomes both the lexeme's `.name` field and the accessor on the lexer object. To access the matched text, use `lexeme.text` from the context snapshot.
 
 ```scala sc:nocompile
 import alpaca.*
@@ -136,7 +136,7 @@ val Lexer = lexer:
   case "\\s+" => Token.Ignored
 ```
 
-Without `@`, you cannot access the matched text. `Token["inc"]` without a binding creates a token whose value is the matched string (here `"+"`), but you cannot transform it.
+Without `@`, you cannot access the matched text for transformation. `Token["inc"]` without a binding creates a token with `Unit` value. If you need the raw match, use `lexeme.text` from the context snapshot, or bind and pass it: `case x @ "\\+" => Token["inc"](x)`.
 
 ## Token Naming Rules
 

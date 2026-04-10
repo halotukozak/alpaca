@@ -71,7 +71,7 @@ val BrainLexer = lexer:
 
 If you reverse the order, `"."` shadows `"\\."` and you get a `ShadowException`.
 
-The same applies to keywords vs identifiers. Function names in BrainFuck> must come after command tokens:
+The same applies to keywords vs identifiers. Function names in the extended BrainFuck lexer must come after command tokens:
 
 ```scala sc:nocompile
 import alpaca.*
