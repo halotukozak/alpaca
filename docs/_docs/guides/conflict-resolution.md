@@ -15,7 +15,7 @@ symbols already on the stack).
 
 **Example (Dangling Else):**
 
-```scala
+```
 if (cond) if (cond) stmt else stmt
 ```
 
@@ -31,7 +31,9 @@ This usually indicates a more serious ambiguity in the grammar.
 Conflicts are resolved by overriding the `resolutions` member in your `Parser` object. This member is a `Set` of
 `ConflictResolution` rules.
 
-```scala 3
+```scala sc:nocompile
+import alpaca.*
+
 object MyParser extends Parser:
   // ... rules ...
 
@@ -52,7 +54,7 @@ You can use these operators with both **Tokens** (Terminals) and **Productions**
 
 #### Operator Precedence Example
 
-```scala 3
+```scala sc:nocompile
 override val resolutions = Set(
   MyLexer.STAR after MyLexer.PLUS,
   MyLexer.SLASH after MyLexer.PLUS
@@ -66,7 +68,7 @@ This tells the parser that `MyLexer.STAR` and `MyLexer.SLASH` have higher preced
 To define **left-associativity** (e.g., `1 + 2 + 3` is `(1 + 2) + 3`), a production should be "before" its own recursive
 tokens.
 
-```scala 3
+```scala sc:nocompile
   val Expr: Rule[Int] = rule(
   "add" { case (Expr(l), MyLexer.PLUS(_), Expr(r)) => l + r }
 )
@@ -81,7 +83,7 @@ override val resolutions = Set(
 For fine-grained control, you can assign names to specific productions within a rule.
 This allows you to reference that exact production in your `resolutions`.
 
-```scala 3
+```scala sc:nocompile
 val Expr: Rule[Int] = rule(
   "mul" { case (Expr(l), MyLexer.STAR(_), Expr(r)) => l * r },
   "div" { case (Expr(l), MyLexer.SLASH(_), Expr(r)) => l / r },
