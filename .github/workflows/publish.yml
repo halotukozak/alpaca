@@ -5,6 +5,10 @@ on:
     tags:
       - '**'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   publish-artifacts:
     runs-on: ubuntu-latest

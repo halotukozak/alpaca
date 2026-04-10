@@ -70,7 +70,7 @@ jobs:
           echo "curr_mean=$(jq '.results[0].mean' current.json)" >> $GITHUB_OUTPUT
 
       - name: Upsert PR Comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           BASE_MEAN: ${{ steps.extract.outputs.base_mean }}
           CURR_MEAN: ${{ steps.extract.outputs.curr_mean }}

@@ -5,9 +5,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 final class ShowableTest extends AnyFunSuite with Matchers:
+  private given DebugSettings = DebugSettings.default
 
   test("Showable should convert String to Shown") {
-    supervisedWithLog:
+    withLog:
       val str = "Hello, World!"
       val shown: String = show"$str"
 
@@ -15,7 +16,7 @@ final class ShowableTest extends AnyFunSuite with Matchers:
   }
 
   test("Showable should convert Int to Shown") {
-    supervisedWithLog:
+    withLog:
       val number: Int = 42
       val shown: String = show"$number"
 
@@ -23,7 +24,7 @@ final class ShowableTest extends AnyFunSuite with Matchers:
   }
 
   test("Showable should convert custom case class to Shown") {
-    supervisedWithLog:
+    withLog:
       case class Person(name: String, age: Int)
       given Showable[Person] = Showable: person =>
         show"${person.name} is ${person.age} years old."
@@ -35,7 +36,7 @@ final class ShowableTest extends AnyFunSuite with Matchers:
   }
 
   test("Showable should convert derived types") {
-    supervisedWithLog:
+    withLog:
       case class Address(city: String, zip: Int) derives Showable
 
       val address = Address("Wonderland", 12345)
@@ -45,7 +46,7 @@ final class ShowableTest extends AnyFunSuite with Matchers:
   }
 
   test("Showable should not convert unsupported types") {
-    supervisedWithLog:
+    withLog:
       """|
          |import Showable._
          |class UnsupportedType(val value: String)

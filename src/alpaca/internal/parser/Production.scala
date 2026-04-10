@@ -38,7 +38,7 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
     name: ValidName | Null = null,
   ) extends Production(Symbol.Empty)
 
-object Production:
+private[alpaca] object Production:
 
   /** Showable instance for displaying productions in human-readable form. */
   given Showable[Production] = Showable:

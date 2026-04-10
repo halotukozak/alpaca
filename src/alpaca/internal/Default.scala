@@ -2,7 +2,6 @@ package alpaca
 package internal
 
 import scala.collection.Factory
-import ox.flow.Flow
 
 /**
  * A type class for creating default values of types.
@@ -56,5 +55,3 @@ private[internal] object Default:
   given [H: Default as head, T <: Tuple: Default as tail] => Default[H *: T] = () => head() *: tail()
 
   given Default[EmptyTuple] = () => EmptyTuple
-
-  given [T] => Default[Flow[T]] = () => Flow.empty
