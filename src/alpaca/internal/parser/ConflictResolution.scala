@@ -108,25 +108,42 @@ private[parser] object ConflictResolutionTable:
       val sb = new StringBuilder
       sb.append("graph TD\n")
 
-      def nodeName(key: ConflictKey): String =
-        val raw = key match
-          case p: Production => p.name match
-            case null => show"$p"
-            case name: String => name
-          case s: String => show"Token($s)"
-        // Escape special chars for mermaid
-        raw.replace(" ", "_").replace("(", "[").replace(")", "]").replace("->", "_to_").replace("ε", "epsilon")
+      val idMap = mutable.HashMap.empty[ConflictKey, String]
+      var prodIdx = 0
+      var tokIdx = 0
+
+      def nodeId(key: ConflictKey): String =
+        idMap.getOrElseUpdate(
+          key,
+          key match
+            case _: Production =>
+              prodIdx += 1
+              s"P_$prodIdx"
+            case _: String =>
+              tokIdx += 1
+              s"T_$tokIdx"
+        )
+
+      def escapeLabel(label: String): String =
+        label
+          .replace("\\", "\\\\")
+          .replace("\"", "\\\"")
+          .replace("\n", "\\n")
+          .replace("\r", "\\r")
 
       def nodeLabel(key: ConflictKey): String = key match
         case p: Production => show"$p"
         case s: String => show"Token($s)"
 
-      val nodes = (table.keySet ++ table.values.flatten).toSet
+      val nodes = (table.keySet ++ table.values.flatten).toList.sortBy(nodeLabel)
       for node <- nodes do
-        sb.append(s"  ${nodeName(node)}[\"${nodeLabel(node)}\"]\n")
+        sb.append(s"  ${nodeId(node)}[\"${escapeLabel(nodeLabel(node))}\"]\n")
 
-      for (from, toSet) <- table; to <- toSet do
-        sb.append(s"  ${nodeName(from)} --> ${nodeName(to)}\n")
+      for
+        (from, toSet) <- table.toList.sortBy { case (fromKey, _) => nodeLabel(fromKey) }
+        to <- toSet.toList.sortBy(nodeLabel)
+      do
+        sb.append(s"  ${nodeId(from)} --> ${nodeId(to)}\n")
 
       sb.toString
 

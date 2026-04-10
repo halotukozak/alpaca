@@ -1,0 +1,135 @@
+package alpaca
+package internal
+package parser
+
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+
+final class ConflictResolutionTableTest extends AnyFunSuite with Matchers:
+  private given DebugSettings = DebugSettings.default
+
+  private val prodA = Production.NonEmpty(NonTerminal("A"), NEL(Terminal("a")))
+  private val prodB = Production.NonEmpty(NonTerminal("B"), NEL(Terminal("b")), "named")
+  private val tokenX = "X"
+  private val tokenY = "Y"
+
+  test("toMermaid produces a graph TD header") {
+    withLog:
+      val table = ConflictResolutionTable(Map.empty)
+      table.toMermaid should startWith("graph TD\n")
+  }
+
+  test("toMermaid assigns safe unique IDs for productions and tokens") {
+    withLog:
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodA) -> Set(ConflictKey(tokenX))),
+      )
+      val output = table.toMermaid
+      // Production gets P_ prefix, token gets T_ prefix
+      output should include("P_1")
+      output should include("T_1")
+      // Safe IDs do not contain spaces, parens, arrows, or epsilon
+      output.linesIterator
+        .filter(_.trim.startsWith("P_") || _.trim.startsWith("T_"))
+        .foreach: line =>
+          val id = line.trim.takeWhile(c => c != '[' && c != ' ' && c != '-')
+          id should fullyMatch regex "[PT]_[0-9]+"
+  }
+
+  test("toMermaid emits node declarations with human-readable labels") {
+    withLog:
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodA) -> Set(ConflictKey(tokenX))),
+      )
+      val output = table.toMermaid
+      output should include(show"A -> a")
+      output should include("Token(X)")
+  }
+
+  test("toMermaid emits edge declarations") {
+    withLog:
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodA) -> Set(ConflictKey(tokenX))),
+      )
+      val output = table.toMermaid
+      output should include("-->")
+      // P_1 should point to T_1
+      output should include("P_1 --> T_1")
+  }
+
+  test("toMermaid output is deterministic across repeated calls") {
+    withLog:
+      val table = ConflictResolutionTable(
+        Map(
+          ConflictKey(prodA) -> Set(ConflictKey(tokenX), ConflictKey(tokenY)),
+          ConflictKey(prodB) -> Set(ConflictKey(tokenX)),
+        ),
+      )
+      val first = table.toMermaid
+      val second = table.toMermaid
+      first shouldEqual second
+  }
+
+  test("toMermaid escapes double quotes in labels") {
+    withLog:
+      val prodWithQuote = Production.NonEmpty(NonTerminal("A\"B"), NEL(Terminal("a")))
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodWithQuote) -> Set.empty),
+      )
+      val output = table.toMermaid
+      output should include("\\\"")
+  }
+
+  test("toMermaid escapes backslashes in labels") {
+    withLog:
+      val prodWithBackslash = Production.NonEmpty(NonTerminal("A\\B"), NEL(Terminal("a")))
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodWithBackslash) -> Set.empty),
+      )
+      val output = table.toMermaid
+      output should include("\\\\")
+  }
+
+  test("toMermaid escapes newlines in labels") {
+    withLog:
+      val prodWithNewline = Production.NonEmpty(NonTerminal("A\nB"), NEL(Terminal("a")))
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodWithNewline) -> Set.empty),
+      )
+      val output = table.toMermaid
+      // header + 1 node line = 2 lines; if the newline in the label were not escaped,
+      // there would be an extra line
+      output.linesIterator.length shouldBe 2
+      // The literal two-char sequence \n should appear inside the node label brackets
+      val nodeLine = output.linesIterator.find(_.contains("[\"")).getOrElse(fail("no node line found"))
+      nodeLine should include("\\n")
+  }
+
+  test("toMermaid handles multiple nodes and edges in sorted order") {
+    withLog:
+      val table = ConflictResolutionTable(
+        Map(
+          ConflictKey(prodA) -> Set(ConflictKey(tokenX)),
+          ConflictKey(prodB) -> Set(ConflictKey(tokenY)),
+        ),
+      )
+      val lines = table.toMermaid.linesIterator.toList
+      val nodeLine1 = lines.indexWhere(_.contains("A -> a"))
+      val nodeLine2 = lines.indexWhere(_.contains("named"))
+      // Nodes are listed before edges
+      val edgeLine = lines.indexWhere(_.contains("-->"))
+      nodeLine1 should be >= 0
+      nodeLine2 should be >= 0
+      edgeLine should be > nodeLine1
+      edgeLine should be > nodeLine2
+  }
+
+  test("toMermaid includes nodes referenced only as targets") {
+    withLog:
+      // tokenX appears only as a target, not as a key in the table
+      val table = ConflictResolutionTable(
+        Map(ConflictKey(prodA) -> Set(ConflictKey(tokenX))),
+      )
+      val output = table.toMermaid
+      output should include("Token(X)")
+  }
