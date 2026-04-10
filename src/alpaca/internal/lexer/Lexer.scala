@@ -132,7 +132,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
-      infos.iterator.foreach: info =>
+      infos.foreach: info =>
         try Pattern.compile(info.pattern)
         catch
           case e: PatternSyntaxException =>

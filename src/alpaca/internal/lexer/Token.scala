@@ -78,10 +78,10 @@ private[lexer] object TokenInfo:
 sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
 
   /** Token information including name and pattern. */
-  val info: TokenInfo
+  private[alpaca] val info: TokenInfo
 
   /** Function to update the context when this token is matched. */
-  val ctxManipulation: CtxManipulation[Ctx @uv]
+  private[lexer] val ctxManipulation: CtxManipulation[Ctx @uv]
 
 /**
  * A token that produces a value when matched.

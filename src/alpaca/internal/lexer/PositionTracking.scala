@@ -10,8 +10,6 @@ package lexer
  * reset to 1 when a newline is encountered.
  */
 trait PositionTracking extends LexerCtx:
-  this: Product =>
-
   /** The current character position within the line (1-based). */
   var position: Int
 
