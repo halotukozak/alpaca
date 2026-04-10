@@ -8,7 +8,7 @@ This is the *S-attributed translation scheme*: each non-terminal has one *synthe
 
 For the calculator: every non-terminal produces a `Double`. Leaves (NUMBER tokens) contribute `n.value` (a Double from the lexer). Each binary operator reduction computes `a op b`.
 
-No top-down information flow is needed — the calculator is purely bottom-up. Each value is computed from the immediately reduced children. (For stateful parsing where context flows from parent to child, see `../parser.md`.)
+No top-down information flow is needed — the calculator is purely bottom-up. Each value is computed from the immediately reduced children. (For stateful parsing where context flows from parent to child, see [Parser](../parser.md).)
 
 > **Definition — Semantic Action:**
 > Given a production A → X₁ X₂ ... Xₙ, a semantic action is a function
@@ -88,4 +88,4 @@ The final result type is the type declared for `root`. For CalcParser: `val root
 - See [Conflicts & Disambiguation](conflicts.md) for how conflict resolution ensures each reduce is unambiguous, so the correct semantic action is always called.
 - See [Extractors](../extractors.md) for the complete extractor reference (terminal, non-terminal, EBNF, Lexeme fields).
 - See [Parser](../parser.md) for the `rule` DSL reference and `parse()` return type.
-- See [Full Example](full-example.md) for the complete CalcParser with all semantic actions assembled and running.
+- Next: [Full Example](full-example.md) — the complete CalcParser with all semantic actions assembled and running.

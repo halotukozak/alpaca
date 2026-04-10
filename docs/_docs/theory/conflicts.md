@@ -21,7 +21,7 @@ Why it happens: two or more LR(1) items in the same state propose incompatible a
 - **Reduce** `Expr → Expr PLUS Expr` — complete the first addition and produce a single `Expr`.
 - **Shift** the second `PLUS` — keep accumulating, treating the input as `1 + (2 + 3)`.
 
-Both are valid parse trees for `1 + 2 + 3` — the grammar (from [cfg.md](cfg.md)) is ambiguous for binary operator chains. Alpaca detects this conflict at compile time and reports:
+Both are valid parse trees for `1 + 2 + 3` — the grammar (from [Context-Free Grammars](cfg.md)) is ambiguous for binary operator chains. Alpaca detects this conflict at compile time and reports:
 
 ```
 Shift "PLUS ($plus)" vs Reduce Expr -> Expr PLUS ($plus) Expr
@@ -44,6 +44,8 @@ In situation like:
 Number ...
 Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
 ```
+
+> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These method names do not exist in the Alpaca API. The correct methods are `before` and `after`. See [Conflict Resolution](../conflict-resolution.md) for full details on reading error messages.
 
 Reduce/reduce conflicts are less common than shift/reduce conflicts. They typically indicate a grammar design issue — two rules competing for the same token sequence. The usual fix is to restructure the grammar so the two competing productions have distinct right-hand sides, or to use a different non-terminal.
 
@@ -92,5 +94,5 @@ When you add `override val resolutions = Set(...)`, the macro incorporates your 
 - [Context-Free Grammars](cfg.md) — the calculator grammar that produces these conflicts
 - [Shift-Reduce Parsing](shift-reduce.md) — the parse table mechanics behind conflicts
 - [Conflict Resolution](../conflict-resolution.md) — the full DSL reference: Production(symbols*) selector, named productions, token-side resolution, cycle detection, ordering constraint
-- [Semantic Actions](semantic-actions.md) — what happens when a conflict-free reduction fires
+- Next: [Semantic Actions](semantic-actions.md) — what happens when a conflict-free reduction fires
 - [Full Calculator Example](full-example.md) — the full CalcParser with conflict resolution applied
