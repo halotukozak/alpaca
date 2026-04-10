@@ -56,5 +56,9 @@ subsection:
         page: theory/conflicts.md
       - title: Semantic Actions
         page: theory/semantic-actions.md
+      - title: AST Construction Patterns
+        page: theory/ast-construction.md
+      - title: Operator Precedence Grammars
+        page: theory/operator-precedence.md
       - title: Full Calculator Example
         page: theory/full-example.md
