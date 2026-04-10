@@ -2,7 +2,8 @@ name: Deploy static content to Pages
 
 on:
   push:
-    branches: ["master"]
+    tags:
+      - "**"
 
   workflow_dispatch:
 
