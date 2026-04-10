@@ -1,7 +1,7 @@
 name: Runtime Benchmark
 
 on:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   benchmark:
@@ -69,7 +69,7 @@ jobs:
 
       - name: Upsert PR Comment
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

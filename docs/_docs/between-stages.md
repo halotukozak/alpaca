@@ -69,12 +69,11 @@ object IndentTracking:
 
 // Step 3: Case class extends both
 case class MyCtx(
-  var text: CharSequence = "",
   var indentLevel: Int = 0,
 ) extends LexerCtx with IndentTracking
 
 // Step 4: Pass MyCtx to lexer -- auto composition happens at compile time
-valLexer = lexer[MyCtx]:
+val Lexer = lexer[MyCtx]:
   case "\\n" => Token.Ignored
   case id @ "[a-z]+" => Token["ID"](id)
 ```
@@ -86,6 +85,8 @@ Always put the `given` in a **trait companion**, not a case class companion.
 For reference, the `BetweenStages` type is a function:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // BetweenStages[Ctx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
 // token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken
 // matcher: java.util.regex.Matcher  -- the successful match for this token

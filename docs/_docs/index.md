@@ -115,6 +115,8 @@ object MyParser extends Parser:
 ### Parsing Input
 
 ```scala sc:nocompile sc-compile-with:MyLexer.scala,MyParser.scala
+import alpaca.*
+
 val input = "2 + 3 * 4"
 val (_, lexemes) = MyLexer.tokenize(input)
 val (_, result) = MyParser.parse(lexemes)
@@ -153,7 +155,6 @@ import alpaca.*
 import scala.collection.mutable.Stack
 
 case class BraceContext(
-  var text: CharSequence = "",
   val braces: Stack[Char] = Stack()
 ) extends LexerCtx
 
@@ -187,6 +188,8 @@ if finalCtx.braces.nonEmpty then
 Tokens can carry values extracted from the input:
 
 ```scala sc:nocompile
+import alpaca.*
+
 case num @ "[0-9]+" => Token["NUM"](num.toInt)
 case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
 ```
@@ -196,9 +199,31 @@ case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
 Use `Token.Ignored` for whitespace and comments that should be skipped:
 
 ```scala sc:nocompile
+import alpaca.*
+
 case "\\s+" => Token.Ignored
 case "#.*" => Token.Ignored 
 ```
+
+## Benchmarks
+
+Runtime benchmarks are **not** run automatically in CI on push or pull requests. They can be triggered manually:
+
+- **GitHub Actions** – go to *Actions → Runtime Benchmark → Run workflow* and select the branch.
+- **Locally** – run all benchmarks (JMH + Python) from the repository root:
+
+  ```bash
+  ./mill benchmarks.runAll
+  ```
+
+  Or run individual JMH suites directly:
+
+  ```bash
+  ./mill benchmarks.alpaca.runJmh
+  ./mill benchmarks.fastparse.runJmh
+  ```
+
+  Results are written to `benchmarks/outputs/`.
 
 ## Building from Source
 
