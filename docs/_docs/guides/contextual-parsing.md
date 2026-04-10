@@ -142,7 +142,7 @@ counters.
 If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
 `given` instance of `BetweenStages` for a trait your context extends.
 
-```scala 3 sc:nocompile
+```scala sc:nocompile
 import alpaca.*
 import alpaca.internal.lexer.BetweenStages
 
@@ -154,6 +154,7 @@ given BetweenStages[IndentTracking] = (token, matched, ctx) =>
   else if matched == "\n" then ctx.indentLevel = 0
 
 case class IndentCtx(
+  var text: CharSequence = "",
   var indentLevel: Int = 0,
 ) extends IndentTracking
 ```
