@@ -6,7 +6,7 @@ import alpaca.Token as TokenDef
 
 import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.annotation.switch
+import scala.annotation.{publicInBinary, switch}
 import scala.reflect.NameTransformer
 
 // $COVERAGE-OFF$
@@ -150,7 +150,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       '{
         {
           new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
-            override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
+            @publicInBinary
+            override private[alpaca] val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
             override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 

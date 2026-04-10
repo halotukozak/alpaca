@@ -5,6 +5,7 @@ package lexer
 import alpaca.internal.lexer.ErrorHandling.Strategy
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.annotation.publicInBinary
 import scala.collection.mutable
 
 /**
@@ -26,7 +27,8 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
   final type Lexeme = alpaca.internal.lexer.Lexeme[?, ?] withFields LexemeFields
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
-  def tokens: List[Token[?, Ctx, ?]]
+  @publicInBinary
+  private[alpaca] def tokens: List[Token[?, Ctx, ?]]
 
   /**
    * Provides dynamic access to tokens by name.
