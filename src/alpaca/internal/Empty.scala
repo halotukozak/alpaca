@@ -1,6 +1,8 @@
 package alpaca
 package internal
 
+import scala.annotation.implicitNotFound
+
 /**
  * A type class for creating empty instances of types.
  *
@@ -9,6 +11,7 @@ package internal
  *
  * @tparam T the type to create empty instances of
  */
+@implicitNotFound("${T} should be a case class.")
 private[alpaca] trait Empty[T] extends (() => T)
 
 private[alpaca] object Empty:
@@ -24,8 +27,9 @@ private[alpaca] object Empty:
    */
   // either way it must be inlined for generic classes
   inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
+  // $COVERAGE-OFF$
 
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = supervisedWithLog:
+  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withLog:
     timeoutOnTooLongCompilation()
 
     import quotes.reflect.*
@@ -68,3 +72,4 @@ private[alpaca] object Empty:
       new Empty[T]:
         def apply(): T = $value
     }
+// $COVERAGE-ON$
