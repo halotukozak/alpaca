@@ -18,7 +18,7 @@ import scala.collection.mutable
  * @tparam Ctx the global context type
  */
 transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using betweenStages: BetweenStages[Ctx],
+  using betweenStages: OnTokenMatch[Ctx],
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
 ) extends Selectable:

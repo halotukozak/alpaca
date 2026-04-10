@@ -12,7 +12,7 @@ import scala.reflect.NameTransformer
 // $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
-  betweenStages: Expr[BetweenStages[Ctx]],
+  betweenStages: Expr[OnTokenMatch[Ctx]],
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
