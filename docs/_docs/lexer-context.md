@@ -35,11 +35,12 @@ The snapshot in each lexeme captures the values *after* the token was consumed, 
 ## The LexerCtx Trait
 
 `LexerCtx` is the base trait for all lexer contexts.
-Any custom context must satisfy three rules:
+Any custom context must satisfy two rules:
 
-1. **It must be a case class** -- `LexerCtx` has a `this: Product =>` self-type, and the auto-derivation machinery requires a `Product` instance. Regular classes do not work (yet?).
-2. **It must include `var text: CharSequence = ""`** -- `LexerCtx` declares this field as abstract. The lexer sets it to the remaining input before each match. Forgetting it produces a compile error.
-3. **All fields must have default values** -- The `Empty[T]` derivation macro reads default parameter values from the companion object to construct the initial context. If any parameter lacks a default, the macro fails at compile time.
+1. **It must be a case class** -- `LexerCtx` has a `this: Product =>` self-type, and the auto-derivation machinery requires a `Product` instance. Regular classes do not work.
+2. **All fields must have default values** -- The `Empty[T]` derivation macro reads default parameter values from the companion object to construct the initial context. If any parameter lacks a default, the macro fails at compile time.
+
+> **Warning:** Do not declare `var text`, `var lastLexeme`, or `var lastRawMatched` in your case class. These fields are provided by the `LexerCtx` trait and managed internally by the lexer. Redeclaring them shadows the internal fields and breaks tokenization.
 
 Mutable state fields must be `var`, not `val` -- the lexer assigns to them directly.
 Exception: a field of a mutable collection type (e.g., `scala.collection.mutable.Stack`) can be `val` because you mutate the collection itself, not the reference.
@@ -52,8 +53,7 @@ To track additional state, define a case class extending `LexerCtx` with your ex
 import alpaca.*
 
 case class StateCtx(
-  var text: CharSequence = "",   // required
-  var count: Int = 0,            // custom state
+  var count: Int = 0,
 ) extends LexerCtx
 
 val Lexer = lexer[StateCtx]:
@@ -83,7 +83,6 @@ You can read and write any `var` field on it:
 import alpaca.*
 
 case class IndentCtx(
-  var text: CharSequence = "",
   var indent: Int = 0,
   var depth: Int = 0,
 ) extends LexerCtx
@@ -136,7 +135,6 @@ For custom contexts, all case class fields appear in the snapshot:
 import alpaca.*
 
 case class MyCtx(
-  var text: CharSequence = "",
   var count: Int = 0,
 ) extends LexerCtx
 

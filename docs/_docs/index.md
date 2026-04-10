@@ -155,7 +155,6 @@ import alpaca.*
 import scala.collection.mutable.Stack
 
 case class BraceContext(
-  var text: CharSequence = "",
   val braces: Stack[Char] = Stack()
 ) extends LexerCtx
 
