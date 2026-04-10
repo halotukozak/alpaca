@@ -20,7 +20,7 @@ At runtime, `parse()` executes the precomputed table. No grammar analysis happen
 
 Extend `Parser` for a stateless parser, or `Parser[Ctx]` to carry custom state through reductions. The required entry point is `val root: Rule[R]` -- the macro uses this as the start symbol.
 
-```scala sc:nocompile sc-name:BrainParser.scala sc-compile-with:BrainLexer.scala,BrainAST.scala
+```scala sc:nocompile
 import alpaca.*
 
 object BrainParser extends Parser:
@@ -123,7 +123,7 @@ Both operators also work on terminals, not only rules.
 
 Call `parse(lexemes)` where `lexemes` comes from `tokenize()`:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala,BrainAST.scala
+```scala sc:nocompile
 val (_, lexemes) = BrainLexer.tokenize("++[>+<-]")
 val (ctx, ast) = BrainParser.parse(lexemes)
 // ctx: ParserCtx.Empty

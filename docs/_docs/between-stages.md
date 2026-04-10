@@ -4,7 +4,7 @@ The Alpaca lexer and parser are two independent stages connected by a single dat
 
 Most programs need nothing more than this:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala
+```scala sc:nocompile
 val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
 val (_, ast) = BrainParser.parse(lexemes)
 ```

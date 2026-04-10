@@ -13,7 +13,7 @@ When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `Par
 
 When you extend `Parser` without a type parameter, the parser uses `ParserCtx.Empty`. No context definition is needed:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainAST.scala
+```scala sc:nocompile
 import alpaca.*
 
 object BrainParser extends Parser:    // uses ParserCtx.Empty
@@ -49,7 +49,7 @@ Four rules apply:
 
 The `ctx` identifier is available inside every `rule { case ... }` body, typed as your specific `ParserCtx` subtype:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainAST.scala
+```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable
 

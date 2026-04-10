@@ -36,7 +36,7 @@ The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your l
 
 BrainFuck> has the eight standard BrainFuck commands (`>`, `<`, `+`, `-`, `.`, `,`, `[`, `]`) plus function definitions (`name(body)`) and function calls (`name!`). Everything else is a comment.
 
-```scala sc:nocompile sc-name:BrainLexer.scala
+```scala sc:nocompile
 import alpaca.*
 
 case class BrainLexContext(
@@ -79,7 +79,7 @@ Pattern order matters: `"\\."` (literal dot — the print command) must appear b
 
 Try it:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala
+```scala sc:nocompile
 val (ctx, lexemes) = BrainLexer.tokenize("foo(++)")
 require(ctx.brackets == 0 && ctx.squareBrackets == 0, "Mismatched brackets")
 println(lexemes.map(_.name))
@@ -90,7 +90,7 @@ println(lexemes.map(_.name))
 
 Before writing the parser, define the tree structure it will produce. BrainFuck> programs are sequences of instructions — some contain nested lists (loops, function bodies):
 
-```scala sc:nocompile sc-name:BrainAST.scala
+```scala sc:nocompile
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
@@ -105,7 +105,7 @@ enum BrainAST:
 
 The parser turns a flat list of lexemes into a nested `BrainAST`:
 
-```scala sc:nocompile sc-name:BrainParser.scala sc-compile-with:BrainLexer.scala,BrainAST.scala
+```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable
 
@@ -157,7 +157,7 @@ Things to note:
 
 BrainFuck operates on an array of 256 bytes with a movable pointer. Functions are stored by name and called by looking them up:
 
-```scala sc:nocompile sc-name:Eval.scala sc-compile-with:BrainAST.scala
+```scala sc:nocompile
 import scala.collection.mutable
 
 class Memory(
@@ -187,7 +187,7 @@ extension (ast: BrainAST)
 
 Wire the three stages together:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala,BrainAST.scala,Eval.scala
+```scala sc:nocompile
 import alpaca.*
 
 @main def run(): Unit =

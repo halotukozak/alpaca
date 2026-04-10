@@ -1,5 +1,7 @@
 index: index.md
 subsection:
+  - title: Getting Started
+    page: getting-started.md
   - title: Lexer
     subsection:
       - title: Lexer
