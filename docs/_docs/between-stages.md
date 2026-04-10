@@ -1,114 +1,66 @@
 # Between Stages
 
-The Alpaca lexer and parser are two independent compilation stages connected by a single data contract: the `Lexeme`.
-When you call `tokenize()`, the lexer matches tokens against the input, runs the `BetweenStages` hook after each match, and collects the results into a `List[Lexeme]`.
-When you call `parse()`, the parser consumes that list.
-The `BetweenStages` hook is responsible for advancing the text cursor, constructing each lexeme with its context snapshot, and applying any custom side effects you configure.
+The Alpaca lexer and parser are two independent stages connected by a single data type: the `Lexeme`. Call `tokenize()` to get a list of lexemes, then pass that list to `parse()`.
 
-Understanding this boundary helps you connect the two stages correctly and, when needed, customize what happens between them.
+Most programs need nothing more than this:
 
-Most Alpaca programs only need one thing from this layer: pass `tokenize().lexemes` to `parse()`.
-The rest of this page explains what is inside those lexemes, how the context state is embedded in each one,
-and how to extend the pipeline when the defaults are not enough.
+```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala
+val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
+val (_, ast) = BrainParser.parse(lexemes)
+```
+
+This page explains what is inside those lexemes and how the data flows between stages.
 
 ## Connecting Lexer Output to Parser Input
 
-The `tokenize()` method returns a named tuple:
-
-```
-(ctx: Ctx, lexemes: List[Lexeme])
-```
-
-The `lexemes` component is the `List[Lexeme]` that the parser expects.
-You can destructure or access it by name:
+The `tokenize()` method returns a named tuple `(ctx: Ctx, lexemes: List[Lexeme])`:
 
 ```scala sc:nocompile
 import alpaca.*
 
-// tokenize() returns a named tuple: (ctx: Ctx, lexemes: List[Lexeme])
-val (ctx, lexemes) = Lexer.tokenize("3 + 4 * 2")
+val (ctx, lexemes) = BrainLexer.tokenize("++[>+<-].")
 
-// Pass the lexeme list to the parser
-val result = Parser.parse(lexemes)
+// ctx holds the final lexer context state
+// lexemes holds the matched tokens (Token.Ignored entries are excluded)
+
+val (_, ast) = BrainParser.parse(lexemes)
 ```
 
-The parser accepts `List[Lexeme[?, ?]]` -- the type refinement from the tokenization result is widened at the `parse()` call site.
-The parser appends `Lexeme.EOF` internally before processing begins.
+The parser accepts `List[Lexeme[?, ?]]` and appends `Lexeme.EOF` internally before processing begins. You do not need to add an end-of-input marker yourself.
 
-The final context (`ctx`) is also useful after tokenization: it holds the accumulated state from all rule bodies (e.g., the final line count, the last recorded indentation level).
-You can inspect it before or after calling `parse()` -- the parser does not modify it.
-
-See the [Lexer](lexer.html) page for how to define a lexer and the token types it accepts.
-
-## Custom BetweenStages
-
-The default `BetweenStages[LexerCtx]` handles cursor advancement, snapshot construction, and context updates for all standard use cases.
-Customize it only when you need per-token side effects beyond what context fields can express -- for example, writing to an external log, emitting metrics, or computing aggregate statistics that must update outside the context object.
-
-The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTracking` traits work.
-It requires a trait (not a case class) so that the auto-composition macro can discover your hook by inspecting the context's linearized parent types at compile time.
-This means one `given` definition covers every case class that extends your trait -- you write the hook once and reuse it across contexts.
-
-1. Define a custom **trait** extending `LexerCtx`.
-2. Provide `given BetweenStages[YourTrait]` in that trait's **companion object**.
-3. Have your case class extend the trait.
-4. The `auto` macro at compile time finds all `BetweenStages` instances from parent traits and composes them automatically.
+The final context (`ctx`) is useful for post-tokenization checks. For example, the BrainFuck lexer tracks bracket depth — after tokenization, you can verify all brackets are balanced:
 
 ```scala sc:nocompile
-import alpaca.*
-
-// Step 1: Trait extending LexerCtx
-trait IndentTracking extends LexerCtx:
-  this: Product =>
-  var indentLevel: Int
-
-// Step 2: given in TRAIT COMPANION (not case class companion)
-object IndentTracking:
-  given BetweenStages[IndentTracking] = (token, matcher, ctx) =>
-    if matcher.group(0) == "\n" then ctx.indentLevel = 0
-
-// Step 3: Case class extends both
-case class MyCtx(
-  var indentLevel: Int = 0,
-) extends LexerCtx with IndentTracking
-
-// Step 4: Pass MyCtx to lexer -- auto composition happens at compile time
-val Lexer = lexer[MyCtx]:
-  case "\\n" => Token.Ignored
-  case id @ "[a-z]+" => Token["ID"](id)
+val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
+require(ctx.squareBrackets == 0, "Mismatched brackets")
+val (_, ast) = BrainParser.parse(lexemes)
 ```
-
-Do **not** define `given BetweenStages[MyCtx]` directly on the concrete case class.
-Doing so bypasses the auto-composition mechanism: the lexer will use your hook but skip the default hook that advances the text cursor, and tokenization will loop indefinitely.
-Always put the `given` in a **trait companion**, not a case class companion.
-
-For reference, the `BetweenStages` type is a function:
-
-```scala sc:nocompile
-import alpaca.*
-
-// BetweenStages[Ctx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
-// token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken
-// matcher: java.util.regex.Matcher  -- the successful match for this token
-// ctx:     Ctx  -- the current context (mutable, updated in place)
-```
-
-Note: The `BetweenStages` trait may be renamed in a future release (see [GitHub #235](https://github.com/alpaca-scala/alpaca/issues/235)).
-
-See the [Lexer Context](lexer-context.html) page for the full reference on `BetweenStages` composition and the built-in `PositionTracking` and `LineTracking` traits.
 
 ## Data Flow Summary
 
-The following sequence describes what happens each time `tokenize()` processes input:
+Each call to `tokenize()` follows this sequence:
 
-1. The lexer attempts to match the remaining input against each rule pattern in order. The first match wins. If no pattern matches, a `RuntimeException` is thrown with the unexpected character.
-2. `BetweenStages` runs: it advances the text cursor (`ctx.text`), applies any rule-body context changes that ran before it was called, and takes a snapshot of all context fields.
-3. If the matched token is a `DefinedToken` (any `Token["NAME"]` with or without a value), a `Lexeme` is constructed with the token's name, value, and the snapshot, then appended to the output list.
-4. If the matched token is `Token.Ignored`, `BetweenStages` still runs (keeping position, line, and custom counters current) but no `Lexeme` is produced. The token is invisible to the parser.
-5. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
-6. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
+1. The lexer matches the remaining input against each pattern in order. The first match wins. If no pattern matches, the `ErrorHandling` strategy runs (default: throw a `RuntimeException`).
+2. The rule body executes (e.g., `ctx.squareBrackets += 1`).
+3. The `BetweenStages` hook runs: it advances the text cursor, applies tracking updates (position, line), and takes a snapshot of all context fields.
+4. If the token is a `DefinedToken` (any `Token["NAME"]`), a `Lexeme` is built from the name, value, and snapshot, then appended to the output list.
+5. If the token is `Token.Ignored`, `BetweenStages` still runs (keeping position and line current) but no `Lexeme` is produced. The token is invisible to the parser.
+6. This repeats until the input is consumed. `tokenize()` returns `(ctx, lexemes)`.
+7. `parse(lexemes)` receives the list, appends `Lexeme.EOF`, and runs the grammar.
 
-The `Lexeme` list is immutable after `tokenize()` returns -- nothing that happens in `parse()` alters the lexeme data.
-If you need to inspect what the lexer produced before parsing, iterate over `lexemes` freely; the parser will see exactly the same list.
+The lexeme list is immutable after `tokenize()` returns. The parser does not alter the lexeme data.
 
-See the [Parser](parser.html) page for how to define grammar rules, productions, and EBNF operators that consume the lexeme list.
+<details>
+<summary>Under the hood: the BetweenStages hook</summary>
+
+`BetweenStages[Ctx]` is a function `(Token[?, Ctx, ?], String, Ctx) => Unit` called after every successful match. The default implementation for `LexerCtx`:
+
+1. Runs the token's context modification function (your rule body side effects)
+2. Builds a `Lexeme` with `name`, `value`, and a `fields` map containing all context case class fields
+3. Replaces the `text` field in the snapshot with the matched string (not the remaining input)
+
+For contexts extending `PositionTracking` or `LineTracking`, additional hooks run automatically via compile-time composition (see [Lexer Context](lexer-context.md#the-betweenstages-hook)).
+
+</details>
+
+See [Lexer](lexer.md) for lexer definition, [Lexer Context](lexer-context.md) for custom contexts and tracking traits, and [Parser](parser.md) for grammar rules.
