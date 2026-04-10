@@ -1,23 +1,24 @@
 # Guide: Contextual Parsing
 
-Contextual parsing refers to the ability of a lexer or parser to change its behavior or maintain state based on the input it has already seen.
-Alpaca provides powerful mechanisms for this through `LexerCtx`, `ParserCtx`, and the `BetweenStages` hook.
+Contextual parsing refers to the ability of a lexer or parser to change its behavior or maintain state based on the
+input it has already seen. Alpaca provides powerful mechanisms for this through `LexerCtx`, `ParserCtx`, and the
+`BetweenStages` hook.
 
 ## 1. Lexer-Level Context
 
 Most contextual logic in Alpaca happens at the lexer level.
-Since the lexer tokenizes the entire input before the parser starts, the lexer context is the primary place to track state that affects tokenization.
+Since the lexer tokenizes the entire input before the parser starts, the lexer context is the primary place to track
+state that affects tokenization.
 
-### Exaple: Brace Matching & Nesting
+### Example: Brace Matching & Nesting
 
 You can use a context to track nesting levels of braces, parentheses, or brackets.
 
-```scala
+```scala 3
 import alpaca.*
-import scala.collection.mutable.Stack
+import scala.collection.mutable
 
 case class BraceCtx(
-  var text: CharSequence = "",
   stack: mutable.Stack[String] = mutable.Stack()
 ) extends LexerCtx
 
@@ -33,13 +34,14 @@ val MyLexer = lexer[BraceCtx]:
 
 ## 2. Accessing Lexer Context in the Parser
 
-Every `Lexeme` matched by the lexer carries a "snapshot" of the `LexerCtx` as it was at the moment that specific token was matched.
+Every `Lexeme` matched by the lexer carries a "snapshot" of the `LexerCtx` as it was at the moment that specific token
+was matched.
 
 This is extremely useful for error reporting or for logic that depends on when a token appeared.
 
-```scala
+```scala 3
 val MyLexer = lexer:
-  case id @ "[A-Z]+" => Token["ID"](id)
+  case id@"[A-Z]+" => Token["ID"](id)
 
 object MyParser extends Parser:
   val root = rule:
@@ -56,7 +58,7 @@ object MyParser extends Parser:
 `ParserCtx` is for maintaining state during the reduction process.
 This is where you build symbol tables, track variable declarations, or perform type checking.
 
-```scala
+```scala 3
 case class MyParserCtx(var symbols: Map[String, Type] = Map()) extends ParserCtx
 
 object MyParser extends Parser[MyParserCtx]:
@@ -66,58 +68,87 @@ object MyParser extends Parser[MyParserCtx]:
   val Decl = rule:
     case (MyLexer.VAR(_), MyLexer.ID(id), MyLexer.TYPE(t)) =>
       ctx.symbols += (id.value -> t.value)
-      // ...
+// ...
 ```
 
 ## 4. Mode Switching (Lexical Feedback)
 
-Sometimes you need to change how the lexer behaves based on what it just matched. For example, when parsing a string with interpolation:
-`"Hello ${user.name}!"`
+Sometimes you need to change how the lexer behaves based on what it just matched. For example, when parsing a string
+with interpolation: `"Hello ${user.name}!"`
 
-While Alpaca doesn't support "real-time" feedback from the parser to the lexer (as the lexer finishes first), you can implement modes within the lexer using context state.
+While Alpaca doesn't support "real-time" feedback from the parser to the lexer (as the lexer finishes first), you can
+implement modes within the lexer using context state.
 
-```scala
-case class ModeCtx(var inString: Boolean = false, var text: CharSequence = "") extends LexerCtx
+//ten przyklad jest zly bo nie dziala
+[//]: # (```scala)
 
-val modeLexer = lexer[ModeCtx]:
-  case "\"" => 
-    ctx.inString = !ctx.inString
-    Token["QUOTE"]
-  
-  case "[a-z]+" if !ctx.inString => Token["KEYWORD"]
-  case "[^\"]+" if ctx.inString  => Token["STRING_CONTENT"]
-```
+[//]: # (case class ModeCtx&#40;var inString: Boolean = false&#41; extends LexerCtx)
+
+[//]: # ()
+[//]: # (val modeLexer = lexer[ModeCtx]:)
+
+[//]: # (  case "\"" =>)
+
+[//]: # (    ctx.inString = !ctx.inString)
+
+[//]: # (    Token["QUOTE"])
+
+[//]: # ()
+[//]: # (  case "[a-z]+" if !ctx.inString => Token["KEYWORD"])
+
+[//]: # (  case "[^\"]+" if ctx.inString => Token["STRING_CONTENT"])
+
+[//]: # (```)
 
 ## 5. The `BetweenStages` Hook
 
 The `BetweenStages` hook is the internal engine that powers context updates.
-It is a function called by Alpaca after **every** token match (including `Token.Ignored`) but **before** the next match starts.
+It is a function called by Alpaca after **every** token match (including `Token.Ignored`) but **before** the next match
+starts.
 
 Its signature is conceptually:
 `(Token, Matcher, Ctx) => Unit`
 
 ### Automatic Updates
-By default, Alpaca uses `BetweenStages` to automatically update the `text` field in your context (to advance past the matched string).
-If your context extends `LineTracking` or `PositionTracking`, the defined hooks also increments `line` and `position` counters.
+
+By default, Alpaca uses `BetweenStages` to automatically update the `text` field in your context (to advance past the
+matched string).
+If your context extends `LineTracking` or `PositionTracking`, the defined hooks also increments `line` and `position`
+counters.
 
 ### Customizing `BetweenStages`
-If you need complex logic to run after every match regardless of which token was matched, you can provide a custom `given` instance of `BetweenStages`.
 
-```scala
+If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
+`given` instance of `BetweenStages`.
 
-trait CustomTrait extends LexerCtx:
-  var indentLevel: Int
 
-case class CustomCtx(var text: CharSequence = "", var indentLevel: Int = 0) extends CustomTrait derives BetweenStages
+//todo: ten przyklad nie dizala poprawnie
+[//]: # (```scala 3)
 
-given BetweenStages[CustomTrait] = new:
-  def apply(token: Token[?, MyCtx, ?], matcher: Matcher, ctx: MyCtx): Unit =
-    // Custom logic to update indentLevel based on the matched token
-    token match
-      case Token["INDENT"](_) => ctx.indentLevel += 1
-      case Token["DEDENT"](_) => ctx.indentLevel -= 1
-      case _ => ()
-```
+[//]: # ()
+[//]: # (trait CustomTrait extends LexerCtx:)
+
+[//]: # (  var indentLevel: Int)
+
+[//]: # ()
+[//]: # (case class CustomCtx&#40;var indentLevel: Int = 0&#41; extends CustomTrait derives BetweenStages)
+
+[//]: # ()
+[//]: # (given BetweenStages[CustomTrait] = new:)
+
+[//]: # (  def apply&#40;token: Token[?, MyCtx, ?], matcher: Matcher, ctx: MyCtx&#41;: Unit =)
+
+[//]: # (    // Custom logic to update indentLevel based on the matched token)
+
+[//]: # (    token match)
+
+[//]: # (      case Token["INDENT"]&#40;_&#41; => ctx.indentLevel += 1)
+
+[//]: # (      case Token["DEDENT"]&#40;_&#41; => ctx.indentLevel -= 1)
+
+[//]: # (      case _ => &#40;&#41;)
+
+[//]: # (```)_
 
 ## Summary of Data Flow
 
