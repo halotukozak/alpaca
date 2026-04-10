@@ -5,6 +5,7 @@ package parser
 import alpaca.internal.parser.ParseAction.{Reduction, Shift}
 
 import scala.annotation.tailrec
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 
 /**
@@ -27,7 +28,15 @@ private[parser] object ParseTable:
      */
     def apply(state: Int, symbol: Symbol): ParseAction =
       try table((state, symbol))
-      catch case e: NoSuchElementException => throw AlgorithmError(s"No action for state $state and symbol $symbol")
+      catch
+        case _: NoSuchElementException =>
+          val expected = table.keysIterator
+            .collect:
+              case (`state`, sym) => sym.name
+            .to(SortedSet)
+            .mkString(", ")
+
+          throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -37,9 +46,10 @@ private[parser] object ParseTable:
      *
      * @return a Csv representation of the parse table
      */
-    def toCsv(using DebugSettings): Csv =
+    // it shouldn't be eager
+    def toCsv(using Log): Csv =
       val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-      val states = table.keysIterator.map(_.state).distinct.toList.sorted
+      val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
 
       val headers = show"State" :: symbols.map(_.show)
       val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
@@ -57,15 +67,11 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  def apply(
-    productions: List[Production],
-    conflictResolutionTable: ConflictResolutionTable,
-  )(using quotes: Quotes,
-  )(using DebugSettings,
-  ): ParseTable =
-    import quotes.reflect.report
-
+  // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
+  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
+    logger.trace("building first set...")
     val firstSet = FirstSet(productions)
+    logger.trace("building states and parse table...")
     var currStateId = 0
     val states =
       mutable.ListBuffer(
@@ -84,6 +90,7 @@ private[parser] object ParseTable:
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
+              logger.trace(show"Conflict resolved: $action")
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
@@ -93,17 +100,18 @@ private[parser] object ParseTable:
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
                 case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
-    @tailrec def toPath(stateId: Int, acc: List[Symbol] = Nil): List[Symbol] =
+    @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
         val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
         if sourceStateId == stateId then
-          debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
+          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
+      logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
@@ -123,7 +131,7 @@ private[parser] object ParseTable:
 
   given Showable[ParseTable] = Showable: table =>
     val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-    val states = table.keysIterator.map(_.state).distinct.toList.sorted
+    val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
@@ -150,6 +158,7 @@ private[parser] object ParseTable:
     result.append('\n')
     result.result()
 
+  // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
@@ -163,7 +172,7 @@ private[parser] object ParseTable:
         Symbol.spliceOwner,
         Symbol.freshName("builder"),
         TypeRepr.of[BuilderTpe],
-        Flags.Mutable,
+        Flags.Synthetic,
         Symbol.noSymbol,
       )
 
@@ -172,14 +181,14 @@ private[parser] object ParseTable:
       val builder = Ref(symbol).asExprOf[BuilderTpe]
 
       val additions = entries
-        .map(entry =>
+        .map: entry =>
           '{
             def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
             avoidTooLargeMethod()
-          }.asTerm,
-        )
+          }.asTerm
         .toList
 
       val result = '{ $builder.result() }.asTerm
 
       Block(valDef :: additions, result).asExprOf[ParseTable]
+// $COVERAGE-ON$

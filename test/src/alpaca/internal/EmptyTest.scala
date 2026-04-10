@@ -16,7 +16,7 @@ final class EmptyTest extends AnyFunSuite with Matchers:
 
   case class Outer(inner: Inner = Inner(), tags: List[String] = Nil, opt: Option[Int] = None) derives Empty
 
-  case class Box[T](value: Option[T] = None) derives Empty
+  case class Box[T](value: Option[T] = None)
 
   case class Mixed(a: Int, b: String = "b") // has a param without default -> should fail
 
