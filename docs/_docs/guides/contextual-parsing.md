@@ -142,25 +142,25 @@ counters.
 If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
 `given` instance of `BetweenStages` for a trait your context extends.
 
-```scala sc:nocompile
+```scala 3 sc:nocompile
 import alpaca.*
 import alpaca.internal.lexer.BetweenStages
 
 trait IndentTracking extends LexerCtx:
   var indentLevel: Int
 
-given BetweenStages[IndentTracking] = (token, matched, ctx) =>
-  if matched == "\t" then ctx.indentLevel += 1
-  else if matched == "\n" then ctx.indentLevel = 0
+given BetweenStages[IndentTracking] = 
+    (_, "\t", ctx) => ctx.indentLevel += 1
+    (_, "\n", ctx) => ctx.indentLevel = 0
+    (_, _, _) => 
 
 case class IndentCtx(
-  var text: CharSequence = "",
   var indentLevel: Int = 0,
 ) extends IndentTracking
 ```
 
 Alpaca automatically composes `BetweenStages` instances from all parent traits of your context type. The `IndentTracking`
-hook above will be combined with the base `LexerCtx` hook that advances `text`.
+hook above will be combined with the base `LexerCtx` hook.
 
 ## Summary of Data Flow
 
