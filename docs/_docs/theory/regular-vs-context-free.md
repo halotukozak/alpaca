@@ -34,7 +34,7 @@ Regular languages **cannot** express:
 
 Consider the language of balanced square brackets: `[]`, `[[]]`, `[[[]]]`, etc. To recognize this language, a machine must count how many opening brackets it has seen and verify the same number of closing brackets follows. A finite automaton has a fixed number of states — it cannot count to an arbitrary depth.
 
-This is exactly why the BrainFuck lexer can *count* brackets (using `ctx.squareBrackets`) but cannot *validate nesting structure*. The lexer tracks a counter in mutable state — that goes beyond what a pure finite automaton can do. The nesting structure (`[` matched with `]`) is handled by the parser's grammar rules, which have a stack.
+The BrainFuck lexer can track bracket *depth* (using `ctx.squareBrackets`) and reject some malformed inputs — an unmatched `]` or leftover `[` at end of input. But that is still not full context-free parsing: the lexer emits a flat token stream and does not build nested structure. The parser's grammar rules and parse stack turn `[` ... `]` sequences into the nested `While` nodes in the AST.
 
 <details>
 <summary>The pumping lemma (informal)</summary>

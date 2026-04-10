@@ -23,7 +23,7 @@ EBNF is purely syntactic sugar — it generates the same language as the equival
 
 ## Alpaca's EBNF Operators
 
-Alpaca provides two EBNF operators on any `Rule[R]`:
+Alpaca provides two EBNF operators that work on both `Rule[R]` and terminals:
 
 ### `.List` — Zero or More
 
@@ -93,7 +93,7 @@ OperationList → ε
 OperationList → OperationList Operation
 ```
 
-The same `OperationList` synthetic non-terminal is reused wherever `Operation.List` appears.
+In practice, the macro generates a fresh synthetic non-terminal (with a randomized name) for each `.List` occurrence. The `OperationList` name above is schematic — the actual generated names are internal.
 
 ## When to Use EBNF vs Explicit Recursion
 
@@ -124,10 +124,10 @@ The BrainFuck parser uses `.List` in three places:
 | Rule | EBNF equivalent | Purpose |
 |------|----------------|---------|
 | `root → Operation.List` | `root → {Operation}` | Top-level program: zero or more operations |
-| `While → [ Operation.List ]` | `While → [ {Operation} ]` | Loop body: zero or more operations |
-| `FunctionDef → name ( Operation.List )` | `FunctionDef → name ( {Operation} )` | Function body |
+| `While → jumpForward Operation.List jumpBack` | `While → "[" {Operation} "]"` | Loop body: zero or more operations |
+| `FunctionDef → name "(" Operation.List ")"` | `FunctionDef → name "(" {Operation} ")"` | Function body |
 
-All three reuse the same synthetic `OperationList` non-terminal.
+All three expand to the same kind of synthetic list recursion over `Operation`.
 
 ## Cross-links
 
