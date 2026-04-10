@@ -4,7 +4,7 @@ package lexer
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
-import scala.annotation.{compileTimeOnly, unused}
+import scala.annotation.{compileTimeOnly, publicInBinary, unused}
 
 /**
  * Type alias for context manipulation functions.
@@ -78,10 +78,12 @@ private[lexer] object TokenInfo:
 sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
 
   /** Token information including name and pattern. */
-  val info: TokenInfo
+  @publicInBinary
+  private[alpaca] val info: TokenInfo
 
   /** Function to update the context when this token is matched. */
-  val ctxManipulation: CtxManipulation[Ctx @uv]
+  @publicInBinary
+  private[alpaca] val ctxManipulation: CtxManipulation[Ctx @uv]
 
 /**
  * A token that produces a value when matched.
@@ -97,9 +99,9 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  * @param remapping function to extract value from context
  */
 //todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
-final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
-  info: TokenInfo,
-  ctxManipulation: CtxManipulation[Ctx @uv],
+private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
+  @publicInBinary info: TokenInfo,
+  @publicInBinary ctxManipulation: CtxManipulation[Ctx @uv],
   remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
   type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
@@ -122,9 +124,9 @@ final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
  * @param info token information
  * @param ctxManipulation function to update context
  */
-final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
-  info: TokenInfo,
-  ctxManipulation: CtxManipulation[Ctx @uv],
+private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
+  @publicInBinary info: TokenInfo,
+  @publicInBinary ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
 
 private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =

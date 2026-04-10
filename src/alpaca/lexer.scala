@@ -4,7 +4,7 @@ import alpaca.internal.*
 import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, publicInBinary}
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -90,7 +90,7 @@ object Token:
 transparent inline def ctx(using c: LexerCtx): c.type = c
 
 /**
- * Base trait for lexer global context.
+ * Trait for the global context used during tokenization.
  *
  * The global context maintains state during lexing, including the current
  * position in the input, the last matched token, and the remaining text to process.
@@ -99,14 +99,26 @@ transparent inline def ctx(using c: LexerCtx): c.type = c
 trait LexerCtx:
   this: Product =>
 
-  /** The last lexeme that was created. */
-  var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
+  /**
+   * The last lexeme that was created.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
 
-  /** The raw string that was matched for the last token. */
-  var lastRawMatched: String = compiletime.uninitialized
+  /**
+   * The raw string that was matched for the last token.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var lastRawMatched: String = compiletime.uninitialized
 
-  /** The remaining text to be tokenized. */
-  var text: CharSequence = compiletime.uninitialized
+  /**
+   * The remaining text to be tokenized.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var text: CharSequence = compiletime.uninitialized
 
 object LexerCtx:
 
