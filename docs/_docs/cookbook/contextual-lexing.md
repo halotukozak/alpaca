@@ -60,7 +60,7 @@ import alpaca.*
 val FunctionCall: Rule[BrainAST] = rule:
   case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
     // name.value: String -- the function name
-    // name.position: Int -- character position (if lexer uses PositionTracking)
+    // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
     // name.line: Int -- line number (if lexer uses LineTracking)
     BrainAST.FunctionCall(name.value)
 ```
@@ -112,11 +112,16 @@ By default, the lexer throws on unmatched input. You can customize this with an 
 import alpaca.*
 import alpaca.internal.lexer.ErrorHandling
 
-// Skip unrecognized characters silently
+// Option A: skip unrecognized characters silently
 given ErrorHandling[BrainLexContext] = _ =>
   ErrorHandling.Strategy.IgnoreChar
+```
 
-// Or stop gracefully, returning what was tokenized so far
+```scala sc:nocompile
+import alpaca.*
+import alpaca.internal.lexer.ErrorHandling
+
+// Option B: stop gracefully, returning what was tokenized so far
 given ErrorHandling[BrainLexContext] = _ =>
   ErrorHandling.Strategy.Stop
 ```

@@ -37,7 +37,8 @@ import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
-) extends ParserCtx ```
+) extends ParserCtx
+```
 
 Four rules apply:
 

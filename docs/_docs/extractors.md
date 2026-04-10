@@ -106,13 +106,13 @@ When a terminal extractor binds a variable, the variable is a `Lexeme` carrying 
 { case BrainLexer.functionName(name) =>
     val funcName = name.value      // "foo": String
     val raw = name.text            // "foo": String (same here, but differs for transformed values)
-    val pos = name.position        // Int -- character position from lexer
+    val pos = name.position        // Int -- 1-based column within current line
     val ln = name.line             // Int -- line number from lexer
 }
 ```
 
 Field access is type-safe via the `Selectable` refinement on `Lexeme`. The `position` and `line` fields are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. Custom context fields (e.g., `name.squareBrackets`) are accessible if the lexer context declares them.
 
-**Note:** `position` records the post-match cursor position (after advancing by the token length), not the start position.
+**Note:** `position` is the post-match column within the current line (1-based, resets on newlines). It reflects the cursor after advancing by the token length, not the start of the token.
 
 See [Parser](parser.md) for grammar rules and [Between Stages](between-stages.md) for how lexeme snapshots are constructed.
