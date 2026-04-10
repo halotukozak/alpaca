@@ -194,7 +194,7 @@ Available fields depend on the `LexerCtx` used to build the lexer:
 - Adding `LineTracking` (already included in `LexerCtx.Default`) provides `line`.
 - Custom context fields appear if the lexer context declares them.
 
-See [Between Stages](between-stages.html) for the full Lexeme structure, context snapshot lifecycle, and how positional values are computed.
+See [Between Stages](on-token-match.html) for the full Lexeme structure, context snapshot lifecycle, and how positional values are computed.
 
 ## Accessing Fields on a Bound Lexeme
 
@@ -218,7 +218,7 @@ If the lexer uses `LexerCtx.Default`, all four fields (`value`, `text`, `positio
 Custom context fields (e.g., `id.indentLevel`) are accessible if the lexer context declares them.
 
 **Pitfall:** `position` records the post-match cursor position (after advancing by the token length), not the start position.
-For a token `"42"` starting at column 1, `position` is 3. See [Between Stages](between-stages.html) for the exact semantics.
+For a token `"42"` starting at column 1, `position` is 3. See [Between Stages](on-token-match.html) for the exact semantics.
 
 ---
 

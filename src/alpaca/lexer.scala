@@ -23,7 +23,7 @@ import scala.annotation.{compileTimeOnly, publicInBinary}
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
  * @param rules the lexer rules as a partial function
- * @param betweenStages implicit BetweenStages for context updates
+ * @param betweenStages implicit OnTokenMatch for context updates
  * @param errorHandling implicit ErrorHandling for custom error recovery
  * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
@@ -33,7 +33,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
-  betweenStages: BetweenStages[Ctx],
+  betweenStages: OnTokenMatch[Ctx],
   m: Mirror.Of[Ctx],
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
@@ -129,7 +129,7 @@ object LexerCtx:
     Copyable.derived
 
   /**
-   * Default BetweenStages implementation that updates the context after each match.
+   * Default OnTokenMatch implementation that updates the context after each match.
    *
    * This implementation:
    * - Updates lastRawMatched with the matched text
@@ -137,7 +137,7 @@ object LexerCtx:
    * - Advances the text position
    * - Applies any context modifications
    */
-  given BetweenStages[LexerCtx] =
+  given OnTokenMatch[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
       val fields = ctx.productElementNames.zip(ctx.productIterator).toMap + ("text" -> ctx.lastRawMatched)
