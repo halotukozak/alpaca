@@ -98,13 +98,7 @@ private[parser] object Symbol:
   given [S <: Symbol]: ToExpr[S] with
     def apply(x: S)(using Quotes): Expr[S] =
       x.match
-        case x: NonTerminal => Expr[NonTerminal](x)
-        case x: Terminal => Expr[Terminal](x)
+        case x: NonTerminal => '{ NonTerminal(${ Expr(x.name) }) }
+        case x: Terminal => '{ Terminal(${ Expr(x.name) }) }
       .asInstanceOf[Expr[S]]
-
-  given ToExpr[NonTerminal] with
-    def apply(x: NonTerminal)(using Quotes): Expr[NonTerminal] = '{ NonTerminal(${ Expr(x.name) }) }
-
-  given ToExpr[Terminal] with
-    def apply(x: Terminal)(using Quotes): Expr[Terminal] = '{ Terminal(${ Expr(x.name) }) }
 // $COVERAGE-ON$

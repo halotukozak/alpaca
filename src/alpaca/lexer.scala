@@ -96,9 +96,7 @@ transparent inline def ctx(using c: LexerCtx): c.type = c
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx:
-  this: Product =>
-
+trait LexerCtx extends Product:
   /**
    * The last lexeme that was created.
    * @note This is for internal use only and should not be accessed directly.
@@ -142,9 +140,7 @@ object LexerCtx:
   given BetweenStages[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-      val ctxAsProduct = ctx.asInstanceOf[Product]
-      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
-        ("text" -> ctx.lastRawMatched)
+      val fields = ctx.productElementNames.zip(ctx.productIterator).toMap + ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
     case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
@@ -173,7 +169,6 @@ object LexerCtx:
    * This is the most commonly used context and provides useful information
    * for error reporting.
    *
-   * @param text     the remaining text to tokenize
    * @param position the current character position (1-based)
    * @param line     the current line number (1-based)
    */

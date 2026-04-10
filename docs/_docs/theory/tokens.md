@@ -39,13 +39,10 @@ The word *lexeme* is used throughout this documentation to mean this complete re
 In Alpaca, each matched token is represented as a `Lexeme[Name, Value]`. A lexeme carries four
 pieces of information:
 
-^ todo: it also carries the context
-
 - `name` — the token class name string, e.g., `"NUMBER"` or `"PLUS"`
-- `value` — the extracted value with its Scala type, e.g., `3.14: Double` for NUMBER, `(): Unit`
+- `value` — the extracted value with its Scala type, e.g., `3.14: Double` for NUMBER, `"+": String`
   for PLUS
-- `position` — the character offset at the end of the match
-- `line` — the line number at the end of the match
+- `fields` — a snapshot of the lexer context at match time, accessible as typed fields (e.g., `.position`, `.line`, `.text`)
 
 The tokenization output for a simple expression illustrates this:
 
@@ -68,8 +65,6 @@ Whitespace matches `Token.Ignored` and does not produce a lexeme — it disappea
 ## CalcLexer Token Class Table
 
 The `CalcLexer` running example defines seven token classes:
-
-^ todo: come up a with better example
 
 | Token Class | Regex Pattern       | Value Type | Example Match     |
 |-------------|---------------------|------------|-------------------|

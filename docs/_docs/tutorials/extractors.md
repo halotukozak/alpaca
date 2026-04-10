@@ -22,7 +22,7 @@ case MyLexer.NUM(n) => n.value // n is a Lexem object
 The `Lexem` object contains:
 - `value`: The extracted value (e.g., `Double`, `Int`, `String`).
 - `name`: The name of the token.
-- `fields`: A NamedTuple containing context information (like `line` and `position`). //todo: to juz nieaktualne
+- `fields`: A map containing context field snapshots (like `line` and `position`). Access fields directly via `n.line`, `n.position`, etc.
 
 ### Accessing Context Fields
 You can match directly on context fields if they are available in your lexer context. If such fields are not defined in your custom context, your code will not compile, ensuring type safety.
@@ -71,9 +71,7 @@ case (MyLexer.IF(_), Expr(cond), MyLexer.THEN(_), Stmt(s)) => ...
 
 ## How it Works (Internal)
 
-//ta sekcja pewnie powinna byc jakos ujednolicona
-
-Alpaca's macros analyze these pattern matches at compile-time to:
+Alpaca's macros analyze these pattern matches at compile time to:
 1. Identify the symbols (terminals and non-terminals) involved.
 2. Construct the grammar's production rules.
 3. Generate the parse table.

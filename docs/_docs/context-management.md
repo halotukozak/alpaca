@@ -28,8 +28,7 @@ You can define a custom context by extending `LexerCtx` (and optionally `LineTra
 import alpaca.*
 
 case class MyCtx(
-  var text: CharSequence = "",
-  var braceDepth: Int = 0
+  var braceDepth: Int = 0,
 ) extends LexerCtx
 
 val myLexer = lexer[MyCtx]:

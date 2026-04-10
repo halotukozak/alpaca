@@ -82,8 +82,7 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
   private[alpaca] val info: TokenInfo
 
   /** Function to update the context when this token is matched. */
-  @publicInBinary
-  private[alpaca] val ctxManipulation: CtxManipulation[Ctx @uv]
+  private[lexer] val ctxManipulation: CtxManipulation[Ctx @uv]
 
 /**
  * A token that produces a value when matched.
@@ -100,9 +99,9 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  */
 //todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
 private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
-  @publicInBinary info: TokenInfo,
-  @publicInBinary ctxManipulation: CtxManipulation[Ctx @uv],
-  remapping: (Ctx @uv) => Value,
+  @publicInBinary private[lexer] info: TokenInfo,
+  private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
+  private[lexer] remapping: (Ctx @uv) => Value,
 ) extends Token[Name, Ctx, Value]:
   type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
 
@@ -125,8 +124,8 @@ private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCt
  * @param ctxManipulation function to update context
  */
 private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCtx](
-  @publicInBinary info: TokenInfo,
-  @publicInBinary ctxManipulation: CtxManipulation[Ctx @uv],
+  @publicInBinary private[lexer] info: TokenInfo,
+  private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
 ) extends Token[Name, Ctx, Nothing]
 
 private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =

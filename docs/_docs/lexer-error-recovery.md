@@ -66,7 +66,6 @@ The workaround is to move the condition inside the rule body, after the match:
 import alpaca.*
 
 case class MyCtx(
-  var text: CharSequence = "",
   var someCondition: Boolean = false,
 ) extends LexerCtx
 
