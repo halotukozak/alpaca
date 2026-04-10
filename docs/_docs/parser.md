@@ -97,6 +97,8 @@ For value-bearing tokens, use `binding.value` to access the extracted value.
 For tokens used only for structural matching (operators, punctuation), use `_` to discard the binding.
 
 ```scala sc:nocompile
+import alpaca.*
+
 // Value-bearing token: use binding.value
 { case Lexer.NUMBER(n) => n.value }   // n.value: Int
 
@@ -121,6 +123,8 @@ Non-terminals use the rule name in unapply position.
 Each `Rule[R]` implements `unapply`, so a rule reference in a case branch extracts the value produced by that rule during the parse:
 
 ```scala sc:nocompile
+import alpaca.*
+
 { case (Expr(left), Lexer.PLUS(_), Expr(right)) => left + right }
 // Expr(left): Rule[Int].unapply — extracts the Int produced by the Expr rule
 ```

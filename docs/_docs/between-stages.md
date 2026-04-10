@@ -86,6 +86,8 @@ Always put the `given` in a **trait companion**, not a case class companion.
 For reference, the `BetweenStages` type is a function:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // BetweenStages[Ctx] extends ((Token[?, Ctx, ?], Matcher, Ctx) => Unit)
 // token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken
 // matcher: java.util.regex.Matcher  -- the successful match for this token

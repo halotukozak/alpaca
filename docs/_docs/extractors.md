@@ -99,6 +99,8 @@ val root = rule:
 `.Option` and `.List` also work on terminals (from `DefinedToken`), not only rules:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // Token-level EBNF: zero or more NUMBER lexemes
 val root = rule:
   case Lexer.NUMBER.List(numbers) =>
@@ -118,8 +120,6 @@ The user-visible fields are:
 - **`position: Int`** — character position at match time (post-match; incremented by token length before the snapshot)
 - **`line: Int`** — line number at match time
 - **`fields: Map[String, Any]`** — all context fields at match time, accessible by name
-
-[//]: # (todo: widzę tę sekcję już kolejny raz. ale ma chyba najlepsza treść ze wszysktich. tylko powinna być w innym miejscu)
 
 `Lexeme` extends `Selectable`, so field access is type-safe at compile time — `id.position` returns `Int`, not `Any`.
 The type refinement is encoded in the `tokenize()` return type and flows through to the parser.

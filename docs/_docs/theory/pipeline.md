@@ -20,6 +20,8 @@ Some compilers add a fifth stage — code generation — that emits machine code
 With Alpaca, running the full pipeline takes two calls:
 
 ```scala sc:nocompile
+import alpaca.*
+
 // Full pipeline: source text → typed result
 val (_, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
 // lexemes: List[Lexeme] — NUMBER(3.0), PLUS, NUMBER(4.0), TIMES, NUMBER(2.0)

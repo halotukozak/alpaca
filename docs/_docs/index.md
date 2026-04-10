@@ -111,6 +111,8 @@ object MyParser extends Parser:
 ### Parsing Input
 
 ```scala sc:nocompile sc-compile-with:MyLexer.scala,MyParser.scala
+import alpaca.*
+
 val input = "2 + 3 * 4"
 val (_, lexemes) = MyLexer.tokenize(input)
 val (_, result) = MyParser.parse(lexemes)
@@ -183,6 +185,8 @@ if finalCtx.braces.nonEmpty then
 Tokens can carry values extracted from the input:
 
 ```scala sc:nocompile
+import alpaca.*
+
 case num @ "[0-9]+" => Token["NUM"](num.toInt)
 case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
 ```
@@ -192,6 +196,8 @@ case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["ID"](id)
 Use `Token.Ignored` for whitespace and comments that should be skipped:
 
 ```scala sc:nocompile
+import alpaca.*
+
 case "\\s+" => Token.Ignored
 case "#.*" => Token.Ignored 
 ```
