@@ -61,7 +61,7 @@ body:
       label: Example Usage
       description: How would you like to use this feature? Please provide a code example if possible.
       placeholder: |
-        ```scala
+        ```scala 3
         // Example of how the feature would work
         val MyLexer = lexer:
           case "new_feature" => Token["FEATURE"]
