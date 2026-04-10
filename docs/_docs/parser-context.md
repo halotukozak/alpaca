@@ -5,7 +5,7 @@ Parser context lets you carry mutable state through parsing reductions. Stateles
 <details>
 <summary>Under the hood: context threading</summary>
 
-When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx`, has `Copyable` derived, and generates the context threading code. At runtime, the initial context is created via `Empty[Ctx]` (using default constructor values) and the same object is passed to every rule reduction in a single `parse()` call.
+When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx` and is a case class (Product). A `Copyable` instance is automatically provided for any `ParserCtx & Product` — you do not need to derive it explicitly. At runtime, the initial context is created via `Empty[Ctx]` (using constructor defaults) and the same object is passed to every rule reduction in a single `parse()` call.
 
 </details>
 

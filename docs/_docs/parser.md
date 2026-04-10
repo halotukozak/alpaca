@@ -42,7 +42,7 @@ object BrainParser extends Parser:
   )
 ```
 
-Note: `root` must be a `val`, not a `def`. The macro reads declarations top-to-bottom and skips `def`.
+The macro reads both `val` and `def` declarations, but `val` is the conventional and recommended form for grammar rules.
 
 ## Rules and Productions
 
@@ -149,7 +149,7 @@ import alpaca.*
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case CalcLexer.NUM(n) => n.value },
+    { case CalcLexer.NUMBER(n) => n.value },
   )
   val root = rule:
     case Expr(e) => e
