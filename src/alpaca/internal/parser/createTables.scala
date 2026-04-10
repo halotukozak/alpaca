@@ -156,7 +156,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       .collect:
         case p if p.name != null => (p.name, p)
       .toMap
-    
+
     val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
     call match
       case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
