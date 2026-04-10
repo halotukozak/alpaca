@@ -12,7 +12,9 @@ Alpaca provides `LexerCtx.Default`, which automatically tracks:
 - `line`: Current line number (1-based).
 - `position`: Current character position (1-based).
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val myLexer = lexer: // Uses LexerCtx.Default by default
   case "\n" =>
     // The ctx is automatically updated for line and position
@@ -22,7 +24,9 @@ val myLexer = lexer: // Uses LexerCtx.Default by default
 ### Custom Lexer Context
 You can define a custom context by extending `LexerCtx` (and optionally `LineTracking` or `PositionTracking`).
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 case class MyCtx(
   var text: CharSequence = "",
   var braceDepth: Int = 0
@@ -58,7 +62,9 @@ The `ParserCtx` is used to maintain state during the parsing phase. It's typical
 ### Defining a Parser Context
 Extend the `ParserCtx` trait and provide it to your `Parser`.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 case class MyParserCtx(
   var symbols: Set[String] = Set()
 ) extends ParserCtx
@@ -78,7 +84,7 @@ The lexer and parser maintain **separate** contexts.
 
 When you call `myParser.parse(lexemes)`, the lexemes themselves carry a "snapshot" of the lexer context as it was when the token was matched. This allows the parser to access position information (like line numbers) for error reporting, even though the lexer has finished its job.
 
-```scala
+```scala sc:nocompile
 // In the parser, accessing lexer context info:
 case MyLexer.NUM(n) => 
   println(s"Matched number on line ${n.line}")

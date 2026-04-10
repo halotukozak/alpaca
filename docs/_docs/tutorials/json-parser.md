@@ -5,7 +5,7 @@ structures.
 
 ## 1. Defining the Lexer
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val JsonLexer = lexer:
@@ -26,7 +26,9 @@ val JsonLexer = lexer:
 
 JSON is recursive: a `Value` can be an `Object` or `Array`, which contain more `Value`s.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 object JsonParser extends Parser:
   val root: Rule[Any] = rule:
     case Value(value) => value
@@ -66,7 +68,7 @@ object JsonParser extends Parser:
 
 ## 3. Parsing Input
 
-```scala
+```scala sc:nocompile
 val input = """{"name": "Alice", "age": 30, "tags": ["a", "b"]}"""
 
 val (_, lexemes) = JsonLexer.tokenize(input)
@@ -84,7 +86,9 @@ Alpaca provides `.List` and `.Option` operators on **Rules** to simplify common 
 
 For example, instead of writing explicit recursion for a list of statements:
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val Block: Rule[List[Any]] = rule:
   case Stmt.List(stmts) => stmts
 ```

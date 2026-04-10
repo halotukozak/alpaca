@@ -7,27 +7,25 @@ automatically from your lexer and parser definitions.
 
 Match a token without its value using `_`, or bind it to access the `Lexeme`:
 
-[//]: # (@formatter:off)
-```scala
+```scala sc:nocompile
 case (MyLexer.PLUS(_), Expr(e)) => ...     // ignore token value
 case MyLexer.NUM(n) => n.value              // n is a Lexeme
 ```
-[//]: # (@formatter:on)
 
 The `Lexeme` object contains `value`, `name`, and context fields (such as `line`, `position`) exposed as dynamic
 members when provided by your lexer context.
 
-[//]: # (@formatter:off)
-```scala
+```scala sc:nocompile
 case MyLexer.NUM(n) => println(s"Found number on line ${n.line}")
 ```
-[//]: # (@formatter:on)
 
 ## 2. Matching Non-Terminals (Rules)
 
 Rules also act as extractors, returning the value produced by that rule:
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 val Expr: Rule[Int] = rule(...)
 val Stmt: Rule[Unit] = rule:
   case Expr(e) => println(s"Expression result: $e")
@@ -37,7 +35,9 @@ val Stmt: Rule[Unit] = rule:
 
 `.List` and `.Option` work on **Rule** references (not tokens) for common EBNF patterns:
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 // .List — zero or more occurrences, returns List[T]
 val Block: Rule[List[String]] = rule:
   case Stmt.List(stmts) => stmts
@@ -51,8 +51,6 @@ val Args: Rule[(Int, Option[Int])] = rule:
 
 For sequences of symbols, use tuples:
 
-[//]: # (@formatter:off)
-```scala
+```scala sc:nocompile
 case (MyLexer.IF(_), Expr(cond), MyLexer.THEN(_), Stmt(s)) => ...
 ```
-[//]: # (@formatter:on)

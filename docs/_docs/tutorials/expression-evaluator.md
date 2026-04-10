@@ -6,7 +6,7 @@ precedence** and **conflict resolution**.
 
 ## 1. Defining the Lexer
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val CalcLexer = lexer:
@@ -25,7 +25,9 @@ val CalcLexer = lexer:
 
 **Named productions** (e.g., `"plus"`, `"times"`) let us reference specific alternatives in conflict resolution.
 
-```scala
+```scala sc:nocompile
+import alpaca.*
+
 object CalcParser extends Parser:
   val root: Rule[Double] = rule:
     case Expr(v) => v
@@ -61,7 +63,7 @@ object CalcParser extends Parser:
 The grammar above is ambiguous — does `1 + 2 * 3` mean `(1 + 2) * 3` or `1 + (2 * 3)`? Override `resolutions` to
 disambiguate:
 
-```scala
+```scala sc:nocompile
   override val resolutions = Set(
   // Exponentiation: right-associative, highest binary precedence
   CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
@@ -90,7 +92,7 @@ disambiguate:
 
 ## 4. Evaluating Expressions
 
-```scala
+```scala sc:nocompile
 val input = "sin(pi / 2) + 2 ** 3 * 4"
 val (_, lexemes) = CalcLexer.tokenize(input)
 val (_, result) = CalcParser.parse(lexemes)
