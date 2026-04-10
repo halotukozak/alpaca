@@ -68,22 +68,22 @@ The `BrainLexer` running example defines these token classes:
 
 | Token Class    | Regex Pattern | Value Type | Example Match        |
 |----------------|---------------|------------|----------------------|
-| `next`         | `>`           | `String`   | `">"` → `">"`       |
-| `prev`         | `<`           | `String`   | `"<"` → `"<"`       |
-| `inc`          | `\+`          | `String`   | `"+"` → `"+"`       |
-| `dec`          | `-`           | `String`   | `"-"` → `"-"`       |
-| `print`        | `\.`          | `String`   | `"."` → `"."`       |
-| `read`         | `,`           | `String`   | `","` → `","`       |
-| `jumpForward`  | `\[`          | `String`   | `"["` → `"["`       |
-| `jumpBack`     | `\]`          | `String`   | `"]"` → `"]"`       |
+| `next`         | `>`           | `Unit`     | `">"`                |
+| `prev`         | `<`           | `Unit`     | `"<"`                |
+| `inc`          | `\+`          | `Unit`     | `"+"`                |
+| `dec`          | `-`           | `Unit`     | `"-"`                |
+| `print`        | `\.`          | `Unit`     | `"."`                |
+| `read`         | `,`           | `Unit`     | `","`                |
+| `jumpForward`  | `\[`          | `Unit`     | `"["`                |
+| `jumpBack`     | `\]`          | `Unit`     | `"]"`                |
 | `functionName` | `[A-Za-z]+`   | `String`   | `"foo"` → `"foo"`   |
-| `functionOpen` | `\(`          | `String`   | `"("` → `"("`       |
-| `functionClose`| `\)`          | `String`   | `")"` → `")"`       |
-| `functionCall` | `!`           | `String`   | `"!"` → `"!"`       |
+| `functionOpen` | `\(`          | `Unit`     | `"("`                |
+| `functionClose`| `\)`          | `Unit`     | `")"`                |
+| `functionCall` | `!`           | `Unit`     | `"!"`                |
 
-Whitespace and non-command characters are ignored (`Token.Ignored`) and do not appear in the lexeme stream.
+Input matched as `Token.Ignored` -- such as whitespace or other non-command characters -- does not produce a lexeme and disappears from the stream.
 
-`functionName` is the only token with a transformed value: the `@` binding captures the matched text and passes it to `Token["functionName"](name)`. The other tokens use `Token["NAME"]` without a value argument — their value is the matched string.
+`functionName` is the only value-bearing token: the `@` binding captures the matched text and passes it to `Token["functionName"](name)`. The other tokens use `Token["NAME"]` without a value argument — they carry `Unit`. Their presence in the stream is enough; the matched text is accessible via `lexeme.text` from the context snapshot if needed.
 
 
 ## Cross-links
