@@ -76,32 +76,53 @@ object MyParser extends Parser[SymbolTableCtx]:
       ctx.symbols += (id.value -> tpe.value)
 ```
 
-## 4. Mode Switching (Lexical Feedback)
+[//]: # (todo: ten przyklad nie dziala)
+[//]: # (## 4. Mode Switching &#40;Lexical Feedback&#41;)
 
-Sometimes you need to change how the lexer behaves based on what it just matched. For example, tracking whether
-you are inside a string literal to lex its content differently.
+[//]: # ()
+[//]: # (Sometimes you need to change how the lexer behaves based on what it just matched. For example, tracking whether)
 
-While Alpaca doesn't support real-time feedback from the parser to the lexer (since the lexer finishes first), you can
-implement modes within the lexer using context state. The context state is checked in rule bodies — not as pattern guards
-— since Alpaca patterns are matched by the generated scanner at compile time, not at runtime.
+[//]: # (you are inside a string literal to lex its content differently.)
 
-```scala sc:nocompile
-import alpaca.*
+[//]: # ()
+[//]: # (While Alpaca doesn't support real-time feedback from the parser to the lexer &#40;since the lexer finishes first&#41;, you can)
 
-case class ModeCtx(
-  var text: CharSequence = "",
-  var inString: Boolean = false,
-) extends LexerCtx
+[//]: # (implement modes within the lexer using context state. The context state is checked in rule bodies — not as pattern guards)
 
-val ModeLexer = lexer[ModeCtx]:
-  case "\"" =>
-    ctx.inString = !ctx.inString
-    Token["QUOTE"]
-  case content @ "[^\"]+" =>
-    if ctx.inString then Token["STRING_CONTENT"](content)
-    else Token["TEXT"](content)
-  case "\\s+" => Token.Ignored
-```
+[//]: # (— since Alpaca patterns are matched by the generated scanner at compile time, not at runtime.)
+
+[//]: # ()
+[//]: # (```scala sc:nocompile)
+
+[//]: # (import alpaca.*)
+
+[//]: # ()
+[//]: # (case class ModeCtx&#40;)
+
+[//]: # (  var text: CharSequence = "",)
+
+[//]: # (  var inString: Boolean = false,)
+
+[//]: # (&#41; extends LexerCtx)
+
+[//]: # ()
+[//]: # (val ModeLexer = lexer[ModeCtx]:)
+
+[//]: # (  case "\"" =>)
+
+[//]: # (    ctx.inString = !ctx.inString)
+
+[//]: # (    Token["QUOTE"])
+
+[//]: # (  case content @ "[^\"]+" =>)
+
+[//]: # (    if ctx.inString then Token["STRING_CONTENT"]&#40;content&#41;)
+
+[//]: # (    else Token["TEXT"]&#40;content&#41;)
+
+[//]: # (  case "\\s+" => Token.Ignored)
+
+[//]: # (```)
 
 ## 5. The `BetweenStages` Hook
 
@@ -121,7 +142,7 @@ counters.
 If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
 `given` instance of `BetweenStages` for a trait your context extends.
 
-```scala sc:nocompile
+```scala 3 sc:nocompile
 import alpaca.*
 import alpaca.internal.lexer.BetweenStages
 
@@ -133,7 +154,6 @@ given BetweenStages[IndentTracking] = (token, matched, ctx) =>
   else if matched == "\n" then ctx.indentLevel = 0
 
 case class IndentCtx(
-  var text: CharSequence = "",
   var indentLevel: Int = 0,
 ) extends IndentTracking
 ```
