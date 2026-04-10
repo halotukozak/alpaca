@@ -16,16 +16,16 @@ final class ExpressionEvaluatorTutorialTest extends AnyFunSuite:
     case "//" => Token["fdiv"]
 
     // Single-character operators
-    case literal@("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
+    case literal @ ("\\+" | "-" | "\\*" | "/" | "%" | "\\(" | "\\)" | ",") =>
       Token[literal.type]
 
     // Keywords (constants and functions)
-    case keyword@("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
+    case keyword @ ("pi" | "e" | "sin" | "cos" | "tan" | "atan2") =>
       Token[keyword.type]
 
     // Numbers (floats and ints)
-    case x@"""(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
-    case x@"\\d+" => Token["int"](x.toInt)
+    case x @ """(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
+    case x @ "\\d+" => Token["int"](x.toInt)
 
   object CalcParser extends Parser:
     val root: Rule[Double] = rule:
@@ -45,15 +45,14 @@ final class ExpressionEvaluatorTutorialTest extends AnyFunSuite:
       // Constants and Functions
       "pi" { case CalcLexer.pi(_) => math.Pi },
       "sin" { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) },
-      "atan2" {
-        case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
-          math.atan2(y, x)
+      "atan2" { case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
+        math.atan2(y, x)
       },
 
       // Parentheses and literals
       { case (CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => a },
       { case CalcLexer.float(x) => x.value },
-      { case CalcLexer.int(n) => n.value.toDouble }
+      { case CalcLexer.int(n) => n.value.toDouble },
     )
 
     override val resolutions = Set(
