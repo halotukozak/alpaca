@@ -27,10 +27,8 @@ Shift/reduce conflict:
 Shift "+" vs Reduce Expr -> Expr + Expr
 In situation like:
 Expr + Expr + ...
-Consider marking production Expr -> Expr + Expr to be alwaysBefore or alwaysAfter "+"
+Consider marking production Expr -> Expr + Expr to be before or after "+"
 ```
-
-> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These names do not exist in the Alpaca API. The correct methods are `before` and `after`.
 
 The fix:
 
@@ -125,7 +123,7 @@ This is equivalent to `production.uplus.after(Lexer.exp)`. Use whichever reads m
 production.plus.before(Lexer.PLUS)   // reduce first -> left grouping
 ```
 
-**Right-associative** (`a = b = c = a = (b = c)`): prefer shifting before reducing.
+**Right-associative** (`a = b = c` means `a = (b = c)`): prefer shifting before reducing.
 
 ```scala sc:nocompile
 production.assign.after(Lexer.ASSIGN)  // shift first -> right grouping

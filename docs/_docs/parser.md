@@ -80,8 +80,8 @@ Use `MyLexer.TOKEN(binding)` to match a terminal. The binding is a `Lexeme` -- u
 // Structural: discard the binding
 { case BrainLexer.jumpForward(_) => ... }
 
-// Backtick quoting for special-character token names
-{ case BrainLexer.`\\+`(_) => ... }
+// Tokens with special characters in their name need backtick quoting:
+// e.g., if a lexer defines Token["\\+"], access it as MyLexer.`\\+`(_)
 ```
 
 ### Non-Terminals

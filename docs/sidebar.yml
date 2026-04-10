@@ -30,12 +30,10 @@ subsection:
         page: cookbook/expression-evaluator.md
       - title: JSON Parser
         page: cookbook/json-parser.md
-      - title: Conflict Resolution
-        page: cookbook/conflict-resolution.md
       - title: Contextual Lexing
         page: cookbook/contextual-lexing.md
-      - title: Lexer Error Handling
-        page: cookbook/lexer-error-handling.md
+      - title: BrainFuck Interpreter
+        page: cookbook/brainfuck-interpreter.md
   - title: Theory
     subsection:
       - title: The Compilation Pipeline

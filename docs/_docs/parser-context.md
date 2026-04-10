@@ -37,15 +37,13 @@ import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
-) extends ParserCtx derives Copyable
-```
+) extends ParserCtx ```
 
 Four rules apply:
 
-1. **Must be a `case class`** -- `Copyable.derived` requires `Mirror.ProductOf`.
+1. **Must be a `case class`** -- `Copyable` is auto-derived for any `ParserCtx & Product`.
 2. **All fields must have default values** -- `Empty[Ctx]` constructs the initial context from constructor defaults.
-3. **`derives Copyable` is required** -- `Parser[Ctx]` needs an implicit `Copyable[Ctx]`.
-4. **Mutable collections are `val`; other mutable fields are `var`** -- mutate the collection contents, not the reference.
+3. **Mutable collections are `val`; other mutable fields are `var`** -- mutate the collection contents, not the reference.
 
 ## Accessing Context in Rule Bodies
 
@@ -57,8 +55,7 @@ import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
-) extends ParserCtx derives Copyable
-
+) extends ParserCtx 
 object BrainParser extends Parser[BrainParserCtx]:
   val root: Rule[BrainAST] = rule:
     case Operation.List(stmts) => BrainAST.Root(stmts)
