@@ -36,7 +36,7 @@ The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your l
 
 BrainFuck> has the eight standard BrainFuck commands (`>`, `<`, `+`, `-`, `.`, `,`, `[`, `]`) plus function definitions (`name(body)`) and function calls (`name!`). Everything else is a comment.
 
-```scala sc:nocompile
+```scala
 import alpaca.*
 
 case class BrainLexContext(
@@ -90,7 +90,7 @@ println(lexemes.map(_.name))
 
 Before writing the parser, define the tree structure it will produce. BrainFuck> programs are sequences of instructions — some contain nested lists (loops, function bodies):
 
-```scala sc:nocompile
+```scala
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])

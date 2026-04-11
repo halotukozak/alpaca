@@ -8,7 +8,7 @@ This guide covers stateful tokenization: tracking nesting depth, maintaining cou
 
 The BrainFuck> lexer tracks bracket depth to catch mismatched brackets at lex time:
 
-```scala sc:nocompile
+```scala
 import alpaca.*
 
 case class BrainLexContext(

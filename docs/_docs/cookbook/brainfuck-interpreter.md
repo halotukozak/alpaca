@@ -27,7 +27,7 @@ Everything else is a comment.
 
 ## The AST
 
-```scala sc:nocompile
+```scala
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
@@ -40,7 +40,7 @@ enum BrainAST:
 
 The lexer tracks bracket depth in a custom context to catch mismatches at lex time:
 
-```scala sc:nocompile
+```scala
 import alpaca.*
 
 case class BrainLexContext(

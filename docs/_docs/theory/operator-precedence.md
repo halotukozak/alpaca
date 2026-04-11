@@ -105,7 +105,7 @@ Standard BrainFuck has no operator precedence — `+` always means "increment by
 
 The extended lexer adds arithmetic tokens:
 
-```scala sc:nocompile
+```scala
 import alpaca.*
 
 val ExtendedLexer = lexer:

@@ -53,7 +53,7 @@ Mutable state fields must be `var`, not `val` -- the lexer assigns to them direc
 
 The BrainFuck lexer from [Getting Started](getting-started.md) does not validate bracket matching -- it tokenizes `]` even without a prior `[`. To fix that, we track bracket depth in a custom context:
 
-```scala sc:nocompile
+```scala
 import alpaca.*
 
 case class BrainLexContext(
