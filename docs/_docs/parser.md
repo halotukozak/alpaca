@@ -67,6 +67,33 @@ val Operation: Rule[BrainAST] = rule(
 
 Multi-symbol productions match a tuple; single-symbol productions match directly (no parentheses). Each `{ case ... }` block must contain exactly one alternative.
 
+### Multiline Actions
+
+Rule bodies can span multiple statements. Use intermediate variables and return the final value:
+
+```scala sc:nocompile
+val FunctionDef: Rule[BrainAST] = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+        Operation.List(ops), BrainLexer.functionClose(_)) =>
+    val funcName = name.value
+    require(ctx.functions.add(funcName), s"Function $funcName already defined")
+    BrainAST.FunctionDef(funcName, ops)
+```
+
+### Named Productions with Hyphens
+
+Production names can contain hyphens. Access them with backtick quoting in `resolutions`:
+
+```scala sc:nocompile
+val Expr: Rule[Int] = rule(
+  "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+)
+
+override val resolutions = Set(
+  production.`left-add`.before(Lexer.PLUS),
+)
+```
+
 ## Terminal and Non-Terminal Matching
 
 ### Terminals
