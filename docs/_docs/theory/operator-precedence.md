@@ -99,17 +99,85 @@ The grammar is ambiguous, but the resolutions tell the parser exactly how to han
 
 For grammars with 2-3 precedence levels, stratification is straightforward. For grammars with many levels (C has 15), flat grammar + resolution is more maintainable.
 
-## BrainFuck: No Precedence Needed
+## Extending BrainFuck with Arithmetic
 
-The BrainFuck grammar has no binary operators — all operations are statements, not expressions. There is no precedence hierarchy and no ambiguity:
+Standard BrainFuck has no operator precedence — `+` always means "increment by 1." But suppose we extend the language with arithmetic expressions for cell values: `+(3*2)` adds 6 to the current cell, `-(1+2)` subtracts 3. Now the BrainFuck lexer needs number and operator tokens, and the parser needs expression rules with precedence.
+
+The extended lexer adds arithmetic tokens:
+
+```scala sc:nocompile
+import alpaca.*
+
+val ExtendedLexer = lexer:
+  // Standard BrainFuck
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\." => Token["print"]
+  case "," => Token["read"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
+  // Arithmetic extension
+  case "\\+" => Token["+"]
+  case "-" => Token["-"]
+  case "\\*" => Token["*"]
+  case "/" => Token["/"]
+  case "\\(" => Token["("]
+  case "\\)" => Token[")"]
+  case n @ "[0-9]+" => Token["NUM"](n.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+The parser uses a flat grammar with conflict resolution for precedence:
+
+```scala sc:nocompile
+import alpaca.*
+
+object ExtendedParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(ops) => BrainAST.Root(ops)
+
+  // Arithmetic expressions with precedence
+  val Expr: Rule[Int] = rule(
+    "add"  { case (Expr(a), ExtendedLexer.`+`(_), Expr(b)) => a + b },
+    "sub"  { case (Expr(a), ExtendedLexer.`-`(_), Expr(b)) => a - b },
+    "mul"  { case (Expr(a), ExtendedLexer.`*`(_), Expr(b)) => a * b },
+    "div"  { case (Expr(a), ExtendedLexer.`/`(_), Expr(b)) => a / b },
+    { case ExtendedLexer.NUM(n) => n.value },
+    { case (ExtendedLexer.`(`(_), Expr(e), ExtendedLexer.`)`(_)) => e },
+  )
+
+  // BrainFuck operations, now with arithmetic amounts
+  val Operation: Rule[BrainAST] = rule(
+    { case (ExtendedLexer.`+`(_), ExtendedLexer.`(`(_), Expr(n), ExtendedLexer.`)`(_)) =>
+        BrainAST.Add(n) },        // +(3*2) adds 6
+    { case (ExtendedLexer.`-`(_), ExtendedLexer.`(`(_), Expr(n), ExtendedLexer.`)`(_)) =>
+        BrainAST.Sub(n) },        // -(1+2) subtracts 3
+    { case ExtendedLexer.`+`(_) => BrainAST.Inc },  // bare + is increment by 1
+    { case ExtendedLexer.`-`(_) => BrainAST.Dec },
+    // ... other operations
+  )
+
+  override val resolutions = Set(
+    // * and / bind tighter than + and -
+    production.mul.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
+    production.div.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
+    production.add.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
+    production.sub.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
+    production.add.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
+    production.sub.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
+  )
+```
+
+Without the resolutions, the compiler reports:
 
 ```
-root      → Operation*
-Operation → next | prev | inc | dec | print | read | While | FunctionDef | FunctionCall
-While     → [ Operation* ]
+Shift "*" vs Reduce Expr -> Expr + Expr
+In situation like:
+Expr + Expr * ...
+Consider marking production Expr -> Expr + Expr to be before or after "*"
 ```
 
-Every token uniquely determines which rule to apply. The parser never faces a shift/reduce choice. This is why the BrainFuck parser needs no `resolutions`.
+The resolutions establish: `*`/`/` bind tighter than `+`/`-`, and all operators are left-associative. Now `+(3+2*4)` correctly evaluates to `+(11)` — adding 11 to the current cell.
 
 ## Cross-links
 
