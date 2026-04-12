@@ -9,7 +9,7 @@ subsection:
       - title: Error Recovery
         page: lexer-error-recovery.md
       - title: Between Stages
-        page: between-stages.md
+        page: on-token-match.md
   - title: Parser
     subsection:
       - title: Parser

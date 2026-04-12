@@ -10,22 +10,20 @@ package lexer
  * reset to 1 when a newline is encountered.
  */
 trait PositionTracking extends LexerCtx:
-  this: Product =>
-
   /** The current character position within the line (1-based). */
   var position: Int
 
 object PositionTracking:
 
   /**
-   * BetweenStages instance that updates the position after each match.
+   * OnTokenMatch instance that updates the position after each match.
    *
    * The position is reset to 1 on newlines, otherwise it is incremented
    * by the length of the matched text.
    *
-   * This is automatically composed with other BetweenStages instances
+   * This is automatically composed with other OnTokenMatch instances
    * when the context extends PositionTracking.
    */
-  given BetweenStages[PositionTracking] =
+  given OnTokenMatch[PositionTracking] =
     case (_, "\n", ctx) => ctx.position = 1
     case (_, matched, ctx) => ctx.position += matched.length

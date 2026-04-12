@@ -5,9 +5,9 @@ Every Alpaca lexer carries a **context** object that evolves as the input is pro
 By default, the lexer uses `LexerCtx.Default`, which gives you position and line tracking with no extra setup.
 
 <details>
-<summary>Under the hood: BetweenStages composition</summary>
+<summary>Under the hood: OnTokenMatch composition</summary>
 
-When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `BetweenStages` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `BetweenStages.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
+When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `OnTokenMatch` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `OnTokenMatch.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
 
 </details>
 
@@ -182,28 +182,28 @@ case class BrainLexContext(
 
 With this context, every lexeme carries `squareBrackets`, `position`, and `line` -- all updated automatically.
 
-## The BetweenStages Hook
+## The OnTokenMatch Hook
 
-After every successful token match, Alpaca runs the **BetweenStages** hook for the context type. This hook updates tracking fields and captures the lexeme snapshot.
+After every successful token match, Alpaca runs the **OnTokenMatch** hook for the context type. This hook updates tracking fields and captures the lexeme snapshot.
 
-For custom context types, the hook is auto-derived. The macro inspects all parent traits, summons their `BetweenStages` instances, and composes them. For a context extending `PositionTracking` and `LineTracking`:
+For custom context types, the hook is auto-derived. The macro inspects all parent traits, summons their `OnTokenMatch` instances, and composes them. For a context extending `PositionTracking` and `LineTracking`:
 
-1. `BetweenStages[LexerCtx]` -- advances the text cursor, records the lexeme
-2. `BetweenStages[PositionTracking]` -- updates the `position` field
-3. `BetweenStages[LineTracking]` -- updates the `line` field
+1. `OnTokenMatch[LexerCtx]` -- advances the text cursor, records the lexeme
+2. `OnTokenMatch[PositionTracking]` -- updates the `position` field
+3. `OnTokenMatch[LineTracking]` -- updates the `line` field
 
 All three run automatically after every token match.
 
 <details>
-<summary>Under the hood: custom BetweenStages traits</summary>
+<summary>Under the hood: custom OnTokenMatch traits</summary>
 
-If you define your own trait extending `LexerCtx` and provide a `given BetweenStages[MyTrait]`, the auto macro will compose it into any context that extends `MyTrait`. This pattern mirrors how `PositionTracking` and `LineTracking` work internally.
+If you define your own trait extending `LexerCtx` and provide a `given OnTokenMatch[MyTrait]`, the auto macro will compose it into any context that extends `MyTrait`. This pattern mirrors how `PositionTracking` and `LineTracking` work internally.
 
 Define the `given` in the **trait companion**, not the case class companion. Putting it on the case class bypasses auto-composition: the lexer uses your hook but skips the default hook that advances the text cursor, and tokenization loops indefinitely.
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.BetweenStages
+import alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
 trait IndentTracking extends LexerCtx:
@@ -212,7 +212,7 @@ trait IndentTracking extends LexerCtx:
 
 // Step 2: given in TRAIT COMPANION
 object IndentTracking:
-  given BetweenStages[IndentTracking] =
+  given OnTokenMatch[IndentTracking] =
     case (_, "\t", ctx) => ctx.indentLevel += 1
     case (_, "\n", ctx) => ctx.indentLevel = 0
     case _ => ()
@@ -246,4 +246,4 @@ val (_, lexemes) = Lexer.tokenize("+ +")
 // lexemes(0).fields == Map("text" -> "+")  -- only the text field
 ```
 
-See [Between Stages](between-stages.md) to learn how context snapshots in lexemes flow into the parser.
+See [Between Stages](on-token-match.md) to learn how context snapshots in lexemes flow into the parser.
