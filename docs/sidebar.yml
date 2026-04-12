@@ -1,20 +1,58 @@
-index: index.html
+index: index.md
 subsection:
   - title: Lexer
-    page: lexer.md
-  - title: Lexer Context
-    page: lexer-context.md
-  - title: Lexer Error Recovery
-    page: lexer-error-recovery.md
-  - title: Between Stages
-    page: between-stages.md
+    subsection:
+      - title: Lexer
+        page: lexer.md
+      - title: Lexer Context
+        page: lexer-context.md
+      - title: Error Recovery
+        page: lexer-error-recovery.md
+      - title: Between Stages
+        page: on-token-match.md
   - title: Parser
-    page: parser.md
-  - title: Parser Context
-    page: parser-context.md
-  - title: Conflict Resolution
-    page: conflict-resolution.md
-  - title: Extractors
-    page: extractors.md
-  - title: Debug Settings
-    page: debug-settings.md
+    subsection:
+      - title: Parser
+        page: parser.md
+      - title: Parser Context
+        page: parser-context.md
+      - title: Extractors
+        page: extractors.md
+      - title: Conflict Resolution
+        page: conflict-resolution.md
+  - title: Tooling
+    subsection:
+      - title: Debug Settings
+        page: debug-settings.md
+  - title: Cookbook
+    subsection:
+      - title: Expression Evaluator
+        page: cookbook/expression-evaluator.md
+      - title: JSON Parser
+        page: cookbook/json-parser.md
+      - title: Conflict Resolution
+        page: cookbook/conflict-resolution.md
+      - title: Contextual Lexing
+        page: cookbook/contextual-lexing.md
+      - title: Lexer Error Handling
+        page: cookbook/lexer-error-handling.md
+  - title: Theory
+    subsection:
+      - title: The Compilation Pipeline
+        page: theory/pipeline.md
+      - title: Tokens and Lexemes
+        page: theory/tokens.md
+      - title: "The Lexer: Regex to Finite Automata"
+        page: theory/lexer-fa.md
+      - title: Context-Free Grammars
+        page: theory/cfg.md
+      - title: The Shift-Reduce Loop
+        page: theory/shift-reduce.md
+      - title: Why LR Parsing
+        page: theory/why-lr.md
+      - title: Conflicts and Disambiguation
+        page: theory/conflicts.md
+      - title: Semantic Actions
+        page: theory/semantic-actions.md
+      - title: Full Calculator Example
+        page: theory/full-example.md
