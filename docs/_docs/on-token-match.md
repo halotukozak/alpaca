@@ -5,49 +5,45 @@ When you call `tokenize()`, the lexer matches tokens against the input, runs the
 When you call `parse()`, the parser consumes that list.
 The `OnTokenMatch` hook is responsible for advancing the text cursor, constructing each lexeme with its context snapshot, and applying any custom side effects you configure.
 
-Understanding this boundary helps you connect the two stages correctly and, when needed, customize what happens between them.
+Most programs need nothing more than this:
 
-Most Alpaca programs only need one thing from this layer: pass `tokenize().lexemes` to `parse()`.
-The rest of this page explains what is inside those lexemes, how the context state is embedded in each one,
-and how to extend the pipeline when the defaults are not enough.
+```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala
+val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
+val (_, ast) = BrainParser.parse(lexemes)
+```
+
+This page explains what is inside those lexemes, how to customize the pipeline, and how the data flows between stages.
 
 ## Connecting Lexer Output to Parser Input
 
-The `tokenize()` method returns a named tuple:
-
-```
-(ctx: Ctx, lexemes: List[Lexeme])
-```
-
-The `lexemes` component is the `List[Lexeme]` that the parser expects.
-You can destructure or access it by name:
+The `tokenize()` method returns a named tuple `(ctx: Ctx, lexemes: List[Lexeme])`:
 
 ```scala sc:nocompile
 import alpaca.*
 
-// tokenize() returns a named tuple: (ctx: Ctx, lexemes: List[Lexeme])
-val (ctx, lexemes) = Lexer.tokenize("3 + 4 * 2")
+val (ctx, lexemes) = BrainLexer.tokenize("++[>+<-].")
 
-// Pass the lexeme list to the parser
-val result = Parser.parse(lexemes)
+// ctx holds the final lexer context state
+// lexemes holds the matched tokens (Token.Ignored entries are excluded)
+
+val (_, ast) = BrainParser.parse(lexemes)
 ```
 
-The parser accepts `List[Lexeme[?, ?]]` -- the type refinement from the tokenization result is widened at the `parse()` call site.
-The parser appends `Lexeme.EOF` internally before processing begins.
+The parser accepts `List[Lexeme[?, ?]]` and appends `Lexeme.EOF` internally before processing begins. You do not need to add an end-of-input marker yourself.
 
-The final context (`ctx`) is also useful after tokenization: it holds the accumulated state from all rule bodies (e.g., the final line count, the last recorded indentation level).
-You can inspect it before or after calling `parse()` -- the parser does not modify it.
+The final context (`ctx`) is useful for post-tokenization checks. For example, the BrainFuck lexer tracks bracket depth — after tokenization, you can verify all brackets are balanced:
 
-See the [Lexer](lexer.html) page for how to define a lexer and the token types it accepts.
+```scala sc:nocompile
+val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
+require(ctx.squareBrackets == 0, "Mismatched brackets")
+val (_, ast) = BrainParser.parse(lexemes)
+```
 
 ## Custom OnTokenMatch
 
-The default `OnTokenMatch[LexerCtx]` handles cursor advancement, snapshot construction, and context updates for all standard use cases.
-Customize it only when you need per-token side effects beyond what context fields can express -- for example, writing to an external log, emitting metrics, or computing aggregate statistics that must update outside the context object.
+The default `OnTokenMatch[LexerCtx]` handles cursor advancement, snapshot construction, and context updates for all standard use cases. Customize it only when you need per-token side effects beyond what context fields can express -- for example, writing to an external log, emitting metrics, or computing aggregate statistics that must update outside the context object.
 
-The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTracking` traits work.
-It requires a trait (not a case class) so that the auto-composition macro can discover your hook by inspecting the context's linearized parent types at compile time.
-This means one `given` definition covers every case class that extends your trait -- you write the hook once and reuse it across contexts.
+The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTracking` traits work. It requires a trait (not a case class) so that the auto-composition macro can discover your hook by inspecting the context's linearized parent types at compile time.
 
 1. Define a custom **trait** extending `LexerCtx`.
 2. Provide `given OnTokenMatch[YourTrait]` in that trait's **companion object**.
@@ -64,8 +60,8 @@ trait IndentTracking extends LexerCtx:
 
 // Step 2: given in TRAIT COMPANION (not case class companion)
 object IndentTracking:
-  given OnTokenMatch[IndentTracking] = (token, matcher, ctx) =>
-    if matcher.group(0) == "\n" then ctx.indentLevel = 0
+  given OnTokenMatch[IndentTracking] = (token, matched, ctx) =>
+    if matched == "\n" then ctx.indentLevel = 0
 
 // Step 3: Case class extends both
 case class MyCtx(
@@ -78,9 +74,7 @@ val Lexer = lexer[MyCtx]:
   case id @ "[a-z]+" => Token["ID"](id)
 ```
 
-Do **not** define `given OnTokenMatch[MyCtx]` directly on the concrete case class.
-Doing so bypasses the auto-composition mechanism: the lexer will use your hook but skip the default hook that advances the text cursor, and tokenization will loop indefinitely.
-Always put the `given` in a **trait companion**, not a case class companion.
+Do **not** define `given OnTokenMatch[MyCtx]` directly on the concrete case class. Doing so bypasses the auto-composition mechanism: the lexer will use your hook but skip the default hook that advances the text cursor, and tokenization will loop indefinitely. Always put the `given` in a **trait companion**, not a case class companion.
 
 For reference, the `OnTokenMatch` type is a function:
 
@@ -89,17 +83,15 @@ import alpaca.*
 
 // OnTokenMatch[Ctx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
 // token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken
-// matched: String            -- the matched text for this token
-// ctx:     Ctx               -- the current context (mutable, updated in place)
+// matched: String             -- the matched text
+// ctx:     Ctx                -- the current context (mutable, updated in place)
 ```
 
-
-
-See the [Lexer Context](lexer-context.html) page for the full reference on `OnTokenMatch` composition and the built-in `PositionTracking` and `LineTracking` traits.
+See the [Lexer Context](lexer-context.md) page for the full reference on `OnTokenMatch` composition and the built-in `PositionTracking` and `LineTracking` traits.
 
 ## Data Flow Summary
 
-The following sequence describes what happens each time `tokenize()` processes input:
+Each call to `tokenize()` follows this sequence:
 
 1. The lexer attempts to match the remaining input against each rule pattern in order. The first match wins. If no pattern matches, a `RuntimeException` is thrown with the unexpected character.
 2. `OnTokenMatch` runs: it advances the text cursor (`ctx.text`), applies any rule-body context changes that ran before it was called, and takes a snapshot of all context fields.
@@ -108,7 +100,6 @@ The following sequence describes what happens each time `tokenize()` processes i
 5. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
 6. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
 
-The `Lexeme` list is immutable after `tokenize()` returns -- nothing that happens in `parse()` alters the lexeme data.
-If you need to inspect what the lexer produced before parsing, iterate over `lexemes` freely; the parser will see exactly the same list.
+The `Lexeme` list is immutable after `tokenize()` returns. The parser does not alter the lexeme data.
 
-See the [Parser](parser.html) page for how to define grammar rules, productions, and EBNF operators that consume the lexeme list.
+See [Lexer](lexer.md) for lexer definition, [Lexer Context](lexer-context.md) for custom contexts and tracking traits, and [Parser](parser.md) for grammar rules.
