@@ -2,7 +2,7 @@
 
 Contextual parsing refers to the ability of a lexer or parser to change its behavior or maintain state based on the
 input it has already seen. Alpaca provides powerful mechanisms for this through `LexerCtx`, `ParserCtx`, and the
-`BetweenStages` hook.
+`OnTokenMatch` hook.
 
 ## 1. Lexer-Level Context
 
@@ -76,32 +76,32 @@ object MyParser extends Parser[SymbolTableCtx]:
 ```
 
 
-## 5. The `BetweenStages` Hook
+## 5. The `OnTokenMatch` Hook
 
-The `BetweenStages` hook is the internal engine that powers context updates.
+The `OnTokenMatch` hook is the internal engine that powers context updates.
 It is a function called by Alpaca after **every** token match (including `Token.Ignored`) but **before** the next match
 starts.
 
 ### Automatic Updates
 
-By default, Alpaca uses `BetweenStages` to automatically update the `text` field in your context (to advance past the
+By default, Alpaca uses `OnTokenMatch` to automatically update the `text` field in your context (to advance past the
 matched string).
 If your context extends `LineTracking` or `PositionTracking`, the derived hooks also increment `line` and `position`
 counters.
 
-### Customizing `BetweenStages`
+### Customizing `OnTokenMatch`
 
 If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
-`given` instance of `BetweenStages` for a trait your context extends.
+`given` instance of `OnTokenMatch` for a trait your context extends.
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.BetweenStages
+import alpaca.internal.lexer.OnTokenMatch
 
 trait IndentTracking extends LexerCtx:
   var indentLevel: Int
 
-given BetweenStages[IndentTracking] = 
+given OnTokenMatch[IndentTracking] = 
     (_, "\t", ctx) => ctx.indentLevel += 1
     (_, "\n", ctx) => ctx.indentLevel = 0
     (_, _, _) => 
@@ -111,13 +111,13 @@ case class IndentCtx(
 ) extends IndentTracking
 ```
 
-Alpaca automatically composes `BetweenStages` instances from all parent traits of your context type. The `IndentTracking`
+Alpaca automatically composes `OnTokenMatch` instances from all parent traits of your context type. The `IndentTracking`
 hook above will be combined with the base `LexerCtx` hook.
 
 ## Summary of Data Flow
 
 1. **Input String** flows into the `lexer`.
-2. **`BetweenStages`** updates the `LexerCtx` after every match.
+2. **`OnTokenMatch`** updates the `LexerCtx` after every match.
 3. **`Lexeme`s** are produced, each capturing the current `LexerCtx` state.
 4. **List[Lexeme]** flows into the `parser`.
 5. **`ParserCtx`** is initialized and updated as rules are reduced.
