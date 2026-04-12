@@ -1,9 +1,10 @@
-# Tutorial: Building a JSON Parser
+# JSON Parser
 
-This tutorial builds a JSON parser with Alpaca, covering lexer definition, recursive grammar rules, and nested data
-structures.
+This guide builds a JSON parser that handles objects, arrays, strings, numbers, booleans, and null. It demonstrates recursive grammar rules and nested data structures.
 
-## 1. Defining the Lexer
+**What you'll learn:** recursive rules, separator-delimited lists via explicit recursion, and backtick-quoted token names for punctuation.
+
+## The Lexer
 
 ```scala sc:nocompile
 import alpaca.*
@@ -16,13 +17,15 @@ val JsonLexer = lexer:
   case "\\]" => Token["]"]
   case ":" => Token[":"]
   case "," => Token[","]
-  case x@("false" | "true") => Token["Bool"](x.toBoolean)
+  case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
   case "null" => Token["Null"](null: @annotation.nowarn("msg=unused explicit parameter"))
-  case x@"""[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
-  case x@""""(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
+  case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
+  case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 ```
 
-## 2. Defining the Parser
+Punctuation tokens (`{`, `}`, `[`, `]`, `:`, `,`) need backtick quoting when accessed in parser rules: `JsonLexer.\`{\`(_)`.
+
+## The Parser
 
 JSON is recursive: a `Value` can be an `Object` or `Array`, which contain more `Value`s.
 
@@ -66,32 +69,21 @@ object JsonParser extends Parser:
   )
 ```
 
-## 3. Parsing Input
+`ObjectMembers` and `ArrayElements` use explicit left recursion for comma-separated lists. This is the standard pattern when elements are separated by delimiters -- `.List` works for unseparated sequences (like BrainFuck operations), but separator-delimited lists need explicit recursion.
+
+## Running It
 
 ```scala sc:nocompile
 val input = """{"name": "Alice", "age": 30, "tags": ["a", "b"]}"""
-
 val (_, lexemes) = JsonLexer.tokenize(input)
 val (_, result) = JsonParser.parse(lexemes)
-
 println(result)
 // Map(name -> Alice, age -> 30.0, tags -> List(a, b))
 ```
 
-## 4. Using EBNF Operators
+No conflict resolution is needed -- the JSON grammar is unambiguous.
 
-Alpaca provides `.List` and `.Option` operators on **Rules** to simplify common patterns.
+## Exercises
 
-> `.List` and `.Option` work on `Rule` references, not on token references directly.
-
-For example, instead of writing explicit recursion for a list of statements:
-
-```scala sc:nocompile
-import alpaca.*
-
-val Block: Rule[List[Any]] = rule:
-  case Stmt.List(stmts) => stmts
-```
-
-For separator-delimited lists (like JSON's comma-separated members), explicit recursion as shown in Section 2 is
-often clearer.
+- Add typed results (`Rule[JsonValue]` instead of `Rule[Any]`) using a sealed enum
+- Support JSON5 features: trailing commas, single-line comments, unquoted keys
