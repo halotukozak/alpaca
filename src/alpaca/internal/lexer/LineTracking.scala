@@ -9,19 +9,17 @@ package lexer
  * number is incremented each time a newline character is matched.
  */
 trait LineTracking extends LexerCtx:
-  this: Product =>
-
   /** The current line number (1-based). */
   var line: Int
 
 object LineTracking:
 
   /**
-   * BetweenStages instance that increments the line number on newlines.
+   * OnTokenMatch instance that increments the line number on newlines.
    *
-   * This is automatically composed with other BetweenStages instances
+   * This is automatically composed with other OnTokenMatch instances
    * when the context extends LineTracking.
    */
-  given BetweenStages[LineTracking] =
+  given OnTokenMatch[LineTracking] =
     case (_, "\n", ctx) => ctx.line += 1
     case _ => ()
