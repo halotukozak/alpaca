@@ -239,7 +239,7 @@ lexemes(0).text      // "42": String (the matched text, not remaining input)
 
 The `Lexeme` class extends `Selectable` with a structural refinement that encodes every context field and its type. The compiler resolves `lexeme.position` to `Int` at compile time -- not by casting from `Any` at runtime. If you access a field that does not exist on the context type (e.g., `.indent` when using `LexerCtx.Default`), you get a compile error.
 
-The `text` field in the snapshot is the **matched string**, not the remaining input. Even though `LexerCtx.text` holds the remaining input during lexing, the `BetweenStages` hook replaces it with `ctx.lastRawMatched` when building the snapshot.
+The `text` field in the snapshot is the **matched string**, not the remaining input. Even though `LexerCtx.text` holds the remaining input during lexing, the `OnTokenMatch` hook replaces it with `ctx.lastRawMatched` when building the snapshot.
 
 The `position` value is the **post-match** cursor. The token `"42"` starts at column 1 but the snapshot records `position = 3` (1 + 2 characters consumed).
 

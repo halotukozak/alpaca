@@ -4,7 +4,7 @@ import alpaca.internal.*
 import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, publicInBinary}
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -23,7 +23,7 @@ import scala.annotation.compileTimeOnly
  *
  * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
  * @param rules the lexer rules as a partial function
- * @param betweenStages implicit BetweenStages for context updates
+ * @param betweenStages implicit OnTokenMatch for context updates
  * @param errorHandling implicit ErrorHandling for custom error recovery
  * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
@@ -33,7 +33,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
-  betweenStages: BetweenStages[Ctx],
+  betweenStages: OnTokenMatch[Ctx],
   m: Mirror.Of[Ctx],
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
@@ -90,23 +90,33 @@ object Token:
 transparent inline def ctx(using c: LexerCtx): c.type = c
 
 /**
- * Base trait for lexer global context.
+ * Trait for the global context used during tokenization.
  *
  * The global context maintains state during lexing, including the current
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx:
-  this: Product =>
+trait LexerCtx extends Product:
+  /**
+   * The last lexeme that was created.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
 
-  /** The last lexeme that was created. */
-  var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
+  /**
+   * The raw string that was matched for the last token.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var lastRawMatched: String = compiletime.uninitialized
 
-  /** The raw string that was matched for the last token. */
-  var lastRawMatched: String = compiletime.uninitialized
-
-  /** The remaining text to be tokenized. */
-  var text: CharSequence = compiletime.uninitialized
+  /**
+   * The remaining text to be tokenized.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var text: CharSequence = compiletime.uninitialized
 
 object LexerCtx:
 
@@ -119,7 +129,7 @@ object LexerCtx:
     Copyable.derived
 
   /**
-   * Default BetweenStages implementation that updates the context after each match.
+   * Default OnTokenMatch implementation that updates the context after each match.
    *
    * This implementation:
    * - Updates lastRawMatched with the matched text
@@ -127,12 +137,10 @@ object LexerCtx:
    * - Advances the text position
    * - Applies any context modifications
    */
-  given BetweenStages[LexerCtx] =
+  given OnTokenMatch[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-      val ctxAsProduct = ctx.asInstanceOf[Product]
-      val fields = ctxAsProduct.productElementNames.zip(ctxAsProduct.productIterator).toMap +
-        ("text" -> ctx.lastRawMatched)
+      val fields = ctx.productElementNames.zip(ctx.productIterator).toMap + ("text" -> ctx.lastRawMatched)
       ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
 
     case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>

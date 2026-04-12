@@ -2,7 +2,7 @@
 
 This guide covers stateful tokenization: tracking nesting depth, maintaining counters, passing information from the lexer to the parser, and handling errors gracefully.
 
-**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `BetweenStages` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
+**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `OnTokenMatch` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
 
 ## Tracking State During Lexing
 
@@ -60,7 +60,7 @@ import alpaca.*
 val FunctionCall: Rule[BrainAST] = rule:
   case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
     // name.value: String -- the function name
-    // name.position: Int -- character position (if lexer uses PositionTracking)
+    // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
     // name.line: Int -- line number (if lexer uses LineTracking)
     BrainAST.FunctionCall(name.value)
 ```
@@ -112,11 +112,16 @@ By default, the lexer throws on unmatched input. You can customize this with an 
 import alpaca.*
 import alpaca.internal.lexer.ErrorHandling
 
-// Skip unrecognized characters silently
+// Option A: skip unrecognized characters silently
 given ErrorHandling[BrainLexContext] = _ =>
   ErrorHandling.Strategy.IgnoreChar
+```
 
-// Or stop gracefully, returning what was tokenized so far
+```scala sc:nocompile
+import alpaca.*
+import alpaca.internal.lexer.ErrorHandling
+
+// Option B: stop gracefully, returning what was tokenized so far
 given ErrorHandling[BrainLexContext] = _ =>
   ErrorHandling.Strategy.Stop
 ```
@@ -143,7 +148,7 @@ This is simpler and often sufficient. The BrainFuck lexer uses this approach -- 
 ## Data Flow Summary
 
 1. **Input** flows into the lexer
-2. **`BetweenStages`** updates the `LexerCtx` after every match
+2. **`OnTokenMatch`** updates the `LexerCtx` after every match
 3. **`Lexeme`s** are produced, each carrying a context snapshot
 4. **`List[Lexeme]`** flows into the parser
 5. **`ParserCtx`** is initialized and updated as rules are reduced

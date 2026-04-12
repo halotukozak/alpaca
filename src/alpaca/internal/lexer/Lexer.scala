@@ -6,13 +6,13 @@ import alpaca.Token as TokenDef
 
 import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
-import scala.annotation.switch
+import scala.annotation.{publicInBinary, switch}
 import scala.reflect.NameTransformer
 
 // $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
-  betweenStages: Expr[BetweenStages[Ctx]],
+  betweenStages: Expr[OnTokenMatch[Ctx]],
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
@@ -122,25 +122,17 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
 
-  val selectDynamicLambda = createLambda[String => Token[?, Ctx, ?]]:
-    case (methSym, List(fieldName: Term)) =>
-      Match(
-        Typed(
-          fieldName,
-          Annotated(
-            TypeTree.ref(fieldName.tpe.typeSymbol),
-            '{ new annotation.switch }.asTerm.changeOwner(methSym),
-          ),
-        ),
-        tokens.map: (expr, name) =>
-          CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
-      ).changeOwner(methSym)
+  def selectDynamicImpl(fieldName: Expr[String])(using Quotes) = Match(
+    '{ $fieldName: @switch }.asTerm,
+    tokens.map: (expr, name) =>
+      CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
+  ).asExprOf[Token[?, Ctx, ?]]
 
   logger.trace("creating tokenization class instance")
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
     case ('[refinedTpe], '[fields]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
-      infos.iterator.foreach: info =>
+      infos.foreach: info =>
         try Pattern.compile(info.pattern)
         catch
           case e: PatternSyntaxException =>
@@ -158,9 +150,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       '{
         {
           new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
-            override val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
+            @publicInBinary
+            override private[alpaca] val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
 
-            override def selectDynamic(name: String): Token[?, Ctx, ?] = $selectDynamicLambda(name)
+            override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
