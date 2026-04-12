@@ -2,7 +2,7 @@
 
 This guide covers stateful tokenization: tracking nesting depth, maintaining counters, passing information from the lexer to the parser, and handling errors gracefully.
 
-**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `BetweenStages` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
+**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `OnTokenMatch` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
 
 ## Tracking State During Lexing
 
@@ -148,7 +148,7 @@ This is simpler and often sufficient. The BrainFuck lexer uses this approach -- 
 ## Data Flow Summary
 
 1. **Input** flows into the lexer
-2. **`BetweenStages`** updates the `LexerCtx` after every match
+2. **`OnTokenMatch`** updates the `LexerCtx` after every match
 3. **`Lexeme`s** are produced, each carrying a context snapshot
 4. **`List[Lexeme]`** flows into the parser
 5. **`ParserCtx`** is initialized and updated as rules are reduced

@@ -94,7 +94,7 @@ private[parser] object ParseTable:
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
-              (existingAction, action).runtimeChecked match
+              (existingAction, action) match
                 case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
                 case (_: Shift, red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
                 case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
@@ -103,7 +103,10 @@ private[parser] object ParseTable:
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
+        val (sourceStateId, symbol) = table
+          .collectFirst:
+            case (key, Shift(`stateId`)) => key
+          .get
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
@@ -164,8 +167,8 @@ private[parser] object ParseTable:
       import quotes.reflect.*
 
       type BuilderTpe = mutable.Builder[
-        ((state: Int, stepSymbol: parser.Symbol), Shift | Reduction),
-        Map[(state: Int, stepSymbol: parser.Symbol), Shift | Reduction],
+        ((state: Int, stepSymbol: parser.Symbol), ParseAction),
+        Map[(state: Int, stepSymbol: parser.Symbol), ParseAction],
       ]
 
       val symbol = Symbol.newVal(
