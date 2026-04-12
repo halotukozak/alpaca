@@ -42,7 +42,7 @@ object BrainParser extends Parser:
   )
 ```
 
-The macro reads both `val` and `def` declarations, but `val` is the conventional and recommended form for grammar rules.
+The macro reads both `val` and `def` declarations. `val` is the recommended form for grammar rules, but `def` also works.
 
 ## Rules and Productions
 
@@ -107,8 +107,8 @@ Use `MyLexer.TOKEN(binding)` to match a terminal. The binding is a `Lexeme` -- u
 // Structural: discard the binding
 { case BrainLexer.jumpForward(_) => ... }
 
-// Tokens with special characters in their name need backtick quoting:
-// e.g., if a lexer defines Token["\\+"], access it as MyLexer.`\\+`(_)
+// Backtick quoting for special-character token names (e.g., if a lexer defines Token["\\+"])
+{ case MyLexer.`\\+`(_) => ... }
 ```
 
 ### Non-Terminals
@@ -176,7 +176,7 @@ import alpaca.*
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case CalcLexer.NUMBER(n) => n.value },
+    { case CalcLexer.NUMBER(n) => n.value.toDouble },
   )
   val root = rule:
     case Expr(e) => e
