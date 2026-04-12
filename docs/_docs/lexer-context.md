@@ -4,7 +4,7 @@ Every Alpaca lexer carries a **context** object that evolves as the input is pro
 Context lets you do stateful lexing: tracking indentation depth, counting tokens, recording whether you are inside a string literal, or any other state that depends on the token stream seen so far.
 By default, the lexer uses `LexerCtx.Default`, which gives you position and line tracking with no extra setup.
 
-> **Compile-time processing:** When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `BetweenStages` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `BetweenStages.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
+> **Compile-time processing:** When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `OnTokenMatch` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `OnTokenMatch.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
 
 ## Default Context
 
@@ -163,22 +163,22 @@ On a newline match, position resets to 1 (start of next line).
 
 You can use these traits independently or together. `LexerCtx.Default` extends both.
 
-## The BetweenStages Hook
+## The OnTokenMatch Hook
 
-After every successful token match, Alpaca runs the **BetweenStages** hook for the context type.
+After every successful token match, Alpaca runs the **OnTokenMatch** hook for the context type.
 This hook is responsible for updating tracking fields and capturing the lexeme snapshot.
 
-For custom context types, the hook is auto-derived: the macro inspects all parent traits of Ctx, summons their BetweenStages instances, and composes them into a single hook.
+For custom context types, the hook is auto-derived: the macro inspects all parent traits of Ctx, summons their OnTokenMatch instances, and composes them into a single hook.
 
 For a context extending PositionTracking and LineTracking:
-  1. BetweenStages[LexerCtx]          -- updates text, records lexeme
-  2. BetweenStages[PositionTracking]  -- updates position field
-  3. BetweenStages[LineTracking]      -- updates line field
+  1. OnTokenMatch[LexerCtx]          -- updates text, records lexeme
+  2. OnTokenMatch[PositionTracking]  -- updates position field
+  3. OnTokenMatch[LineTracking]      -- updates line field
 All three run automatically after every token match
 
 Composability is automatic: extending `PositionTracking` and `LineTracking` gives you both hooks with no extra code.
 
-> **Advanced:** If you define your own trait extending `LexerCtx` and provide a `given BetweenStages[MyTrait]`, the auto macro will compose it into any context that extends `MyTrait`. This pattern mirrors how `PositionTracking` and `LineTracking` work internally.
+> **Advanced:** If you define your own trait extending `LexerCtx` and provide a `given OnTokenMatch[MyTrait]`, the auto macro will compose it into any context that extends `MyTrait`. This pattern mirrors how `PositionTracking` and `LineTracking` work internally.
 
 ## LexerCtx.Empty
 
@@ -195,4 +195,4 @@ val (_, lexemes) = Lexer.tokenize("1 2 3")
 // lexemes(0).fields == Map("text" -> "1")  -- only the text field, nothing else
 ```
 
-See [Between Stages](between-stages.html) to learn how context snapshots embedded in lexemes flow into the parser.
+See [Between Stages](on-token-match.html) to learn how context snapshots embedded in lexemes flow into the parser.

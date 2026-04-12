@@ -200,7 +200,7 @@ If the input contains a character that does not match any pattern, `tokenize` th
 
 ## Running Example: CalcLexer
 
-The following lexer tokenizes arithmetic expressions. It appears throughout the documentation as a running example -- the [Between Stages](between-stages.html) page shows how its output feeds a parser, the [Parser](parser.html) page defines the grammar, and the [Extractors](extractors.html) page shows how to access values from the parsed result.
+The following lexer tokenizes arithmetic expressions. It appears throughout the documentation as a running example -- the [Between Stages](on-token-match.html) page shows how its output feeds a parser, the [Parser](parser.html) page defines the grammar, and the [Extractors](extractors.html) page shows how to access values from the parsed result.
 
 ```scala sc:nocompile
 import alpaca.*
@@ -300,6 +300,6 @@ You do not need to handle EOF in your lexer rules -- the parser manages it autom
 
 text fields after a match does not retroactively alter earlier lexemes.
 
-See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](between-stages.html) for how tokenized output flows into the parser.
+See [Lexer Context](lexer-context.html) for full details on custom contexts, and [Between Stages](on-token-match.html) for how tokenized output flows into the parser.
 
 See [Debug Settings](debug-settings.html) for compile-time debug output, log levels, and timeout configuration.
