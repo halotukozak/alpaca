@@ -33,7 +33,7 @@ final class ConflictResolutionTableTest extends AnyFunSuite with Matchers:
         .filter(line => line.trim.startsWith("P_") || line.trim.startsWith("T_"))
         .foreach: line =>
           val id = line.trim.takeWhile(c => c != '[' && c != ' ' && c != '-')
-          id should fullyMatch regex "[PT]_[0-9]+"
+          (id should fullyMatch).regex("[PT]_[0-9]+")
   }
 
   test("toMermaid emits node declarations with human-readable labels") {

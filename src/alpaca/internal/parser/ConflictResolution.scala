@@ -122,7 +122,7 @@ private[parser] object ConflictResolutionTable:
               s"P_$prodIdx"
             case _: String =>
               tokIdx += 1
-              s"T_$tokIdx"
+              s"T_$tokIdx",
         )
 
       def escapeLabel(label: String): String =
@@ -138,14 +138,12 @@ private[parser] object ConflictResolutionTable:
         case s: String => show"Token($s)"
 
       val nodes = (table.keySet ++ table.values.flatten).toList.sortBy(nodeLabel)
-      for node <- nodes do
-        sb.append(s"  ${nodeId(node)}[\"${escapeLabel(nodeLabel(node))}\"]\n")
+      for node <- nodes do sb.append(s"  ${nodeId(node)}[\"${escapeLabel(nodeLabel(node))}\"]\n")
 
       for
         (from, toSet) <- table.toList.sortBy { case (fromKey, _) => nodeLabel(fromKey) }
         to <- toSet.toList.sortBy(nodeLabel)
-      do
-        sb.append(s"  ${nodeId(from)} --> ${nodeId(to)}\n")
+      do sb.append(s"  ${nodeId(from)} --> ${nodeId(to)}\n")
 
       sb.toString
 
