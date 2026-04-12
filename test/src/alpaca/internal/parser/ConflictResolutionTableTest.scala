@@ -30,7 +30,7 @@ final class ConflictResolutionTableTest extends AnyFunSuite with Matchers:
       output should include("T_1")
       // Safe IDs do not contain spaces, parens, arrows, or epsilon
       output.linesIterator
-        .filter(_.trim.startsWith("P_") || _.trim.startsWith("T_"))
+        .filter(line => line.trim.startsWith("P_") || line.trim.startsWith("T_"))
         .foreach: line =>
           val id = line.trim.takeWhile(c => c != '[' && c != ' ' && c != '-')
           id should fullyMatch regex "[PT]_[0-9]+"

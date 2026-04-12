@@ -105,6 +105,7 @@ private[parser] object ConflictResolutionTable:
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
 
     def toMermaid(using Log): String =
+      logger.trace("generating Mermaid conflict resolution graph")
       val sb = new StringBuilder
       sb.append("graph TD\n")
 
@@ -130,6 +131,7 @@ private[parser] object ConflictResolutionTable:
           .replace("\"", "\\\"")
           .replace("\n", "\\n")
           .replace("\r", "\\r")
+          .replace("#", "#35;")
 
       def nodeLabel(key: ConflictKey): String = key match
         case p: Production => show"$p"
