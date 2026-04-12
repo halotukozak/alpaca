@@ -123,7 +123,7 @@ This is equivalent to `production.uplus.after(Lexer.exp)`. Use whichever reads m
 production.plus.before(Lexer.PLUS)   // reduce first -> left grouping
 ```
 
-**Right-associative** (`a = b = c` means `a = (b = c)`): prefer shifting before reducing.
+**Right-associative** (`a = b = c` groups as `a = (b = c)`): prefer shifting before reducing.
 
 ```scala sc:nocompile
 production.assign.after(Lexer.ASSIGN)  // shift first -> right grouping
