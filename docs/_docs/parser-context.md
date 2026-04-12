@@ -5,7 +5,7 @@ Parser context lets you carry mutable state through parsing reductions. Stateles
 <details>
 <summary>Under the hood: context threading</summary>
 
-When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx` and is a case class (Product). A `Copyable` instance is automatically provided for any `ParserCtx & Product` — you do not need to derive it explicitly. At runtime, the initial context is created via `Empty[Ctx]` (using constructor defaults) and the same object is passed to every rule reduction in a single `parse()` call.
+When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx` and is a case class (Product). A `Copyable` instance is automatically provided for any `ParserCtx & Product` — no explicit derivation is needed. At runtime, the initial context is created via `Empty[Ctx]` (using constructor defaults) and the same object is passed to every rule reduction in a single `parse()` call.
 
 </details>
 
@@ -37,15 +37,14 @@ import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
-) extends ParserCtx derives Copyable
+) extends ParserCtx
 ```
 
-Four rules apply:
+Three rules apply:
 
-1. **Must be a `case class`** -- `Copyable.derived` requires `Mirror.ProductOf`.
+1. **Must be a `case class`** -- the library automatically provides a `Copyable` instance for any `ParserCtx & Product`.
 2. **All fields must have default values** -- `Empty[Ctx]` constructs the initial context from constructor defaults.
-3. **`derives Copyable` is required** -- `Parser[Ctx]` needs an implicit `Copyable[Ctx]`.
-4. **Mutable collections are `val`; other mutable fields are `var`** -- mutate the collection contents, not the reference.
+3. **Mutable collections are `val`; other mutable fields are `var`** -- mutate the collection contents, not the reference.
 
 ## Accessing Context in Rule Bodies
 
@@ -57,7 +56,7 @@ import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
-) extends ParserCtx derives Copyable
+) extends ParserCtx
 
 object BrainParser extends Parser[BrainParserCtx]:
   val root: Rule[BrainAST] = rule:

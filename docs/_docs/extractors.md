@@ -20,8 +20,8 @@ Use `MyLexer.TOKEN(binding)` to match a terminal. The `binding` is a `Lexeme` --
 // Structural token: discard the binding
 { case BrainLexer.jumpForward(_) => ... }
 
-// Backtick quoting for special-character names
-{ case BrainLexer.`\\+`(_) => ... }
+// Backtick quoting for special-character names (e.g., if a lexer defines Token["\\+"])
+{ case MyLexer.`\\+`(_) => ... }
 ```
 
 **Pitfall:** After `BrainLexer.functionName(name)`, the variable `name` is a `Lexeme`, not a `String`. Using `name` where a `String` is expected is a type error. Always use `name.value`.
