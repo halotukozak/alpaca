@@ -1,139 +1,106 @@
 # Extractors
 
-Parser rule bodies are partial functions — everything on the left side of `=>` is a pattern.
-Extractors provide type-safe access to terminals (tokens), non-terminals (rule results), and EBNF operators.
-This page covers every extractor form available in parser rules.
+Parser rule bodies are partial functions -- everything on the left side of `=>` is a pattern. Extractors provide type-safe access to terminals (tokens), non-terminals (rule results), and EBNF operators.
 
-> **Compile-time processing:** The Alpaca macro transforms `case CalcLexer.NUMBER(n) =>` into a pattern that extracts a `Lexeme` from the parse stack. The extractor logic is wired at compile time — what you write in case patterns is syntactic sugar that the macro resolves against the grammar.
+<details>
+<summary>Under the hood: compile-time pattern analysis</summary>
+
+The Alpaca macro transforms patterns like `BrainLexer.inc(n)` into code that extracts a `Lexeme` from the parse stack. The macro reads each case pattern at compile time, identifies the symbols involved, constructs the grammar productions, and generates the parse table. What you write as patterns is syntactic sugar resolved against the grammar.
+
+</details>
 
 ## Terminal Extractors
 
-Use `MyLexer.TOKEN(binding)` to match a terminal in a case pattern.
-The `binding` variable receives a `Lexeme` — **not** the extracted value.
-Use `binding.value` to access the semantic content.
-
-For structural tokens (operators, punctuation) where the value is not needed, use `_` to discard the binding.
-Token names that are not valid Scala identifiers (containing `+`, `(`, `)`, reserved words like `if`) must be quoted with backticks.
+Use `MyLexer.TOKEN(binding)` to match a terminal. The `binding` is a `Lexeme` -- **not** the extracted value. Use `binding.value` to access the semantic content.
 
 ```scala sc:nocompile
-import alpaca.*
+// Value-bearing token: use binding.value
+{ case BrainLexer.functionName(name) => name.value }   // name: Lexeme, name.value: String
 
-// Value-bearing token: use binding.value for the semantic content
-{ case CalcLexer.NUMBER(n) => n.value }     // n: Lexeme, n.value: Double
+// Structural token: discard the binding
+{ case BrainLexer.jumpForward(_) => ... }
 
-// Structural token: discard the binding when the value is not needed
-{ case CalcLexer.PLUS(_) => () }
-
-// Backtick quoting for special-character token names
-{ case CalcLexer.`\\+`(_) => () }
-{ case (CalcLexer.`\\(`(_), Expr(e), CalcLexer.`\\)`(_)) => e }
+// Backtick quoting for special-character names (e.g., if a lexer defines Token["\\+"])
+{ case MyLexer.`\\+`(_) => ... }
 ```
 
-**Pitfall:** After `CalcLexer.NUMBER(n)`, the variable `n` is a `Lexeme`, not an `Int`.
-Using `n` where a `Double` is expected is a type error. Always use `n.value` for the semantic content.
+**Pitfall:** After `BrainLexer.functionName(name)`, the variable `name` is a `Lexeme`, not a `String`. Using `name` where a `String` is expected is a type error. Always use `name.value`.
 
 ## Non-Terminal Extractors
 
-Use `Rule(binding)` in a case pattern to match a non-terminal.
-This calls `Rule[R].unapply`, extracting the value of type `R` produced by that rule during the parse.
-Rules can refer to themselves recursively — the macro handles left recursion and mutual recursion automatically.
+Use `Rule(binding)` to match a non-terminal. This calls `Rule[R].unapply`, extracting the value of type `R` produced during the parse:
 
 ```scala sc:nocompile
-import alpaca.*
+// While(whl) extracts the BrainAST produced by the While rule
+{ case While(whl) => whl }   // whl: BrainAST
 
-// Expr(left) extracts the Int produced by the Expr rule
-{ case (Expr(left), CalcLexer.PLUS(_), Expr(right)) => left + right }
-// left: Int, right: Int  (from Rule[Int])
-
-// Single non-terminal: direct match, no wrapper
-{ case Expr(e) => e }
+// Multiple non-terminals in a tuple
+{ case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+    BrainAST.While(stmts) }
 ```
 
-A non-terminal extractor is available for any `Rule[R]` defined in the parser.
-The binding variable has exactly type `R` — no cast or conversion needed.
-If two rules produce different types, the types appear naturally in the pattern:
+Rules can refer to themselves recursively. The macro handles left recursion and mutual recursion automatically.
+
+## Tuple Patterns
+
+Multi-symbol productions match a **tuple**; single-symbol productions match **directly**:
 
 ```scala sc:nocompile
-import alpaca.*
-
-val Name:  Rule[String] = rule:
-  case CalcLexer.ID(id) => id.value
-
-val Value: Rule[Double] = rule:
-  case CalcLexer.NUMBER(n) => n.value
-
-val root = rule:
-  case (Name(key), CalcLexer.ASSIGN(_), Value(v)) => (key, v)
-  // key: String (from Rule[String]), v: Double (from Rule[Double])
-```
-
-## Tuple Patterns (Multi-Symbol Productions)
-
-The way a case pattern is written depends on how many symbols the production contains:
-
-- **Multi-symbol productions** match a **tuple**: `{ case (sym1, sym2, sym3) => ... }`
-- **Single-symbol productions** match **directly**: `{ case sym1 => ... }` — not wrapped in a tuple
-
-This is a Scala pattern matching requirement, not an Alpaca-specific rule.
-Writing a tuple pattern with only one element, or omitting the parentheses for multiple elements, is a compile error.
-
-```scala sc:nocompile
-import alpaca.*
-
-val Expr: Rule[Int] = rule(
-  // Multi-symbol: parentheses required
-  { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
+val Operation: Rule[BrainAST] = rule(
+  // Multi-symbol: tuple pattern with parentheses
+  { case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      BrainAST.FunctionCall(name.value) },
   // Single-symbol: no parentheses
-  { case CalcLexer.NUMBER(n) => n.value },
+  { case BrainLexer.inc(_) => BrainAST.Inc },
+  { case While(whl) => whl },
 )
-```
-
-## EBNF Extractors: .Option
-
-`Rule.Option(binding)` in a case pattern binds `binding` to an `Option[R]`.
-The macro generates two synthetic productions at compile time: an empty production (returns `None`) and a single-element production (returns `Some`).
-
-```scala sc:nocompile
-import alpaca.*
-
-val Num: Rule[Int] = rule:
-  case CalcLexer.NUMBER(n) => n.value
-
-val root = rule:
-  case (CalcLexer.LPAREN(_), Num.Option(maybeNum), CalcLexer.RPAREN(_)) =>
-    maybeNum    // Option[Int] — None if absent, Some(n) if present
 ```
 
 ## EBNF Extractors: .List
 
-`Rule.List(binding)` in a case pattern binds `binding` to a `List[R]`.
-The macro generates a left-recursive accumulation: an empty production (returns `Nil`) and an appending production (returns `list :+ elem`).
+`Rule.List(binding)` binds to a `List[R]`. The macro generates a left-recursive accumulation production (empty → `Nil`, append → `list :+ elem`).
+
+The BrainFuck parser uses `.List` for the root and for loop bodies:
 
 ```scala sc:nocompile
-import alpaca.*
+val root: Rule[BrainAST] = rule:
+  case Operation.List(stmts) => BrainAST.Root(stmts)
+  // stmts: List[BrainAST] -- zero or more operations
 
-val Num: Rule[Int] = rule:
-  case CalcLexer.NUMBER(n) => n.value
-
-val root = rule:
-  case Num.List(numbers) =>
-    numbers    // List[Int] — zero or more Num values
+val While: Rule[BrainAST] = rule:
+  case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+    BrainAST.While(stmts)
 ```
 
-`.Option` and `.List` also work on terminals (from `DefinedToken`), not only rules:
+`.List` also works on terminals:
 
 ```scala sc:nocompile
-import alpaca.*
-
-// Token-level EBNF: zero or more NUMBER lexemes
 val root = rule:
-  case CalcLexer.NUMBER.List(numbers) =>
-    numbers    // List[Lexeme] — zero or more NUMBER lexemes
+  case BrainLexer.inc.List(incs) =>
+    incs    // List[Lexeme] -- zero or more inc tokens
 ```
 
-## Combining EBNF in One Production
+## EBNF Extractors: .Option
 
-`.Option` and `.List` can appear together in the same tuple pattern:
+`Rule.Option(binding)` binds to an `Option[R]`. The macro generates an empty production (→ `None`) and a single-element production (→ `Some`).
+
+```scala sc:nocompile
+val root = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionCall(_).Option(call)) =>
+    (name.value, call)   // call: Option[Lexeme]
+```
+
+## Lexeme Fields
+
+When a terminal extractor binds a variable, the variable is a `Lexeme` carrying both the value and a snapshot of the lexer context at match time. Access fields with dot notation:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `binding.value` | Token-specific | The extracted semantic value |
+| `binding.name` | `String` | The token name (e.g., `"functionName"`) |
+| `binding.text` | `String` | The raw matched characters |
+| `binding.position` | `Int` | Character position (post-match) |
+| `binding.line` | `Int` | Line number |
 
 ```scala sc:nocompile
 import alpaca.*
@@ -194,7 +161,7 @@ Available fields depend on the `LexerCtx` used to build the lexer:
 - Adding `LineTracking` (already included in `LexerCtx.Default`) provides `line`.
 - Custom context fields appear if the lexer context declares them.
 
-See [Between Stages](on-token-match.html) for the full Lexeme structure, context snapshot lifecycle, and how positional values are computed.
+See [Between Stages](on-token-match.md) for the full Lexeme structure, context snapshot lifecycle, and how positional values are computed.
 
 ## Accessing Fields on a Bound Lexeme
 
@@ -213,13 +180,9 @@ import alpaca.*
 }
 ```
 
-Field access is typed via the `Selectable` refinement on `Lexeme`.
-If the lexer uses `LexerCtx.Default`, all four fields (`value`, `text`, `position`, `line`) are available.
-Custom context fields (e.g., `id.indentLevel`) are accessible if the lexer context declares them.
+Field access is type-safe via the `Selectable` refinement on `Lexeme`. The `position` and `line` fields are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. Custom context fields (e.g., `name.squareBrackets`) are accessible if the lexer context declares them.
 
 **Pitfall:** `position` records the post-match cursor position (after advancing by the token length), not the start position.
-For a token `"42"` starting at column 1, `position` is 3. See [Between Stages](on-token-match.html) for the exact semantics.
+For a token `"42"` starting at column 1, `position` is 3. See [Between Stages](on-token-match.md) for the exact semantics.
 
----
-
-See [Parser](parser.html) for grammar rules, rule definitions, and parsing input.
+See [Parser](parser.md) for grammar rules and [Between Stages](on-token-match.md) for how lexeme snapshots are constructed.

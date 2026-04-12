@@ -1,124 +1,114 @@
 # Parser Context
 
-Parser context lets you carry mutable state through parsing reductions.
-Stateless parsers use `ParserCtx.Empty` by default; custom contexts carry domain-specific state like symbol tables, error accumulators, or any state that evolves as productions are reduced.
+Parser context lets you carry mutable state through parsing reductions. Stateless parsers use `ParserCtx.Empty` by default; custom contexts carry domain-specific state like symbol tables, function registries, or error accumulators.
 
-> **Compile-time processing:** When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx`, has `Copyable` derived, and generates the appropriate context threading code. At runtime, the initial context is created via `Empty[Ctx]` (using default constructor values) and the same object is passed to every rule reduction in a single `parse()` call.
+<details>
+<summary>Under the hood: context threading</summary>
+
+When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `ParserCtx` and is a case class (Product). A `Copyable` instance is automatically provided for any `ParserCtx & Product` — no explicit derivation is needed. At runtime, the initial context is created via `Empty[Ctx]` (using constructor defaults) and the same object is passed to every rule reduction in a single `parse()` call.
+
+</details>
 
 ## ParserCtx.Empty (Default)
 
-When you extend `Parser` without a type parameter, the parser uses `ParserCtx.Empty` internally.
-No context definition is needed — this is the right choice for parsers that only care about the parsed value, not accumulated state.
+When you extend `Parser` without a type parameter, the parser uses `ParserCtx.Empty`. No context definition is needed:
 
-```scala sc:nocompile
+```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainAST.scala
 import alpaca.*
 
-object CalcParser extends Parser:           // uses ParserCtx.Empty by default
-  val Expr: Rule[Int] = rule(
-    { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case CalcLexer.NUMBER(n) => n.value },
-  )
-  val root: Rule[Int] = rule:
-    case Expr(e) => e
+object BrainParser extends Parser:    // uses ParserCtx.Empty
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
 
-val (_, result) = CalcParser.parse(CalcLexer.tokenize("1 + 2").lexemes)
-// result: Int | Null  -- 3 for valid input, null for invalid input
-// ctx is ParserCtx.Empty -- can be discarded with _
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    // ...
+  )
 ```
 
 ## Custom Parser Context
 
-To carry state across reductions, define a `case class` extending `ParserCtx` with `derives Copyable`:
+The BrainFuck> extension adds function definitions and calls. To track which functions have been defined (so we can reject calls to undefined functions), we use a custom parser context:
 
 ```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable
 
-case class CalcContext(
-  names: mutable.Map[String, Int] = mutable.Map.empty,
-  errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
-) extends ParserCtx derives Copyable
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
 ```
 
-Four rules apply to every custom parser context:
+Three rules apply:
 
-1. **Must be a `case class`** — `Copyable.derived` requires `Mirror.ProductOf`, which only case classes provide.
-2. **All fields must have default values** — `Empty[Ctx]` constructs the initial context from constructor defaults. Fields without defaults cause a compile error.
-3. **`derives Copyable` is required** — `Parser[Ctx]` requires an implicit `Copyable[Ctx]`. Without it, the compiler reports an implicit not found error.
-4. **Mutable collections are `val`; other mutable fields are `var`** — mutate the collection contents, not the reference.
+1. **Must be a `case class`** -- the library automatically provides a `Copyable` instance for any `ParserCtx & Product`.
+2. **All fields must have default values** -- `Empty[Ctx]` constructs the initial context from constructor defaults.
+3. **Mutable collections are `val`; other mutable fields are `var`** -- mutate the collection contents, not the reference.
 
 ## Accessing Context in Rule Bodies
 
-The `ctx` identifier is available inside every `rule { case ... }` body and resolves to the current context instance, typed as your specific `ParserCtx` subtype:
+The `ctx` identifier is available inside every `rule { case ... }` body, typed as your specific `ParserCtx` subtype:
 
-```scala sc:nocompile
+```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainAST.scala
 import alpaca.*
+import scala.collection.mutable
 
-object CalcParser extends Parser[CalcContext]:
-  val Expr: Rule[Int] = rule(
-    { case CalcLexer.NUMBER(n) => n.value },
-    { case CalcLexer.ID(id) =>
-        ctx.names.getOrElse(    // ctx is CalcContext here, not just ParserCtx
-          id.value, {
-            ctx.errors.append(("undefined", id, id.line))
-            0
-          },
-        )
-    },
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
+
+object BrainParser extends Parser[BrainParserCtx]:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+          Operation.List(ops), BrainLexer.functionClose(_)) =>
+      require(ctx.functions.add(name.value), s"Function ${name.value} is already defined")
+      BrainAST.FunctionDef(name.value, ops)
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
+      BrainAST.FunctionCall(name.value)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case FunctionDef(fdef) => fdef },
+    { case FunctionCall(call) => call },
+    // ... other operations
   )
-  val Statement: Rule[Unit | Int] = rule(
-    { case (CalcLexer.ID(id), CalcLexer.ASSIGN(_), Expr(expr)) =>
-        ctx.names(id.value) = expr },  // mutates the shared context
-    { case Expr(expr) => expr },
-  )
-  val root = rule:
-    case Statement(stmt) => stmt
 ```
 
-`ctx` is `@compileTimeOnly` — it is only valid syntactically inside `rule` bodies.
+`FunctionDef` adds the function name to `ctx.functions`. `FunctionCall` checks that the name exists. Both see the same context object.
 
 ## Shared State Across Reductions
 
-`ctx` is ONE object shared across all rule executions during a single `parse()` call.
-Mutations made in one rule body are visible to all subsequent reductions in the same parse.
-
-In the example above, the `Statement` rule writes to `ctx.names`, and the `Expr` rule reads from `ctx.names`.
-Because they share the same context object, a value assigned in `Statement` is immediately readable in `Expr`:
+`ctx` is one object shared across all rule executions during a single `parse()` call. Mutations made in one rule body are visible to all subsequent reductions:
 
 ```scala sc:nocompile
-import alpaca.*
-
-// Parsing "x = 42" then "x":
-// 1. Statement reduces "x = 42": ctx.names("x") = 42
-// 2. Expr reduces "x": ctx.names.getOrElse("x", 0)  => 42
-//    Both rules see the same ctx object — the assignment is visible.
-
-val (ctx, _) = CalcParser.parse(CalcLexer.tokenize("x = 42").lexemes)
-// ctx.names contains "x" -> 42 after parsing completes
+// Parsing "foo(+++)foo!":
+// 1. FunctionDef reduces "foo(+++)": ctx.functions.add("foo")
+// 2. FunctionCall reduces "foo!": ctx.functions.contains("foo") => true
 ```
 
-The initial context is created once per `parse()` call, and all reductions during that call operate on the same instance.
-There is no per-rule copy — mutations accumulate across all reductions.
+The initial context is created once per `parse()` call. There is no per-rule copy -- mutations accumulate.
 
-## Getting Positional Info from the Lexeme, Not ctx
+## Positional Info from Lexemes, Not ctx
 
-`ParserCtx` and `LexerCtx` are completely independent.
-The parser context has **no** `text`, `position`, or `line` fields.
-To access positional information in parser rule bodies, use the fields on the `Lexeme` binding — not `ctx`.
+`ParserCtx` and `LexerCtx` are independent. The parser context has no `text`, `position`, or `line` fields. To access positional information, use the `Lexeme` binding:
 
-Every terminal binding (e.g., `id` in `CalcLexer.ID(id)`) is a `Lexeme` object carrying a snapshot of the lexer context at match time.
-The available fields are:
+```scala sc:nocompile
+{ case BrainLexer.functionName(name) =>
+    val funcName = name.value      // String -- the function name
+    val pos = name.position        // Int -- character position from lexer
+    val ln = name.line             // Int -- line number from lexer
+    // ...
+}
+```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `binding.value` | Token-specific | The extracted semantic value (e.g., `Int` for a number token) |
-| `binding.text` | `String` | The raw matched characters |
-| `binding.position` | `Int` | Character position from the lexer context snapshot |
-| `binding.line` | `Int` | Line number from the lexer context snapshot |
+The `position` and `line` fields come from the lexer context snapshot. They are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. See [Lexer Context](lexer-context.md) for details.
 
-The `position` and `line` fields are available because the lexer uses `LexerCtx.Default`, which includes `PositionTracking` and `LineTracking`. If your lexer uses a custom context without those traits, the corresponding fields will not be present on the lexeme. See [Lexer Context](lexer-context.html) for details on which traits provide which fields.
-
----
-
-See [Extractors](extractors.html) for the full `Lexeme` field reference and how custom lexer context fields appear in bindings.
-See [Parser](parser.html) for grammar rules and EBNF operators.
+See [Extractors](extractors.md) for the full `Lexeme` field reference. See [Parser](parser.md) for grammar rules and EBNF operators.
