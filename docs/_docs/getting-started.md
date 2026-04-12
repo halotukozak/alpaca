@@ -34,7 +34,7 @@ The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your l
 
 ## Step 1: The Lexer
 
-BrainFuck has eight commands — everything else is a comment (ignored):
+BrainFuck> has the eight standard BrainFuck commands plus function definitions (`name(body)`) and function calls (`name!`). Everything else is a comment.
 
 | Command | Meaning |
 | :---: | :--- |
@@ -46,47 +46,73 @@ BrainFuck has eight commands — everything else is a comment (ignored):
 | `,` | Read one byte of input into the current cell |
 | `[` | Jump forward past the matching `]` if the current cell is zero |
 | `]` | Jump back to the matching `[` if the current cell is non-zero |
+| `name(body)` | Define a function |
+| `name!` | Call a function |
 
 ```scala sc:nocompile sc-name:BrainLexer.scala
 import alpaca.*
 
-val BrainLexer = lexer:
+case class BrainLexContext(
+  var brackets: Int = 0,
+  var squareBrackets: Int = 0,
+) extends LexerCtx
+
+val BrainLexer = lexer[BrainLexContext]:
   case ">" => Token["next"]
   case "<" => Token["prev"]
   case "\\+" => Token["inc"]
   case "-" => Token["dec"]
   case "\\." => Token["print"]
   case "," => Token["read"]
-  case "\\[" => Token["jumpForward"]
-  case "\\]" => Token["jumpBack"]
+  case "\\[" =>
+    ctx.squareBrackets += 1
+    Token["jumpForward"]
+  case "\\]" =>
+    require(ctx.squareBrackets > 0, "Mismatched brackets")
+    ctx.squareBrackets -= 1
+    Token["jumpBack"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" =>
+    ctx.brackets += 1
+    Token["functionOpen"]
+  case "\\)" =>
+    require(ctx.brackets > 0, "Mismatched brackets")
+    ctx.brackets -= 1
+    Token["functionClose"]
+  case "!" => Token["functionCall"]
   case "." => Token.Ignored
   case "\n" => Token.Ignored
 ```
 
-Each `case` maps a regex pattern to a token. `Token["next"]` creates a named token with a `String` value equal to the matched text. `Token.Ignored` matches but produces no output — the lexer skips it.
+Each `case` maps a regex pattern to a token. `Token["next"]` creates a named token. `Token["functionName"](name)` creates a value-bearing token — the matched text is available as the token's value. `Token.Ignored` matches but produces no output.
+
+The custom context `BrainLexContext` tracks bracket depth. Inside rule bodies, `ctx` gives access to the context — the lexer increments and decrements counters and uses `require` to catch mismatched brackets at lex time.
 
 Pattern order matters: `"\\."` (literal dot — the print command) must appear before `"."` (any character — the catch-all). Otherwise the catch-all would shadow the print command.
 
 Try it:
 
 ```scala sc:nocompile sc-compile-with:BrainLexer.scala
-val (_, lexemes) = BrainLexer.tokenize("++[>+<-].")
+val (ctx, lexemes) = BrainLexer.tokenize("foo(++)")
+require(ctx.brackets == 0 && ctx.squareBrackets == 0, "Mismatched brackets")
 println(lexemes.map(_.name))
-// List(inc, inc, jumpForward, next, inc, prev, dec, jumpBack, print)
+// List(functionName, functionOpen, inc, inc, functionClose)
 ```
 
 ## Step 2: The AST
 
-Before writing the parser, define the tree structure it will produce. BrainFuck programs are sequences of instructions, some of which contain nested instruction lists (loops):
+Before writing the parser, define the tree structure it will produce. BrainFuck> programs are sequences of instructions — some contain nested lists (loops, function bodies):
 
 ```scala sc:nocompile sc-name:BrainAST.scala
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
+  case FunctionDef(name: String, ops: List[BrainAST])
+  case FunctionCall(name: String)
   case Next, Prev, Inc, Dec, Print, Read
 ```
 
-`Root` wraps the top-level program. `While` represents a `[...]` loop — it repeats its body while the current cell is nonzero.
+`Root` wraps the top-level program. `While` represents a `[...]` loop. `FunctionDef` and `FunctionCall` handle named functions.
 
 ## Step 3: The Parser
 
@@ -94,8 +120,13 @@ The parser turns a flat list of lexemes into a nested `BrainAST`:
 
 ```scala sc:nocompile sc-name:BrainParser.scala sc-compile-with:BrainLexer.scala,BrainAST.scala
 import alpaca.*
+import scala.collection.mutable
 
-object BrainParser extends Parser:
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
+
+object BrainParser extends Parser[BrainParserCtx]:
   val root: Rule[BrainAST] = rule:
     case Operation.List(stmts) => BrainAST.Root(stmts)
 
@@ -111,23 +142,41 @@ object BrainParser extends Parser:
     { case BrainLexer.print(_) => BrainAST.Print },
     { case BrainLexer.read(_) => BrainAST.Read },
     { case While(whl) => whl },
+    { case FunctionDef(fdef) => fdef },
+    { case FunctionCall(call) => call },
   )
+
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+          Operation.List(ops), BrainLexer.functionClose(_)) =>
+      require(ctx.functions.add(name.value), s"Function ${name.value} is already defined")
+      BrainAST.FunctionDef(name.value, ops)
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
+      BrainAST.FunctionCall(name.value)
 ```
 
-Three things to note:
+Things to note:
 
 - **`root`** is required. It defines the grammar's start symbol. Here it matches zero or more `Operation`s via `.List`.
-- **`Operation.List(stmts)`** is an EBNF operator. It matches zero or more occurrences of the `Operation` rule and returns a `List[BrainAST]`.
-- **`BrainLexer.next(_)`** matches a lexeme whose token name is `"next"`. The `_` discards the lexeme value — we only care that the token appeared.
+- **`Operation.List(stmts)`** is an EBNF operator. It matches zero or more occurrences and returns a `List[BrainAST]`.
+- **`BrainLexer.next(_)`** matches a lexeme whose token name is `"next"`. The `_` discards the lexeme — we only care that the token appeared.
+- **`name.value`** accesses the value from a `Lexeme`. After `BrainLexer.functionName(name)`, `name` is a `Lexeme` and `name.value` is the matched `String`.
+- **`Parser[BrainParserCtx]`** carries state through reductions. `ctx.functions` tracks which functions have been defined, so `FunctionCall` can reject undefined names.
 
 ## Step 4: The Evaluator
 
-BrainFuck operates on an array of 256 bytes with a movable pointer:
+BrainFuck operates on an array of 256 bytes with a movable pointer. Functions are stored by name and called by looking them up:
 
 ```scala sc:nocompile sc-name:Eval.scala sc-compile-with:BrainAST.scala
+import scala.collection.mutable
+
 class Memory(
   val cells: Array[Int] = new Array(256),
   var pointer: Int = 0,
+  val functions: mutable.Map[String, List[BrainAST]] = mutable.Map.empty,
 )
 
 extension (ast: BrainAST)
@@ -140,6 +189,11 @@ extension (ast: BrainAST)
     case BrainAST.Print      => print(mem.cells(mem.pointer).toChar)
     case BrainAST.Read       => mem.cells(mem.pointer) = scala.io.StdIn.readChar() & 0xff
     case BrainAST.While(ops) => while mem.cells(mem.pointer) != 0 do ops.foreach(_.eval(mem))
+    case BrainAST.FunctionDef(name, ops) => mem.functions += (name -> ops)
+    case BrainAST.FunctionCall(name) =>
+      mem.functions.get(name) match
+        case Some(ops) => ops.foreach(_.eval(mem))
+        case _ => throw RuntimeException(s"Undefined function: $name")
 ```
 
 ## Step 5: Run It
@@ -150,14 +204,25 @@ Wire the three stages together:
 import alpaca.*
 
 @main def run(): Unit =
-  val program = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
-  val (_, lexemes) = BrainLexer.tokenize(program)
-  val (_, ast) = BrainParser.parse(lexemes)
-  ast.nn.eval(Memory())
+  // Standard BrainFuck: Hello World
+  val hello = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
+  val (ctx1, lexemes1) = BrainLexer.tokenize(hello)
+  require(ctx1.squareBrackets == 0, "Mismatched brackets")
+  val (_, ast1) = BrainParser.parse(lexemes1)
+  ast1.nn.eval(Memory())
   // prints: Hello World!
+
+  // BrainFuck>: function definition and call
+  val withFunctions = "foo(+++)foo!foo!"
+  val (ctx2, lexemes2) = BrainLexer.tokenize(withFunctions)
+  require(ctx2.brackets == 0, "Mismatched brackets")
+  val (_, ast2) = BrainParser.parse(lexemes2)
+  val mem = Memory()
+  ast2.nn.eval(mem)
+  // mem.cells(0) == 6 (two calls to foo, each incrementing 3 times)
 ```
 
-The pipeline is always the same: `tokenize` produces lexemes, `parse` produces an AST (or `null` on failure — `.nn` asserts non-null), and you do whatever you want with the result.
+The pipeline is always the same: `tokenize` produces lexemes, `parse` produces an AST (or `null` on failure — `.nn` asserts non-null), and you evaluate the result however you want.
 
 ## What's Next
 
