@@ -187,3 +187,7 @@ Contributions are welcome. Please feel free to submit a Pull Request.
 ## Authors
 
 Created by [halotukozak](https://github.com/halotukozak) and [Corvette653](https://github.com/Corvette653)
+
+---
+
+Made with ❤️ and coffee

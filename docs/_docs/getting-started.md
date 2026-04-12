@@ -34,7 +34,18 @@ The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your l
 
 ## Step 1: The Lexer
 
-BrainFuck has eight commands: `>`, `<`, `+`, `-`, `.`, `,`, `[`, `]`. Everything else is a comment (ignored).
+BrainFuck has eight commands — everything else is a comment (ignored):
+
+| Command | Meaning |
+| :---: | :--- |
+| `>` | Move the data pointer to the next cell |
+| `<` | Move the data pointer to the previous cell |
+| `+` | Increment the byte at the data pointer |
+| `-` | Decrement the byte at the data pointer |
+| `.` | Output the byte at the data pointer as a character |
+| `,` | Read one byte of input into the current cell |
+| `[` | Jump forward past the matching `]` if the current cell is zero |
+| `]` | Jump back to the matching `[` if the current cell is non-zero |
 
 ```scala sc:nocompile sc-name:BrainLexer.scala
 import alpaca.*
