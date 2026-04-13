@@ -35,7 +35,7 @@ The input `1 + 2 + 3` has two parse trees:
 - `(1 + 2) + 3` — left-associative
 - `1 + (2 + 3)` — right-associative
 
-Alpaca reports this as a shift/reduce conflict. Resolution: `production.plus.before(Lexer.PLUS)` makes it left-associative.
+Alpaca reports this as a shift/reduce conflict. Resolution: `production.plus.before(CalcLexer.PLUS)` makes it left-associative.
 
 ## Detecting Ambiguity
 
