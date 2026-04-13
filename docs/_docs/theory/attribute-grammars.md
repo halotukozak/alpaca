@@ -56,7 +56,7 @@ val FunctionDef: Rule[BrainAST] = rule:
 
 val FunctionCall: Rule[BrainAST] = rule:
   case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-    ctx.functions.contains(name.value)  // reads from shared context
+    require(ctx.functions.contains(name.value), s"Undefined function: ${name.value}")
     BrainAST.FunctionCall(name.value)
 ```
 

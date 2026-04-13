@@ -95,13 +95,9 @@ extension (ast: BrainAST)
     // ... other cases
 ```
 
-In Scala 3, sealed enums with pattern matching give you exhaustiveness checking — the compiler warns if you miss a case. This is the functional equivalent of the visitor pattern from object-oriented design.
+In Scala 3, sealed enums with pattern matching give you exhaustiveness checking — the compiler warns if you miss a case.
 
-You can define multiple traversals over the same AST:
-- `eval` — interpret the program
-- `prettyPrint` — format as readable source
-- `optimize` — transform the tree (e.g., collapse consecutive `Inc`s)
-- `compile` — emit bytecode or machine code
+The same tree can be traversed multiple times: an evaluator interprets it, a pretty-printer formats it back to source, an optimizer rewrites subtrees (e.g., collapse consecutive `Inc`s), and a compiler emits bytecode.
 
 ## Choosing Between the Two
 
@@ -119,4 +115,3 @@ For most real languages, building an AST is the right choice. Direct computation
 
 - See [Semantic Actions](semantic-actions.md) for how Alpaca executes `case` bodies during reductions.
 - See the [BrainFuck Interpreter](../cookbook/brainfuck-interpreter.md) for the complete AST + evaluator example.
-- See [Attribute Grammars](attribute-grammars.md) for the formal theory behind passing values through reductions.
