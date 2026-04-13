@@ -27,13 +27,7 @@ Alpaca provides two EBNF operators that work on both `Rule[R]` and terminals:
 
 ### `.List` — Zero or More
 
-`Rule.List(binding)` matches zero or more occurrences and returns a `List[R]`. The macro generates two synthetic productions:
-
-```
--- Generated BNF for Operation.List:
-OperationList → ε                        -- returns Nil
-OperationList → OperationList Operation  -- returns list :+ elem
-```
+`Rule.List(binding)` matches zero or more occurrences and returns a `List[R]`. The macro generates two synthetic productions (see [Desugaring to Plain BNF](#desugaring-to-plain-bnf) below for the exact expansion).
 
 In Alpaca:
 
@@ -47,13 +41,7 @@ This is equivalent to the EBNF notation `root → {Operation}`.
 
 ### `.Option` — Zero or One
 
-`Rule.Option(binding)` matches zero or one occurrence and returns an `Option[R]`. The macro generates:
-
-```
--- Generated BNF for Num.Option:
-NumOption → ε       -- returns None
-NumOption → Num     -- returns Some(n)
-```
+`Rule.Option(binding)` matches zero or one occurrence and returns an `Option[R]`. The macro generates similar synthetic productions (see [Desugaring to Plain BNF](#desugaring-to-plain-bnf) below).
 
 In Alpaca:
 
@@ -115,7 +103,7 @@ val ObjectMembers: Rule[List[(String, Any)]] = rule(
 )
 ```
 
-`.List` does not support separators — it produces a bare `List → ε | List X` recursion. For delimiter-separated lists, explicit rules give you control over where the separator appears.
+`.List` does not support separators *yet* — it produces a bare `List → ε | List X` recursion. For delimiter-separated lists, explicit rules give you control over where the separator appears.
 
 ## EBNF in the BrainFuck Grammar
 
