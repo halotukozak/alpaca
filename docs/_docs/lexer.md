@@ -186,7 +186,7 @@ If the input contains a character that matches no pattern, `tokenize` throws a `
 
 ### Tokenizing Files with LazyReader
 
-For large files, use `LazyReader` instead of loading the entire file into a `String`. It reads characters on demand and uses O(1) cursor advancement:
+For large files, use `LazyReader` instead of loading the entire file into a `String`. It reads characters on demand from the underlying file:
 
 ```scala sc:nocompile
 import alpaca.*
@@ -194,11 +194,14 @@ import alpaca.internal.lexer.LazyReader
 import java.nio.file.Path
 
 val reader = LazyReader.from(Path.of("program.bf"))
-val (ctx, lexemes) = BrainLexer.tokenize(reader)
-reader.close()
+val (ctx, lexemes) =
+  try BrainLexer.tokenize(reader)
+  finally reader.close()
 ```
 
-`LazyReader.from(path)` accepts an optional `Charset` parameter (defaults to UTF-8). The reader must be closed after tokenization.
+`LazyReader.from(path)` accepts an optional `Charset` parameter (defaults to UTF-8). Always close the reader in a `finally` block (or use `scala.util.Using.resource`) so the file handle is released even if tokenization throws.
+
+Note: `tokenize` currently wraps the reader in an `OffsetCharSequence`, so previously consumed characters are still retained in memory during tokenization. The lazy reader avoids the upfront cost of slurping the file but does not bound the working set.
 
 ## Token Value Types
 

@@ -80,17 +80,21 @@ val FunctionDef: Rule[BrainAST] = rule:
     BrainAST.FunctionDef(funcName, ops)
 ```
 
-### Named Productions with Hyphens
+### Named Productions with Special Characters
 
-Production names can contain hyphens. Access them with backtick quoting in `resolutions`:
+Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
 
 ```scala sc:nocompile
 val Expr: Rule[Int] = rule(
   "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+  "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
+  "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
 )
 
 override val resolutions = Set(
   production.`left-add`.before(Lexer.PLUS),
+  production.`shift.left`.before(Lexer.SHL),
+  production.`if then`.before(Lexer.THEN),
 )
 ```
 
