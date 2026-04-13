@@ -74,7 +74,7 @@ val BrainLexer = lexer[BrainLexContext]:
     ctx.squareBrackets -= 1
     Token["jumpBack"]
   case count @ "[0-9]+" => Token["repeat"](count.toInt)
-  case cell @ "\\$[a-z]+" => Token["cell"](cell.drop(1))
+  case cell @ "\\$[A-Za-z]+" => Token["cell"](cell.drop(1))
   case name @ "[A-Za-z]+" => Token["functionName"](name)
   case "\\(" =>
     ctx.brackets += 1
@@ -206,7 +206,9 @@ extension (ast: BrainAST)
     case BrainAST.Read       => mem.cells(mem.pointer) = scala.io.StdIn.readChar() & 0xff
     case BrainAST.Repeat(n, op) => (1 to n).foreach(_ => op.eval(mem))
     case BrainAST.GoToCell(name) =>
-      mem.pointer = mem.namedCells.getOrElseUpdate(name, mem.namedCells.size)
+      val idx = mem.namedCells.getOrElseUpdate(name, mem.namedCells.size)
+      require(idx < mem.cells.length, s"Too many named cells (max ${mem.cells.length})")
+      mem.pointer = idx
     case BrainAST.While(ops) => while mem.cells(mem.pointer) != 0 do ops.foreach(_.eval(mem))
     case BrainAST.FunctionDef(name, ops) => mem.functions += (name -> ops)
     case BrainAST.FunctionCall(name) =>
@@ -234,6 +236,7 @@ import alpaca.*
   // Repeat counts and named cells
   val extended = "$a 3+ $b 5+ $a ."
   val (ctx2, lexemes2) = BrainLexer.tokenize(extended)
+  require(ctx2.brackets == 0 && ctx2.squareBrackets == 0, "Mismatched brackets")
   val (_, ast2) = BrainParser.parse(lexemes2)
   val mem = Memory()
   ast2.nn.eval(mem)
@@ -242,7 +245,7 @@ import alpaca.*
   // Functions: define once, call twice
   val withFunctions = "$a foo(3+)foo!foo!."
   val (ctx3, lexemes3) = BrainLexer.tokenize(withFunctions)
-  require(ctx3.brackets == 0, "Mismatched brackets")
+  require(ctx3.brackets == 0 && ctx3.squareBrackets == 0, "Mismatched brackets")
   val (_, ast3) = BrainParser.parse(lexemes3)
   val mem2 = Memory()
   ast3.nn.eval(mem2)
