@@ -4,11 +4,13 @@ When a lexer or parser encounters invalid input, it must decide what to do. A na
 
 ## Types of Errors
 
-**Lexical errors** — the lexer encounters a character that matches no token pattern. Example: `@` in a BrainFuck program.
+**Lexical errors** — the lexer encounters a character that matches no token pattern. Example: an unexpected character in a strict lexer with no catch-all rule.
 
-**Syntactic errors** — the parser encounters a token sequence that matches no grammar rule. Example: `++]` (closing bracket without an opening bracket in the grammar).
+**Syntactic errors** — the parser encounters a token sequence that matches no grammar rule. Example: an expression grammar receiving `1 + * 2`.
 
 **Semantic errors** — the input is syntactically valid but violates a semantic rule. Example: calling an undefined function in BrainFuck> (`bar!` without a prior `bar(...)` definition).
+
+Note: with the standard BrainFuck lexer used elsewhere in these docs, non-command characters are typically ignored via `case "." => Token.Ignored`, and an unmatched `]` is rejected during lexing if bracket tracking is enabled. The examples above are generic illustrations, not statements about that specific lexer configuration.
 
 Each level has different recovery strategies.
 
