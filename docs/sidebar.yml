@@ -42,8 +42,12 @@ subsection:
         page: theory/tokens.md
       - title: "The Lexer: Regex to Finite Automata"
         page: theory/lexer-fa.md
+      - title: Regular vs Context-Free
+        page: theory/regular-vs-context-free.md
       - title: Context-Free Grammars
         page: theory/cfg.md
+      - title: EBNF and Extended Notations
+        page: theory/ebnf-extended-notations.md
       - title: The Shift-Reduce Loop
         page: theory/shift-reduce.md
       - title: Why LR Parsing
