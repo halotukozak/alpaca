@@ -60,5 +60,11 @@ subsection:
         page: theory/ast-construction.md
       - title: Operator Precedence Grammars
         page: theory/operator-precedence.md
+      - title: Ambiguity
+        page: theory/ambiguity.md
+      - title: Error Recovery Theory
+        page: theory/error-recovery-theory.md
+      - title: Attribute Grammars
+        page: theory/attribute-grammars.md
       - title: Full Calculator Example
         page: theory/full-example.md
