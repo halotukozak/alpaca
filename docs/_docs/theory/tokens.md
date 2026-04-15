@@ -60,7 +60,7 @@ val (_, lexemes) = BrainLexer.tokenize("foo(++)")
 //   .line     — line number at end of match
 ```
 
-Whitespace matches `Token.Ignored` and does not produce a lexeme — it disappears from the stream.
+Input matched as `Token.Ignored` — such as whitespace or other non-command characters — does not produce a lexeme and disappears from the stream.
 
 ## BrainLexer Token Class Table
 
@@ -80,8 +80,6 @@ The `BrainLexer` running example defines these token classes:
 | `functionOpen` | `\(`          | `Unit`     | `"("`                |
 | `functionClose`| `\)`          | `Unit`     | `")"`                |
 | `functionCall` | `!`           | `Unit`     | `"!"`                |
-
-Input matched as `Token.Ignored` -- such as whitespace or other non-command characters -- does not produce a lexeme and disappears from the stream.
 
 `functionName` is the only value-bearing token: the `@` binding captures the matched text and passes it to `Token["functionName"](name)`. The other tokens use `Token["NAME"]` without a value argument — they carry `Unit`. Their presence in the stream is enough; the matched text is accessible via `lexeme.text` from the context snapshot if needed.
 
