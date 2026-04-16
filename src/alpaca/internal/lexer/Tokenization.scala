@@ -44,11 +44,11 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * Tokenizes the input character sequence.
    *
    * Processes the input from start to finish, matching tokens and building
-   * a list of lexems. Throws a RuntimeException if an unexpected character
+   * a list of lexemes. Throws a RuntimeException if an unexpected character
    * is encountered.
    *
    * @param input the input to tokenize
-   * @return a list of lexems representing the tokenized input
+   * @return a tuple of (ctx, lexemes) where ctx is the final lexer context and lexemes is the list of matched tokens
    */
   final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
     val globalCtx = empty()

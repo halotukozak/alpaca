@@ -7,7 +7,7 @@ The `OnTokenMatch` hook is responsible for advancing the text cursor, constructi
 
 Most programs need nothing more than this:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala
+```scala sc:nocompile
 val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
 val (_, ast) = BrainParser.parse(lexemes)
 ```
