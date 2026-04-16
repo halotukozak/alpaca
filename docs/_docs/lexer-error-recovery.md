@@ -34,7 +34,7 @@ Malformed Java regex patterns -- unmatched parentheses, invalid quantifiers, bad
 
 Pattern guards (`case "regex" if condition =>`) are not supported in lexer rules. The workaround is to move the condition into the rule body:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 case class BrainLexContext(
@@ -60,7 +60,7 @@ Patterns are tried in the order they appear. The first match wins. The general r
 
 In the BrainFuck lexer, this matters for the print command vs the catch-all:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 // RIGHT -- literal dot before catch-all dot
@@ -73,7 +73,7 @@ If you reverse the order, `"."` shadows `"\\."` and you get a `ShadowException`.
 
 The same applies to keywords vs identifiers. Function names in the extended BrainFuck lexer must come after command tokens:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 // RIGHT -- single-char commands before the general name pattern

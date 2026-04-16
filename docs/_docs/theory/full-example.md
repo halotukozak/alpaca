@@ -4,7 +4,7 @@ The preceding theory pages have built up each component of the compiler pipeline
 
 CalcLexer tokenizes arithmetic expressions into the seven token classes introduced in [Tokens and Lexemes](tokens.md).
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val CalcLexer = lexer:

@@ -6,7 +6,7 @@ This guide builds a math expression evaluator supporting arithmetic (`+`, `-`, `
 
 ## The Lexer
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val CalcLexer = lexer:

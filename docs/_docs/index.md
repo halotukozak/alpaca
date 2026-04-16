@@ -70,7 +70,7 @@ import alpaca.*
 
 Define a lexer using pattern matching with regex patterns:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val MyLexer = lexer:

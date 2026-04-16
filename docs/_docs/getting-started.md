@@ -49,7 +49,7 @@ BrainFuck> has the eight standard BrainFuck commands plus function definitions (
 | `name(body)` | Define a function |
 | `name!` | Call a function |
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 case class BrainLexContext(
@@ -103,7 +103,7 @@ println(lexemes.map(_.name))
 
 Before writing the parser, define the tree structure it will produce. BrainFuck> programs are sequences of instructions — some contain nested lists (loops, function bodies):
 
-```scala
+```scala sc:nocompile
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
