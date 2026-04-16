@@ -21,6 +21,11 @@ import scala.reflect.NameTransformer
 private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
   import quotes.reflect.*
 
+  private def symbolFromType(tpe: TypeRepr): parser.Symbol.NonEmpty = tpe.dealias.widen.asType match
+    case '[type name <: ValidName; Token[name, ?, ?]] => Terminal(ValidName.from[name])
+    case '[Rule[?]] => NonTerminal(NameTransformer.decode(tpe.termSymbol.name))
+    case _ => report.errorAndAbort(show"SeparatedBy separator must be a Token or Rule type, but got: ${tpe.show}")
+
   val skipTypedOrTest: PartialFunction[Tree, Tree] =
     case TypedOrTest(tree, _) => tree
     case tree => tree
@@ -55,7 +60,11 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       case Apply(q @ Extractor.Name(extractor), List(Extractor.Name(name))) => (q, name, extractor)
       case q @ Extractor.Name(name) => (q, name, null)
 
-    private val Bind: PartialFunction[Tree, Option[Bind]] =
+    val SeparatedBy: PartialFunction[Tree, (qualifier: Term, name: String, separator: parser.Symbol.NonEmpty)] =
+      case TypeApply(Select(q @ Extractor.Name(name), Names.SeparatedBy), List(separator)) =>
+        (q, name, symbolFromType(separator.tpe))
+
+    val Bind: PartialFunction[Tree, Option[Bind]] =
       case bind: Bind => Some(bind)
       case Ident("_") => None
 
@@ -71,6 +80,35 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       others: List[(production: Production, action: Expr[Action[Ctx]])],
     ),
   ] =
+    case skipTypedOrTest(
+          Unapply(Select(Extractor.SeparatedBy(_, name, separator), Names.Unapply), Nil, List(Extractor.Bind(bind))),
+        ) =>
+      logger.trace(show"extracted separated-by ref: $name")
+      val fresh = NonTerminal.fresh(name)
+      val nonEmpty = NonTerminal.fresh(show"${name}_nonEmpty")
+      (
+        symbol = fresh,
+        bind = bind,
+        others = List(
+          (
+            production = Production.Empty(fresh),
+            action = '{ emptyRepeatedAction },
+          ),
+          (
+            production = Production.NonEmpty(fresh, NEL(nonEmpty)),
+            action = '{ identityAction },
+          ),
+          (
+            production = Production.NonEmpty(nonEmpty, NEL(NonTerminal(name))),
+            action = '{ headAction },
+          ),
+          (
+            production = Production.NonEmpty(nonEmpty, NEL(nonEmpty, separator, NonTerminal(name))),
+            action = '{ separatedByAction },
+          ),
+        ),
+      )
+
     case Extractor.NonTerminal(name, bind, null) =>
       logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
@@ -108,6 +146,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           ),
         ),
       )
+
 // $COVERAGE-ON$
 
 private object ParserExtractors:
@@ -116,11 +155,20 @@ private object ParserExtractors:
     final val Unapply = "unapply"
     final val List = "List"
     final val Option = "Option"
+    final val SeparatedBy = "SeparatedBy"
     final val AsInstanceOf = "$asInstanceOf$"
 
   val repeatedAction: Action[ParserCtx] = (_, args) =>
     val RevertedArray(newElem, currList: List[?]) = args.runtimeChecked
     currList.appended(newElem)
+
+  val headAction: Action[ParserCtx] = (_, args) => List(args.head)
+
+  val identityAction: Action[ParserCtx] = (_, args) => args.head
+
+  val separatedByAction: Action[ParserCtx] = (_, args) =>
+    val RevertedArray(newElem, separator, currList: List[?]) = args.runtimeChecked
+    currList.appendedAll(List(separator, newElem))
 
   val emptyRepeatedAction: Action[ParserCtx] = (_, _) => Nil
 

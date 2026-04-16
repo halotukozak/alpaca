@@ -1,6 +1,6 @@
 # EBNF and Extended Notations
 
-BNF (Backus-Naur Form) is sufficient to describe any context-free grammar, but common patterns — optional elements, repetition, grouping — require verbose workarounds. EBNF (Extended BNF) adds shorthand for these patterns, and Alpaca's `.Option` and `.List` operators map directly to EBNF concepts.
+BNF (Backus-Naur Form) is sufficient to describe any context-free grammar, but common patterns — optional elements, repetition, grouping — require verbose workarounds. EBNF (Extended BNF) adds shorthand for these patterns, and Alpaca's `.Option`, `.List`, and `.SeparatedBy` operators map directly to EBNF concepts.
 
 ## BNF vs EBNF
 
@@ -23,7 +23,7 @@ EBNF is purely syntactic sugar — it generates the same language as the equival
 
 ## Alpaca's EBNF Operators
 
-Alpaca provides two EBNF operators that work on both `Rule[R]` and terminals:
+Alpaca provides three EBNF operators that work on both `Rule[R]` and terminals:
 
 ### `.List` — Zero or More
 
@@ -52,6 +52,20 @@ val root = rule:
 ```
 
 This is equivalent to the EBNF notation `root → Num [Num]`.
+
+### `.SeparatedBy` — Zero or More, Separator-Delimited
+
+`Rule.SeparatedBy[Separator](binding)` matches zero or more occurrences delimited by a separator and returns a `List[R | Separator]`. Separators are preserved in the result list (interleaved between the rule values), which is useful when a separator carries its own semantic information (e.g. distinguishing `,` from `;`).
+
+The `Separator` type parameter is a token type (e.g. `MyLexer.`,``) or a rule's singleton type (e.g. `Sep.type`).
+
+```scala sc:nocompile
+val root: Rule[List[Any]] = rule:
+  case Num.SeparatedBy[MyLexer.`,`](items) => items
+  // For "1,2,3": items == List(1, <","-lexeme>, 2, <","-lexeme>, 3)
+```
+
+This is equivalent to the EBNF notation `root → [Num {"," Num}]`.
 
 ## Desugaring to Plain BNF
 
@@ -92,18 +106,15 @@ Use `.List` for **unseparated** sequences — elements that follow each other wi
 case Operation.List(stmts) => BrainAST.Root(stmts)
 ```
 
-Use **explicit recursion** for **separator-delimited** sequences (comma-separated lists, semicolon-separated statements):
+Use `.SeparatedBy[Sep]` for **separator-delimited** sequences (comma-separated lists, semicolon-separated statements):
 
 ```scala sc:nocompile
 // Good: JSON members are separated by commas
-val ObjectMembers: Rule[List[(String, Any)]] = rule(
-  { case ObjectMember(member) => scala.List(member) },
-  { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) =>
-      members :+ member },
-)
+val ObjectMembers: Rule[List[Any]] = rule:
+  case ObjectMember.SeparatedBy[JsonLexer.`,`](members) => members
 ```
 
-`.List` does not support separators *yet* — it produces a bare `List → ε | List X` recursion. For delimiter-separated lists, explicit rules give you control over where the separator appears.
+Use **explicit recursion** only when you need to customise the action — for example, dropping separators from the result instead of preserving them, or building a non-`List` shape.
 
 ## EBNF in the BrainFuck Grammar
 

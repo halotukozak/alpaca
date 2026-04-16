@@ -123,6 +123,15 @@ trait Rule[R]:
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[R]] = dummy
 
+  /**
+   * Matches zero or more occurrences of this rule delimited by `Separator`,
+   * producing a list with separators interleaved.
+   *
+   * @tparam Separator a token type or a rule's `.type`
+   */
+  @compileTimeOnly(RuleOnly)
+  inline def SeparatedBy[Separator]: PartialFunction[Any, List[R | Separator]] = dummy
+
 /**
  * Base trait for parser global context.
  *

@@ -111,6 +111,8 @@ private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCt
   inline def List: PartialFunction[Any, List[LexemeTpe]] = dummy
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
+  @compileTimeOnly(RuleOnly)
+  inline def SeparatedBy[Separator]: PartialFunction[Any, List[LexemeTpe | Separator]] = dummy
 
 /**
  * A token that is matched but not included in the output.
