@@ -34,7 +34,7 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
   ) extends ParserCtx derives Copyable
 
-  object CalcParser extends Parser[CalcContext]:
+  object CalcApiParser extends Parser[CalcContext]:
     val Expr: Rule[Int] = rule(
       "plus" { case (Expr(expr1), CalcLexer.PLUS(_), Expr(expr2)) => expr1 + expr2 },
       "minus" { case (Expr(expr1), CalcLexer.MINUS(_), Expr(expr2)) => expr1 - expr2 },
@@ -77,21 +77,21 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     )
 
   test("basic recognition of various tokens and literals") {
-    CalcParser.parse(CalcLexer.tokenize("a = 3 + 4 * (5 + 6)").lexemes) should matchPattern:
+    CalcApiParser.parse(CalcLexer.tokenize("a = 3 + 4 * (5 + 6)").lexemes) should matchPattern:
       case (ctx: CalcContext, _) if ctx.names("a") == 47 =>
 
-    CalcParser.parse(CalcLexer.tokenize("3 + 4 * (5 + 6)").lexemes) should matchPattern:
+    CalcApiParser.parse(CalcLexer.tokenize("3 + 4 * (5 + 6)").lexemes) should matchPattern:
       case (_, 47) =>
   }
 
   test("ebnf") {
-    CalcParser.parse(CalcLexer.tokenize("a()").lexemes) should matchPattern:
+    CalcApiParser.parse(CalcLexer.tokenize("a()").lexemes) should matchPattern:
       case (_, ("a", None)) =>
 
-    CalcParser.parse(CalcLexer.tokenize("a(2+3)").lexemes) should matchPattern:
+    CalcApiParser.parse(CalcLexer.tokenize("a(2+3)").lexemes) should matchPattern:
       case (_, ("a", Some(Seq(5)))) =>
 
-    CalcParser.parse(CalcLexer.tokenize("a(2+3,4+5)").lexemes) should matchPattern:
+    CalcApiParser.parse(CalcLexer.tokenize("a(2+3,4+5)").lexemes) should matchPattern:
       case (_, ("a", Some(Seq(5, 9)))) =>
   }
 

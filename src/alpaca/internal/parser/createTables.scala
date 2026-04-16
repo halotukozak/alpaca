@@ -212,8 +212,9 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
             case Some(set) => Some(set + extractKey(after))
             case None => Some(Set(extractKey(after))),
   ).tap: table =>
-    table.verifyNoConflicts()
     logger.toFile(show"$parserName/conflictResolutions.dbg", true)(table)
+    logger.toFile(show"$parserName/conflictResolutions.mmd", true)(table.toMermaid)
+    table.verifyNoConflicts()
 
   logger.trace("Conflict resolution table built, identifying root production.")
 
