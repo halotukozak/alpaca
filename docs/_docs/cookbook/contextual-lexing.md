@@ -91,12 +91,12 @@ object BrainParser extends Parser[BrainParserCtx]:
   val FunctionDef: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
           Operation.List(ops), BrainLexer.functionClose(_)) =>
-      require(ctx.functions.add(name.value), s"Function ${name.value} already defined")
+      require(ctx.functions.add(name.value), s"Function ${name.value} is already defined")
       BrainAST.FunctionDef(name.value, ops)
 
   val FunctionCall: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-      require(ctx.functions.contains(name.value), s"Function ${name.value} not defined")
+      require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
       BrainAST.FunctionCall(name.value)
 
   // ... other rules

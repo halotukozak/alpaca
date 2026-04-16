@@ -127,7 +127,7 @@ The user-visible fields are:
 - **`name: String`** — the token type name (e.g., `"NUMBER"`, `"PLUS"`)
 - **`value: T`** — the extracted value; the type depends on the `Token["NAME"](value)` definition in the lexer
 - **`text: String`** — the raw matched characters; always a `String` regardless of token type
-- **`position: Int`** — character position at match time (post-match; incremented by token length before the snapshot)
+- **`position: Int`** — 1-based column within the current line at match time (post-match; resets on newlines)
 - **`line: Int`** — line number at match time
 - **`fields: Map[String, Any]`** — all context fields at match time, accessible by name
 
