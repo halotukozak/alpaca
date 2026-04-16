@@ -133,7 +133,7 @@ object LexerCtx:
    *
    * This implementation:
    * - Updates lastRawMatched with the matched text
-   * - Creates a new Lexem for defined tokens
+   * - Creates a new Lexeme for defined tokens
    * - Advances the text position
    * - Applies any context modifications
    */

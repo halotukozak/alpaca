@@ -103,7 +103,7 @@ The initial context is created once per `parse()` call. There is no per-rule cop
 ```scala sc:nocompile
 { case BrainLexer.functionName(name) =>
     val funcName = name.value      // String -- the function name
-    val pos = name.position        // Int -- character position from lexer
+    val pos = name.position        // Int -- 1-based column within the line
     val ln = name.line             // Int -- line number from lexer
     // ...
 }
