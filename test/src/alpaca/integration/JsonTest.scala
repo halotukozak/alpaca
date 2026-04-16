@@ -26,7 +26,7 @@ final class JsonTest extends AnyFunSuite:
       case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
       case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 
-    object JsonParser extends Parser:
+    object JsonE2EParser extends Parser:
       val root: Rule[Any] = rule:
         case Value(value) => value
 
@@ -64,7 +64,7 @@ final class JsonTest extends AnyFunSuite:
 
     withLazyReader("true"): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse(lexemes)
+      val (_, result) = JsonE2EParser.parse(lexemes)
       assert(result == true)
 
     withLazyReader("""
@@ -83,7 +83,7 @@ final class JsonTest extends AnyFunSuite:
       }
       """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse(lexemes)
+      val (_, result) = JsonE2EParser.parse(lexemes)
 
       val expected = Map(
         "name" -> "John Doe",
@@ -118,7 +118,7 @@ final class JsonTest extends AnyFunSuite:
       ]
       """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse(lexemes)
+      val (_, result) = JsonE2EParser.parse(lexemes)
 
       val expected = List(
         Map("id" -> 1.0, "name" -> "Alice"),
@@ -144,7 +144,7 @@ final class JsonTest extends AnyFunSuite:
       }
       """): input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
-      val (_, result) = JsonParser.parse(lexemes)
+      val (_, result) = JsonE2EParser.parse(lexemes)
 
       val expected = Map(
         "menu" -> Map(

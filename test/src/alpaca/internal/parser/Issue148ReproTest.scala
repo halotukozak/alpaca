@@ -12,7 +12,7 @@ final class Issue148ReproTest extends AnyFunSuite with Matchers:
   case class MyCtx() extends ParserCtx
 
   test("Parser should support multiline actions") {
-    object MyParser extends Parser[MyCtx]:
+    object Issue148Parser extends Parser[MyCtx]:
       override val root: Rule[Any] = rule:
         case MyLexer.T(_) =>
           val x = 1
@@ -20,6 +20,6 @@ final class Issue148ReproTest extends AnyFunSuite with Matchers:
           x + y
 
     val (_, lexemes) = MyLexer.tokenize("T")
-    val (_, result) = MyParser.parse(lexemes)
+    val (_, result) = Issue148Parser.parse(lexemes)
     result shouldBe 3
   }

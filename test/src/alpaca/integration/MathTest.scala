@@ -34,7 +34,7 @@ final class MathTest extends AnyFunSuite:
       case x @ "(\\d+\\.\\d*|\\.\\d+)([eE][+-]?\\d+)?" => Token["float"](x.toDouble)
       case x @ "\\d+" => Token["int"](x.toInt)
 
-    object CalcParser extends Parser:
+    object MathParser extends Parser:
       val Expr: Rule[Double] = rule(
         // binary arithmetic
         "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
@@ -106,7 +106,7 @@ final class MathTest extends AnyFunSuite:
 
     val input = "1 + 2"
     val (_, lexemes) = CalcLexer.tokenize(input)
-    val (_, result) = CalcParser.parse(lexemes)
+    val (_, result) = MathParser.parse(lexemes)
     assert(result == 3.0)
 
     withLazyReader("""
@@ -116,7 +116,7 @@ final class MathTest extends AnyFunSuite:
       + (11 * (2 + (5 - 3) * (9 - (8 / (4 - 2)))) - ((13 - 7) / (5 + 1) * (2 * 3 - 4)))
     """): input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
-      val (_, result) = CalcParser.parse(lexemes)
+      val (_, result) = MathParser.parse(lexemes)
       assert(result == 2096.0)
 
     withLazyReader("""
@@ -128,7 +128,7 @@ final class MathTest extends AnyFunSuite:
       + atan2(1, 0)
     """): input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
-      val (_, result) = CalcParser.parse(lexemes)
+      val (_, result) = MathParser.parse(lexemes)
       val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
 
       assert(result == expected, s"Multiple expression mismatch: $result vs $expected")
