@@ -24,7 +24,7 @@ At runtime, `tokenize()` executes the generated code. If a pattern is invalid or
 
 A lexer is defined with the `lexer` block. Each `case` branch maps a regex pattern to a token constructor. Patterns are tried in order; the first match wins.
 
-```scala sc:nocompile sc-name:BrainLexer.scala
+```scala sc:nocompile
 import alpaca.*
 
 val BrainLexer = lexer:
@@ -40,7 +40,7 @@ val BrainLexer = lexer:
   case "\n" => Token.Ignored
 ```
 
-The result is a `Tokenization` object. It can tokenize input strings and provides typed accessors for each defined token (e.g., `BrainLexer.inc`).
+The result is a `Tokenization` object. It can tokenize input strings, provides typed accessors for each defined token (e.g., `BrainLexer.inc`), and exposes a `.tokens` list for introspection (`BrainLexer.tokens` returns all defined tokens including ignored ones).
 
 ## Regular Expressions
 
@@ -173,7 +173,7 @@ Keywords like `if` always need backticks. `-` is a valid Scala identifier and do
 
 Call `tokenize()` on your lexer with an input string:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala
+```scala sc:nocompile
 val (ctx, lexemes) = BrainLexer.tokenize("++[>+<-].")
 ```
 
@@ -184,12 +184,43 @@ The method returns a named tuple `(ctx: Ctx, lexemes: List[Lexeme])`:
 
 If the input contains a character that matches no pattern, `tokenize` throws a `RuntimeException`. See [Error Recovery](lexer-error-recovery.md) for alternatives.
 
+### Tokenizing Files with LazyReader
+
+For large files, use `LazyReader` instead of loading the entire file into a `String`. It reads characters on demand from the underlying file:
+
+```scala sc:nocompile
+import alpaca.*
+import alpaca.internal.lexer.LazyReader
+import java.nio.file.Path
+
+val reader = LazyReader.from(Path.of("program.bf"))
+val (ctx, lexemes) =
+  try BrainLexer.tokenize(reader)
+  finally reader.close()
+```
+
+`LazyReader.from(path)` accepts an optional `Charset` parameter (defaults to UTF-8). Always close the reader in a `finally` block (or use `scala.util.Using.resource`) so the file handle is released even if tokenization throws.
+
+Note: `tokenize` currently wraps the reader in an `OffsetCharSequence`, so previously consumed characters are still retained in memory during tokenization. The lazy reader avoids the upfront cost of slurping the file but does not bound the working set.
+
+## Token Value Types
+
+The value type depends on how the token is defined:
+
+| Definition | Value Type | Example |
+|-----------|-----------|---------|
+| `Token["NAME"]` | `Unit` | `Token["inc"]` -- value is `()` |
+| `Token["NAME"](expr)` | Type of `expr` | `Token["NUM"](x.toInt)` -- value is `Int` |
+| `Token.Ignored` | N/A | No lexeme produced |
+
+`Token["NAME"]` without a value argument produces `Unit`. To carry the matched text as a value, bind it and pass it: `case x @ "pattern" => Token["NAME"](x)`.
+
 ## The Lexeme Structure
 
 Every non-ignored match produces a `Lexeme`. From the caller's perspective, a lexeme exposes:
 
 - **`name`** -- the token name as a string literal type (e.g., `"inc"`, `"functionName"`)
-- **`value`** -- the extracted value (e.g., `String` for `Token["functionName"](name)`)
+- **`value`** -- the extracted value (`Unit` for `Token["NAME"]`, or the computed type for `Token["NAME"](expr)`)
 
 Each lexeme also carries a snapshot of all context fields at match time. The snapshot is accessed via `Selectable` -- you write `lexeme.position` or `lexeme.line` and the compiler resolves the types:
 

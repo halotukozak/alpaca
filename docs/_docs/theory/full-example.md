@@ -62,12 +62,10 @@ The compile error message:
 Shift "PLUS ($plus)" vs Reduce Expr -> Expr PLUS ($plus) Expr
 In situation like:
 Expr PLUS ($plus) Expr PLUS ($plus) ...
-Consider marking production Expr -> Expr PLUS ($plus) Expr to be alwaysBefore or alwaysAfter "PLUS ($plus)"
+Consider marking production Expr -> Expr PLUS ($plus) Expr to be before or after "PLUS ($plus)"
 ```
 
 The parser does not know whether `1 + 2 + 3` should reduce `1 + 2` first (left-associative) or shift the second `+` first. This is a shift/reduce conflict — both actions are valid for the same parse state and lookahead. See [Conflicts & Disambiguation](conflicts.md) for the formal theory.
-
-The error message says `alwaysBefore`/`alwaysAfter` — the correct API methods are `before` and `after` (see [Conflict Resolution](../conflict-resolution.md)).
 
 ## Step 4: Adding Conflict Resolution
 

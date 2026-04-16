@@ -1,5 +1,7 @@
 index: index.md
 subsection:
+  - title: Getting Started
+    page: getting-started.md
   - title: Lexer
     subsection:
       - title: Lexer
@@ -30,12 +32,10 @@ subsection:
         page: cookbook/expression-evaluator.md
       - title: JSON Parser
         page: cookbook/json-parser.md
-      - title: Conflict Resolution
-        page: cookbook/conflict-resolution.md
       - title: Contextual Lexing
         page: cookbook/contextual-lexing.md
-      - title: Lexer Error Handling
-        page: cookbook/lexer-error-handling.md
+      - title: BrainFuck Interpreter
+        page: cookbook/brainfuck-interpreter.md
   - title: Theory
     subsection:
       - title: The Compilation Pipeline
@@ -44,8 +44,12 @@ subsection:
         page: theory/tokens.md
       - title: "The Lexer: Regex to Finite Automata"
         page: theory/lexer-fa.md
+      - title: Regular vs Context-Free
+        page: theory/regular-vs-context-free.md
       - title: Context-Free Grammars
         page: theory/cfg.md
+      - title: EBNF and Extended Notations
+        page: theory/ebnf-extended-notations.md
       - title: The Shift-Reduce Loop
         page: theory/shift-reduce.md
       - title: Why LR Parsing
@@ -54,5 +58,15 @@ subsection:
         page: theory/conflicts.md
       - title: Semantic Actions
         page: theory/semantic-actions.md
+      - title: AST Construction Patterns
+        page: theory/ast-construction.md
+      - title: Operator Precedence Grammars
+        page: theory/operator-precedence.md
+      - title: Ambiguity
+        page: theory/ambiguity.md
+      - title: Error Recovery Theory
+        page: theory/error-recovery-theory.md
+      - title: Attribute Grammars
+        page: theory/attribute-grammars.md
       - title: Full Calculator Example
         page: theory/full-example.md

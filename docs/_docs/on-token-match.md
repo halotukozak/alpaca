@@ -94,9 +94,10 @@ See the [Lexer Context](lexer-context.md) page for the full reference on `OnToke
 Each call to `tokenize()` follows this sequence:
 
 1. The lexer attempts to match the remaining input against each rule pattern in order. The first match wins. If no pattern matches, a `RuntimeException` is thrown with the unexpected character.
-2. `OnTokenMatch` runs: it advances the text cursor (`ctx.text`), applies any rule-body context changes that ran before it was called, and takes a snapshot of all context fields.
-3. If the matched token is a `DefinedToken` (any `Token["NAME"]` with or without a value), a `Lexeme` is constructed with the token's name, value, and the snapshot, then appended to the output list.
-4. If the matched token is `Token.Ignored`, `OnTokenMatch` still runs (keeping position, line, and custom counters current) but no `Lexeme` is produced. The token is invisible to the parser.
+2. `Tokenization.tokenize` advances the text cursor (`ctx.text`) past the matched string and records the matched text in `ctx.lastRawMatched`.
+3. `OnTokenMatch` runs. The default `OnTokenMatch[LexerCtx]` applies any rule-body context changes (`modifyCtx`), derives a snapshot from the context's `Product` elements (case class fields), overrides the snapshot's `text` field with the matched string, and — for `DefinedToken`s — builds a `Lexeme` from the token name, value, and snapshot.
+4. If the matched token is `Token.Ignored` (or a recovery token), `OnTokenMatch` still runs the context modifications and tracking updates but does not emit a `Lexeme`. The token is invisible to the parser.
+5. Tracking hooks (`PositionTracking`, `LineTracking`, custom traits) run as part of the composed `OnTokenMatch`, updating `position`, `line`, etc.
 5. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
 6. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
 

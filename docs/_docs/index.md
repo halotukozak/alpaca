@@ -70,7 +70,7 @@ import alpaca.*
 
 Define a lexer using pattern matching with regex patterns:
 
-```scala sc:nocompile sc-name:MyLexer.scala
+```scala sc:nocompile
 import alpaca.*
 
 val MyLexer = lexer:
@@ -88,7 +88,7 @@ val MyLexer = lexer:
 
 Define a parser by extending the `Parser` class and defining grammar rules:
 
-```scala sc:nocompile sc-name:MyParser.scala sc-compile-with:MyLexer.scala
+```scala sc:nocompile
 import alpaca.*
 
 object MyParser extends Parser:
@@ -114,7 +114,7 @@ object MyParser extends Parser:
 
 ### Parsing Input
 
-```scala sc:nocompile sc-compile-with:MyLexer.scala,MyParser.scala
+```scala sc:nocompile
 import alpaca.*
 
 val input = "2 + 3 * 4"

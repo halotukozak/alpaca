@@ -1,124 +1,155 @@
-# Guide: Contextual Parsing
+# Contextual Lexing
 
-Contextual parsing refers to the ability of a lexer or parser to change its behavior or maintain state based on the
-input it has already seen. Alpaca provides powerful mechanisms for this through `LexerCtx`, `ParserCtx`, and the
-`OnTokenMatch` hook.
+This guide covers stateful tokenization: tracking nesting depth, maintaining counters, passing information from the lexer to the parser, and handling errors gracefully.
 
-## 1. Lexer-Level Context
+**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `OnTokenMatch` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
 
-Most contextual logic in Alpaca happens at the lexer level.
-Since the lexer tokenizes the entire input before the parser starts, the lexer context is the primary place to track
-state that affects tokenization.
+## Tracking State During Lexing
 
-### Example: Brace Matching & Nesting
+The BrainFuck> lexer tracks bracket depth to catch mismatched brackets at lex time:
 
-You can use a context to track nesting levels of braces, parentheses, or brackets.
+```scala sc:nocompile
+import alpaca.*
+
+case class BrainLexContext(
+  var brackets: Int = 0,
+  var squareBrackets: Int = 0,
+) extends LexerCtx
+
+val BrainLexer = lexer[BrainLexContext]:
+  case "\\[" =>
+    ctx.squareBrackets += 1
+    Token["jumpForward"]
+  case "\\]" =>
+    require(ctx.squareBrackets > 0, "Mismatched brackets")
+    ctx.squareBrackets -= 1
+    Token["jumpBack"]
+  case "\\(" =>
+    ctx.brackets += 1
+    Token["functionOpen"]
+  case "\\)" =>
+    require(ctx.brackets > 0, "Mismatched brackets")
+    ctx.brackets -= 1
+    Token["functionClose"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "!" => Token["functionCall"]
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\." => Token["print"]
+  case "," => Token["read"]
+  case "." => Token.Ignored
+  case "\n" => Token.Ignored
+```
+
+After tokenization, check the final context:
+
+```scala sc:nocompile
+val (ctx, lexemes) = BrainLexer.tokenize(input)
+require(ctx.squareBrackets == 0 && ctx.brackets == 0, "Mismatched brackets")
+```
+
+## Accessing Lexer Context in the Parser
+
+Every `Lexeme` carries a snapshot of the lexer context at match time. Inside parser rules, use the binding to access positional info:
+
+```scala sc:nocompile
+import alpaca.*
+
+val FunctionCall: Rule[BrainAST] = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+    // name.value: String -- the function name
+    // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
+    // name.line: Int -- line number (if lexer uses LineTracking)
+    BrainAST.FunctionCall(name.value)
+```
+
+To get position and line numbers, extend your context with the tracking traits:
+
+```scala sc:nocompile
+case class BrainLexContext(
+  var brackets: Int = 0,
+  var squareBrackets: Int = 0,
+  var position: Int = 1,
+  var line: Int = 1,
+) extends LexerCtx with PositionTracking with LineTracking
+```
+
+## Parser-Level Context
+
+`ParserCtx` is for state that evolves during parsing -- symbol tables, function registries, type environments. The BrainFuck> parser uses it to track defined functions:
 
 ```scala sc:nocompile
 import alpaca.*
 import scala.collection.mutable
 
-case class BraceCtx(
-  stack: mutable.Stack[String] = mutable.Stack()
-) extends LexerCtx
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
+object BrainParser extends Parser[BrainParserCtx]:
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+          Operation.List(ops), BrainLexer.functionClose(_)) =>
+      require(ctx.functions.add(name.value), s"Function ${name.value} already defined")
+      BrainAST.FunctionDef(name.value, ops)
 
-val MyLexer = lexer[BraceCtx]:
-  case "\\(" =>
-    ctx.stack.push("paren")
-    Token["("]
-  case "\\)" =>
-    if ctx.stack.isEmpty || ctx.stack.pop() != "paren" then
-      throw RuntimeException("Mismatched parenthesis")
-    Token[")"]
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      require(ctx.functions.contains(name.value), s"Function ${name.value} not defined")
+      BrainAST.FunctionCall(name.value)
+
+  // ... other rules
 ```
 
-## 2. Accessing Lexer Context in the Parser
+`ctx` is shared across all reductions in a single `parse()` call. A function defined in `FunctionDef` is immediately visible in `FunctionCall`.
 
-Every `Lexeme` matched by the lexer carries a "snapshot" of the `LexerCtx` as it was at the moment that specific token
-was matched.
+## Error Handling Strategies
 
-This is useful for error reporting or for logic that depends on when a token appeared.
+By default, the lexer throws on unmatched input. You can customize this with an `ErrorHandling` instance:
 
 ```scala sc:nocompile
 import alpaca.*
+import alpaca.internal.lexer.ErrorHandling
 
-val MyLexer = lexer:
-  case id @ "[A-Z]+" => Token["ID"](id)
-  case "\\s+" => Token.Ignored
-
-object MyParser extends Parser:
-  val root = rule:
-    case MyLexer.ID(id) =>
-      // id is a Lexeme with context fields from LexerCtx
-      // Access position with id.position, line with id.line
-      id.value
+// Option A: skip unrecognized characters silently
+given ErrorHandling[BrainLexContext] = _ =>
+  ErrorHandling.Strategy.IgnoreChar
 ```
-
-## 3. Parser-Level Context (`ParserCtx`)
-
-`ParserCtx` is for maintaining state during the reduction process.
-This is where you build symbol tables, track variable declarations, or perform type checking.
 
 ```scala sc:nocompile
 import alpaca.*
+import alpaca.internal.lexer.ErrorHandling
 
-case class SymbolTableCtx(
-  var symbols: Map[String, String] = Map()
-) extends ParserCtx derives Copyable
-
-object MyParser extends Parser[SymbolTableCtx]:
-  val root = rule:
-    case Decl(d) => d
-
-  val Decl: Rule[Unit] = rule:
-    case (MyLexer.ID(id), MyLexer.COLON(_), MyLexer.ID(tpe)) =>
-      ctx.symbols += (id.value -> tpe.value)
+// Option B: stop gracefully, returning what was tokenized so far
+given ErrorHandling[BrainLexContext] = _ =>
+  ErrorHandling.Strategy.Stop
 ```
 
+Four strategies are available:
 
-## 5. The `OnTokenMatch` Hook
+| Strategy | Behavior |
+|----------|----------|
+| `Throw(ex)` | Abort with the given exception |
+| `IgnoreChar` | Skip one character and continue |
+| `IgnoreToken` | Skip to the next match and continue |
+| `Stop` | Return lexemes collected so far |
 
-The `OnTokenMatch` hook is the internal engine that powers context updates.
-It is a function called by Alpaca after **every** token match (including `Token.Ignored`) but **before** the next match
-starts.
-
-### Automatic Updates
-
-By default, Alpaca uses `OnTokenMatch` to automatically update the `text` field in your context (to advance past the
-matched string).
-If your context extends `LineTracking` or `PositionTracking`, the derived hooks also increment `line` and `position`
-counters.
-
-### Customizing `OnTokenMatch`
-
-If you need complex logic to run after every match regardless of which token was matched, you can provide a custom
-`given` instance of `OnTokenMatch` for a trait your context extends.
+An alternative to custom `ErrorHandling` is a catch-all pattern at the end of your lexer:
 
 ```scala sc:nocompile
-import alpaca.*
-import alpaca.internal.lexer.OnTokenMatch
-
-trait IndentTracking extends LexerCtx:
-  var indentLevel: Int
-
-given OnTokenMatch[IndentTracking] = 
-    (_, "\t", ctx) => ctx.indentLevel += 1
-    (_, "\n", ctx) => ctx.indentLevel = 0
-    (_, _, _) => 
-
-case class IndentCtx(
-  var indentLevel: Int = 0,
-) extends IndentTracking
+case x @ "." =>
+  println(s"Unexpected character: $x")
+  Token.Ignored   // skip and continue
 ```
 
-Alpaca automatically composes `OnTokenMatch` instances from all parent traits of your context type. The `IndentTracking`
-hook above will be combined with the base `LexerCtx` hook.
+This is simpler and often sufficient. The BrainFuck lexer uses this approach -- `"." => Token.Ignored` catches all non-command characters.
 
-## Summary of Data Flow
+## Data Flow Summary
 
-1. **Input String** flows into the `lexer`.
-2. **`OnTokenMatch`** updates the `LexerCtx` after every match.
-3. **`Lexeme`s** are produced, each capturing the current `LexerCtx` state.
-4. **List[Lexeme]** flows into the `parser`.
-5. **`ParserCtx`** is initialized and updated as rules are reduced.
-6. **Result** is produced, along with the final `ParserCtx`.
+1. **Input** flows into the lexer
+2. **`OnTokenMatch`** updates the `LexerCtx` after every match
+3. **`Lexeme`s** are produced, each carrying a context snapshot
+4. **`List[Lexeme]`** flows into the parser
+5. **`ParserCtx`** is initialized and updated as rules are reduced
+6. **Result** is produced, along with the final `ParserCtx`

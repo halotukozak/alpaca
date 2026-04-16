@@ -162,14 +162,13 @@ object LexerCtx:
    * The default lexer context with position and line tracking.
    *
    * This context tracks:
-   * - The remaining text to tokenize
-   * - The current character position (1-based)
+   * - The current column position within the line (1-based, resets on newlines)
    * - The current line number (1-based)
    *
    * This is the most commonly used context and provides useful information
-   * for error reporting.
+   * for error reporting. The `text` field is inherited from [[LexerCtx]].
    *
-   * @param position the current character position (1-based)
+   * @param position the current column position within the line (1-based)
    * @param line     the current line number (1-based)
    */
   final case class Default(

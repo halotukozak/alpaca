@@ -27,10 +27,9 @@ Both are valid parse trees for `1 + 2 + 3` — the grammar (from [Context-Free G
 Shift "PLUS ($plus)" vs Reduce Expr -> Expr PLUS ($plus) Expr
 In situation like:
 Expr PLUS ($plus) Expr PLUS ($plus) ...
-Consider marking production Expr -> Expr PLUS ($plus) Expr to be alwaysBefore or alwaysAfter "PLUS ($plus)"
+Consider marking production Expr -> Expr PLUS ($plus) Expr to be before or after "PLUS ($plus)"
 ```
 
-> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These method names do not exist in the Alpaca API. The correct methods are `before` and `after`. See [Conflict Resolution](../conflict-resolution.md) for full details on reading error messages.
 
 ## Reduce/Reduce Conflicts
 
@@ -42,10 +41,9 @@ A reduce/reduce conflict occurs when two different productions can reduce the sa
 Reduce Integer -> Number vs Reduce Float -> Number
 In situation like:
 Number ...
-Consider marking one of the productions to be alwaysBefore or alwaysAfter the other
+Consider marking one of the productions to be before or after the other
 ```
 
-> **Note:** The error message says `alwaysBefore`/`alwaysAfter`. These method names do not exist in the Alpaca API. The correct methods are `before` and `after`. See [Conflict Resolution](../conflict-resolution.md) for full details on reading error messages.
 
 Reduce/reduce conflicts are less common than shift/reduce conflicts. They typically indicate a grammar design issue — two rules competing for the same token sequence. The usual fix is to restructure the grammar so the two competing productions have distinct right-hand sides, or to use a different non-terminal.
 

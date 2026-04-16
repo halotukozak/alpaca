@@ -53,9 +53,9 @@ Identifying the 4-tuple components:
 - R = the 7 production rules above
 - S = root — the start symbol
 
-Note: this grammar is **ambiguous** — the expression `1 + 2 * 3` can be parsed in two ways depending on which `Expr` is
-expanded first. We will see how Alpaca resolves ambiguities on the [Conflict Resolution](../conflict-resolution.md)
-page.
+This grammar is **ambiguous** — the expression `1 + 2 * 3` can be parsed in two ways depending on which `Expr` is expanded first. See [Conflict Resolution](../conflict-resolution.md) for how Alpaca resolves this.
+
+> **BrainFuck mapping:** The BrainFuck> grammar from [Getting Started](../getting-started.md) has different non-terminals (`root`, `Operation`, `While`, `FunctionDef`, `FunctionCall`) but the same structure: V = {root, Operation, While, ...}, Σ = {next, prev, inc, ..., functionName, ...}, and production rules mapping each non-terminal to token sequences. Unlike the calculator grammar, BrainFuck> is unambiguous — no conflicts arise.
 
 ## Derivation
 
@@ -118,7 +118,7 @@ object CalcParser extends Parser:
 ```
 
 Each `case` clause corresponds to one production rule. `Expr(a)` matches a reduced `Expr` non-terminal with value `a`.
-`CalcLexer.PLUS(_)` matches the PLUS terminal (the `_` discards the lexeme value since PLUS carries `Unit`).
+`CalcLexer.PLUS(_)` matches the PLUS terminal (the `_` discards the lexeme binding).
 `CalcLexer.NUMBER(n)` matches a NUMBER terminal; `n.value` accesses the `Double` extracted by the lexer. The grammar's
 non-terminals (`Expr`, `root`) become `Rule[Double]` values; the type parameter is the result type of each reduction.
 

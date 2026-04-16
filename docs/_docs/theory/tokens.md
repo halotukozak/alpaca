@@ -49,38 +49,39 @@ The tokenization output for a simple expression illustrates this:
 ```scala sc:nocompile
 import alpaca.*
 
-val (_, lexemes) = CalcLexer.tokenize("3 + 4 * 2")
+val (_, lexemes) = BrainLexer.tokenize("foo(++)")
 // lexemes: List[Lexeme] =
-//   NUMBER(3.0), PLUS, NUMBER(4.0), TIMES, NUMBER(2.0)
+//   functionName("foo"), functionOpen, inc, inc, functionClose
 //
 // Each Lexeme carries:
-//   .name     — token class name (e.g., "NUMBER")
-//   .value    — extracted value  (e.g., 3.0: Double)
-//   .position — character offset at end of match
+//   .name     — token class name (e.g., "functionName")
+//   .value    — extracted value  (e.g., "foo": String)
+//   .position — column position at end of match
 //   .line     — line number at end of match
 ```
 
-Whitespace matches `Token.Ignored` and does not produce a lexeme — it disappears from the stream.
+Input matched as `Token.Ignored` — such as whitespace or other non-command characters — does not produce a lexeme and disappears from the stream.
 
-## CalcLexer Token Class Table
+## BrainLexer Token Class Table
 
-The `CalcLexer` running example defines seven token classes:
+The `BrainLexer` running example defines these token classes:
 
-| Token Class | Regex Pattern       | Value Type | Example Match     |
-|-------------|---------------------|------------|-------------------|
-| `NUMBER`    | `[0-9]+(\.[0-9]+)?` | `Double`   | `"3.14"` → `3.14` |
-| `PLUS`      | `\+`                | `Unit`     | `"+"`             |
-| `MINUS`     | `-`                 | `Unit`     | `"-"`             |
-| `TIMES`     | `\*`                | `Unit`     | `"*"`             |
-| `DIVIDE`    | `/`                 | `Unit`     | `"/"`             |
-| `LPAREN`    | `\(`                | `Unit`     | `"("`             |
-| `RPAREN`    | `\)`                | `Unit`     | `")"`             |
+| Token Class    | Regex Pattern | Value Type | Example Match        |
+|----------------|---------------|------------|----------------------|
+| `next`         | `>`           | `Unit`     | `">"`                |
+| `prev`         | `<`           | `Unit`     | `"<"`                |
+| `inc`          | `\+`          | `Unit`     | `"+"`                |
+| `dec`          | `-`           | `Unit`     | `"-"`                |
+| `print`        | `\.`          | `Unit`     | `"."`                |
+| `read`         | `,`           | `Unit`     | `","`                |
+| `jumpForward`  | `\[`          | `Unit`     | `"["`                |
+| `jumpBack`     | `\]`          | `Unit`     | `"]"`                |
+| `functionName` | `[A-Za-z]+`   | `String`   | `"foo"` → `"foo"`   |
+| `functionOpen` | `\(`          | `Unit`     | `"("`                |
+| `functionClose`| `\)`          | `Unit`     | `")"`                |
+| `functionCall` | `!`           | `Unit`     | `"!"`                |
 
-Whitespace is ignored (`Token.Ignored`) and does not appear in the lexeme stream.
-
-`NUMBER` is the only value-bearing token: the macro uses the `@` binding to convert the matched
-string to a `Double`. The remaining six tokens carry `Unit` — their presence in the stream is
-enough; no value needs to be extracted.
+`functionName` is the only value-bearing token: the `@` binding captures the matched text and passes it to `Token["functionName"](name)`. The other tokens use `Token["NAME"]` without a value argument — they carry `Unit`. Their presence in the stream is enough; the matched text is accessible via `lexeme.text` from the context snapshot if needed.
 
 
 ## Cross-links

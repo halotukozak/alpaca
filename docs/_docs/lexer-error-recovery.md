@@ -15,7 +15,7 @@ The `lexer` macro validates token definitions at compile time. Pattern shadowing
 
 A `ShadowException` occurs when one pattern can never match because an earlier pattern always matches first. If every string that pattern B can match is also matched by pattern A, and A appears before B, then B is unreachable:
 
-```scala sc:nocompile
+```scala sc:fail
 import alpaca.*
 
 // This does NOT compile -- ShadowException
