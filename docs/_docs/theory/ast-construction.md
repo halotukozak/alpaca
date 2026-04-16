@@ -51,7 +51,7 @@ This works when:
 
 For complex languages, build an AST and process it separately. The BrainFuck interpreter does this:
 
-```scala sc:nocompile
+```scala
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])

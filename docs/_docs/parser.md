@@ -20,7 +20,7 @@ At runtime, `parse()` executes the precomputed table. No grammar analysis happen
 
 Extend `Parser` for a stateless parser, or `Parser[Ctx]` to carry custom state through reductions. The required entry point is `val root: Rule[R]` -- the macro uses this as the start symbol.
 
-```scala sc:nocompile sc-name:BrainParser.scala sc-compile-with:BrainLexer.scala,BrainAST.scala
+```scala sc:nocompile
 import alpaca.*
 
 object BrainParser extends Parser:
@@ -66,6 +66,37 @@ val Operation: Rule[BrainAST] = rule(
 ```
 
 Multi-symbol productions match a tuple; single-symbol productions match directly (no parentheses). Each `{ case ... }` block must contain exactly one alternative.
+
+### Multiline Actions
+
+Rule bodies can span multiple statements. Use intermediate variables and return the final value:
+
+```scala sc:nocompile
+val FunctionDef: Rule[BrainAST] = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+        Operation.List(ops), BrainLexer.functionClose(_)) =>
+    val funcName = name.value
+    require(ctx.functions.add(funcName), s"Function $funcName already defined")
+    BrainAST.FunctionDef(funcName, ops)
+```
+
+### Named Productions with Special Characters
+
+Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
+
+```scala sc:nocompile
+val Expr: Rule[Int] = rule(
+  "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+  "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
+  "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
+)
+
+override val resolutions = Set(
+  production.`left-add`.before(Lexer.PLUS),
+  production.`shift.left`.before(Lexer.SHL),
+  production.`if then`.before(Lexer.THEN),
+)
+```
 
 ## Terminal and Non-Terminal Matching
 
@@ -123,7 +154,7 @@ Both operators also work on terminals, not only rules.
 
 Call `parse(lexemes)` where `lexemes` comes from `tokenize()`:
 
-```scala sc:nocompile sc-compile-with:BrainLexer.scala,BrainParser.scala,BrainAST.scala
+```scala sc:nocompile
 val (_, lexemes) = BrainLexer.tokenize("++[>+<-]")
 val (ctx, ast) = BrainParser.parse(lexemes)
 // ctx: ParserCtx.Empty
