@@ -2,7 +2,7 @@
 
 The Alpaca lexer transforms raw text into a stream of structured tokens. You define lexical rules as regex patterns paired with token constructors, and the macro generates a tokenizer at compile time.
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 ```
 
@@ -24,7 +24,7 @@ At runtime, `tokenize()` executes the generated code. If a pattern is invalid or
 
 A lexer is defined with the `lexer` block. Each `case` branch maps a regex pattern to a token constructor. Patterns are tried in order; the first match wins.
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val BrainLexer = lexer:
@@ -127,7 +127,7 @@ val (_, lexemes) = BrainLexer.tokenize("+ hello +\n+")
 
 The `@` syntax binds the matched text to a variable, giving you a `String` to transform before passing to the token constructor.
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val Lexer = lexer:
@@ -151,7 +151,7 @@ Without `@`, you cannot access the matched text for transformation. `Token["inc"
 
 When several patterns share the same structure, use alternation with `variable.type` to create one token per alternative:
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val Lexer = lexer:

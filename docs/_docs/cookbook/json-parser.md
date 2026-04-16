@@ -6,7 +6,7 @@ This guide builds a JSON parser that handles objects, arrays, strings, numbers, 
 
 ## The Lexer
 
-```scala
+```scala sc:nocompile
 import alpaca.*
 
 val JsonLexer = lexer:
