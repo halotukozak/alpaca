@@ -102,7 +102,7 @@ abstract class Parser[Ctx <: ParserCtx](
 
     @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): Node =
       val nextSymbol = Terminal(input(pos).name)
-      tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
+      tables.parseTable(stack.head.index, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
           loop(pos + 1, (gotoState, Node.Token(input(pos))) :: stack)
 

@@ -1,216 +1,195 @@
 # Parser
 
-The Alpaca parser transforms a `List[Lexeme]` into a typed result by matching token sequences against grammar rules you define.
-A parser is a Scala object extending `Parser` (for stateless parsing) or `Parser[Ctx]` (for parsers that maintain context state across reductions).
-Like the lexer, the grammar is analyzed at compile time — the macro builds an LR(1) parse table from your rule declarations, catching conflicts before your code runs.
+The Alpaca parser transforms a `List[Lexeme]` into a typed result by matching token sequences against grammar rules. You define rules using pattern matching, and the macro builds an LR(1) parse table at compile time.
 
-> **Compile-time processing:** When you define `object MyParser extends Parser`, the Alpaca macro reads every `Rule` `val` declaration, builds an LR(1) parse table, and compiles semantic actions into the table. Any grammar conflicts (`ShiftReduceConflict`, `ReduceReduceConflict`) are reported as compile errors. Only the resulting parser object is present at runtime.
+<details>
+<summary>Under the hood: compile-time table generation</summary>
+
+When you define `object MyParser extends Parser`, the Alpaca macro:
+
+1. Reads every `Rule` val declaration
+2. Builds an LR(1) parse table (states, transitions, actions)
+3. Compiles semantic actions (your `case` bodies) into the action table
+4. Reports grammar conflicts (`ShiftReduceConflict`, `ReduceReduceConflict`) as compile errors
+
+At runtime, `parse()` executes the precomputed table. No grammar analysis happens during parsing.
+
+</details>
 
 ## Defining a Parser
 
-Extend `Parser` for a stateless parser (uses `ParserCtx.Empty` by default), or `Parser[Ctx]` to carry custom state through parsing.
-The required entry point is a `val root: Rule[R]` — the macro uses this as the grammar start symbol.
-
-The simplest parser extends `Parser` with no type parameter:
+Extend `Parser` for a stateless parser, or `Parser[Ctx]` to carry custom state through reductions. The required entry point is `val root: Rule[R]` -- the macro uses this as the start symbol.
 
 ```scala sc:nocompile
 import alpaca.*
 
-object Parser extends Parser:            // ParserCtx.Empty default
-  val Expr: Rule[Double] = rule(
-    { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case CalcLexer.NUMBER(n) => n.value },
+object BrainParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.next(_) => BrainAST.Next },
+    { case BrainLexer.prev(_) => BrainAST.Prev },
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case BrainLexer.print(_) => BrainAST.Print },
+    { case BrainLexer.read(_) => BrainAST.Read },
+    { case While(whl) => whl },
   )
-  val root: Rule[Double] = rule:
-    case Expr(v) => v
 ```
 
-For parsers that maintain state during parsing, extend `Parser[Ctx]` where `Ctx <: ParserCtx`.
-The context is available inside every rule body through the `ctx` identifier:
-
-```scala sc:nocompile
-import alpaca.*
-import scala.collection.mutable
-
-case class CalcContext(
-  names: mutable.Map[String, Int] = mutable.Map.empty,
-) extends ParserCtx derives Copyable
-
-object Parser extends Parser[CalcContext]:
-  val Expr: Rule[Int] = rule(
-    { case Lexer.NUMBER(n) => n.value },
-    { case Lexer.ID(id) => ctx.names.getOrElse(id.value, 0) },
-  )
-  val Statement: Rule[Unit | Int] = rule(
-    { case (Lexer.ID(id), Lexer.ASSIGN(_), Expr(expr)) =>
-        ctx.names(id.value) = expr },
-    { case Expr(expr) => expr },
-  )
-  val root: Rule[Unit | Int] = rule:
-    case Statement(stmt) => stmt
-```
-
-`ctx` is `@compileTimeOnly` — it is only valid syntactically inside `rule` definitions.
-It cannot be referenced at class body level or inside `resolutions`.
+The macro reads both `val` and `def` declarations. `val` is the recommended form for grammar rules, but `def` also works.
 
 ## Rules and Productions
 
-A `Rule[R]` is a named non-terminal that produces values of type `R`.
-Use the `rule` function to define one or more productions for a rule.
+A `Rule[R]` is a named non-terminal that produces values of type `R`. Use `rule` to define one or more productions.
 
-**Single production** — use the colon syntax when a rule has exactly one case:
-
-**Multiple productions** — pass each production as a separate argument when a rule has alternatives:
+**Single production** -- colon syntax:
 
 ```scala sc:nocompile
-import alpaca.*
-
-object ArithParser extends Parser:
-  // Single production — colon syntax
-  val Num: Rule[Int] = rule:
-    case Lexer.NUMBER(n) => n.value
-
-  // Multiple productions — argument list
-  val Expr: Rule[Int] = rule(
-    { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },   // multi-symbol: tuple
-    { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
-    { case Num(n) => n },                                         // single-symbol: direct
-  )
-
-  val root: Rule[Int] = rule:
-    case Expr(e) => e
+val root: Rule[BrainAST] = rule:
+  case Operation.List(stmts) => BrainAST.Root(stmts)
 ```
 
-Each production is a partial function (`ProductionDefinition[R]`).
-Multi-symbol productions match a tuple in the case branch; single-symbol productions match the symbol directly — not as a tuple.
+**Multiple productions** -- argument list:
 
-**Guards** (`if ...`) in case branches are not supported (yet?) and cause a compile error: "Guards are not supported yet."
-Each `{ case ... }` block must contain exactly one alternative — multiple `case` branches in one production block are not supported; each alternative must be a separate argument to `rule(...)`.
+```scala sc:nocompile
+val Operation: Rule[BrainAST] = rule(
+  { case BrainLexer.inc(_) => BrainAST.Inc },     // single-symbol: direct match
+  { case BrainLexer.dec(_) => BrainAST.Dec },
+  { case While(whl) => whl },                      // non-terminal reference
+)
+```
+
+Multi-symbol productions match a tuple; single-symbol productions match directly (no parentheses). Each `{ case ... }` block must contain exactly one alternative.
+
+### Multiline Actions
+
+Rule bodies can span multiple statements. Use intermediate variables and return the final value:
+
+```scala sc:nocompile
+val FunctionDef: Rule[BrainAST] = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+        Operation.List(ops), BrainLexer.functionClose(_)) =>
+    val funcName = name.value
+    require(ctx.functions.add(funcName), s"Function $funcName already defined")
+    BrainAST.FunctionDef(funcName, ops)
+```
+
+### Named Productions with Special Characters
+
+Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
+
+```scala sc:nocompile
+val Expr: Rule[Int] = rule(
+  "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+  "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
+  "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
+)
+
+override val resolutions = Set(
+  production.`left-add`.before(Lexer.PLUS),
+  production.`shift.left`.before(Lexer.SHL),
+  production.`if then`.before(Lexer.THEN),
+)
+```
 
 ## Terminal and Non-Terminal Matching
 
 ### Terminals
 
-Terminals come from the lexer object.
-Use the token accessor with a binding variable: `MyLexer.TOKENNAME(binding)`.
-For value-bearing tokens, use `binding.value` to access the extracted value.
-For tokens used only for structural matching (operators, punctuation), use `_` to discard the binding.
+Use `MyLexer.TOKEN(binding)` to match a terminal. The binding is a `Lexeme` -- use `binding.value` for the extracted value:
 
 ```scala sc:nocompile
-// Value-bearing token: use binding.value
-{ case Lexer.NUMBER(n) => n.value }   // n.value: Int
+// Value-bearing: use binding.value
+{ case BrainLexer.functionName(name) => name.value }  // name.value: String
 
-// Structural token: discard the binding with _
-{ case (Lexer.PLUS(_), Expr(b)) => b }
+// Structural: discard the binding
+{ case BrainLexer.jumpForward(_) => ... }
 
-// Backtick quoting for special-character token names
-{ case Lexer.`\\+`(_) => () }
-{ case (Lexer.`\\(`(_), Expr(e), Lexer.`\\)`(_)) => e }
+// Backtick quoting for special-character token names (e.g., if a lexer defines Token["\\+"])
+{ case MyLexer.`\\+`(_) => ... }
 ```
-
-Token names that are not valid Scala identifiers — names containing `+`, `(`, `)`, reserved words like `if`, etc. — must be quoted with backticks when used as accessors.
-See the [Lexer](lexer.html) page for the full token naming rules.
-
-**Pitfall:** After `Lexer.NUMBER(n)`, the binding `n` is a `Lexeme`, not the extracted value.
-The semantic content is `n.value`. The `Lexeme` also provides context fields, like `n.text` (matched string), `n.position`, and `n.line`.
-Using `n` directly where an `Int` is expected is a type error.
 
 ### Non-Terminals
 
-Non-terminals use the rule name in unapply position.
-Each `Rule[R]` implements `unapply`, so a rule reference in a case branch extracts the value produced by that rule during the parse:
+Use the rule name in unapply position. The binding has exactly type `R` from `Rule[R]`:
 
 ```scala sc:nocompile
-{ case (Expr(left), Lexer.PLUS(_), Expr(right)) => left + right }
-// Expr(left): Rule[Int].unapply — extracts the Int produced by the Expr rule
-```
+// While(whl) extracts the BrainAST produced by the While rule
+{ case While(whl) => whl }   // whl: BrainAST
 
-Rules can refer to themselves recursively.
-The macro builds an LR(1) table that handles left recursion and mutual recursion without extra work on your part.
+// Recursive reference
+{ case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+    BrainAST.While(stmts) }
+```
 
 ## EBNF Operators
 
-Alpaca provides `.Option` and `.List` on any `Rule[R]` to express optional and repeated symbols without writing epsilon or recursive productions by hand.
+`.Option` and `.List` on any `Rule[R]` express optional and repeated symbols without hand-written recursion.
 
-**`.Option`** produces `Option[R]`. The macro generates two synthetic productions at compile time: an empty production (returns `None`) and a single-element production (returns `Some`).
-
-**`.List`** produces `List[R]`. The macro generates two synthetic productions: an empty production (returns `Nil`) and a left-recursive accumulation production.
+**`.List`** produces `List[R]`. The BrainFuck parser uses this heavily -- the root rule matches zero or more operations:
 
 ```scala sc:nocompile
-import alpaca.*
-
-object ApiParser extends Parser:
-  val Num: Rule[Int] = rule:
-    case Lexer.NUMBER(n) => n.value
-
-  val root = rule:
-    case (Num(n), Lexer.COMMA(_), Num.Option(opt), Lexer.COMMA(_), Num.List(lst)) =>
-      (n, opt, lst)
-      // opt: Option[Int]  — None if no number follows the first comma
-      // lst: List[Int]    — zero or more numbers after the second comma
-
-// "1,,3"       => (1, None, List(3))
-// "1,2,1 2 3"  => (1, Some(2), List(1, 2, 3))
+val root: Rule[BrainAST] = rule:
+  case Operation.List(stmts) => BrainAST.Root(stmts)
+  // stmts: List[BrainAST] -- zero or more operations
 ```
 
-`.Option` and `.List` are compile-time pattern extractors — they instruct the macro to generate the appropriate synthetic productions.
-They appear inside `case` patterns only. They cannot be called directly at runtime.
+**`.Option`** produces `Option[R]`:
+
+```scala sc:nocompile
+val root = rule:
+  case (BrainLexer.functionName(name), BrainLexer.functionCall(_).Option(call)) =>
+    (name.value, call)   // call: Option[Lexeme]
+```
+
+Both operators also work on terminals, not only rules.
 
 ## Parsing Input
 
-Call `MyParser.parse(lexemes)` where `lexemes` is the `List[Lexeme]` from `Lexer.tokenize(input).lexemes`.
-The `parse()` method appends `Lexeme.EOF` internally before running the shift/reduce loop.
-
-The return type is a named tuple `(ctx: Ctx, result: T | Null)`:
-- `ctx` — the final parser context after all reductions (or `ParserCtx.Empty` for stateless parsers)
-- `result` — the value produced by `root`, or `null` if parsing failed (the input was rejected by the grammar)
+Call `parse(lexemes)` where `lexemes` comes from `tokenize()`:
 
 ```scala sc:nocompile
-import alpaca.*
-
-val (ctx, result) = CalcParser.parse(Lexer.tokenize("1 + 2").lexemes)
-// ctx:    ParserCtx.Empty (or CalcContext if parser has custom state)
-// result: Double | Null   — 3 for valid input, null for invalid input
+val (_, lexemes) = BrainLexer.tokenize("++[>+<-]")
+val (ctx, ast) = BrainParser.parse(lexemes)
+// ctx: ParserCtx.Empty
+// ast: BrainAST | Null -- the parsed result, or null if the input was rejected
 ```
 
-> **Pitfall:** `result` is `T | Null`, not `Option[T]`. If the input does not match the grammar, `result` is `null` — not an exception. Always check for null before using the result. (Parser error reporting with structured failure information is tracked in [#65](https://github.com/halotukozak/alpaca/issues/65) and [#51](https://github.com/halotukozak/alpaca/issues/51).)
+The return type is a named tuple `(ctx: Ctx, result: T | Null)`. The result is `null` for invalid input -- not an exception. Always check for null:
+
+```scala sc:nocompile
+val (_, ast) = BrainParser.parse(lexemes)
+ast.nn.eval(Memory())  // .nn asserts non-null
+```
 
 ## Conflict Resolution
 
-Ambiguous grammars produce compile-time errors.
-`ShiftReduceConflict` is reported when the parser cannot decide whether to shift the next token or reduce the current production.
-`ReduceReduceConflict` is reported when two different rules match the same token sequence.
+Ambiguous grammars produce compile-time errors. The BrainFuck grammar has no conflicts (all tokens are unambiguous), but arithmetic grammars do. See [Conflict Resolution](conflict-resolution.md) for the full `before`/`after` DSL.
 
-To resolve conflicts, name individual productions with a string literal placed before the production body, and declare precedence relationships in `resolutions = Set(...)` using the `before`/`after` DSL:
+Quick example:
 
 ```scala sc:nocompile
 import alpaca.*
 
 object CalcParser extends Parser:
-  val Expr: Rule[Int] = rule(
-    "plus"  { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },
-    "minus" { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
-    { case Lexer.NUMBER(n) => n.value },
+  val Expr: Rule[Double] = rule(
+    "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
+    { case CalcLexer.NUMBER(n) => n.value.toDouble },
   )
   val root = rule:
     case Expr(e) => e
 
-  override val resolutions = Set(            // resolutions must be last
-    production.plus.before(Lexer.PLUS, Lexer.MINUS),
-    production.plus.after(Lexer.TIMES),
+  override val resolutions = Set(
+    production.plus.before(CalcLexer.PLUS),  // left-associative
   )
 ```
 
-`production.plus` refers to the production named `"plus"` declared above.
-`before(tokens*)` means "this production takes precedence over those tokens" (prefer reduce here over a subsequent shift).
-`after(tokens*)` is the inverse — those tokens take precedence (prefer shift).
+`resolutions` must be the **last val** in the parser object. See [Conflict Resolution](conflict-resolution.md) for details.
 
-`resolutions` must be defined after all rule declarations. The macro reads declarations top-to-bottom; placing `resolutions` before all rules may cause "Production with name X not found" errors.
-
-See [Conflict Resolution](conflict-resolution.html) for full details on shift/reduce conflicts, reduce/reduce conflicts, named productions, and the `Production(symbols*)` selector.
-
----
-
-See [Parsing Input with Context](parser-context.html) for how to maintain state during parsing with `ParserCtx`.
-
-See [Extractors](extractors.html) for detailed coverage of terminal and non-terminal matching, EBNF patterns, and Lexeme field access in parser rules.
+See [Parser Context](parser-context.md) for custom state, [Extractors](extractors.md) for all pattern forms, and [Debug Settings](debug-settings.md) for compile-time debugging.

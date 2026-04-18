@@ -105,10 +105,10 @@ private[internal] given [K <: Tuple, V <: Tuple: ToExpr] => ToExpr[NamedTuple[K,
  * Handles conversion of nullable values to expressions, properly
  * distinguishing between null and non-null values.
  */
-private[internal] given [T: ToExpr as toExpr] => ToExpr[T | Null]:
+private[internal] given [T: {ToExpr as toExpr}] => ToExpr[T | Null]:
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
     case null => '{ null }
-    case value => toExpr.apply(value.asInstanceOf[T])
+    case value: T @unchecked => toExpr.apply(value)
 
 /**
  * FromExpr instance for nullable types.
@@ -119,7 +119,7 @@ private[internal] given [T: ToExpr as toExpr] => ToExpr[T | Null]:
 private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
   def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
     case '{ $_ : Null } => Some(null)
-    case value => fromExpr.unapply(value.asInstanceOf[Expr[T]])
+    case value: Expr[T] @unchecked => fromExpr.unapply(value)
 // $COVERAGE-ON$
 /**
  * Starts a background timeout watcher for compilation.

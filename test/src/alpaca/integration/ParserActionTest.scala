@@ -9,14 +9,14 @@ final class ParserActionTest extends AnyFunSuite:
     val BugLexer = lexer:
       case "T" => Token["T"]
 
-    object Bug extends Parser:
+    object SingleActionBug extends Parser:
       override val root: Rule[Any] = rule:
         case BugLexer.T(_) =>
           val x = 1
           x
 
     val (_, lexemes) = BugLexer.tokenize("T")
-    val (_, result) = Bug.parse(lexemes)
+    val (_, result) = SingleActionBug.parse(lexemes)
     assert(result == 1)
   }
 
@@ -26,7 +26,7 @@ final class ParserActionTest extends AnyFunSuite:
       case x @ "[0-9]+" => Token["num"](x.toInt)
       case "\\+" => Token["+"]
 
-    object Bug extends Parser:
+    object MultiActionBug extends Parser:
       val Expr: Rule[Int] = rule(
         "add" { case (Expr(a), BugLexer.`+`(_), Expr(b)) =>
           val sum = a + b
@@ -47,7 +47,7 @@ final class ParserActionTest extends AnyFunSuite:
       )
 
     val (_, lexemes) = BugLexer.tokenize("1 + 2")
-    val (_, result) = Bug.parse(lexemes)
+    val (_, result) = MultiActionBug.parse(lexemes)
     assert(result == 6) // (1 + 2) * 2
   }
 
@@ -55,7 +55,7 @@ final class ParserActionTest extends AnyFunSuite:
     val BugLexer = lexer:
       case "T" => Token["T"]
 
-    object Bug extends Parser:
+    object LambdaActionBug extends Parser:
       val R1: Rule[String] = rule:
         case BugLexer.T(_) => "T"
 
@@ -66,6 +66,6 @@ final class ParserActionTest extends AnyFunSuite:
         case R2(f) => f(())
 
     val (_, lexemes) = BugLexer.tokenize("T")
-    val (_, result) = Bug.parse(lexemes)
+    val (_, result) = LambdaActionBug.parse(lexemes)
     assert(result == "T")
   }

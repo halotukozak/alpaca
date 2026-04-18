@@ -103,7 +103,10 @@ private[parser] object ParseTable:
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val (sourceStateId, symbol) = table.collectFirst { case (key, Shift(`stateId`)) => key }.get
+        val (sourceStateId, symbol) = table
+          .collectFirst:
+            case (key, Shift(`stateId`)) => key
+          .get
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc

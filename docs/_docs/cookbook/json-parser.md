@@ -1,0 +1,89 @@
+# JSON Parser
+
+This guide builds a JSON parser that handles objects, arrays, strings, numbers, booleans, and null. It demonstrates recursive grammar rules and nested data structures.
+
+**What you'll learn:** recursive rules, separator-delimited lists via explicit recursion, and backtick-quoted token names for punctuation.
+
+## The Lexer
+
+```scala sc:nocompile
+import alpaca.*
+
+val JsonLexer = lexer:
+  case "\\s+" => Token.Ignored
+  case "\\{" => Token["{"]
+  case "\\}" => Token["}"]
+  case "\\[" => Token["["]
+  case "\\]" => Token["]"]
+  case ":" => Token[":"]
+  case "," => Token[","]
+  case x @ ("false" | "true") => Token["Bool"](x.toBoolean)
+  case "null" => Token["Null"](null: @annotation.nowarn("msg=unused explicit parameter"))
+  case x @ """[-+]?\d+(\.\d+)?""" => Token["Number"](x.toDouble)
+  case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
+```
+
+Punctuation tokens (`{`, `}`, `[`, `]`, `:`, `,`) need backtick quoting when accessed in parser rules: `JsonLexer.\`{\`(_)`.
+
+## The Parser
+
+JSON is recursive: a `Value` can be an `Object` or `Array`, which contain more `Value`s.
+
+```scala sc:nocompile
+import alpaca.*
+
+object JsonParser extends Parser:
+  val root: Rule[Any] = rule:
+    case Value(value) => value
+
+  val Value: Rule[Any] = rule(
+    { case JsonLexer.Null(n) => n.value },
+    { case JsonLexer.Bool(b) => b.value },
+    { case JsonLexer.Number(n) => n.value },
+    { case JsonLexer.String(s) => s.value },
+    { case Object(obj) => obj },
+    { case Array(arr) => arr },
+  )
+
+  val Object: Rule[Map[String, Any]] = rule(
+    { case (JsonLexer.`{`(_), JsonLexer.`}`(_)) => Map.empty[String, Any] },
+    { case (JsonLexer.`{`(_), ObjectMembers(members), JsonLexer.`}`(_)) => members.toMap },
+  )
+
+  val ObjectMembers: Rule[List[(String, Any)]] = rule(
+    { case ObjectMember(member) => scala.List(member) },
+    { case (ObjectMembers(members), JsonLexer.`,`(_), ObjectMember(member)) => members :+ member },
+  )
+
+  val ObjectMember: Rule[(String, Any)] = rule:
+    case (JsonLexer.String(s), JsonLexer.`:`(_), Value(v)) => (s.value, v)
+
+  val Array: Rule[List[Any]] = rule(
+    { case (JsonLexer.`[`(_), JsonLexer.`]`(_)) => Nil },
+    { case (JsonLexer.`[`(_), ArrayElements(elems), JsonLexer.`]`(_)) => elems },
+  )
+
+  val ArrayElements: Rule[List[Any]] = rule(
+    { case Value(v) => scala.List(v) },
+    { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
+  )
+```
+
+`ObjectMembers` and `ArrayElements` use explicit left recursion for comma-separated lists. This is the standard pattern when elements are separated by delimiters -- `.List` works for unseparated sequences (like BrainFuck operations), but separator-delimited lists need explicit recursion.
+
+## Running It
+
+```scala sc:nocompile
+val input = """{"name": "Alice", "age": 30, "tags": ["a", "b"]}"""
+val (_, lexemes) = JsonLexer.tokenize(input)
+val (_, result) = JsonParser.parse(lexemes)
+println(result)
+// Map(name -> Alice, age -> 30.0, tags -> List(a, b))
+```
+
+No conflict resolution is needed -- the JSON grammar is unambiguous.
+
+## Exercises
+
+- Add typed results (`Rule[JsonValue]` instead of `Rule[Any]`) using a sealed enum
+- Support JSON5 features: trailing commas, single-line comments, unquoted keys
