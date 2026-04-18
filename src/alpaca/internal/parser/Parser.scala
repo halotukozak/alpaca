@@ -9,7 +9,6 @@ import alpaca.internal.parser.*
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.collection.mutable
-import scala.reflect.ClassTag
 
 /**
  * A trait that provides compile-time access to named productions for use in conflict resolution definitions.
@@ -90,35 +89,45 @@ abstract class Parser[Ctx <: ParserCtx](
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
-    type Node = R | Lexeme[?, ?] | Null
+    enum Node:
+      case Result(value: Any)
+      case Token(lexeme: Lexeme[?, ?])
+
+      def get: Any = this match
+        case Node.Result(value) => value
+        case Node.Token(lexeme) => lexeme
 
     val ctx = empty()
     val input = lexemes.toVector :+ Lexeme.EOF
 
-    @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): R | Null =
+    @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): Node =
       val nextSymbol = Terminal(input(pos).name)
       tables.parseTable(stack.head.index, nextSymbol).runtimeChecked match
         case ParseAction.Shift(gotoState) =>
-          loop(pos + 1, (gotoState, input(pos)) :: stack)
+          loop(pos + 1, (gotoState, Node.Token(input(pos))) :: stack)
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
           val newStack = stack.drop(rhs.size)
           val newState = newStack.head
 
-          if lhs == Symbol.Start && newState.index == 0 then stack.head.node.asInstanceOf[R | Null]
+          if lhs == Symbol.Start && newState.index == 0 then stack.head.node
           else
             val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
-            val children = stack.take(rhs.size).iterator.map[Any](_.node).to(RevertedArray)
-            loop(pos, (gotoState, tables.actionTable(prod)(ctx, children).asInstanceOf[Node]) :: newStack)
+            val children = stack.take(rhs.size).iterator.map(_.node.get).to(RevertedArray)
+            loop(pos, (gotoState, Node.Result(tables.actionTable(prod)(ctx, children))) :: newStack)
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
-          stack.head.node.asInstanceOf[R | Null]
+          stack.head.node
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
           val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
-          loop(pos, (gotoState, tables.actionTable(prod)(ctx, RevertedArray.empty).asInstanceOf[Node]) :: stack)
+          loop(pos, (gotoState, Node.Result(tables.actionTable(prod)(ctx, RevertedArray.empty))) :: stack)
 
-    (ctx, loop(pos = 0, List((index = 0, node = null: Node))))
+    val result = loop(pos = 0, List((index = 0, node = Node.Result(null)))) match
+      case Node.Result(value) => value.asInstanceOf[R]
+      case Node.Token(lexeme) => null
+
+    (ctx, result)
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty

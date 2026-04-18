@@ -53,13 +53,14 @@ private[parser] object ConflictResolutionTable:
      */
     def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using Log): Option[ParseAction] =
       logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
-      def extractProdOrName(action: ParseAction): ConflictKey = action.runtimeChecked match
-        case red: ParseAction.Reduction => red.production
-        case _: ParseAction.Shift => symbol.name
+
+      extension (action: ParseAction)
+        def toConflictKey: ConflictKey = action match
+          case ParseAction.Reduction(prod) => prod
+          case _ => symbol.name
 
       def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
-        val to = extractProdOrName(second)
-        // todo: use Flow
+        val to = second.toConflictKey
         @tailrec
         def loop(queue: List[ConflictKey], visited: Set[ConflictKey]): Option[ParseAction] = queue match
           case Nil => None
@@ -69,7 +70,7 @@ private[parser] object ConflictResolutionTable:
             val neighbors = current.diff(visited)
             loop(tail ++ neighbors, visited + head)
 
-        loop(List(extractProdOrName(first)), Set())
+        loop(List(first.toConflictKey), Set())
 
       winsOver(first, second) orElse winsOver(second, first)
 
@@ -84,7 +85,6 @@ private[parser] object ConflictResolutionTable:
 
       val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
 
-      // todo: use Ox Channel
       @tailrec
       def loop(stack: List[Action]): Unit = stack match
         case Nil => // Done

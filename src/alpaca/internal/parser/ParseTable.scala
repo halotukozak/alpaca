@@ -2,7 +2,7 @@ package alpaca
 package internal
 package parser
 
-import alpaca.internal.parser.ParseAction.{Reduction, Shift}
+import alpaca.internal.parser.ParseAction.*
 
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
@@ -94,11 +94,11 @@ private[parser] object ParseTable:
               table.update((currStateId, symbol), action)
             case None =>
               val path = toPath(currStateId, List(symbol))
-              (existingAction, action).runtimeChecked match
+              (existingAction, action) match
                 case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
-                case (_: Shift, red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
-                case (red: Reduction, _: Shift) => throw ShiftReduceConflict(symbol, red, path)
-                case (_: Shift, _: Shift) => throw AlgorithmError("Shift-Shift conflict should never happen")
+                case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
+                case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
+                case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
@@ -164,8 +164,8 @@ private[parser] object ParseTable:
       import quotes.reflect.*
 
       type BuilderTpe = mutable.Builder[
-        ((state: Int, stepSymbol: parser.Symbol), Shift | Reduction),
-        Map[(state: Int, stepSymbol: parser.Symbol), Shift | Reduction],
+        ((state: Int, stepSymbol: parser.Symbol), ParseAction),
+        Map[(state: Int, stepSymbol: parser.Symbol), ParseAction],
       ]
 
       val symbol = Symbol.newVal(
