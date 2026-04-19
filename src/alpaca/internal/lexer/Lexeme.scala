@@ -3,7 +3,6 @@ package internal
 package lexer
 
 import scala.NamedTuple.AnyNamedTuple
-import scala.collection.mutable.StringBuilder
 import scala.util.boundary
 import scala.util.boundary.break
 
@@ -39,16 +38,6 @@ private[alpaca] final class Lexeme[+Name <: ValidName, +Value](
       boundary:
         for i <- fieldNames.indices if fieldNames(i) == name do break(fieldValues(i))
         throw new NoSuchElementException(name)
-
-  override def toString: String =
-    val builder = new StringBuilder
-    builder.addAll(s"Lexeme($name, $value, ")
-    builder.addAll(s"Map(\"text\" -> $text")
-    fieldNames.indices.foreach: i =>
-      builder.addAll(s", ${fieldNames(i)} -> ${fieldValues(i)}")
-    builder.addOne(')')
-    builder.addOne(')')
-    builder.result()
 
 private[alpaca] object Lexeme:
 
