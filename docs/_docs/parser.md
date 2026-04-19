@@ -148,12 +148,12 @@ val root = rule:
     (name.value, call)   // call: Option[Lexeme]
 ```
 
-**`.SeparatedBy[Separator]`** produces `List[R | Separator]` for zero or more items interleaved with a separator. Pass a token (as a type) or a rule (as `.type`) for the separator:
+**`.SeparatedBy[Separator]`** produces `List[R | SepValue[Separator]]` for zero or more items interleaved with a separator, where `SepValue[Separator]` is the separator's runtime value type (`Lexeme` for token separators, the bound result type for rule separators). Pass a token (as a type) or a rule (as `.type`) for the separator:
 
 ```scala sc:nocompile
-val root: Rule[List[Any]] = rule:
+val root: Rule[List[Int | Lexeme[",", Unit]]] = rule:
   case Num.SeparatedBy[MyLexer.`,`](items) => items
-  // items: List[Int | Lexeme] -- for "1,2,3": List(1, <,>, 2, <,>, 3)
+  // for "1,2,3": List(1, <,>, 2, <,>, 3)
 ```
 
 All three operators work on terminals too, not only rules.

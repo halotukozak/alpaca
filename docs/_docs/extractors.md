@@ -92,11 +92,11 @@ val root = rule:
 
 ## EBNF Extractors: .SeparatedBy
 
-`Rule.SeparatedBy[Separator](binding)` matches zero or more occurrences delimited by a separator. The binding is a `List[R | Separator]` — separators are interleaved into the list along with the rule's results.
+`Rule.SeparatedBy[Separator](binding)` matches zero or more occurrences delimited by a separator. The binding is a `List[R | SepValue[Separator]]` — separators are interleaved into the list along with the rule's results. `SepValue[Separator]` is the runtime value of the separator: for a token separator it is the corresponding `Lexeme`, and for a rule separator it is the rule's result type.
 
 The type parameter `Separator` is the type of the separator symbol:
 
-- For a **token separator**, pass the token as a type (e.g. `MyLexer.`,``). The refinement on the tokenization makes the token name a valid type.
+- For a **token separator**, pass the token as a type (e.g. ``MyLexer.`,` ``). The refinement on the tokenization makes the token name a valid type.
 - For a **rule separator**, pass the rule's singleton type (e.g. `Sep.type`).
 
 ```scala sc:nocompile
@@ -114,7 +114,7 @@ val Sep: Rule[String] = rule:
 // For "1,2,3", items == List(1, ",", 2, ",", 3)
 ```
 
-The macro generates three synthetic productions: empty (→ `Nil`), singleton (→ `List(elem)`), and left-recursive append (→ `list :+ separator :+ elem`).
+The macro generates two synthetic non-terminals and four productions: an empty case (→ `Nil`), a bridge from the outer to the non-empty non-terminal (identity), a singleton (→ `List(elem)`), and a left-recursive append (→ `list :+ separator :+ elem`).
 
 ## Lexeme Fields
 
