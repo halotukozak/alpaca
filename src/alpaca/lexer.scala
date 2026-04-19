@@ -140,8 +140,13 @@ object LexerCtx:
   given OnTokenMatch[LexerCtx] =
     case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
       modifyCtx(ctx)
-      val fields = Lexeme.fieldNamesFor(ctx)
-      ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields, ctx.productIterator.toArray, ctx.lastRawMatched)
+      ctx.lastLexeme = Lexeme(
+        name = info.name,
+        value = remapping(ctx),
+        text = ctx.lastRawMatched,
+        fieldNames = Lexeme.fieldNamesFor(ctx),
+        fieldValues = ctx.productIterator.toArray,
+      )
 
     case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
       modifyCtx(ctx)

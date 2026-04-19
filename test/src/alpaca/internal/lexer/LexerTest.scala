@@ -6,6 +6,16 @@ import org.scalatest.matchers.should.Matchers
 
 final class LexerTest extends AnyFunSuite with Matchers:
 
+  def Lexer[Name <: ValidName, Value](
+    name: Name,
+    value: Value,
+    text: String,
+    fields: Map[String, Any],
+  ): Lexeme[Name, Value] =
+    val names = fields.keysIterator.toArray
+    val values = names.map(fields.apply)
+    new Lexeme(name, value, names, values, text)
+
   test("tokenize simple identifier") {
     val Lexer = lexer:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
