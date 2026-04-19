@@ -6,26 +6,19 @@ import org.scalatest.matchers.should.Matchers
 
 final class LexerTest extends AnyFunSuite with Matchers:
 
-  /**
-   * A comparable shape of a Lexeme, used only for test assertions so we
-   * don't need content-based equals on Lexeme itself.
-   */
-  private case class LexemeShape(name: String, value: Any, fields: Map[String, Any])
-
-  private def lex(name: String, value: Any, fields: Map[String, Any]): LexemeShape =
-    LexemeShape(name, value, fields)
-
   extension (lexeme: Lexeme[?, ?])
-    private def shape: LexemeShape =
-      val fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text)
-      LexemeShape(lexeme.name, lexeme.value, fields)
+    private def shape = (
+      name = lexeme.name,
+      value = lexeme.value,
+      fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text),
+    )
 
   test("tokenize simple identifier") {
     val Lexer = lexer:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
 
     val (_, lexemes) = Lexer.tokenize("hello")
-    assert(lexemes.map(_.shape) == List(lex("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
+    assert(lexemes.map(_.shape) == List(("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
   }
 
   test("tokenize with whitespace ignored") {
@@ -38,9 +31,9 @@ final class LexerTest extends AnyFunSuite with Matchers:
 
     assert(
       lexemes.map(_.shape) == List(
-        lex("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
-        lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-        lex("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
+        ("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
+        ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        ("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
       ),
     )
   }
@@ -78,15 +71,15 @@ final class LexerTest extends AnyFunSuite with Matchers:
 
     assert(
       lexemes.map(_.shape) == List(
-        lex("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
-        lex("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
-        lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-        lex("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
-        lex("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
-        lex("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
-        lex("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
-        lex("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
-        lex("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
+        ("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+        ("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+        ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        ("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+        ("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+        ("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+        ("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+        ("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+        ("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
       ),
     )
   }
@@ -118,8 +111,8 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val (ctx, lexemes) = Lexer.tokenize("abc\ndef")
     assert(
       lexemes.map(_.shape) == List(
-        lex("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
-        lex("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
+        ("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
+        ("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
       ),
     )
     ctx.line shouldBe 2
@@ -142,15 +135,15 @@ final class LexerTest extends AnyFunSuite with Matchers:
 
       assert(
         lexemes.map(_.shape) == List(
-          lex("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
-          lex("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
-          lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-          lex("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
-          lex("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
-          lex("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
-          lex("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
-          lex("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
-          lex("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
+          ("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+          ("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+          ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+          ("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+          ("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+          ("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+          ("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+          ("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+          ("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
         ),
       )
   }
