@@ -90,6 +90,32 @@ val root = rule:
     (name.value, call)   // call: Option[Lexeme]
 ```
 
+## EBNF Extractors: .SeparatedBy
+
+`Rule.SeparatedBy[Separator](binding)` matches zero or more occurrences delimited by a separator. The binding is a `List[R | SepValue[Separator]]` — separators are interleaved into the list along with the rule's results. `SepValue[Separator]` is the runtime value of the separator: for a token separator it is the corresponding `Lexeme`, and for a rule separator it is the rule's result type.
+
+The type parameter `Separator` is the type of the separator symbol:
+
+- For a **token separator**, pass the token as a type (e.g. ``MyLexer.`,` ``). The refinement on the tokenization makes the token name a valid type.
+- For a **rule separator**, pass the rule's singleton type (e.g. `Sep.type`).
+
+```scala sc:nocompile
+// Token separator: comma-separated numbers
+val root: Rule[List[Any]] = rule:
+  case Num.SeparatedBy[MyLexer.`,`](items) => items
+  // items: List[Int | Lexeme] -- values interleaved with comma lexemes
+
+// Rule separator: separator carries a semantic value
+val root: Rule[List[Any]] = rule:
+  case Num.SeparatedBy[Sep.type](items) => items
+
+val Sep: Rule[String] = rule:
+  case MyLexer.`,`(_) => ","
+// For "1,2,3", items == List(1, ",", 2, ",", 3)
+```
+
+The macro generates two synthetic non-terminals and four productions: an empty case (→ `Nil`), a bridge from the outer to the non-empty non-terminal (identity), a singleton (→ `List(elem)`), and a left-recursive append (→ `list :+ separator :+ elem`).
+
 ## Lexeme Fields
 
 When a terminal extractor binds a variable, the variable is a `Lexeme` carrying both the value and a snapshot of the lexer context at match time. Access fields with dot notation:

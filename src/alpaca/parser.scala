@@ -79,6 +79,21 @@ extension (name: String)
   inline def apply[R](production: ProductionDefinition[R]): production.type = dummy
 
 /**
+ * The runtime value type of a separator symbol used by `.SeparatedBy`.
+ *
+ * The parser places `Lexeme` values on the stack for terminals, so when
+ * the separator is a token type `Token[n, ?, v]`, its runtime value is
+ * `Lexeme[n, v]`. For a rule separator `Rule[t]` (typically passed as a
+ * singleton type like `Sep.type`), the runtime value is `t` — whatever
+ * that rule produces.
+ *
+ * @tparam S the separator symbol type (a token type or a rule's `.type`)
+ */
+type SepValue[S] = S match
+  case Token[n, ?, v] => Lexeme[n, v]
+  case Rule[t] => t
+
+/**
  * Represents a grammar rule in the parser.
  *
  * A rule defines how a non-terminal symbol can be parsed by specifying
@@ -122,6 +137,19 @@ trait Rule[R]:
    */
   @compileTimeOnly(RuleOnly)
   inline def Option: PartialFunction[Any, Option[R]] = dummy
+
+  /**
+   * Matches zero or more occurrences of this rule delimited by `Separator`,
+   * producing a list with separators interleaved.
+   *
+   * For a token separator, the interleaved values are `Lexeme`s (not the
+   * token type itself); for a rule separator, they are values of that rule's
+   * result type. See [[SepValue]].
+   *
+   * @tparam Separator a token type or a rule's `.type`
+   */
+  @compileTimeOnly(RuleOnly)
+  inline def SeparatedBy[Separator]: PartialFunction[Any, List[R | SepValue[Separator]]] = dummy
 
 /**
  * Base trait for parser global context.
