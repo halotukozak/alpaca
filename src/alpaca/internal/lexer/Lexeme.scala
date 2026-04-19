@@ -40,16 +40,6 @@ private[alpaca] final class Lexeme[+Name <: ValidName, +Value](
         throw new NoSuchElementException(name)
 
 private[alpaca] object Lexeme:
-
-  /**
-   * Cached field-name array per `LexerCtx` subclass — `productElementNames`
-   * is class-level metadata and never changes per instance.
-   */
-  private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
-
-  private[alpaca] def fieldNamesFor(ctx: LexerCtx): Array[String] =
-    fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
-
   /**
    * A special end-of-file lexeme used to signal the end of input.
    *

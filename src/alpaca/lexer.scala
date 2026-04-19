@@ -137,19 +137,24 @@ object LexerCtx:
    * - Advances the text position
    * - Applies any context modifications
    */
-  given OnTokenMatch[LexerCtx] =
-    case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
-      modifyCtx(ctx)
-      ctx.lastLexeme = Lexeme(
-        name = info.name,
-        value = remapping(ctx),
-        text = ctx.lastRawMatched,
-        fieldNames = Lexeme.fieldNamesFor(ctx),
-        fieldValues = ctx.productIterator.toArray,
-      )
+  given OnTokenMatch[LexerCtx] with
+    private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
 
-    case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
-      modifyCtx(ctx)
+    override def apply(token: lexer.Token[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
+      case DefinedToken(info, modifyCtx, remapping) =>
+        modifyCtx(ctx)
+        val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
+        val fieldValues = ctx.productIterator.toArray
+        ctx.lastLexeme = Lexeme(
+          name = info.name,
+          value = remapping(ctx),
+          text = ctx.lastRawMatched,
+          fieldNames = fieldNames,
+          fieldValues = fieldValues,
+        )
+
+      case InternalIgnoredToken(_, modifyCtx) =>
+        modifyCtx(ctx)
 
   /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
   given ErrorHandling[LexerCtx] = ctx =>
