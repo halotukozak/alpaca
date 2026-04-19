@@ -14,7 +14,15 @@ import scala.collection.immutable.SortedSet
 opaque private[parser] type State <: SortedSet[Item] = SortedSet[Item]
 
 private[parser] object State:
-  val empty: State = SortedSet.empty[Item](using Ordering.by(_.hashCode))
+
+  val empty: State = SortedSet.empty[Item](
+    using Ordering
+      .by[Item, String](_.production.lhs.name)
+      .orElseBy(_.production.ordinal)
+      .orElseBy(_.production.rhs.hashCode)
+      .orElseBy(_.dotPosition)
+      .orElseBy(_.lookAhead.name),
+  )
 
   extension (state: State)
 
