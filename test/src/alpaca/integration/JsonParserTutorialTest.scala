@@ -28,7 +28,7 @@ final class JsonParserTutorialTest extends AnyFunSuite:
     case x @ """"(\\.|[^"])*"""" => Token["String"](x.slice(1, x.length - 1))
 
   // === Section 2: Parser (from tutorial) ===
-  object JsonParser extends Parser:
+  object JsonTutorialParser extends Parser:
     val root: Rule[Any] = rule:
       case Value(value) => value
 
@@ -121,7 +121,7 @@ final class JsonParserTutorialTest extends AnyFunSuite:
         |""".stripMargin
 
     val (_, lexemes) = JsonLexer.tokenize(input)
-    val (_, result) = JsonParser.parse(lexemes)
+    val (_, result) = JsonTutorialParser.parse(lexemes)
 
     val expected = Map(
       "name" -> "John Doe",
@@ -151,24 +151,24 @@ final class JsonParserTutorialTest extends AnyFunSuite:
 
   test("parse empty object and array") {
     val (_, lexemes1) = JsonLexer.tokenize("{}")
-    val (_, result1) = JsonParser.parse(lexemes1)
+    val (_, result1) = JsonTutorialParser.parse(lexemes1)
     assert(result1 == Map.empty)
 
     val (_, lexemes2) = JsonLexer.tokenize("[]")
-    val (_, result2) = JsonParser.parse(lexemes2)
+    val (_, result2) = JsonTutorialParser.parse(lexemes2)
     assert(result2 == Nil)
   }
 
   test("parse primitives") {
     val (_, l1) = JsonLexer.tokenize("42")
-    val (_, r1) = JsonParser.parse(l1)
+    val (_, r1) = JsonTutorialParser.parse(l1)
     assert(r1 == 42.0)
 
     val (_, l2) = JsonLexer.tokenize("true")
-    val (_, r2) = JsonParser.parse(l2)
+    val (_, r2) = JsonTutorialParser.parse(l2)
     assert(r2 == true)
 
     val (_, l3) = JsonLexer.tokenize("null")
-    val (_, r3) = JsonParser.parse(l3)
+    val (_, r3) = JsonTutorialParser.parse(l3)
     assert(r3 == null)
   }

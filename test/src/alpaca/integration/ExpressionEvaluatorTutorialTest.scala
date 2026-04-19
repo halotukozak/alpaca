@@ -27,7 +27,7 @@ final class ExpressionEvaluatorTutorialTest extends AnyFunSuite:
     case x @ """(\d+\.\d*|\.\d+)([eE][+-]?\d+)?""" => Token["float"](x.toDouble)
     case x @ "\\d+" => Token["int"](x.toInt)
 
-  object CalcParser extends Parser:
+  object ExprEvalParser extends Parser:
     val root: Rule[Double] = rule:
       case Expr(v) => v
 
@@ -76,12 +76,12 @@ final class ExpressionEvaluatorTutorialTest extends AnyFunSuite:
 
   test("basic arithmetic") {
     val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")
-    val (_, result) = CalcParser.parse(lexemes)
+    val (_, result) = ExprEvalParser.parse(lexemes)
     assert(result == 7.0)
   }
 
   test("sin(pi / 2) + 2 ** 3 * 4") {
     val (_, lexemes) = CalcLexer.tokenize("sin(pi / 2) + 2 ** 3 * 4")
-    val (_, result) = CalcParser.parse(lexemes)
+    val (_, result) = ExprEvalParser.parse(lexemes)
     assert(result == 33.0)
   }

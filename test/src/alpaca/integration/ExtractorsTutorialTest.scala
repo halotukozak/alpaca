@@ -22,7 +22,7 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
 
   // Section 1: Matching terminals — basic token matching and value access
   test("basic token matching with _ and value access") {
-    object P extends Parser:
+    object TerminalMatchParser extends Parser:
       val root: Rule[Int] = rule:
         case Expr(v) => v
 
@@ -38,13 +38,13 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
       )
 
     val (_, lexemes) = MyLexer.tokenize("1 + 2 + 3")
-    val (_, result) = P.parse(lexemes)
+    val (_, result) = TerminalMatchParser.parse(lexemes)
     assert(result == 6)
   }
 
   // Section 2: Matching non-terminals (rules as extractors)
   test("rules act as extractors") {
-    object P extends Parser:
+    object NonTerminalMatchParser extends Parser:
       val root: Rule[String] = rule:
         case Stmt(s) => s
 
@@ -61,13 +61,13 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
       )
 
     val (_, lexemes) = MyLexer.tokenize("1 + 2")
-    val (_, result) = P.parse(lexemes)
+    val (_, result) = NonTerminalMatchParser.parse(lexemes)
     assert(result == "Expression result: 3")
   }
 
   // Section 3: EBNF extractors — .List (works on Rules, not tokens)
   test(".List extractor matches zero or more") {
-    object P extends Parser:
+    object ListExtractorParser extends Parser:
       val root: Rule[List[Int]] = rule:
         case Num.List(ns) => ns
 
@@ -75,13 +75,13 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
         case MyLexer.NUM(n) => n.value
 
     val (_, lexemes) = MyLexer.tokenize("1 2 3")
-    val (_, result) = P.parse(lexemes)
+    val (_, result) = ListExtractorParser.parse(lexemes)
     assert(result == List(1, 2, 3))
   }
 
   // Section 3: EBNF extractors — .Option (works on Rules, not tokens)
   test(".Option extractor matches zero or one") {
-    object P extends Parser:
+    object OptionExtractorParser extends Parser:
       val root: Rule[(Int, Option[Int])] = rule:
         case (Num(a), MyLexer.`,`(_), Num.Option(b)) =>
           (a, b)
@@ -90,11 +90,11 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
         case MyLexer.NUM(n) => n.value
 
     val (_, lexemes1) = MyLexer.tokenize("1 , 2")
-    val (_, result1) = P.parse(lexemes1)
+    val (_, result1) = OptionExtractorParser.parse(lexemes1)
     assert(result1 == (1, Some(2)))
 
     val (_, lexemes2) = MyLexer.tokenize("1 ,")
-    val (_, result2) = P.parse(lexemes2)
+    val (_, result2) = OptionExtractorParser.parse(lexemes2)
     assert(result2 == (1, None))
   }
 
@@ -168,7 +168,7 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
 
   // Section 4: Tuple matching
   test("tuple matching for sequences") {
-    object P extends Parser:
+    object TupleMatchParser extends Parser:
       val root: Rule[Int] = rule:
         case Expr(v) => v
 
@@ -183,6 +183,6 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
       )
 
     val (_, lexemes) = MyLexer.tokenize("(2 * 3)")
-    val (_, result) = P.parse(lexemes)
+    val (_, result) = TupleMatchParser.parse(lexemes)
     assert(result == 6)
   }

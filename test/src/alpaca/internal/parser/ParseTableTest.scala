@@ -18,7 +18,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
 
   test("parse table Shift-Reduce conflict") {
     typeCheckErrors("""
-    object CalcParser extends Parser[CalcContext]:
+    object ShiftReduceCalcParser extends Parser[CalcContext]:
       val Expr: Rule[Int] = rule(
         { case (Expr(expr1), CalcLexer.`+`(_), Expr(expr2)) => expr1 + expr2 },
         { case CalcLexer.Num(lexem) => lexem.value },
@@ -37,7 +37,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
 
   test("parse table Reduce-Reduce conflict") {
     typeCheckErrors("""
-    object CalcParser extends Parser[CalcContext]:
+    object ReduceReduceCalcParser extends Parser[CalcContext]:
       val Integer = rule:
        case CalcLexer.Num(lexem) => lexem.value 
 
@@ -52,7 +52,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
       val root = rule:
        case Expr(expr) => expr
     """).loneElement.message should include("""
-                                              |Reduce Integer -> Num vs Reduce Float -> Num
+                                              |Reduce Float -> Num vs Reduce Integer -> Num
                                               |In situation like:
                                               |Num ...
                                               |Consider marking one of the productions to be before or after the other
@@ -61,7 +61,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
 
   test("conflict resolution cycle detection") {
     typeCheckErrors("""
-    object CalcParser extends Parser[CalcContext]:
+    object CycleParser extends Parser[CalcContext]:
       val A = rule("A" { case CalcLexer.Num(lexem) => lexem.value })
       val B = rule:
        case CalcLexer.`+`(_) => "+"

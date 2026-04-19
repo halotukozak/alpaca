@@ -53,12 +53,14 @@ private[parser] object ConflictResolutionTable:
      */
     def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using Log): Option[ParseAction] =
       logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
-      def extractProdOrName(action: ParseAction): ConflictKey = action match
-        case ParseAction.Reduction(production) => production
-        case _: ParseAction.Shift => symbol.name
+
+      extension (action: ParseAction)
+        def toConflictKey: ConflictKey = action match
+          case ParseAction.Reduction(prod) => prod
+          case _: ParseAction.Shift => symbol.name
 
       def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
-        val to = extractProdOrName(second)
+        val to = second.toConflictKey
         @tailrec
         def loop(queue: List[ConflictKey], visited: Set[ConflictKey]): Option[ParseAction] = queue match
           case Nil => None
@@ -68,7 +70,7 @@ private[parser] object ConflictResolutionTable:
             val neighbors = current.diff(visited)
             loop(tail ++ neighbors, visited + head)
 
-        loop(List(extractProdOrName(first)), Set())
+        loop(List(first.toConflictKey), Set())
 
       winsOver(first, second) orElse winsOver(second, first)
 
@@ -101,6 +103,49 @@ private[parser] object ConflictResolutionTable:
               loop(neighbors ::: List(Action.Leave(node)) ::: rest)
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
+
+    def toMermaid(using Log): String =
+      logger.trace("generating Mermaid conflict resolution graph")
+      val sb = new StringBuilder
+      sb.append("graph TD\n")
+
+      val idMap = mutable.HashMap.empty[ConflictKey, String]
+      var prodIdx = 0
+      var tokIdx = 0
+
+      def nodeId(key: ConflictKey): String =
+        idMap.getOrElseUpdate(
+          key,
+          key match
+            case _: Production =>
+              prodIdx += 1
+              s"P_$prodIdx"
+            case _: String =>
+              tokIdx += 1
+              s"T_$tokIdx",
+        )
+
+      def escapeLabel(label: String): String =
+        label
+          .replace("\\", "\\\\")
+          .replace("\"", "\\\"")
+          .replace("\n", "\\n")
+          .replace("\r", "\\r")
+          .replace("#", "#35;")
+
+      def nodeLabel(key: ConflictKey): String = key match
+        case p: Production => show"$p"
+        case s: String => show"Token($s)"
+
+      val nodes = (table.keySet ++ table.values.flatten).toList.sortBy(nodeLabel)
+      for node <- nodes do sb.append(s"  ${nodeId(node)}[\"${escapeLabel(nodeLabel(node))}\"]\n")
+
+      for
+        (from, toSet) <- table.toList.sortBy { case (fromKey, _) => nodeLabel(fromKey) }
+        to <- toSet.toList.sortBy(nodeLabel)
+      do sb.append(s"  ${nodeId(from)} --> ${nodeId(to)}\n")
+
+      sb.toString
 
   /**
    * Showable instance for displaying conflict resolution tables.

@@ -14,7 +14,7 @@ final class Issue198FixTest extends AnyFunSuite with Matchers:
   case class MyCtx() extends ParserCtx
 
   test("hyphenated production name should compile") {
-    object MyParser extends Parser[MyCtx]:
+    object Issue198Parser extends Parser[MyCtx]:
       val root = rule:
         case Expr(e) => e
 
@@ -27,5 +27,5 @@ final class Issue198FixTest extends AnyFunSuite with Matchers:
         production.`if-else`.after(MyLexer.Num),
       )
 
-    assert(MyParser.resolutions.nonEmpty)
+    assert(Issue198Parser.resolutions.nonEmpty)
   }
