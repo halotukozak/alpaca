@@ -120,14 +120,14 @@ private[parser] object ParseTable:
       for stepSymbol <- currState.possibleSteps do
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
-        stateIndex.get(newState) match
-          case None =>
+        val stateId = stateIndex.getOrElseUpdate(
+          newState, {
             val newId = states.length
-            addToTable(stepSymbol, Shift(newId))
             states += newState
-            stateIndex(newState) = newId
-          case Some(stateId) =>
-            addToTable(stepSymbol, Shift(stateId))
+            newId
+          },
+        )
+        addToTable(stepSymbol, Shift(stateId))
 
       currStateId += 1
 
