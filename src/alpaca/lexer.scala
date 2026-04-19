@@ -2,6 +2,7 @@ package alpaca
 
 import alpaca.internal.*
 import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
+import alpaca.internal.lexer.Token as LexerToken
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, publicInBinary}
@@ -140,7 +141,7 @@ object LexerCtx:
   given OnTokenMatch[LexerCtx] with
     private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
 
-    override def apply(token: lexer.Token[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
+    override def apply(token: LexerToken[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
       case DefinedToken(info, modifyCtx, remapping) =>
         modifyCtx(ctx)
         val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
