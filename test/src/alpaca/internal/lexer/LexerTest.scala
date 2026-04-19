@@ -20,14 +20,12 @@ final class LexerTest extends AnyFunSuite with Matchers:
       val fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text)
       LexemeShape(lexeme.name, lexeme.value, fields)
 
-  extension (lexemes: List[Lexeme[?, ?]]) private def shapes: List[LexemeShape] = lexemes.map(_.shape)
-
   test("tokenize simple identifier") {
     val Lexer = lexer:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
 
     val (_, lexemes) = Lexer.tokenize("hello")
-    assert(lexemes.shapes == List(lex("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
+    assert(lexemes.map(_.shape) == List(lex("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
   }
 
   test("tokenize with whitespace ignored") {
@@ -39,7 +37,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val (_, lexemes) = Lexer.tokenize("42 + 13")
 
     assert(
-      lexemes.shapes == List(
+      lexemes.map(_.shape) == List(
         lex("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
         lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
         lex("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
@@ -79,7 +77,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val (_, lexemes) = Lexer.tokenize("(x + 42) * y - 1")
 
     assert(
-      lexemes.shapes == List(
+      lexemes.map(_.shape) == List(
         lex("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
         lex("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
         lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
@@ -119,7 +117,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
 
     val (ctx, lexemes) = Lexer.tokenize("abc\ndef")
     assert(
-      lexemes.shapes == List(
+      lexemes.map(_.shape) == List(
         lex("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
         lex("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
       ),
@@ -143,7 +141,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
       val (_, lexemes) = Lexer.tokenize(reader)
 
       assert(
-        lexemes.shapes == List(
+        lexemes.map(_.shape) == List(
           lex("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
           lex("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
           lex("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
