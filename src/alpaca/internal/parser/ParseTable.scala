@@ -73,15 +73,16 @@ private[parser] object ParseTable:
     val firstSet = FirstSet(productions)
     logger.trace("building states and parse table...")
     var currStateId = 0
-    val states =
-      mutable.ListBuffer(
-        State.fromItem(
-          State.empty,
-          productions.find(_.lhs == parser.Symbol.Start).get.toItem(),
-          productions,
-          firstSet,
-        ),
-      )
+    val initialState = State.fromItem(
+      State.empty,
+      productions.find(_.lhs == parser.Symbol.Start).get.toItem(),
+      productions,
+      firstSet,
+    )
+    val states = mutable.ArrayBuffer(initialState)
+    // Parallel index so deduplication lookup is O(1) instead of O(S) per call
+    // (and O(S^2) overall across the whole LR table construction).
+    val stateIndex = mutable.HashMap(initialState -> 0)
     val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
@@ -121,11 +122,13 @@ private[parser] object ParseTable:
       for stepSymbol <- currState.possibleSteps do
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
-        states.indexOf(newState) match
-          case -1 =>
-            addToTable(stepSymbol, Shift(states.length))
+        stateIndex.get(newState) match
+          case None =>
+            val newId = states.length
+            addToTable(stepSymbol, Shift(newId))
             states += newState
-          case stateId =>
+            stateIndex(newState) = newId
+          case Some(stateId) =>
             addToTable(stepSymbol, Shift(stateId))
 
       currStateId += 1
