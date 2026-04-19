@@ -73,15 +73,14 @@ private[parser] object ParseTable:
     val firstSet = FirstSet(productions)
     logger.trace("building states and parse table...")
     var currStateId = 0
-    val states =
-      mutable.ListBuffer(
-        State.fromItem(
-          State.empty,
-          productions.find(_.lhs == parser.Symbol.Start).get.toItem(),
-          productions,
-          firstSet,
-        ),
-      )
+    val initialState = State.fromItem(
+      State.empty,
+      productions.find(_.lhs == parser.Symbol.Start).get.toItem(),
+      productions,
+      firstSet,
+    )
+    val states = mutable.ArrayBuffer(initialState)
+    val stateIndex = mutable.HashMap(initialState -> 0)
     val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
@@ -121,12 +120,14 @@ private[parser] object ParseTable:
       for stepSymbol <- currState.possibleSteps do
         val newState = currState.nextState(stepSymbol, productions, firstSet)
 
-        states.indexOf(newState) match
-          case -1 =>
-            addToTable(stepSymbol, Shift(states.length))
+        val stateId = stateIndex.getOrElseUpdate(
+          newState, {
+            val newId = states.length
             states += newState
-          case stateId =>
-            addToTable(stepSymbol, Shift(stateId))
+            newId
+          },
+        )
+        addToTable(stepSymbol, Shift(stateId))
 
       currStateId += 1
 
