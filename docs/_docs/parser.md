@@ -130,7 +130,7 @@ Use the rule name in unapply position. The binding has exactly type `R` from `Ru
 
 ## EBNF Operators
 
-`.Option` and `.List` on any `Rule[R]` express optional and repeated symbols without hand-written recursion.
+`.Option`, `.List`, and `.SeparatedBy` on any `Rule[R]` express optional, repeated, and delimiter-separated symbols without hand-written recursion.
 
 **`.List`** produces `List[R]`. The BrainFuck parser uses this heavily -- the root rule matches zero or more operations:
 
@@ -148,7 +148,15 @@ val root = rule:
     (name.value, call)   // call: Option[Lexeme]
 ```
 
-Both operators also work on terminals, not only rules.
+**`.SeparatedBy[Separator]`** produces `List[R | SepValue[Separator]]` for zero or more items interleaved with a separator, where `SepValue[Separator]` is the separator's runtime value type (`Lexeme` for token separators, the bound result type for rule separators). Pass a token (as a type) or a rule (as `.type`) for the separator:
+
+```scala sc:nocompile
+val root: Rule[List[Int | Lexeme[",", Unit]]] = rule:
+  case Num.SeparatedBy[MyLexer.`,`](items) => items
+  // for "1,2,3": List(1, <,>, 2, <,>, 3)
+```
+
+All three operators work on terminals too, not only rules.
 
 ## Parsing Input
 

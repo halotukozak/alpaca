@@ -121,6 +121,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   RegexChecker.checkPatterns(infos.map(_.pattern))
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
+  val types = Refined(
+    TypeTree.of[Any],
+    fields.map: (name, tpe) =>
+      TypeDef(Symbol.newTypeAlias(Symbol.spliceOwner, name, Flags.EmptyFlags, tpe, Symbol.noSymbol)),
+    defn.AnyClass,
+  ).tpe
 
   def selectDynamicImpl(fieldName: Expr[String])(using Quotes) = Match(
     '{ $fieldName: @switch }.asTerm,
@@ -129,8 +135,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   ).asExprOf[Token[?, Ctx, ?]]
 
   logger.trace("creating tokenization class instance")
-  (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType).runtimeChecked match
-    case ('[refinedTpe], '[fields]) =>
+  (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
+    case ('[refinedTpe], '[fields], '[types]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
       infos.foreach: info =>
         try Pattern.compile(info.pattern)
@@ -156,6 +162,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
-        }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe]
+        }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe & types]
       }
 // $COVERAGE-ON$
