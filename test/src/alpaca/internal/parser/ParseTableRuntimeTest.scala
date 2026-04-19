@@ -37,7 +37,7 @@ final class ParseTableRuntimeTest extends AnyFunSuite with Matchers:
     val unknown = Terminal("<unknown>")
 
     val ex = intercept[AlgorithmError](table(0, unknown))
-    ex.getMessage should (include("Unexpected symbol") and include("Expected one of:"))
+    ex.getMessage should (include("Unexpected symbol").and(include("Expected one of:")))
   }
 
   test("toCsv headers start with State and include all grammar symbols seen in the table") {
