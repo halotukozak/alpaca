@@ -7,6 +7,8 @@ import alpaca.internal.lexer.ErrorHandling.Strategy
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.publicInBinary
 import scala.collection.mutable
+import scala.util.boundary
+import scala.util.boundary.break
 
 /**
  * The result of compiling a lexer definition.
@@ -60,16 +62,17 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     while !globalCtx.text.isEmpty do
       matcher.reset(globalCtx.text)
 
+      // noinspection ScalaUnreachableCode
       val (token, matched) = if matcher.lookingAt then
         val matched = matcher.group(0)
         globalCtx.lastRawMatched = matched
         globalCtx.text = globalCtx.text.from(matcher.end)
-        Iterator
-          .range(1, matcher.groupCount + 1)
-          .collectFirst:
-            case i if matcher.start(i) != -1 => (groupToTokenMap(i), matched)
-          .getOrElse:
-            throw new AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+
+        val found = boundary:
+          for i <- 1 to matcher.groupCount if matcher.start(i) != -1 do break(groupToTokenMap(i))
+          throw AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+
+        (found, matched)
       else
         errorHandling(globalCtx) match
           case Strategy.Throw(ex) =>
