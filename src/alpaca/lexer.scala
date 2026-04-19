@@ -2,6 +2,7 @@ package alpaca
 
 import alpaca.internal.*
 import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
+import alpaca.internal.lexer.Token as LexerToken
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, publicInBinary}
@@ -137,14 +138,23 @@ object LexerCtx:
    * - Advances the text position
    * - Applies any context modifications
    */
-  given OnTokenMatch[LexerCtx] =
-    case (DefinedToken(info, modifyCtx, remapping), _, ctx) =>
-      modifyCtx(ctx)
-      val fields = ctx.productElementNames.zip(ctx.productIterator).toMap + ("text" -> ctx.lastRawMatched)
-      ctx.lastLexeme = Lexeme(info.name, remapping(ctx), fields)
+  given OnTokenMatch[LexerCtx] with
+    private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
 
-    case (InternalIgnoredToken(_, modifyCtx), _, ctx) =>
-      modifyCtx(ctx)
+    override def apply(token: LexerToken[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
+      case DefinedToken(info, modifyCtx, remapping) =>
+        modifyCtx(ctx)
+        val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
+        ctx.lastLexeme = Lexeme(
+          name = info.name,
+          value = remapping(ctx),
+          text = raw,
+          fieldNames = fieldNames,
+          fieldValues = ctx.productIterator.toArray,
+        )
+
+      case InternalIgnoredToken(_, modifyCtx) =>
+        modifyCtx(ctx)
 
   /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
   given ErrorHandling[LexerCtx] = ctx =>

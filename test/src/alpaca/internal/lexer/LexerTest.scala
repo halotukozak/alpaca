@@ -6,12 +6,36 @@ import org.scalatest.matchers.should.Matchers
 
 final class LexerTest extends AnyFunSuite with Matchers:
 
+  extension (lexeme: Lexeme[?, ?])
+    private def shape = (
+      name = lexeme.name,
+      value = lexeme.value,
+      fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text),
+    )
+
+  test("selectDynamic returns ctx fields and throws for missing keys") {
+    val lexeme: Lexeme[?, ?] =
+      new Lexeme("IDENTIFIER", "hello", "hello", Array("position", "line"), Array(6, 1))
+
+    lexeme.text shouldBe "hello"
+    lexeme.selectDynamic("position") shouldBe 6
+    lexeme.selectDynamic("line") shouldBe 1
+    intercept[NoSuchElementException](lexeme.selectDynamic("missing"))
+  }
+
+  test("selectDynamic falls through arrays in order to find the first match") {
+    val lexeme = new Lexeme("T", (), "txt", Array("a", "b", "a"), Array(1, 2, 3))
+
+    lexeme.selectDynamic("a") shouldBe 1
+    lexeme.selectDynamic("b") shouldBe 2
+  }
+
   test("tokenize simple identifier") {
     val Lexer = lexer:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)
 
     val (_, lexemes) = Lexer.tokenize("hello")
-    assert(lexemes == List(Lexeme("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
+    assert(lexemes.map(_.shape) == List(("IDENTIFIER", "hello", Map("text" -> "hello", "position" -> 6, "line" -> 1))))
   }
 
   test("tokenize with whitespace ignored") {
@@ -23,10 +47,10 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val (_, lexemes) = Lexer.tokenize("42 + 13")
 
     assert(
-      lexemes == List(
-        Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
-        Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-        Lexeme("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
+      lexemes.map(_.shape) == List(
+        ("NUMBER", "42", Map("text" -> "42", "position" -> 3, "line" -> 1)),
+        ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        ("NUMBER", "13", Map("text" -> "13", "position" -> 8, "line" -> 1)),
       ),
     )
   }
@@ -63,16 +87,16 @@ final class LexerTest extends AnyFunSuite with Matchers:
     val (_, lexemes) = Lexer.tokenize("(x + 42) * y - 1")
 
     assert(
-      lexemes == List(
-        Lexeme("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
-        Lexeme("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
-        Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-        Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
-        Lexeme("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
-        Lexeme("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
-        Lexeme("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
-        Lexeme("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
-        Lexeme("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
+      lexemes.map(_.shape) == List(
+        ("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+        ("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+        ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+        ("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+        ("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+        ("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+        ("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+        ("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+        ("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
       ),
     )
   }
@@ -103,9 +127,9 @@ final class LexerTest extends AnyFunSuite with Matchers:
 
     val (ctx, lexemes) = Lexer.tokenize("abc\ndef")
     assert(
-      lexemes == List(
-        Lexeme("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
-        Lexeme("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
+      lexemes.map(_.shape) == List(
+        ("IDENTIFIER", "abc", Map("text" -> "abc", "position" -> 4, "line" -> 1)),
+        ("IDENTIFIER", "def", Map("text" -> "def", "position" -> 4, "line" -> 2)),
       ),
     )
     ctx.line shouldBe 2
@@ -127,16 +151,16 @@ final class LexerTest extends AnyFunSuite with Matchers:
       val (_, lexemes) = Lexer.tokenize(reader)
 
       assert(
-        lexemes == List(
-          Lexeme("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
-          Lexeme("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
-          Lexeme("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
-          Lexeme("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
-          Lexeme("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
-          Lexeme("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
-          Lexeme("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
-          Lexeme("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
-          Lexeme("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
+        lexemes.map(_.shape) == List(
+          ("LPAREN", (), Map("text" -> "(", "position" -> 2, "line" -> 1)),
+          ("IDENTIFIER", "x", Map("text" -> "x", "position" -> 3, "line" -> 1)),
+          ("PLUS", (), Map("text" -> "+", "position" -> 5, "line" -> 1)),
+          ("NUMBER", "42", Map("text" -> "42", "position" -> 8, "line" -> 1)),
+          ("RPAREN", (), Map("text" -> ")", "position" -> 9, "line" -> 1)),
+          ("MULTIPLY", (), Map("text" -> "*", "position" -> 11, "line" -> 1)),
+          ("IDENTIFIER", "y", Map("text" -> "y", "position" -> 13, "line" -> 1)),
+          ("MINUS", (), Map("text" -> "-", "position" -> 15, "line" -> 1)),
+          ("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
         ),
       )
   }
