@@ -80,8 +80,6 @@ private[parser] object ParseTable:
       firstSet,
     )
     val states = mutable.ArrayBuffer(initialState)
-    // Parallel index so deduplication lookup is O(1) instead of O(S) per call
-    // (and O(S^2) overall across the whole LR table construction).
     val stateIndex = mutable.HashMap(initialState -> 0)
     val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
 
