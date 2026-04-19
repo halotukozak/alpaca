@@ -14,45 +14,15 @@ import scala.collection.immutable.SortedSet
 opaque private[parser] type State <: SortedSet[Item] = SortedSet[Item]
 
 private[parser] object State:
-  // Structural ordering: hashCode-based ordering can silently drop items on
-  // collision, producing incomplete LR states without any diagnostic.
-  private given Ordering[Item] with
-    def compare(a: Item, b: Item): Int =
-      val byLhs = a.production.lhs.name.compareTo(b.production.lhs.name)
-      if byLhs != 0 then byLhs
-      else
-        val byProd = compareProductions(a.production, b.production)
-        if byProd != 0 then byProd
-        else
-          val byDot = Integer.compare(a.dotPosition, b.dotPosition)
-          if byDot != 0 then byDot
-          else a.lookAhead.name.compareTo(b.lookAhead.name)
 
-    private def compareProductions(a: Production, b: Production): Int = (a, b) match
-      case (_: Production.Empty, _: Production.NonEmpty) => -1
-      case (_: Production.NonEmpty, _: Production.Empty) => 1
-      case (a: Production.Empty, b: Production.Empty) => compareNames(a.name, b.name)
-      case (a: Production.NonEmpty, b: Production.NonEmpty) =>
-        val byName = compareNames(a.name, b.name)
-        if byName != 0 then byName else compareRhs(a.rhs, b.rhs)
-
-    private def compareRhs(a: NEL[Symbol.NonEmpty], b: NEL[Symbol.NonEmpty]): Int =
-      val byLen = Integer.compare(a.size, b.size)
-      if byLen != 0 then byLen
-      else
-        val ai = a.iterator
-        val bi = b.iterator
-        var result = 0
-        while result == 0 && ai.hasNext do result = ai.next().name.compareTo(bi.next().name)
-        result
-
-    private def compareNames(a: ValidName | Null, b: ValidName | Null): Int =
-      if a == null && b == null then 0
-      else if a == null then -1
-      else if b == null then 1
-      else a.compareTo(b)
-
-  val empty: State = SortedSet.empty[Item]
+  val empty: State = SortedSet.empty[Item](
+    using Ordering
+      .by[Item, String](_.production.lhs.name)
+      .orElseBy(_.production.ordinal)
+      .orElseBy(_.production.rhs.hashCode)
+      .orElseBy(_.dotPosition)
+      .orElseBy(_.lookAhead.name),
+  )
 
   extension (state: State)
 
