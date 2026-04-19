@@ -8,6 +8,9 @@ opaque private[alpaca] type RevertedArray[T] = Array[T]
 private[alpaca] object RevertedArray:
   def empty[T: ClassTag]: RevertedArray[T] = Array.empty[T]
 
+  /** Wraps an existing Array as a RevertedArray without copying. */
+  def wrap[T](arr: Array[T]): RevertedArray[T] = arr
+
   def unapplySeq[T](x: RevertedArray[T]): Array.UnapplySeqWrapper[T] = Array.unapplySeq(x)
 
   extension [T](self: RevertedArray[T])

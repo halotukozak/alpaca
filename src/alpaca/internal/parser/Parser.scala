@@ -100,30 +100,58 @@ abstract class Parser[Ctx <: ParserCtx](
     val ctx = empty()
     val input = lexemes.toVector :+ Lexeme.EOF
 
-    @tailrec def loop(pos: Int, stack: List[(index: Int, node: Node)]): Node =
+    // Two parallel stacks instead of a cons-list of (index, node) tuples:
+    // reduction becomes O(1) dropRight + a direct Array fill, with no
+    // per-step List allocation and no intermediate take/drop/to copies.
+    val stateStack = new mutable.ArrayDeque[Int](16)
+    val nodeStack = new mutable.ArrayDeque[Node](16)
+    stateStack += 0
+    nodeStack += Node.Result(null)
+
+    @tailrec def loop(pos: Int): Node =
       val nextSymbol = Terminal(input(pos).name)
-      tables.parseTable(stack.head.index, nextSymbol) match
+      tables.parseTable(stateStack.last, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
-          loop(pos + 1, (gotoState, Node.Token(input(pos))) :: stack)
+          stateStack += gotoState
+          nodeStack += Node.Token(input(pos))
+          loop(pos + 1)
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
-          val newStack = stack.drop(rhs.size)
-          val newState = newStack.head
+          val n = rhs.size
+          val topNode = nodeStack.last
+          val baseIdx = stateStack.size - 1 - n
+          val newStateIdx = stateStack(baseIdx)
 
-          if lhs == Symbol.Start && newState.index == 0 then stack.head.node
+          if lhs == Symbol.Start && newStateIdx == 0 then topNode
           else
-            val ParseAction.Shift(gotoState) = tables.parseTable(newState.index, lhs).runtimeChecked
-            val children = stack.take(rhs.size).iterator.map(_.node.get).to(RevertedArray)
-            loop(pos, (gotoState, Node.Result(tables.actionTable(prod)(ctx, children))) :: newStack)
+            // Build children top-first so RevertedArray's reverse indexing
+            // exposes them to the action in RHS order.
+            val children = new Array[Any](n)
+            val top = nodeStack.size - 1
+            var i = 0
+            while i < n do
+              children(i) = nodeStack(top - i).get
+              i += 1
+            stateStack.dropRightInPlace(n)
+            nodeStack.dropRightInPlace(n)
 
-        case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stack.head.index == 0 =>
-          stack.head.node
+            val ParseAction.Shift(gotoState) = tables.parseTable(newStateIdx, lhs).runtimeChecked
+            val result = tables.actionTable(prod)(ctx, RevertedArray.wrap(children))
+            stateStack += gotoState
+            nodeStack += Node.Result(result)
+            loop(pos)
+
+        case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stateStack.last == 0 =>
+          nodeStack.last
 
         case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
-          val ParseAction.Shift(gotoState) = tables.parseTable(stack.head.index, lhs).runtimeChecked
-          loop(pos, (gotoState, Node.Result(tables.actionTable(prod)(ctx, RevertedArray.empty))) :: stack)
+          val ParseAction.Shift(gotoState) = tables.parseTable(stateStack.last, lhs).runtimeChecked
+          val result = tables.actionTable(prod)(ctx, RevertedArray.empty)
+          stateStack += gotoState
+          nodeStack += Node.Result(result)
+          loop(pos)
 
-    val result = loop(pos = 0, List((index = 0, node = Node.Result(null)))) match
+    val result = loop(pos = 0) match
       case Node.Result(value) => value.asInstanceOf[R]
       case Node.Token(lexeme) => null
 
