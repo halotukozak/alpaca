@@ -33,11 +33,9 @@ private[alpaca] final class Lexeme[+Name <: ValidName, +Value](
   type Fields <: AnyNamedTuple
 
   def selectDynamic(name: String): Any =
-    if name == "text" then text
-    else
-      boundary:
-        for i <- fieldNames.indices if fieldNames(i) == name do break(fieldValues(i))
-        throw new NoSuchElementException(name)
+    boundary:
+      for i <- fieldNames.indices if fieldNames(i) == name do break(fieldValues(i))
+      throw new NoSuchElementException(name)
 
 private[alpaca] object Lexeme:
   /**

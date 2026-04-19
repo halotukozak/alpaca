@@ -13,11 +13,11 @@ final class LexerTest extends AnyFunSuite with Matchers:
       fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text),
     )
 
-  test("selectDynamic returns text, ctx fields, and throws for missing keys") {
+  test("selectDynamic returns ctx fields and throws for missing keys") {
     val lexeme: Lexeme[?, ?] =
       new Lexeme("IDENTIFIER", "hello", "hello", Array("position", "line"), Array(6, 1))
 
-    lexeme.selectDynamic("text") shouldBe "hello"
+    lexeme.text shouldBe "hello"
     lexeme.selectDynamic("position") shouldBe 6
     lexeme.selectDynamic("line") shouldBe 1
     intercept[NoSuchElementException](lexeme.selectDynamic("missing"))
