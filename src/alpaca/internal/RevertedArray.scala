@@ -9,9 +9,6 @@ private[alpaca] object RevertedArray:
   def empty[T: ClassTag]: RevertedArray[T] = Array.empty[T]
 
   def apply[T](arr: Array[T]): RevertedArray[T] = arr
-  def apply[T](arr: immutable.ArraySeq[T]): RevertedArray[T] = arr.unsafeArray.asInstanceOf[Array[T]]
-  def apply[T](arr: mutable.ArraySeq[T]): RevertedArray[T] = arr.array.asInstanceOf[Array[T]]
-  def apply[T: ClassTag](elements: T*): RevertedArray[T] = elements.toArray
 
   def unapplySeq[T](x: RevertedArray[T]): Array.UnapplySeqWrapper[T] = Array.unapplySeq(x)
 
