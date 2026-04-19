@@ -26,7 +26,7 @@ import scala.util.boundary.break
 private[alpaca] final class Lexeme[+Name <: ValidName, +Value](
   val name: Name,
   val value: Value,
-  private[alpaca] val text: String,
+  val text: String,
   private[alpaca] val fieldNames: Array[String],
   private[alpaca] val fieldValues: Array[Any],
 ) extends Selectable:

@@ -13,6 +13,23 @@ final class LexerTest extends AnyFunSuite with Matchers:
       fields = lexeme.fieldNames.iterator.zip(lexeme.fieldValues.iterator).toMap + ("text" -> lexeme.text),
     )
 
+  test("selectDynamic returns text, ctx fields, and throws for missing keys") {
+    val lexeme: Lexeme[?, ?] =
+      new Lexeme("IDENTIFIER", "hello", "hello", Array("position", "line"), Array(6, 1))
+
+    lexeme.selectDynamic("text") shouldBe "hello"
+    lexeme.selectDynamic("position") shouldBe 6
+    lexeme.selectDynamic("line") shouldBe 1
+    intercept[NoSuchElementException](lexeme.selectDynamic("missing"))
+  }
+
+  test("selectDynamic falls through arrays in order to find the first match") {
+    val lexeme = new Lexeme("T", (), "txt", Array("a", "b", "a"), Array(1, 2, 3))
+
+    lexeme.selectDynamic("a") shouldBe 1
+    lexeme.selectDynamic("b") shouldBe 2
+  }
+
   test("tokenize simple identifier") {
     val Lexer = lexer:
       case id @ "[a-zA-Z][a-zA-Z0-9]*" => Token["IDENTIFIER"](id)

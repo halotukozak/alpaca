@@ -145,13 +145,12 @@ object LexerCtx:
       case DefinedToken(info, modifyCtx, remapping) =>
         modifyCtx(ctx)
         val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
-        val fieldValues = ctx.productIterator.toArray
         ctx.lastLexeme = Lexeme(
           name = info.name,
           value = remapping(ctx),
-          text = ctx.lastRawMatched,
+          text = raw,
           fieldNames = fieldNames,
-          fieldValues = fieldValues,
+          fieldValues = ctx.productIterator.toArray,
         )
 
       case InternalIgnoredToken(_, modifyCtx) =>
