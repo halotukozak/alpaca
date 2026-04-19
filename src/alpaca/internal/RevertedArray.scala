@@ -1,6 +1,6 @@
 package alpaca.internal
 
-import scala.collection.{Factory, immutable, mutable}
+import scala.collection.Factory
 import scala.reflect.ClassTag
 
 opaque private[alpaca] type RevertedArray[T] = Array[T]
