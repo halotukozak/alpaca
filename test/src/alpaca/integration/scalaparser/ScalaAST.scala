@@ -34,9 +34,9 @@ enum ScalaTree:
   case Ident(name: String)
 
   // Expressions (Scala 3 spec: InfixExpr, PrefixExpr, SimpleExpr)
-  case Select(qual: ScalaTree, name: String)               // SimpleExpr '.' id
-  case Apply(fun: ScalaTree, args: List[ScalaTree])        // SimpleExpr ArgumentExprs
-  case Prefix(op: String, operand: ScalaTree)              // PrefixExpr
+  case Select(qual: ScalaTree, name: String) // SimpleExpr '.' id
+  case Apply(fun: ScalaTree, args: List[ScalaTree]) // SimpleExpr ArgumentExprs
+  case Prefix(op: String, operand: ScalaTree) // PrefixExpr
   case Infix(left: ScalaTree, op: String, right: ScalaTree) // InfixExpr
 
   // Expr1: if-then-else

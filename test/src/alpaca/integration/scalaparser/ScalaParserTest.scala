@@ -86,20 +86,17 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("multiplication before addition") {
     // 1 + 2 * 3  ==  1 + (2 * 3)
-    assert(parse("1 + 2 * 3") ==
-      Infix(IntLit(1), "+", Infix(IntLit(2), "*", IntLit(3))))
+    assert(parse("1 + 2 * 3") == Infix(IntLit(1), "+", Infix(IntLit(2), "*", IntLit(3))))
   }
 
   test("multiplication before subtraction") {
     // 10 - 2 * 3  ==  10 - (2 * 3)
-    assert(parse("10 - 2 * 3") ==
-      Infix(IntLit(10), "-", Infix(IntLit(2), "*", IntLit(3))))
+    assert(parse("10 - 2 * 3") == Infix(IntLit(10), "-", Infix(IntLit(2), "*", IntLit(3))))
   }
 
   test("mixed arithmetic precedence") {
     // 2 * 3 + 4 * 5  ==  (2*3) + (4*5)
-    assert(parse("2 * 3 + 4 * 5") ==
-      Infix(Infix(IntLit(2), "*", IntLit(3)), "+", Infix(IntLit(4), "*", IntLit(5))))
+    assert(parse("2 * 3 + 4 * 5") == Infix(Infix(IntLit(2), "*", IntLit(3)), "+", Infix(IntLit(4), "*", IntLit(5))))
   }
 
   // ===========================================================
@@ -108,20 +105,17 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("addition is left-associative") {
     // 1 + 2 + 3  ==  (1 + 2) + 3
-    assert(parse("1 + 2 + 3") ==
-      Infix(Infix(IntLit(1), "+", IntLit(2)), "+", IntLit(3)))
+    assert(parse("1 + 2 + 3") == Infix(Infix(IntLit(1), "+", IntLit(2)), "+", IntLit(3)))
   }
 
   test("subtraction is left-associative") {
     // 10 - 3 - 2  ==  (10 - 3) - 2
-    assert(parse("10 - 3 - 2") ==
-      Infix(Infix(IntLit(10), "-", IntLit(3)), "-", IntLit(2)))
+    assert(parse("10 - 3 - 2") == Infix(Infix(IntLit(10), "-", IntLit(3)), "-", IntLit(2)))
   }
 
   test("multiplication is left-associative") {
     // 2 * 3 * 4  ==  (2 * 3) * 4
-    assert(parse("2 * 3 * 4") ==
-      Infix(Infix(IntLit(2), "*", IntLit(3)), "*", IntLit(4)))
+    assert(parse("2 * 3 * 4") == Infix(Infix(IntLit(2), "*", IntLit(3)), "*", IntLit(4)))
   }
 
   // ===========================================================
@@ -130,8 +124,7 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("parentheses override precedence") {
     // (1 + 2) * 3  ==  3 * 3
-    assert(parse("(1 + 2) * 3") ==
-      Infix(Infix(IntLit(1), "+", IntLit(2)), "*", IntLit(3)))
+    assert(parse("(1 + 2) * 3") == Infix(Infix(IntLit(1), "+", IntLit(2)), "*", IntLit(3)))
   }
 
   // ===========================================================
@@ -164,8 +157,7 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("arithmetic before comparison") {
     // a + b < c  ==  (a + b) < c
-    assert(parse("a + b < c") ==
-      Infix(Infix(Ident("a"), "+", Ident("b")), "<", Ident("c")))
+    assert(parse("a + b < c") == Infix(Infix(Ident("a"), "+", Ident("b")), "<", Ident("c")))
   }
 
   // ===========================================================
@@ -182,14 +174,12 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("and before or") {
     // a || b && c  ==  a || (b && c)
-    assert(parse("a || b && c") ==
-      Infix(Ident("a"), "||", Infix(Ident("b"), "&&", Ident("c"))))
+    assert(parse("a || b && c") == Infix(Ident("a"), "||", Infix(Ident("b"), "&&", Ident("c"))))
   }
 
   test("comparison before logical and") {
     // a && b == c  ==  a && (b == c)
-    assert(parse("a && b == c") ==
-      Infix(Ident("a"), "&&", Infix(Ident("b"), "==", Ident("c"))))
+    assert(parse("a && b == c") == Infix(Ident("a"), "&&", Infix(Ident("b"), "==", Ident("c"))))
   }
 
   // ===========================================================
@@ -206,14 +196,12 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("unary minus binds tighter than multiplication") {
     // -x * y  ==  (-x) * y
-    assert(parse("-x * y") ==
-      Infix(Prefix("-", Ident("x")), "*", Ident("y")))
+    assert(parse("-x * y") == Infix(Prefix("-", Ident("x")), "*", Ident("y")))
   }
 
   test("unary minus binds tighter than addition") {
     // -x + y  ==  (-x) + y
-    assert(parse("-x + y") ==
-      Infix(Prefix("-", Ident("x")), "+", Ident("y")))
+    assert(parse("-x + y") == Infix(Prefix("-", Ident("x")), "+", Ident("y")))
   }
 
   // ===========================================================
@@ -231,14 +219,12 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("selection binds tighter than addition") {
     // a.b + c  ==  (a.b) + c
-    assert(parse("a.b + c") ==
-      Infix(Select(Ident("a"), "b"), "+", Ident("c")))
+    assert(parse("a.b + c") == Infix(Select(Ident("a"), "b"), "+", Ident("c")))
   }
 
   test("selection on right-hand side of operator") {
     // a + b.c  ==  a + (b.c)
-    assert(parse("a + b.c") ==
-      Infix(Ident("a"), "+", Select(Ident("b"), "c")))
+    assert(parse("a + b.c") == Infix(Ident("a"), "+", Select(Ident("b"), "c")))
   }
 
   // ===========================================================
@@ -254,36 +240,30 @@ final class ScalaParserTest extends AnyFunSuite:
   }
 
   test("function call with multiple arguments") {
-    assert(parse("f(x, y, z)") ==
-      Apply(Ident("f"), List(Ident("x"), Ident("y"), Ident("z"))))
+    assert(parse("f(x, y, z)") == Apply(Ident("f"), List(Ident("x"), Ident("y"), Ident("z"))))
   }
 
   test("method call on object") {
-    assert(parse("obj.method(x)") ==
-      Apply(Select(Ident("obj"), "method"), List(Ident("x"))))
+    assert(parse("obj.method(x)") == Apply(Select(Ident("obj"), "method"), List(Ident("x"))))
   }
 
   test("chained method calls") {
     // a.b().c()  ==  ((a.b)()).c()
-    assert(parse("a.b().c()") ==
-      Apply(Select(Apply(Select(Ident("a"), "b"), Nil), "c"), Nil))
+    assert(parse("a.b().c()") == Apply(Select(Apply(Select(Ident("a"), "b"), Nil), "c"), Nil))
   }
 
   test("apply binds tighter than addition on left") {
     // f(x) + 1  ==  (f(x)) + 1
-    assert(parse("f(x) + 1") ==
-      Infix(Apply(Ident("f"), List(Ident("x"))), "+", IntLit(1)))
+    assert(parse("f(x) + 1") == Infix(Apply(Ident("f"), List(Ident("x"))), "+", IntLit(1)))
   }
 
   test("apply binds tighter than addition on right") {
     // 1 + f(x)  ==  1 + (f(x))
-    assert(parse("1 + f(x)") ==
-      Infix(IntLit(1), "+", Apply(Ident("f"), List(Ident("x")))))
+    assert(parse("1 + f(x)") == Infix(IntLit(1), "+", Apply(Ident("f"), List(Ident("x")))))
   }
 
   test("expression argument in function call") {
-    assert(parse("f(a + b)") ==
-      Apply(Ident("f"), List(Infix(Ident("a"), "+", Ident("b")))))
+    assert(parse("f(a + b)") == Apply(Ident("f"), List(Infix(Ident("a"), "+", Ident("b")))))
   }
 
   // ===========================================================
@@ -291,26 +271,24 @@ final class ScalaParserTest extends AnyFunSuite:
   // ===========================================================
 
   test("if-else expression") {
-    assert(parse("if (x) a else b") ==
-      If(Ident("x"), Ident("a"), Ident("b")))
+    assert(parse("if (x) a else b") == If(Ident("x"), Ident("a"), Ident("b")))
   }
 
   test("if-else with arithmetic condition") {
-    assert(parse("if (x > 0) x else -x") ==
-      If(Infix(Ident("x"), ">", IntLit(0)), Ident("x"), Prefix("-", Ident("x"))))
+    assert(parse("if (x > 0) x else -x") == If(Infix(Ident("x"), ">", IntLit(0)), Ident("x"), Prefix("-", Ident("x"))))
   }
 
   test("else branch is greedy: extends to the right") {
     // if (c) a else b + 1  ==  if (c) a else (b + 1)
-    assert(parse("if (c) a else b + 1") ==
-      If(Ident("c"), Ident("a"), Infix(Ident("b"), "+", IntLit(1))))
+    assert(parse("if (c) a else b + 1") == If(Ident("c"), Ident("a"), Infix(Ident("b"), "+", IntLit(1))))
   }
 
   test("nested if-else: inner else binds to nearest if") {
     // if (c1) if (c2) a else b else c
     // Parsed as: if (c1) (if (c2) a else b) else c
-    assert(parse("if (c1) if (c2) a else b else c") ==
-      If(Ident("c1"), If(Ident("c2"), Ident("a"), Ident("b")), Ident("c")))
+    assert(
+      parse("if (c1) if (c2) a else b else c") == If(Ident("c1"), If(Ident("c2"), Ident("a"), Ident("b")), Ident("c")),
+    )
   }
 
   // ===========================================================
@@ -326,34 +304,33 @@ final class ScalaParserTest extends AnyFunSuite:
   }
 
   test("block with single val definition") {
-    assert(parse("{ val x = 1; x }") ==
-      Block(List(ValDef("x", IntLit(1))), Ident("x")))
+    assert(parse("{ val x = 1; x }") == Block(List(ValDef("x", IntLit(1))), Ident("x")))
   }
 
   test("block with multiple val definitions") {
-    assert(parse("{ val x = 1; val y = 2; x + y }") ==
-      Block(
+    assert(
+      parse("{ val x = 1; val y = 2; x + y }") == Block(
         List(ValDef("x", IntLit(1)), ValDef("y", IntLit(2))),
         Infix(Ident("x"), "+", Ident("y")),
-      ))
+      ),
+    )
   }
 
   test("block with expression statement") {
-    assert(parse("{ x; y }") ==
-      Block(List(Ident("x")), Ident("y")))
+    assert(parse("{ x; y }") == Block(List(Ident("x")), Ident("y")))
   }
 
   test("val definition with complex rhs") {
-    assert(parse("{ val x = a + b * c; x }") ==
-      Block(
+    assert(
+      parse("{ val x = a + b * c; x }") == Block(
         List(ValDef("x", Infix(Ident("a"), "+", Infix(Ident("b"), "*", Ident("c"))))),
         Ident("x"),
-      ))
+      ),
+    )
   }
 
   test("block used inside larger expression") {
-    assert(parse("{ val x = 2; x } + 1") ==
-      Infix(Block(List(ValDef("x", IntLit(2))), Ident("x")), "+", IntLit(1)))
+    assert(parse("{ val x = 2; x } + 1") == Infix(Block(List(ValDef("x", IntLit(2))), Ident("x")), "+", IntLit(1)))
   }
 
   // ===========================================================
@@ -362,39 +339,46 @@ final class ScalaParserTest extends AnyFunSuite:
 
   test("recursive factorial pattern") {
     // if (n <= 0) 1 else n * f(n - 1)
-    assert(parse("if (n <= 0) 1 else n * f(n - 1)") ==
-      If(
+    assert(
+      parse("if (n <= 0) 1 else n * f(n - 1)") == If(
         Infix(Ident("n"), "<=", IntLit(0)),
         IntLit(1),
         Infix(Ident("n"), "*", Apply(Ident("f"), List(Infix(Ident("n"), "-", IntLit(1))))),
-      ))
+      ),
+    )
   }
 
   test("full precedence ladder") {
     // a || b && c == d < e + f * g
     // Parsed as: a || (b && (c == (d < (e + (f * g)))))
-    assert(parse("a || b && c == d < e + f * g") ==
-      Infix(
-        Ident("a"), "||",
+    assert(
+      parse("a || b && c == d < e + f * g") == Infix(
+        Ident("a"),
+        "||",
         Infix(
-          Ident("b"), "&&",
+          Ident("b"),
+          "&&",
           Infix(
-            Ident("c"), "==",
+            Ident("c"),
+            "==",
             Infix(
-              Ident("d"), "<",
+              Ident("d"),
+              "<",
               Infix(Ident("e"), "+", Infix(Ident("f"), "*", Ident("g"))),
             ),
           ),
         ),
-      ))
+      ),
+    )
   }
 
   test("method chain with arithmetic") {
     // xs.filter(p).length + 1  ==  ((xs.filter(p)).length) + 1
-    assert(parse("xs.filter(p).length + 1") ==
-      Infix(
+    assert(
+      parse("xs.filter(p).length + 1") == Infix(
         Select(Apply(Select(Ident("xs"), "filter"), List(Ident("p"))), "length"),
         "+",
         IntLit(1),
-      ))
+      ),
+    )
   }

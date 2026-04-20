@@ -37,29 +37,28 @@ object ScalaParser extends Parser:
   // =========================================================
 
   val Expr: Rule[ScalaTree] = rule(
-
     // ---- InfixExpr: arithmetic ----
-    "plus"   { case (Expr(l), ScalaLexer.`\\+`(_), Expr(r)) => ScalaTree.Infix(l, "+",  r) },
-    "minus"  { case (Expr(l), ScalaLexer.`-`(_),   Expr(r)) => ScalaTree.Infix(l, "-",  r) },
-    "times"  { case (Expr(l), ScalaLexer.`\\*`(_), Expr(r)) => ScalaTree.Infix(l, "*",  r) },
-    "divide" { case (Expr(l), ScalaLexer.`/`(_),   Expr(r)) => ScalaTree.Infix(l, "/",  r) },
-    "mod"    { case (Expr(l), ScalaLexer.`%`(_),   Expr(r)) => ScalaTree.Infix(l, "%",  r) },
+    "plus" { case (Expr(l), ScalaLexer.`\\+`(_), Expr(r)) => ScalaTree.Infix(l, "+", r) },
+    "minus" { case (Expr(l), ScalaLexer.`-`(_), Expr(r)) => ScalaTree.Infix(l, "-", r) },
+    "times" { case (Expr(l), ScalaLexer.`\\*`(_), Expr(r)) => ScalaTree.Infix(l, "*", r) },
+    "divide" { case (Expr(l), ScalaLexer.`/`(_), Expr(r)) => ScalaTree.Infix(l, "/", r) },
+    "mod" { case (Expr(l), ScalaLexer.`%`(_), Expr(r)) => ScalaTree.Infix(l, "%", r) },
 
     // ---- InfixExpr: comparison ----
-    "eq"     { case (Expr(l), ScalaLexer.eqeq(_),  Expr(r)) => ScalaTree.Infix(l, "==", r) },
-    "neq"    { case (Expr(l), ScalaLexer.neq(_),   Expr(r)) => ScalaTree.Infix(l, "!=", r) },
-    "lt"     { case (Expr(l), ScalaLexer.`<`(_),   Expr(r)) => ScalaTree.Infix(l, "<",  r) },
-    "gt"     { case (Expr(l), ScalaLexer.`>`(_),   Expr(r)) => ScalaTree.Infix(l, ">",  r) },
-    "lte"    { case (Expr(l), ScalaLexer.lte(_),   Expr(r)) => ScalaTree.Infix(l, "<=", r) },
-    "gte"    { case (Expr(l), ScalaLexer.gte(_),   Expr(r)) => ScalaTree.Infix(l, ">=", r) },
+    "eq" { case (Expr(l), ScalaLexer.eqeq(_), Expr(r)) => ScalaTree.Infix(l, "==", r) },
+    "neq" { case (Expr(l), ScalaLexer.neq(_), Expr(r)) => ScalaTree.Infix(l, "!=", r) },
+    "lt" { case (Expr(l), ScalaLexer.`<`(_), Expr(r)) => ScalaTree.Infix(l, "<", r) },
+    "gt" { case (Expr(l), ScalaLexer.`>`(_), Expr(r)) => ScalaTree.Infix(l, ">", r) },
+    "lte" { case (Expr(l), ScalaLexer.lte(_), Expr(r)) => ScalaTree.Infix(l, "<=", r) },
+    "gte" { case (Expr(l), ScalaLexer.gte(_), Expr(r)) => ScalaTree.Infix(l, ">=", r) },
 
     // ---- InfixExpr: logical ----
-    "and"    { case (Expr(l), ScalaLexer.and(_),   Expr(r)) => ScalaTree.Infix(l, "&&", r) },
-    "or"     { case (Expr(l), ScalaLexer.or(_),    Expr(r)) => ScalaTree.Infix(l, "||", r) },
+    "and" { case (Expr(l), ScalaLexer.and(_), Expr(r)) => ScalaTree.Infix(l, "&&", r) },
+    "or" { case (Expr(l), ScalaLexer.or(_), Expr(r)) => ScalaTree.Infix(l, "||", r) },
 
     // ---- PrefixExpr: unary operators ----
     "uminus" { case (ScalaLexer.`-`(_), Expr(e)) => ScalaTree.Prefix("-", e) },
-    "unot"   { case (ScalaLexer.`!`(_), Expr(e)) => ScalaTree.Prefix("!", e) },
+    "unot" { case (ScalaLexer.`!`(_), Expr(e)) => ScalaTree.Prefix("!", e) },
 
     // ---- SimpleExpr: field selection (Scala spec: SimpleExpr '.' id) ----
     "select" { case (Expr(q), ScalaLexer.`\\.`(_), ScalaLexer.id(n)) =>
@@ -67,7 +66,7 @@ object ScalaParser extends Parser:
     },
 
     // ---- SimpleExpr: function application (Scala spec: SimpleExpr ArgumentExprs) ----
-    "apply"      { case (Expr(f), ScalaLexer.`\\(`(_), Args(args), ScalaLexer.`\\)`(_)) =>
+    "apply" { case (Expr(f), ScalaLexer.`\\(`(_), Args(args), ScalaLexer.`\\)`(_)) =>
       ScalaTree.Apply(f, args)
     },
     "applyEmpty" { case (Expr(f), ScalaLexer.`\\(`(_), ScalaLexer.`\\)`(_)) =>
@@ -78,9 +77,17 @@ object ScalaParser extends Parser:
     { case (ScalaLexer.`\\(`(_), Expr(e), ScalaLexer.`\\)`(_)) => e },
 
     // ---- Expr1: if-then-else (Scala spec: 'if' '(' Expr ')' Expr 'else' Expr) ----
-    "ifelse" { case (ScalaLexer.`if`(_), ScalaLexer.`\\(`(_), Expr(cond),
-                     ScalaLexer.`\\)`(_), Expr(thn), ScalaLexer.`else`(_), Expr(els)) =>
-      ScalaTree.If(cond, thn, els)
+    "ifelse" {
+      case (
+            ScalaLexer.`if`(_),
+            ScalaLexer.`\\(`(_),
+            Expr(cond),
+            ScalaLexer.`\\)`(_),
+            Expr(thn),
+            ScalaLexer.`else`(_),
+            Expr(els),
+          ) =>
+        ScalaTree.If(cond, thn, els)
     },
 
     // ---- BlockExpr ----
@@ -90,11 +97,11 @@ object ScalaParser extends Parser:
     },
 
     // ---- Literals ----
-    { case ScalaLexer.intLit(n)    => ScalaTree.IntLit(n.value)  },
-    { case ScalaLexer.floatLit(f)  => ScalaTree.FloatLit(f.value) },
-    { case ScalaLexer.`true`(_)    => ScalaTree.BoolLit(true)  },
-    { case ScalaLexer.`false`(_)   => ScalaTree.BoolLit(false) },
-    { case ScalaLexer.`null`(_)    => ScalaTree.NullLit },
+    { case ScalaLexer.intLit(n) => ScalaTree.IntLit(n.value) },
+    { case ScalaLexer.floatLit(f) => ScalaTree.FloatLit(f.value) },
+    { case ScalaLexer.`true`(_) => ScalaTree.BoolLit(true) },
+    { case ScalaLexer.`false`(_) => ScalaTree.BoolLit(false) },
+    { case ScalaLexer.`null`(_) => ScalaTree.NullLit },
     { case ScalaLexer.stringLit(s) => ScalaTree.StringLit(s.value) },
 
     // ---- SimpleRef: identifier ----
@@ -106,8 +113,8 @@ object ScalaParser extends Parser:
   // =========================================================
 
   val Args: Rule[List[ScalaTree]] = rule(
-    { case Expr(e)                                   => List(e)       },
-    { case (Args(as), ScalaLexer.`,`(_), Expr(e))   => as :+ e       },
+    { case Expr(e) => List(e) },
+    { case (Args(as), ScalaLexer.`,`(_), Expr(e)) => as :+ e },
   )
 
   // =========================================================
@@ -116,7 +123,7 @@ object ScalaParser extends Parser:
 
   val BlockStat: Rule[ScalaTree] = rule(
     { case (ValDef(v), ScalaLexer.`;`(_)) => v },
-    { case (Expr(e),   ScalaLexer.`;`(_)) => e },
+    { case (Expr(e), ScalaLexer.`;`(_)) => e },
   )
 
   // =========================================================
@@ -145,7 +152,6 @@ object ScalaParser extends Parser:
   // =========================================================
 
   override val resolutions: Set[ConflictResolution] = Set(
-
     // ------------------------------------------------------------------
     // Select '.' and Apply '(' bind tightest: delay reducing everything
     // else when the next token is '.' or '('
@@ -244,10 +250,18 @@ object ScalaParser extends Parser:
     // the else-branch is greedy and captures following binary operators
     // ------------------------------------------------------------------
     production.ifelse.after(
-      ScalaLexer.`\\+`, ScalaLexer.`-`,
-      ScalaLexer.`\\*`, ScalaLexer.`/`, ScalaLexer.`%`,
-      ScalaLexer.`<`, ScalaLexer.`>`, ScalaLexer.lte, ScalaLexer.gte,
-      ScalaLexer.eqeq, ScalaLexer.neq,
-      ScalaLexer.and, ScalaLexer.or,
+      ScalaLexer.`\\+`,
+      ScalaLexer.`-`,
+      ScalaLexer.`\\*`,
+      ScalaLexer.`/`,
+      ScalaLexer.`%`,
+      ScalaLexer.`<`,
+      ScalaLexer.`>`,
+      ScalaLexer.lte,
+      ScalaLexer.gte,
+      ScalaLexer.eqeq,
+      ScalaLexer.neq,
+      ScalaLexer.and,
+      ScalaLexer.or,
     ),
   )
