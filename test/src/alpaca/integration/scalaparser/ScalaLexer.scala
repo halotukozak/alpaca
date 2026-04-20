@@ -4,10 +4,12 @@ package integration.scalaparser
 /**
  * Lexer for a subset of Scala expressions.
  *
- * Tokens follow the Scala 3 specification lexical syntax.
- * Multi-character tokens are listed before single-character ones to ensure
- * they are matched first. Keywords use a word-boundary assertion to prevent
- * matching as prefixes of identifiers (e.g. "if" must not match in "iffy").
+ * Tokens follow the Scala 3 specification lexical syntax
+ * (https://docs.scala-lang.org/scala3/reference/syntax.html).
+ * Multi-character tokens are listed before single-character ones so the
+ * longest match wins. Keywords use a word-boundary assertion so they do
+ * not match as prefixes of identifiers (e.g. `if` must not match inside
+ * `iffy`).
  */
 val ScalaLexer = lexer:
   // Whitespace and single-line comments are ignored
@@ -18,6 +20,13 @@ val ScalaLexer = lexer:
   case "if\\b" => Token["if"]
   case "else\\b" => Token["else"]
   case "val\\b" => Token["val"]
+  case "var\\b" => Token["var"]
+  case "def\\b" => Token["def"]
+  case "class\\b" => Token["class"]
+  case "match\\b" => Token["match"]
+  case "case\\b" => Token["case"]
+  case "new\\b" => Token["new"]
+  case "extends\\b" => Token["extends"]
   case "true\\b" => Token["true"]
   case "false\\b" => Token["false"]
   case "null\\b" => Token["null"]
@@ -29,10 +38,14 @@ val ScalaLexer = lexer:
   case ">=" => Token["gte"]
   case "&&" => Token["and"]
   case "\\|\\|" => Token["or"]
+  case "=>" => Token["arrow"]
+
+  // Wildcard — named because `_` is reserved in Scala identifiers
+  case "_" => Token["wildcard"]
 
   // Single-character operators and punctuation
-  case literal @ ("\\+" | "-" | "\\*" | "/" | "%" | "<" | ">" | "!" | "=" | "\\." | "," | ";" | "\\(" | "\\)" | "\\{" |
-      "\\}") =>
+  case literal @ ("\\+" | "-" | "\\*" | "/" | "%" | "<" | ">" | "!" | "=" | "\\." | "," | ";" | ":" | "@" | "\\|" |
+      "\\(" | "\\)" | "\\{" | "\\}" | "\\[" | "\\]") =>
     Token[literal.type]
 
   // Floating-point literals (before integers to ensure correct matching)

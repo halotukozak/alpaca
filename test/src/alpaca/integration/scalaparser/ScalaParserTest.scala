@@ -2,6 +2,8 @@ package alpaca
 package integration.scalaparser
 
 import ScalaTree.*
+import ScalaPattern.*
+import ScalaType.*
 import org.scalatest.funsuite.AnyFunSuite
 
 final class ScalaParserTest extends AnyFunSuite:
@@ -379,6 +381,301 @@ final class ScalaParserTest extends AnyFunSuite:
         Select(Apply(Select(Ident("xs"), "filter"), List(Ident("p"))), "length"),
         "+",
         IntLit(1),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // var definitions (Scala 3 spec: VarDef ::= 'var' id '=' Expr)
+  // ===========================================================
+
+  test("var definition in block") {
+    assert(parse("{ var x = 1; x }") == Block(List(VarDef("x", IntLit(1))), Ident("x")))
+  }
+
+  test("val and var mixed in block") {
+    assert(
+      parse("{ val x = 1; var y = 2; x + y }") == Block(
+        List(ValDef("x", IntLit(1)), VarDef("y", IntLit(2))),
+        Infix(Ident("x"), "+", Ident("y")),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // new expressions (Scala 3 spec: SimpleExpr ::= 'new' ConstrApp; simplified: no args)
+  // ===========================================================
+
+  test("new with bare class name") {
+    assert(parse("new Foo") == New("Foo", Nil))
+  }
+
+  test("new used in expression") {
+    assert(parse("new Foo.bar") == Select(New("Foo", Nil), "bar"))
+  }
+
+  test("new as val rhs") {
+    assert(parse("{ val x = new Foo; x }") == Block(List(ValDef("x", New("Foo", Nil))), Ident("x")))
+  }
+
+  // ===========================================================
+  // Types (Scala 3 spec: Type, SimpleType — simplified)
+  //   Only used via def/class/param positions; no function types.
+  // ===========================================================
+
+  test("def with simple return type") {
+    // def zero(): Int = 0
+    assert(
+      parse("{ def zero(): Int = 0; zero() }") == Block(
+        List(DefDef("zero", Nil, TypeRef("Int"), IntLit(0))),
+        Apply(Ident("zero"), Nil),
+      ),
+    )
+  }
+
+  test("def with single parameter") {
+    // def inc(x: Int): Int = x + 1
+    assert(
+      parse("{ def inc(x: Int): Int = x + 1; inc(41) }") == Block(
+        List(
+          DefDef(
+            "inc",
+            List(Param("x", TypeRef("Int"))),
+            TypeRef("Int"),
+            Infix(Ident("x"), "+", IntLit(1)),
+          ),
+        ),
+        Apply(Ident("inc"), List(IntLit(41))),
+      ),
+    )
+  }
+
+  test("def with multiple parameters") {
+    // def add(x: Int, y: Int): Int = x + y
+    assert(
+      parse("{ def add(x: Int, y: Int): Int = x + y; add(1, 2) }") == Block(
+        List(
+          DefDef(
+            "add",
+            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            TypeRef("Int"),
+            Infix(Ident("x"), "+", Ident("y")),
+          ),
+        ),
+        Apply(Ident("add"), List(IntLit(1), IntLit(2))),
+      ),
+    )
+  }
+
+  test("def with applied return type") {
+    // def empty(): List[Int] = xs
+    assert(
+      parse("{ def empty(): List[Int] = xs; empty() }") == Block(
+        List(DefDef("empty", Nil, AppliedType("List", List(TypeRef("Int"))), Ident("xs"))),
+        Apply(Ident("empty"), Nil),
+      ),
+    )
+  }
+
+  test("def with nested type parameter") {
+    // def pairs(): Map[String, List[Int]] = xs
+    assert(
+      parse("{ def pairs(): Map[String, List[Int]] = xs; pairs() }") == Block(
+        List(
+          DefDef(
+            "pairs",
+            Nil,
+            AppliedType("Map", List(TypeRef("String"), AppliedType("List", List(TypeRef("Int"))))),
+            Ident("xs"),
+          ),
+        ),
+        Apply(Ident("pairs"), Nil),
+      ),
+    )
+  }
+
+  test("recursive factorial def") {
+    // def fact(n: Int): Int = if (n <= 0) 1 else n * fact(n - 1)
+    assert(
+      parse("{ def fact(n: Int): Int = if (n <= 0) 1 else n * fact(n - 1); fact(5) }") == Block(
+        List(
+          DefDef(
+            "fact",
+            List(Param("n", TypeRef("Int"))),
+            TypeRef("Int"),
+            If(
+              Infix(Ident("n"), "<=", IntLit(0)),
+              IntLit(1),
+              Infix(
+                Ident("n"),
+                "*",
+                Apply(Ident("fact"), List(Infix(Ident("n"), "-", IntLit(1)))),
+              ),
+            ),
+          ),
+        ),
+        Apply(Ident("fact"), List(IntLit(5))),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // class definitions (Scala 3 spec: ClassDef — simplified; no traits, no type params)
+  //   ClassDef ::= 'class' id ['(' Params ')'] ['extends' id] BlockExpr
+  // ===========================================================
+
+  test("empty class") {
+    assert(parse("{ class Empty {}; null }") == Block(List(ClassDef("Empty", Nil, None, UnitBlock)), NullLit))
+  }
+
+  test("class with constructor params") {
+    assert(
+      parse("{ class Point(x: Int, y: Int) {}; null }") == Block(
+        List(
+          ClassDef(
+            "Point",
+            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            None,
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("class extending parent") {
+    assert(
+      parse("{ class Dog extends Animal {}; null }") == Block(
+        List(ClassDef("Dog", Nil, Some("Animal"), UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("class with params and parent") {
+    assert(
+      parse("{ class Cat(name: String) extends Animal {}; null }") == Block(
+        List(
+          ClassDef(
+            "Cat",
+            List(Param("name", TypeRef("String"))),
+            Some("Animal"),
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("class with method in body") {
+    assert(
+      parse("{ class Box(v: Int) { def get(): Int = v; 0 }; null }") == Block(
+        List(
+          ClassDef(
+            "Box",
+            List(Param("v", TypeRef("Int"))),
+            None,
+            Block(
+              List(DefDef("get", Nil, TypeRef("Int"), Ident("v"))),
+              IntLit(0),
+            ),
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Partial function literals (Scala 3 spec: BlockExpr ::= '{' CaseClauses '}')
+  //
+  // These stand in for full match expressions — to simulate
+  // `x match { case p => e }`, apply the pfun: `({ case p => e })(x)`.
+  // ===========================================================
+
+  test("pfun with wildcard") {
+    assert(
+      parse("{ case _ => 0 }") == PartialFun(
+        List(MatchCase(Wildcard, None, IntLit(0))),
+      ),
+    )
+  }
+
+  test("pfun with variable pattern") {
+    assert(
+      parse("{ case n => n + 1 }") == PartialFun(
+        List(MatchCase(VarPat("n"), None, Infix(Ident("n"), "+", IntLit(1)))),
+      ),
+    )
+  }
+
+  test("pfun with literal patterns") {
+    assert(
+      parse("""{ case 0 => "zero" case 1 => "one" case _ => "many" }""") == PartialFun(
+        List(
+          MatchCase(LitPat(IntLit(0)), None, StringLit("zero")),
+          MatchCase(LitPat(IntLit(1)), None, StringLit("one")),
+          MatchCase(Wildcard, None, StringLit("many")),
+        ),
+      ),
+    )
+  }
+
+  test("pfun with guard") {
+    assert(
+      parse("{ case n if n > 0 => n }") == PartialFun(
+        List(MatchCase(VarPat("n"), Some(Infix(Ident("n"), ">", IntLit(0))), Ident("n"))),
+      ),
+    )
+  }
+
+  test("pfun with constructor pattern") {
+    assert(
+      parse("{ case Some(v) => v case None() => 0 }") == PartialFun(
+        List(
+          MatchCase(ConstrPat("Some", List(VarPat("v"))), None, Ident("v")),
+          MatchCase(ConstrPat("None", Nil), None, IntLit(0)),
+        ),
+      ),
+    )
+  }
+
+  test("pfun with nested constructor pattern") {
+    assert(
+      parse("{ case Some(Some(x)) => x }") == PartialFun(
+        List(
+          MatchCase(
+            ConstrPat("Some", List(ConstrPat("Some", List(VarPat("x"))))),
+            None,
+            Ident("x"),
+          ),
+        ),
+      ),
+    )
+  }
+
+  test("pfun with bind pattern") {
+    assert(
+      parse("{ case all @ Some(v) => all }") == PartialFun(
+        List(MatchCase(BindPat("all", ConstrPat("Some", List(VarPat("v")))), None, Ident("all"))),
+      ),
+    )
+  }
+
+  test("pfun applied to argument (simulating match)") {
+    // Simulate `x match { case 0 => "zero"; case _ => "other" }` as
+    // `({ case 0 => "zero" case _ => "other" })(x)`
+    assert(
+      parse("""({ case 0 => "zero" case _ => "other" })(x)""") == Apply(
+        PartialFun(
+          List(
+            MatchCase(LitPat(IntLit(0)), None, StringLit("zero")),
+            MatchCase(Wildcard, None, StringLit("other")),
+          ),
+        ),
+        List(Ident("x")),
       ),
     )
   }

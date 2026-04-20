@@ -4,23 +4,64 @@ package integration.scalaparser
 /**
  * AST for a subset of Scala expressions.
  *
- * Follows the Scala 3 language specification grammar:
- * https://docs.scala-lang.org/scala3/reference/syntax.html
+ * Follows the Scala 3 language specification grammar
+ * (https://docs.scala-lang.org/scala3/reference/syntax.html), restricted to
+ * classic brace syntax — no significant indentation, no optional braces, no
+ * indent/outdent tokens.
  *
- * Productions covered:
- *   Literal   ::=  integerLiteral | floatingPointLiteral
- *              |   booleanLiteral | characterLiteral | stringLiteral | 'null'
- *   SimpleRef ::=  id
- *   SimpleExpr::=  SimpleRef | Literal | BlockExpr | '(' Expr ')'
- *              |   SimpleExpr '.' id         (Select)
- *              |   SimpleExpr ArgumentExprs  (Apply)
- *   InfixExpr ::=  PrefixExpr | InfixExpr op InfixExpr
- *   PrefixExpr::=  ['-' | '!'] SimpleExpr
- *   Expr1     ::=  'if' '(' Expr ')' Expr 'else' Expr
- *   BlockExpr ::=  '{' '}' | '{' Block '}'
- *   Block     ::=  {BlockStat ';'} Expr
- *   BlockStat ::=  Def | Expr
- *   ValDef    ::=  'val' id '=' Expr
+ * Productions covered (EBNF taken verbatim from spec; simplifications noted):
+ *
+ *   Literal       ::= integerLiteral | floatingPointLiteral
+ *                   | booleanLiteral | stringLiteral | 'null'
+ *   SimpleRef     ::= id
+ *   SimpleExpr    ::= SimpleRef | Literal | BlockExpr | '(' Expr ')'
+ *                   | SimpleExpr '.' id           (Select)
+ *                   | SimpleExpr ArgumentExprs    (Apply)
+ *                   | 'new' id                    (New — simplified, no args)
+ *   PrefixExpr    ::= ['-' | '!'] SimpleExpr
+ *   InfixExpr     ::= PrefixExpr | InfixExpr op InfixExpr
+ *   Expr1         ::= 'if' '(' Expr ')' Expr 'else' Expr
+ *   BlockExpr     ::= '{' '}' | '{' Block '}'
+ *   Block         ::= {BlockStat ';'} Expr
+ *   BlockStat     ::= Def ';' | Expr ';'
+ *   Def           ::= ValDef | VarDef | DefDef | ClassDef
+ *   ValDef        ::= 'val' id '=' Expr
+ *   VarDef        ::= 'var' id '=' Expr
+ *   DefDef        ::= 'def' id '(' [Params] ')' ':' Type '=' Expr
+ *   ClassDef      ::= 'class' id ['(' Params ')'] ['extends' id] BlockExpr
+ *   Params        ::= Param {',' Param}
+ *   Param         ::= id ':' Type
+ *   Type          ::= id | id '[' Types ']'           (SimpleType only)
+ *   Types         ::= Type {',' Type}
+ *   BlockExpr     ::= '{' CaseClauses '}'                 (partial function literal)
+ *   CaseClauses   ::= CaseClause {CaseClause}
+ *   CaseClause    ::= 'case' Pattern [Guard] '=>' Expr
+ *   Guard         ::= 'if' Expr
+ *   Pattern       ::= SimplePattern | id '@' SimplePattern
+ *   SimplePattern ::= '_' | Literal | id | id '(' Patterns ')'
+ *   Patterns      ::= Pattern {',' Pattern}
+ *
+ * Spec productions intentionally NOT covered (LALR state-explosion or scope):
+ *   - Full match expressions `e match { ... }` — state explosion when
+ *     combined with the full InfixExpr precedence ladder. Partial function
+ *     literals (`{ case p => e }`) are supported instead; to simulate
+ *     `x match { case ... }`, apply the partial function: `({ case ... })(x)`.
+ *   - Lambdas / closures
+ *   - Type ascription on expressions (`e: T`) — conflicts with param `:`
+ *   - Typed patterns (`p: T`) — conflicts with case-clause arrow
+ *   - Alt patterns (`a | b`) — state-explosion; use multiple case clauses
+ *   - Function types (`A => B`) — arrow conflicts with case-clause arrow
+ *   - Significant indentation and `indent`/`outdent` tokens
+ *   - Context-sensitive `colon` token
+ *   - Quoted patterns, `given` patterns, `inline` modifiers
+ *   - Extensions, given instances, using clauses, implicit
+ *   - Traits, objects, enums, case classes
+ *   - Multiple parameter clauses, default args, by-name params
+ *   - Type parameters on `def` and `class`
+ *   - Variance, bounds (`<:`, `>:`), refinements, match types
+ *   - `try`, `while`, `for`, `throw`, `return`
+ *   - Interpolated strings, symbol literals, character literals
+ *   - Constructor arguments on `new` (`new Foo(1, 2)`)
  */
 enum ScalaTree:
   // Literals (Scala 3 spec: Literal)
@@ -46,5 +87,44 @@ enum ScalaTree:
   case Block(stmts: List[ScalaTree], result: ScalaTree)
   case UnitBlock // empty block: {}
 
-  // Block statement: val definition (Scala 3 spec: ValDef)
+  // Definitions (Scala 3 spec: Def subtree)
   case ValDef(name: String, value: ScalaTree)
+  case VarDef(name: String, value: ScalaTree)
+  case DefDef(name: String, params: List[Param], retTpe: ScalaType, body: ScalaTree)
+  case ClassDef(name: String, params: List[Param], parent: Option[String], body: ScalaTree)
+
+  // Spec: 'new' ConstrApp — simplified to 'new' id, no args
+  case New(name: String, args: List[ScalaTree])
+
+  // Spec: BlockExpr ::= '{' CaseClauses '}' — partial function literal
+  case PartialFun(cases: List[MatchCase])
+
+/** Spec: CaseClause ::= 'case' Pattern [Guard] '=>' Expr */
+case class MatchCase(pattern: ScalaPattern, guard: Option[ScalaTree], body: ScalaTree)
+
+/** Spec: Param ::= id ':' Type */
+case class Param(name: String, tpe: ScalaType)
+
+/**
+ * Pattern AST (Scala 3 spec: Pattern, SimplePattern — simplified).
+ *
+ * Constructor patterns (`Name(p1, p2)`) are covered; extractor-specific
+ * mechanics are not — any `id(...)` lexically qualifies.
+ */
+enum ScalaPattern:
+  case Wildcard // SimplePattern: '_'
+  case VarPat(name: String) // SimplePattern: varid
+  case LitPat(lit: ScalaTree) // SimplePattern: Literal
+  case ConstrPat(name: String, args: List[ScalaPattern]) // SimplePattern: id '(' Patterns ')'
+  case BindPat(name: String, inner: ScalaPattern) // Pattern: id '@' SimplePattern
+
+/**
+ * Type AST (Scala 3 spec: Type, SimpleType).
+ *
+ * Covers simple named types, applied types (`List[Int]`) and function types
+ * (`A => B`). Intersection, refinement, match, bounds, and path-dependent
+ * types are out of scope.
+ */
+enum ScalaType:
+  case TypeRef(name: String) // SimpleType: id
+  case AppliedType(base: String, args: List[ScalaType]) // SimpleType: id '[' Types ']'
