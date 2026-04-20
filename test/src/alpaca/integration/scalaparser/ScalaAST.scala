@@ -27,8 +27,14 @@ package integration.scalaparser
  *   Def           ::= ValDef | VarDef | DefDef | ClassDef
  *   ValDef        ::= 'val' id '=' Expr
  *   VarDef        ::= 'var' id '=' Expr
- *   DefDef        ::= 'def' id '(' [Params] ')' ':' Type '=' Expr
- *   ClassDef      ::= 'class' id ['(' Params ')'] ['extends' id] BlockExpr
+ *   DefDef        ::= 'def' id [TypeParams] '(' [Params] ')' ':' Type '=' Expr
+ *   ClassDef      ::= 'class' id [TypeParams] ['(' Params ')'] ['extends' id {'with' id}] BlockExpr
+ *   TypeParams    ::= '[' id {',' id} ']'       (simplified: no bounds, no variance)
+ *   ObjectDef     ::= 'object' id ['extends' id {'with' id}] BlockExpr
+ *   TraitDef      ::= 'trait' id BlockExpr
+ *   While         ::= 'while' '(' Expr ')' Expr
+ *   Throw         ::= 'throw' Expr
+ *   Return        ::= 'return' Expr
  *   Params        ::= Param {',' Param}
  *   Param         ::= id ':' Type
  *   Type          ::= id | id '[' Types ']'           (SimpleType only)
@@ -90,14 +96,33 @@ enum ScalaTree:
   // Definitions (Scala 3 spec: Def subtree)
   case ValDef(name: String, value: ScalaTree)
   case VarDef(name: String, value: ScalaTree)
-  case DefDef(name: String, params: List[Param], retTpe: ScalaType, body: ScalaTree)
-  case ClassDef(name: String, params: List[Param], parent: Option[String], body: ScalaTree)
+  case DefDef(
+    name: String,
+    tparams: List[String],
+    params: List[Param],
+    retTpe: ScalaType,
+    body: ScalaTree,
+  )
+  case ClassDef(
+    name: String,
+    tparams: List[String],
+    params: List[Param],
+    parents: List[String],
+    body: ScalaTree,
+  )
+  case ObjectDef(name: String, parents: List[String], body: ScalaTree)
+  case TraitDef(name: String, body: ScalaTree)
 
   // Spec: 'new' ConstrApp — simplified to 'new' id, no args
   case New(name: String, args: List[ScalaTree])
 
   // Spec: BlockExpr ::= '{' CaseClauses '}' — partial function literal
   case PartialFun(cases: List[MatchCase])
+
+  // Control flow (Scala 3 spec: Expr1)
+  case While(cond: ScalaTree, body: ScalaTree)
+  case Throw(expr: ScalaTree)
+  case Return(expr: ScalaTree)
 
 /** Spec: CaseClause ::= 'case' Pattern [Guard] '=>' Expr */
 case class MatchCase(pattern: ScalaPattern, guard: Option[ScalaTree], body: ScalaTree)

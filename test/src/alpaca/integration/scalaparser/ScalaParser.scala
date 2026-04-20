@@ -82,6 +82,15 @@ object ScalaParser extends Parser:
         ScalaTree.If(cond, thn, els)
     },
 
+    // ---- Expr1: while loop (Scala spec: 'while' '(' Expr ')' Expr) ----
+    "whileloop" { case (ScalaLexer.`while`(_), ScalaLexer.`\\(`(_), Expr(cond), ScalaLexer.`\\)`(_), Expr(body)) =>
+      ScalaTree.While(cond, body)
+    },
+
+    // ---- Expr1: throw / return (Scala spec) ----
+    "throw" { case (ScalaLexer.`throw`(_), Expr(e)) => ScalaTree.Throw(e) },
+    "ret" { case (ScalaLexer.`return`(_), Expr(e)) => ScalaTree.Return(e) },
+
     // ---- BlockExpr (Scala spec: BlockExpr ::= '{' (CaseClauses | Block) '}') ----
     { case (ScalaLexer.`\\{`(_), ScalaLexer.`\\}`(_)) => ScalaTree.UnitBlock },
     { case (ScalaLexer.`\\{`(_), BlockStat.List(ss), Expr(e), ScalaLexer.`\\}`(_)) =>
@@ -126,6 +135,8 @@ object ScalaParser extends Parser:
     { case (VarDef(v), ScalaLexer.`;`(_)) => v },
     { case (DefDef(d), ScalaLexer.`;`(_)) => d },
     { case (ClassDef(c), ScalaLexer.`;`(_)) => c },
+    { case (ObjectDef(o), ScalaLexer.`;`(_)) => o },
+    { case (TraitDef(t), ScalaLexer.`;`(_)) => t },
     { case (Expr(e), ScalaLexer.`;`(_)) => e },
   )
 
@@ -151,7 +162,8 @@ object ScalaParser extends Parser:
   // =========================================================
 
   val DefDef: Rule[ScalaTree] = rule(
-    {
+    // def id() : T = body
+    "defdef0" {
       case (
             ScalaLexer.`def`(_),
             ScalaLexer.id(n),
@@ -162,9 +174,10 @@ object ScalaParser extends Parser:
             ScalaLexer.`=`(_),
             Expr(body),
           ) =>
-        ScalaTree.DefDef(n.value, Nil, ret, body)
+        ScalaTree.DefDef(n.value, Nil, Nil, ret, body)
     },
-    {
+    // def id(Params) : T = body
+    "defdef1" {
       case (
             ScalaLexer.`def`(_),
             ScalaLexer.id(n),
@@ -176,7 +189,42 @@ object ScalaParser extends Parser:
             ScalaLexer.`=`(_),
             Expr(body),
           ) =>
-        ScalaTree.DefDef(n.value, ps, ret, body)
+        ScalaTree.DefDef(n.value, Nil, ps, ret, body)
+    },
+    // def id[TypeParams]() : T = body
+    "defdef2" {
+      case (
+            ScalaLexer.`def`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            ScalaLexer.`\\(`(_),
+            ScalaLexer.`\\)`(_),
+            ScalaLexer.`:`(_),
+            Type(ret),
+            ScalaLexer.`=`(_),
+            Expr(body),
+          ) =>
+        ScalaTree.DefDef(n.value, ts, Nil, ret, body)
+    },
+    // def id[TypeParams](Params) : T = body
+    "defdef3" {
+      case (
+            ScalaLexer.`def`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            ScalaLexer.`\\(`(_),
+            Params(ps),
+            ScalaLexer.`\\)`(_),
+            ScalaLexer.`:`(_),
+            Type(ret),
+            ScalaLexer.`=`(_),
+            Expr(body),
+          ) =>
+        ScalaTree.DefDef(n.value, ts, ps, ret, body)
     },
   )
 
@@ -189,9 +237,11 @@ object ScalaParser extends Parser:
   // =========================================================
 
   val ClassDef: Rule[ScalaTree] = rule(
+    // class id BODY
     "class0" { case (ScalaLexer.`class`(_), ScalaLexer.id(n), Expr(body)) =>
-      ScalaTree.ClassDef(n.value, Nil, None, body)
+      ScalaTree.ClassDef(n.value, Nil, Nil, Nil, body)
     },
+    // class id (Params) BODY
     "class1" {
       case (
             ScalaLexer.`class`(_),
@@ -201,31 +251,136 @@ object ScalaParser extends Parser:
             ScalaLexer.`\\)`(_),
             Expr(body),
           ) =>
-        ScalaTree.ClassDef(n.value, ps, None, body)
+        ScalaTree.ClassDef(n.value, Nil, ps, Nil, body)
     },
+    // class id extends Parents BODY
     "class2" {
       case (
             ScalaLexer.`class`(_),
             ScalaLexer.id(n),
             ScalaLexer.`extends`(_),
-            ScalaLexer.id(p),
+            Parents(ps),
             Expr(body),
           ) =>
-        ScalaTree.ClassDef(n.value, Nil, Some(p.value), body)
+        ScalaTree.ClassDef(n.value, Nil, Nil, ps, body)
     },
+    // class id (Params) extends Parents BODY
     "class3" {
       case (
             ScalaLexer.`class`(_),
             ScalaLexer.id(n),
             ScalaLexer.`\\(`(_),
-            Params(ps),
+            Params(prms),
             ScalaLexer.`\\)`(_),
             ScalaLexer.`extends`(_),
-            ScalaLexer.id(p),
+            Parents(pts),
             Expr(body),
           ) =>
-        ScalaTree.ClassDef(n.value, ps, Some(p.value), body)
+        ScalaTree.ClassDef(n.value, Nil, prms, pts, body)
     },
+    // class id [TypeParams] BODY
+    "class4" {
+      case (
+            ScalaLexer.`class`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            Expr(body),
+          ) =>
+        ScalaTree.ClassDef(n.value, ts, Nil, Nil, body)
+    },
+    // class id [TypeParams] (Params) BODY
+    "class5" {
+      case (
+            ScalaLexer.`class`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            ScalaLexer.`\\(`(_),
+            Params(ps),
+            ScalaLexer.`\\)`(_),
+            Expr(body),
+          ) =>
+        ScalaTree.ClassDef(n.value, ts, ps, Nil, body)
+    },
+    // class id [TypeParams] extends Parents BODY
+    "class6" {
+      case (
+            ScalaLexer.`class`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            ScalaLexer.`extends`(_),
+            Parents(pts),
+            Expr(body),
+          ) =>
+        ScalaTree.ClassDef(n.value, ts, Nil, pts, body)
+    },
+    // class id [TypeParams] (Params) extends Parents BODY
+    "class7" {
+      case (
+            ScalaLexer.`class`(_),
+            ScalaLexer.id(n),
+            ScalaLexer.`\\[`(_),
+            TypeParams(ts),
+            ScalaLexer.`\\]`(_),
+            ScalaLexer.`\\(`(_),
+            Params(prms),
+            ScalaLexer.`\\)`(_),
+            ScalaLexer.`extends`(_),
+            Parents(pts),
+            Expr(body),
+          ) =>
+        ScalaTree.ClassDef(n.value, ts, prms, pts, body)
+    },
+  )
+
+  // =========================================================
+  // Object and trait definitions (Scala spec: TmplDef)
+  //
+  //   ObjectDef ::= 'object' id ['extends' id {'with' id}] BlockExpr
+  //   TraitDef  ::= 'trait' id BlockExpr
+  // =========================================================
+
+  val ObjectDef: Rule[ScalaTree] = rule(
+    "object0" { case (ScalaLexer.`object`(_), ScalaLexer.id(n), Expr(body)) =>
+      ScalaTree.ObjectDef(n.value, Nil, body)
+    },
+    "object1" { case (ScalaLexer.`object`(_), ScalaLexer.id(n), ScalaLexer.`extends`(_), Parents(ps), Expr(body)) =>
+      ScalaTree.ObjectDef(n.value, ps, body)
+    },
+  )
+
+  val TraitDef: Rule[ScalaTree] = rule:
+    case (ScalaLexer.`trait`(_), ScalaLexer.id(n), Expr(body)) =>
+      ScalaTree.TraitDef(n.value, body)
+
+  // =========================================================
+  // Parents for extends-clause (Scala spec: InheritClauses, simplified to ids)
+  //
+  //   Parents ::= id {'with' id}
+  // =========================================================
+
+  val Parents: Rule[List[String]] = rule(
+    { case ScalaLexer.id(n) => List(n.value) },
+    { case (Parents(ps), ScalaLexer.`with`(_), ScalaLexer.id(n)) => ps :+ n.value },
+  )
+
+  // =========================================================
+  // Type parameters (Scala spec: DefTypeParamClause / ClsTypeParamClause)
+  //
+  //   TypeParams ::= id {',' id}
+  //
+  // Simplified: no variance (`+A`, `-A`), no bounds (`A <: B`, `A >: B`),
+  // no higher-kinded types.
+  // =========================================================
+
+  val TypeParams: Rule[List[String]] = rule(
+    { case ScalaLexer.id(n) => List(n.value) },
+    { case (TypeParams(ts), ScalaLexer.`,`(_), ScalaLexer.id(n)) => ts :+ n.value },
   )
 
   // =========================================================
@@ -440,5 +595,58 @@ object ScalaParser extends Parser:
       ScalaLexer.neq,
       ScalaLexer.and,
       ScalaLexer.or,
+    ),
+
+    // while body is greedy: `while (c) x + 1` parses as `while (c) (x + 1)`
+    production.whileloop.after(
+      ScalaLexer.`\\+`,
+      ScalaLexer.`-`,
+      ScalaLexer.`\\*`,
+      ScalaLexer.`/`,
+      ScalaLexer.`%`,
+      ScalaLexer.`<`,
+      ScalaLexer.`>`,
+      ScalaLexer.lte,
+      ScalaLexer.gte,
+      ScalaLexer.eqeq,
+      ScalaLexer.neq,
+      ScalaLexer.and,
+      ScalaLexer.or,
+    ),
+
+    // throw / return bodies are greedy: `throw x + 1` parses as `throw (x + 1)`
+    production.`throw`.after(
+      ScalaLexer.`\\+`,
+      ScalaLexer.`-`,
+      ScalaLexer.`\\*`,
+      ScalaLexer.`/`,
+      ScalaLexer.`%`,
+      ScalaLexer.`<`,
+      ScalaLexer.`>`,
+      ScalaLexer.lte,
+      ScalaLexer.gte,
+      ScalaLexer.eqeq,
+      ScalaLexer.neq,
+      ScalaLexer.and,
+      ScalaLexer.or,
+      ScalaLexer.`\\.`,
+      ScalaLexer.`\\(`,
+    ),
+    production.ret.after(
+      ScalaLexer.`\\+`,
+      ScalaLexer.`-`,
+      ScalaLexer.`\\*`,
+      ScalaLexer.`/`,
+      ScalaLexer.`%`,
+      ScalaLexer.`<`,
+      ScalaLexer.`>`,
+      ScalaLexer.lte,
+      ScalaLexer.gte,
+      ScalaLexer.eqeq,
+      ScalaLexer.neq,
+      ScalaLexer.and,
+      ScalaLexer.or,
+      ScalaLexer.`\\.`,
+      ScalaLexer.`\\(`,
     ),
   )

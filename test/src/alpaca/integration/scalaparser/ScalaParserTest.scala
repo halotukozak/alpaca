@@ -427,7 +427,7 @@ final class ScalaParserTest extends AnyFunSuite:
     // def zero(): Int = 0
     assert(
       parse("{ def zero(): Int = 0; zero() }") == Block(
-        List(DefDef("zero", Nil, TypeRef("Int"), IntLit(0))),
+        List(DefDef("zero", Nil, Nil, TypeRef("Int"), IntLit(0))),
         Apply(Ident("zero"), Nil),
       ),
     )
@@ -440,6 +440,7 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           DefDef(
             "inc",
+            Nil,
             List(Param("x", TypeRef("Int"))),
             TypeRef("Int"),
             Infix(Ident("x"), "+", IntLit(1)),
@@ -457,6 +458,7 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           DefDef(
             "add",
+            Nil,
             List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
             TypeRef("Int"),
             Infix(Ident("x"), "+", Ident("y")),
@@ -471,7 +473,7 @@ final class ScalaParserTest extends AnyFunSuite:
     // def empty(): List[Int] = xs
     assert(
       parse("{ def empty(): List[Int] = xs; empty() }") == Block(
-        List(DefDef("empty", Nil, AppliedType("List", List(TypeRef("Int"))), Ident("xs"))),
+        List(DefDef("empty", Nil, Nil, AppliedType("List", List(TypeRef("Int"))), Ident("xs"))),
         Apply(Ident("empty"), Nil),
       ),
     )
@@ -484,6 +486,7 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           DefDef(
             "pairs",
+            Nil,
             Nil,
             AppliedType("Map", List(TypeRef("String"), AppliedType("List", List(TypeRef("Int"))))),
             Ident("xs"),
@@ -501,6 +504,7 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           DefDef(
             "fact",
+            Nil,
             List(Param("n", TypeRef("Int"))),
             TypeRef("Int"),
             If(
@@ -519,13 +523,77 @@ final class ScalaParserTest extends AnyFunSuite:
     )
   }
 
+  test("generic def: single type param") {
+    // def id[A](x: A): A = x
+    assert(
+      parse("{ def id[A](x: A): A = x; id(42) }") == Block(
+        List(
+          DefDef(
+            "id",
+            List("A"),
+            List(Param("x", TypeRef("A"))),
+            TypeRef("A"),
+            Ident("x"),
+          ),
+        ),
+        Apply(Ident("id"), List(IntLit(42))),
+      ),
+    )
+  }
+
+  test("generic def: multiple type params") {
+    // def map[A, B](x: A): B = f(x)
+    assert(
+      parse("{ def map[A, B](x: A): B = f(x); 0 }") == Block(
+        List(
+          DefDef(
+            "map",
+            List("A", "B"),
+            List(Param("x", TypeRef("A"))),
+            TypeRef("B"),
+            Apply(Ident("f"), List(Ident("x"))),
+          ),
+        ),
+        IntLit(0),
+      ),
+    )
+  }
+
+  test("generic def: applied return type using type param") {
+    // def wrap[A](x: A): List[A] = cons(x, nil)
+    assert(
+      parse("{ def wrap[A](x: A): List[A] = cons(x, nil); 0 }") == Block(
+        List(
+          DefDef(
+            "wrap",
+            List("A"),
+            List(Param("x", TypeRef("A"))),
+            AppliedType("List", List(TypeRef("A"))),
+            Apply(Ident("cons"), List(Ident("x"), Ident("nil"))),
+          ),
+        ),
+        IntLit(0),
+      ),
+    )
+  }
+
+  test("generic def: no value params") {
+    // def pi[A](): A = defaultA
+    assert(
+      parse("{ def pi[A](): A = defaultA; 0 }") == Block(
+        List(DefDef("pi", List("A"), Nil, TypeRef("A"), Ident("defaultA"))),
+        IntLit(0),
+      ),
+    )
+  }
+
   // ===========================================================
-  // class definitions (Scala 3 spec: ClassDef — simplified; no traits, no type params)
-  //   ClassDef ::= 'class' id ['(' Params ')'] ['extends' id] BlockExpr
+  // class definitions (Scala 3 spec: ClassDef)
+  //   ClassDef ::= 'class' id [TypeParams] ['(' Params ')'] ['extends' Parents] BlockExpr
   // ===========================================================
 
   test("empty class") {
-    assert(parse("{ class Empty {}; null }") == Block(List(ClassDef("Empty", Nil, None, UnitBlock)), NullLit))
+    assert(parse("{ class Empty {}; null }") == Block(List(ClassDef("Empty", Nil, Nil, Nil, UnitBlock)), NullLit))
   }
 
   test("class with constructor params") {
@@ -534,8 +602,9 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           ClassDef(
             "Point",
+            Nil,
             List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
-            None,
+            Nil,
             UnitBlock,
           ),
         ),
@@ -547,7 +616,7 @@ final class ScalaParserTest extends AnyFunSuite:
   test("class extending parent") {
     assert(
       parse("{ class Dog extends Animal {}; null }") == Block(
-        List(ClassDef("Dog", Nil, Some("Animal"), UnitBlock)),
+        List(ClassDef("Dog", Nil, Nil, List("Animal"), UnitBlock)),
         NullLit,
       ),
     )
@@ -559,11 +628,21 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           ClassDef(
             "Cat",
+            Nil,
             List(Param("name", TypeRef("String"))),
-            Some("Animal"),
+            List("Animal"),
             UnitBlock,
           ),
         ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("class with multiple parents (extends ... with ...)") {
+    assert(
+      parse("{ class Dog extends Animal with Furry with Loud {}; null }") == Block(
+        List(ClassDef("Dog", Nil, Nil, List("Animal", "Furry", "Loud"), UnitBlock)),
         NullLit,
       ),
     )
@@ -575,10 +654,11 @@ final class ScalaParserTest extends AnyFunSuite:
         List(
           ClassDef(
             "Box",
+            Nil,
             List(Param("v", TypeRef("Int"))),
-            None,
+            Nil,
             Block(
-              List(DefDef("get", Nil, TypeRef("Int"), Ident("v"))),
+              List(DefDef("get", Nil, Nil, TypeRef("Int"), Ident("v"))),
               IntLit(0),
             ),
           ),
@@ -586,6 +666,135 @@ final class ScalaParserTest extends AnyFunSuite:
         NullLit,
       ),
     )
+  }
+
+  test("generic class: single type param") {
+    // class Box[A] {}
+    assert(
+      parse("{ class Box[A] {}; null }") == Block(
+        List(ClassDef("Box", List("A"), Nil, Nil, UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("generic class: type params + constructor params") {
+    // class Pair[A, B](first: A, second: B) {}
+    assert(
+      parse("{ class Pair[A, B](first: A, second: B) {}; null }") == Block(
+        List(
+          ClassDef(
+            "Pair",
+            List("A", "B"),
+            List(Param("first", TypeRef("A")), Param("second", TypeRef("B"))),
+            Nil,
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("generic class: type params + constructor params + parent") {
+    // class MyList[A](head: A) extends Seq with Iterable {}
+    assert(
+      parse("{ class MyList[A](head: A) extends Seq with Iterable {}; null }") == Block(
+        List(
+          ClassDef(
+            "MyList",
+            List("A"),
+            List(Param("head", TypeRef("A"))),
+            List("Seq", "Iterable"),
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  // ===========================================================
+  // object / trait definitions (Scala 3 spec: TmplDef)
+  // ===========================================================
+
+  test("empty object") {
+    assert(parse("{ object Singleton {}; null }") == Block(List(ObjectDef("Singleton", Nil, UnitBlock)), NullLit))
+  }
+
+  test("object extending trait") {
+    assert(
+      parse("{ object Bark extends Animal {}; null }") == Block(
+        List(ObjectDef("Bark", List("Animal"), UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("object with multiple parents") {
+    assert(
+      parse("{ object Hybrid extends A with B with C {}; null }") == Block(
+        List(ObjectDef("Hybrid", List("A", "B", "C"), UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("empty trait") {
+    assert(parse("{ trait Animal {}; null }") == Block(List(TraitDef("Animal", UnitBlock)), NullLit))
+  }
+
+  test("trait with abstract method body") {
+    // def speak(): String = ???  — we don't have `???`, use a placeholder ident
+    assert(
+      parse("{ trait Speaker { def speak(): String = placeholder; null }; null }") == Block(
+        List(
+          TraitDef(
+            "Speaker",
+            Block(
+              List(DefDef("speak", Nil, Nil, TypeRef("String"), Ident("placeholder"))),
+              NullLit,
+            ),
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  // ===========================================================
+  // while / throw / return (Scala 3 spec: Expr1)
+  // ===========================================================
+
+  test("while loop with simple body") {
+    // while (running) step()
+    assert(
+      parse("while (running) step()") == While(Ident("running"), Apply(Ident("step"), Nil)),
+    )
+  }
+
+  test("while loop with arithmetic body is greedy") {
+    // while (c) i + 1  ==  while (c) (i + 1)
+    assert(
+      parse("while (c) i + 1") == While(Ident("c"), Infix(Ident("i"), "+", IntLit(1))),
+    )
+  }
+
+  test("throw expression") {
+    assert(parse("throw e") == Throw(Ident("e")))
+  }
+
+  test("throw with constructor argument") {
+    // throw new RuntimeException
+    assert(parse("throw new RuntimeException") == Throw(New("RuntimeException", Nil)))
+  }
+
+  test("return expression") {
+    assert(parse("return x") == Return(Ident("x")))
+  }
+
+  test("return with arithmetic body is greedy") {
+    assert(parse("return x + 1") == Return(Infix(Ident("x"), "+", IntLit(1))))
   }
 
   // ===========================================================
