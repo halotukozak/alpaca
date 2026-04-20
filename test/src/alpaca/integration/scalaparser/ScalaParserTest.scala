@@ -306,13 +306,13 @@ final class ScalaParserTest extends AnyFunSuite:
   }
 
   test("block with single val definition") {
-    assert(parse("{ val x = 1; x }") == Block(List(ValDef("x", IntLit(1))), Ident("x")))
+    assert(parse("{ val x = 1; x }") == Block(List(ValDef("x", None, IntLit(1))), Ident("x")))
   }
 
   test("block with multiple val definitions") {
     assert(
       parse("{ val x = 1; val y = 2; x + y }") == Block(
-        List(ValDef("x", IntLit(1)), ValDef("y", IntLit(2))),
+        List(ValDef("x", None, IntLit(1)), ValDef("y", None, IntLit(2))),
         Infix(Ident("x"), "+", Ident("y")),
       ),
     )
@@ -325,14 +325,14 @@ final class ScalaParserTest extends AnyFunSuite:
   test("val definition with complex rhs") {
     assert(
       parse("{ val x = a + b * c; x }") == Block(
-        List(ValDef("x", Infix(Ident("a"), "+", Infix(Ident("b"), "*", Ident("c"))))),
+        List(ValDef("x", None, Infix(Ident("a"), "+", Infix(Ident("b"), "*", Ident("c"))))),
         Ident("x"),
       ),
     )
   }
 
   test("block used inside larger expression") {
-    assert(parse("{ val x = 2; x } + 1") == Infix(Block(List(ValDef("x", IntLit(2))), Ident("x")), "+", IntLit(1)))
+    assert(parse("{ val x = 2; x } + 1") == Infix(Block(List(ValDef("x", None, IntLit(2))), Ident("x")), "+", IntLit(1)))
   }
 
   // ===========================================================
@@ -390,13 +390,13 @@ final class ScalaParserTest extends AnyFunSuite:
   // ===========================================================
 
   test("var definition in block") {
-    assert(parse("{ var x = 1; x }") == Block(List(VarDef("x", IntLit(1))), Ident("x")))
+    assert(parse("{ var x = 1; x }") == Block(List(VarDef("x", None, IntLit(1))), Ident("x")))
   }
 
   test("val and var mixed in block") {
     assert(
       parse("{ val x = 1; var y = 2; x + y }") == Block(
-        List(ValDef("x", IntLit(1)), VarDef("y", IntLit(2))),
+        List(ValDef("x", None, IntLit(1)), VarDef("y", None, IntLit(2))),
         Infix(Ident("x"), "+", Ident("y")),
       ),
     )
@@ -415,7 +415,7 @@ final class ScalaParserTest extends AnyFunSuite:
   }
 
   test("new as val rhs") {
-    assert(parse("{ val x = new Foo; x }") == Block(List(ValDef("x", New("Foo", Nil))), Ident("x")))
+    assert(parse("{ val x = new Foo; x }") == Block(List(ValDef("x", None, New("Foo", Nil))), Ident("x")))
   }
 
   // ===========================================================
@@ -593,7 +593,7 @@ final class ScalaParserTest extends AnyFunSuite:
   // ===========================================================
 
   test("empty class") {
-    assert(parse("{ class Empty {}; null }") == Block(List(ClassDef("Empty", Nil, Nil, Nil, UnitBlock)), NullLit))
+    assert(parse("{ class Empty {}; null }") == Block(List(ClassDef(false, "Empty", Nil, Nil, Nil, UnitBlock)), NullLit))
   }
 
   test("class with constructor params") {
@@ -601,6 +601,7 @@ final class ScalaParserTest extends AnyFunSuite:
       parse("{ class Point(x: Int, y: Int) {}; null }") == Block(
         List(
           ClassDef(
+            false,
             "Point",
             Nil,
             List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
@@ -616,7 +617,7 @@ final class ScalaParserTest extends AnyFunSuite:
   test("class extending parent") {
     assert(
       parse("{ class Dog extends Animal {}; null }") == Block(
-        List(ClassDef("Dog", Nil, Nil, List("Animal"), UnitBlock)),
+        List(ClassDef(false, "Dog", Nil, Nil, List("Animal"), UnitBlock)),
         NullLit,
       ),
     )
@@ -627,6 +628,7 @@ final class ScalaParserTest extends AnyFunSuite:
       parse("{ class Cat(name: String) extends Animal {}; null }") == Block(
         List(
           ClassDef(
+            false,
             "Cat",
             Nil,
             List(Param("name", TypeRef("String"))),
@@ -642,7 +644,7 @@ final class ScalaParserTest extends AnyFunSuite:
   test("class with multiple parents (extends ... with ...)") {
     assert(
       parse("{ class Dog extends Animal with Furry with Loud {}; null }") == Block(
-        List(ClassDef("Dog", Nil, Nil, List("Animal", "Furry", "Loud"), UnitBlock)),
+        List(ClassDef(false, "Dog", Nil, Nil, List("Animal", "Furry", "Loud"), UnitBlock)),
         NullLit,
       ),
     )
@@ -653,6 +655,7 @@ final class ScalaParserTest extends AnyFunSuite:
       parse("{ class Box(v: Int) { def get(): Int = v; 0 }; null }") == Block(
         List(
           ClassDef(
+            false,
             "Box",
             Nil,
             List(Param("v", TypeRef("Int"))),
@@ -672,7 +675,7 @@ final class ScalaParserTest extends AnyFunSuite:
     // class Box[A] {}
     assert(
       parse("{ class Box[A] {}; null }") == Block(
-        List(ClassDef("Box", List("A"), Nil, Nil, UnitBlock)),
+        List(ClassDef(false, "Box", List("A"), Nil, Nil, UnitBlock)),
         NullLit,
       ),
     )
@@ -684,6 +687,7 @@ final class ScalaParserTest extends AnyFunSuite:
       parse("{ class Pair[A, B](first: A, second: B) {}; null }") == Block(
         List(
           ClassDef(
+            false,
             "Pair",
             List("A", "B"),
             List(Param("first", TypeRef("A")), Param("second", TypeRef("B"))),
@@ -702,6 +706,7 @@ final class ScalaParserTest extends AnyFunSuite:
       parse("{ class MyList[A](head: A) extends Seq with Iterable {}; null }") == Block(
         List(
           ClassDef(
+            false,
             "MyList",
             List("A"),
             List(Param("head", TypeRef("A"))),
@@ -719,13 +724,13 @@ final class ScalaParserTest extends AnyFunSuite:
   // ===========================================================
 
   test("empty object") {
-    assert(parse("{ object Singleton {}; null }") == Block(List(ObjectDef("Singleton", Nil, UnitBlock)), NullLit))
+    assert(parse("{ object Singleton {}; null }") == Block(List(ObjectDef(false, "Singleton", Nil, UnitBlock)), NullLit))
   }
 
   test("object extending trait") {
     assert(
       parse("{ object Bark extends Animal {}; null }") == Block(
-        List(ObjectDef("Bark", List("Animal"), UnitBlock)),
+        List(ObjectDef(false, "Bark", List("Animal"), UnitBlock)),
         NullLit,
       ),
     )
@@ -734,7 +739,7 @@ final class ScalaParserTest extends AnyFunSuite:
   test("object with multiple parents") {
     assert(
       parse("{ object Hybrid extends A with B with C {}; null }") == Block(
-        List(ObjectDef("Hybrid", List("A", "B", "C"), UnitBlock)),
+        List(ObjectDef(false, "Hybrid", List("A", "B", "C"), UnitBlock)),
         NullLit,
       ),
     )
@@ -885,6 +890,179 @@ final class ScalaParserTest extends AnyFunSuite:
           ),
         ),
         List(Ident("x")),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Type ascription on val / var (Scala 3 spec: ValDef ::= 'val' id [':' Type] '=' Expr)
+  // ===========================================================
+
+  test("val with type annotation") {
+    assert(
+      parse("{ val x: Int = 1; x }") == Block(
+        List(ValDef("x", Some(TypeRef("Int")), IntLit(1))),
+        Ident("x"),
+      ),
+    )
+  }
+
+  test("val with applied type annotation") {
+    assert(
+      parse("{ val xs: List[Int] = ys; xs }") == Block(
+        List(ValDef("xs", Some(AppliedType("List", List(TypeRef("Int")))), Ident("ys"))),
+        Ident("xs"),
+      ),
+    )
+  }
+
+  test("var with type annotation") {
+    assert(
+      parse("{ var counter: Int = 0; counter }") == Block(
+        List(VarDef("counter", Some(TypeRef("Int")), IntLit(0))),
+        Ident("counter"),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Case class / case object (Scala 3 spec: TmplDef ::= ['case'] 'class' ClassDef | ...)
+  // ===========================================================
+
+  test("case class no params") {
+    assert(
+      parse("{ case class Unit {}; null }") == Block(
+        List(ClassDef(true, "Unit", Nil, Nil, Nil, UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("case class with constructor params") {
+    assert(
+      parse("{ case class Point(x: Int, y: Int) {}; null }") == Block(
+        List(
+          ClassDef(
+            true,
+            "Point",
+            Nil,
+            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            Nil,
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("generic case class") {
+    // case class Box[A](value: A) {}
+    assert(
+      parse("{ case class Box[A](value: A) {}; null }") == Block(
+        List(
+          ClassDef(
+            true,
+            "Box",
+            List("A"),
+            List(Param("value", TypeRef("A"))),
+            Nil,
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("case class extends trait") {
+    // case class Some(value: Int) extends Option {}
+    assert(
+      parse("{ case class Some(value: Int) extends Option {}; null }") == Block(
+        List(
+          ClassDef(
+            true,
+            "Some",
+            Nil,
+            List(Param("value", TypeRef("Int"))),
+            List("Option"),
+            UnitBlock,
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("case object") {
+    assert(
+      parse("{ case object None {}; null }") == Block(
+        List(ObjectDef(true, "None", Nil, UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  test("case object extends trait") {
+    assert(
+      parse("{ case object Nil extends List {}; null }") == Block(
+        List(ObjectDef(true, "Nil", List("List"), UnitBlock)),
+        NullLit,
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Tuple literals (Scala 3 spec: SimpleExpr ::= '(' ExprsInParens ')' with 2+)
+  // ===========================================================
+
+  test("pair literal") {
+    assert(parse("(1, 2)") == Tuple(List(IntLit(1), IntLit(2))))
+  }
+
+  test("triple literal") {
+    assert(parse("(1, 2, 3)") == Tuple(List(IntLit(1), IntLit(2), IntLit(3))))
+  }
+
+  test("tuple of mixed types") {
+    assert(
+      parse("""(42, "hello", true)""") == Tuple(List(IntLit(42), StringLit("hello"), BoolLit(true))),
+    )
+  }
+
+  test("tuple with arithmetic elements") {
+    assert(
+      parse("(1 + 2, 3 * 4)") == Tuple(List(Infix(IntLit(1), "+", IntLit(2)), Infix(IntLit(3), "*", IntLit(4)))),
+    )
+  }
+
+  test("nested tuples") {
+    assert(
+      parse("((1, 2), (3, 4))") == Tuple(
+        List(
+          Tuple(List(IntLit(1), IntLit(2))),
+          Tuple(List(IntLit(3), IntLit(4))),
+        ),
+      ),
+    )
+  }
+
+  test("single-element parens are NOT a tuple") {
+    // (x) stays an expression, not a 1-tuple (Scala has no 1-tuple syntax)
+    assert(parse("(x)") == Ident("x"))
+  }
+
+  test("tuple as val rhs") {
+    assert(
+      parse("""{ val pair: String = ("a", 1); pair }""") == Block(
+        List(
+          ValDef(
+            "pair",
+            Some(TypeRef("String")),
+            Tuple(List(StringLit("a"), IntLit(1))),
+          ),
+        ),
+        Ident("pair"),
       ),
     )
   }

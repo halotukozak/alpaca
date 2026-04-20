@@ -25,13 +25,15 @@ package integration.scalaparser
  *   Block         ::= {BlockStat ';'} Expr
  *   BlockStat     ::= Def ';' | Expr ';'
  *   Def           ::= ValDef | VarDef | DefDef | ClassDef
- *   ValDef        ::= 'val' id '=' Expr
- *   VarDef        ::= 'var' id '=' Expr
+ *   ValDef        ::= 'val' id [':' Type] '=' Expr
+ *   VarDef        ::= 'var' id [':' Type] '=' Expr
  *   DefDef        ::= 'def' id [TypeParams] '(' [Params] ')' ':' Type '=' Expr
- *   ClassDef      ::= 'class' id [TypeParams] ['(' Params ')'] ['extends' id {'with' id}] BlockExpr
+ *   ClassDef      ::= ['case'] 'class' id [TypeParams] ['(' Params ')']
+ *                       ['extends' id {'with' id}] BlockExpr
  *   TypeParams    ::= '[' id {',' id} ']'       (simplified: no bounds, no variance)
- *   ObjectDef     ::= 'object' id ['extends' id {'with' id}] BlockExpr
+ *   ObjectDef     ::= ['case'] 'object' id ['extends' id {'with' id}] BlockExpr
  *   TraitDef      ::= 'trait' id BlockExpr
+ *   Tuple         ::= '(' Expr ',' Expr {',' Expr} ')'     (2+ elements)
  *   While         ::= 'while' '(' Expr ')' Expr
  *   Throw         ::= 'throw' Expr
  *   Return        ::= 'return' Expr
@@ -94,8 +96,8 @@ enum ScalaTree:
   case UnitBlock // empty block: {}
 
   // Definitions (Scala 3 spec: Def subtree)
-  case ValDef(name: String, value: ScalaTree)
-  case VarDef(name: String, value: ScalaTree)
+  case ValDef(name: String, tpe: Option[ScalaType], value: ScalaTree)
+  case VarDef(name: String, tpe: Option[ScalaType], value: ScalaTree)
   case DefDef(
     name: String,
     tparams: List[String],
@@ -104,17 +106,21 @@ enum ScalaTree:
     body: ScalaTree,
   )
   case ClassDef(
+    isCase: Boolean,
     name: String,
     tparams: List[String],
     params: List[Param],
     parents: List[String],
     body: ScalaTree,
   )
-  case ObjectDef(name: String, parents: List[String], body: ScalaTree)
+  case ObjectDef(isCase: Boolean, name: String, parents: List[String], body: ScalaTree)
   case TraitDef(name: String, body: ScalaTree)
 
   // Spec: 'new' ConstrApp — simplified to 'new' id, no args
   case New(name: String, args: List[ScalaTree])
+
+  // Spec: SimpleExpr ::= '(' ExprsInParens ')' with 2+ exprs — tuple literal
+  case Tuple(elems: List[ScalaTree])
 
   // Spec: BlockExpr ::= '{' CaseClauses '}' — partial function literal
   case PartialFun(cases: List[MatchCase])
