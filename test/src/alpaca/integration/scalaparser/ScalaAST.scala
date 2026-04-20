@@ -38,7 +38,7 @@ package integration.scalaparser
  *   Throw         ::= 'throw' Expr
  *   Return        ::= 'return' Expr
  *   Params        ::= Param {',' Param}
- *   Param         ::= id ':' Type
+ *   Param         ::= id ':' Type ['=' Expr]      (optional default value)
  *   Type          ::= id | id '[' Types ']'           (SimpleType only)
  *   Types         ::= Type {',' Type}
  *   BlockExpr     ::= '{' CaseClauses '}'                 (partial function literal)
@@ -133,8 +133,8 @@ enum ScalaTree:
 /** Spec: CaseClause ::= 'case' Pattern [Guard] '=>' Expr */
 case class MatchCase(pattern: ScalaPattern, guard: Option[ScalaTree], body: ScalaTree)
 
-/** Spec: Param ::= id ':' Type */
-case class Param(name: String, tpe: ScalaType)
+/** Spec: Param ::= id ':' Type ['=' Expr] */
+case class Param(name: String, tpe: ScalaType, default: Option[ScalaTree])
 
 /**
  * Pattern AST (Scala 3 spec: Pattern, SimplePattern — simplified).

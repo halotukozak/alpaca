@@ -548,11 +548,16 @@ object ScalaParser extends Parser:
   //   Param  ::= id ':' Type
   // =========================================================
 
-  val Params: Rule[List[Param]] = rule(
-    { case (ScalaLexer.id(n), ScalaLexer.`:`(_), Type(t)) => List(Param(n.value, t)) },
-    { case (Params(ps), ScalaLexer.`,`(_), ScalaLexer.id(n), ScalaLexer.`:`(_), Type(t)) =>
-      ps :+ Param(n.value, t)
+  val ParamRule: Rule[Param] = rule(
+    "param" { case (ScalaLexer.id(n), ScalaLexer.`:`(_), Type(t)) => Param(n.value, t, None) },
+    "paramDefault" { case (ScalaLexer.id(n), ScalaLexer.`:`(_), Type(t), ScalaLexer.`=`(_), Expr(e)) =>
+      Param(n.value, t, Some(e))
     },
+  )
+
+  val Params: Rule[List[Param]] = rule(
+    { case ParamRule(p) => List(p) },
+    { case (Params(ps), ScalaLexer.`,`(_), ParamRule(p)) => ps :+ p },
   )
 
   // =========================================================

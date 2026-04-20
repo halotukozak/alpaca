@@ -441,7 +441,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "inc",
             Nil,
-            List(Param("x", TypeRef("Int"))),
+            List(Param("x", TypeRef("Int"), None)),
             TypeRef("Int"),
             Infix(Ident("x"), "+", IntLit(1)),
           ),
@@ -459,7 +459,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "add",
             Nil,
-            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            List(Param("x", TypeRef("Int"), None), Param("y", TypeRef("Int"), None)),
             TypeRef("Int"),
             Infix(Ident("x"), "+", Ident("y")),
           ),
@@ -505,7 +505,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "fact",
             Nil,
-            List(Param("n", TypeRef("Int"))),
+            List(Param("n", TypeRef("Int"), None)),
             TypeRef("Int"),
             If(
               Infix(Ident("n"), "<=", IntLit(0)),
@@ -531,7 +531,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "id",
             List("A"),
-            List(Param("x", TypeRef("A"))),
+            List(Param("x", TypeRef("A"), None)),
             TypeRef("A"),
             Ident("x"),
           ),
@@ -549,7 +549,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "map",
             List("A", "B"),
-            List(Param("x", TypeRef("A"))),
+            List(Param("x", TypeRef("A"), None)),
             TypeRef("B"),
             Apply(Ident("f"), List(Ident("x"))),
           ),
@@ -567,7 +567,7 @@ final class ScalaParserTest extends AnyFunSuite:
           DefDef(
             "wrap",
             List("A"),
-            List(Param("x", TypeRef("A"))),
+            List(Param("x", TypeRef("A"), None)),
             AppliedType("List", List(TypeRef("A"))),
             Apply(Ident("cons"), List(Ident("x"), Ident("nil"))),
           ),
@@ -604,7 +604,7 @@ final class ScalaParserTest extends AnyFunSuite:
             false,
             "Point",
             Nil,
-            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            List(Param("x", TypeRef("Int"), None), Param("y", TypeRef("Int"), None)),
             Nil,
             UnitBlock,
           ),
@@ -631,7 +631,7 @@ final class ScalaParserTest extends AnyFunSuite:
             false,
             "Cat",
             Nil,
-            List(Param("name", TypeRef("String"))),
+            List(Param("name", TypeRef("String"), None)),
             List("Animal"),
             UnitBlock,
           ),
@@ -658,7 +658,7 @@ final class ScalaParserTest extends AnyFunSuite:
             false,
             "Box",
             Nil,
-            List(Param("v", TypeRef("Int"))),
+            List(Param("v", TypeRef("Int"), None)),
             Nil,
             Block(
               List(DefDef("get", Nil, Nil, TypeRef("Int"), Ident("v"))),
@@ -690,7 +690,7 @@ final class ScalaParserTest extends AnyFunSuite:
             false,
             "Pair",
             List("A", "B"),
-            List(Param("first", TypeRef("A")), Param("second", TypeRef("B"))),
+            List(Param("first", TypeRef("A"), None), Param("second", TypeRef("B"), None)),
             Nil,
             UnitBlock,
           ),
@@ -709,7 +709,7 @@ final class ScalaParserTest extends AnyFunSuite:
             false,
             "MyList",
             List("A"),
-            List(Param("head", TypeRef("A"))),
+            List(Param("head", TypeRef("A"), None)),
             List("Seq", "Iterable"),
             UnitBlock,
           ),
@@ -946,7 +946,7 @@ final class ScalaParserTest extends AnyFunSuite:
             true,
             "Point",
             Nil,
-            List(Param("x", TypeRef("Int")), Param("y", TypeRef("Int"))),
+            List(Param("x", TypeRef("Int"), None), Param("y", TypeRef("Int"), None)),
             Nil,
             UnitBlock,
           ),
@@ -965,7 +965,7 @@ final class ScalaParserTest extends AnyFunSuite:
             true,
             "Box",
             List("A"),
-            List(Param("value", TypeRef("A"))),
+            List(Param("value", TypeRef("A"), None)),
             Nil,
             UnitBlock,
           ),
@@ -984,7 +984,7 @@ final class ScalaParserTest extends AnyFunSuite:
             true,
             "Some",
             Nil,
-            List(Param("value", TypeRef("Int"))),
+            List(Param("value", TypeRef("Int"), None)),
             List("Option"),
             UnitBlock,
           ),
@@ -1063,6 +1063,86 @@ final class ScalaParserTest extends AnyFunSuite:
           ),
         ),
         Ident("pair"),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Default parameter values (Scala 3 spec: Param ::= id ':' Type ['=' Expr])
+  // ===========================================================
+
+  test("def with default parameter") {
+    // def greet(msg: String = "hi"): String = msg
+    assert(
+      parse("""{ def greet(msg: String = "hi"): String = msg; greet() }""") == Block(
+        List(
+          DefDef(
+            "greet",
+            Nil,
+            List(Param("msg", TypeRef("String"), Some(StringLit("hi")))),
+            TypeRef("String"),
+            Ident("msg"),
+          ),
+        ),
+        Apply(Ident("greet"), Nil),
+      ),
+    )
+  }
+
+  test("def with multiple params, some with defaults") {
+    // def inc(x: Int, by: Int = 1): Int = x + by
+    assert(
+      parse("{ def inc(x: Int, by: Int = 1): Int = x + by; inc(10) }") == Block(
+        List(
+          DefDef(
+            "inc",
+            Nil,
+            List(
+              Param("x", TypeRef("Int"), None),
+              Param("by", TypeRef("Int"), Some(IntLit(1))),
+            ),
+            TypeRef("Int"),
+            Infix(Ident("x"), "+", Ident("by")),
+          ),
+        ),
+        Apply(Ident("inc"), List(IntLit(10))),
+      ),
+    )
+  }
+
+  test("def with default arithmetic expression") {
+    // def area(w: Int = 1 + 2): Int = w * w
+    assert(
+      parse("{ def area(w: Int = 1 + 2): Int = w * w; area() }") == Block(
+        List(
+          DefDef(
+            "area",
+            Nil,
+            List(Param("w", TypeRef("Int"), Some(Infix(IntLit(1), "+", IntLit(2))))),
+            TypeRef("Int"),
+            Infix(Ident("w"), "*", Ident("w")),
+          ),
+        ),
+        Apply(Ident("area"), Nil),
+      ),
+    )
+  }
+
+  test("class constructor with default params") {
+    // class Box(v: Int = 0) {}
+    assert(
+      parse("{ class Box(v: Int = 0) {}; null }") == Block(
+        List(
+          ClassDef(
+            false,
+            "Box",
+            Nil,
+            List(Param("v", TypeRef("Int"), Some(IntLit(0)))),
+            Nil,
+            UnitBlock,
+          ),
+        ),
+        NullLit,
       ),
     )
   }
