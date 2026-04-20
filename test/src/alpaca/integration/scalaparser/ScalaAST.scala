@@ -34,6 +34,10 @@ package integration.scalaparser
  *   ObjectDef     ::= ['case'] 'object' id ['extends' id {'with' id}] BlockExpr
  *   TraitDef      ::= 'trait' id BlockExpr
  *   Tuple         ::= '(' Expr ',' Expr {',' Expr} ')'     (2+ elements)
+ *   ModifiedDef   ::= Modifiers Def                        (1+ modifiers prefix)
+ *   Modifiers     ::= Modifier {Modifier}
+ *   Modifier      ::= 'private' | 'protected' | 'final' | 'sealed'
+ *                   | 'abstract' | 'override' | 'lazy' | 'implicit'
  *   While         ::= 'while' '(' Expr ')' Expr
  *   Throw         ::= 'throw' Expr
  *   Return        ::= 'return' Expr
@@ -121,6 +125,9 @@ enum ScalaTree:
 
   // Spec: SimpleExpr ::= '(' ExprsInParens ')' with 2+ exprs — tuple literal
   case Tuple(elems: List[ScalaTree])
+
+  // Spec: Def preceded by one or more Modifiers (private / final / etc.)
+  case Modified(mods: List[String], inner: ScalaTree)
 
   // Spec: BlockExpr ::= '{' CaseClauses '}' — partial function literal
   case PartialFun(cases: List[MatchCase])

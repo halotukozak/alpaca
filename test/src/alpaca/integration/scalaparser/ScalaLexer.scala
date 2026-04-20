@@ -33,6 +33,16 @@ val ScalaLexer = lexer:
   case "while\\b" => Token["while"]
   case "throw\\b" => Token["throw"]
   case "return\\b" => Token["return"]
+  // Modifiers (Scala 3 spec: LocalModifier / AccessModifier / Modifier)
+  case "private\\b" => Token["private"]
+  case "protected\\b" => Token["protected"]
+  case "final\\b" => Token["final"]
+  case "sealed\\b" => Token["sealed"]
+  case "abstract\\b" => Token["abstract"]
+  case "override\\b" => Token["override"]
+  case "lazy\\b" => Token["lazy"]
+  case "implicit\\b" => Token["implicit"]
+
   case "true\\b" => Token["true"]
   case "false\\b" => Token["false"]
   case "null\\b" => Token["null"]

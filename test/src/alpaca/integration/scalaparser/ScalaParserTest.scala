@@ -1146,3 +1146,113 @@ final class ScalaParserTest extends AnyFunSuite:
       ),
     )
   }
+
+  // ===========================================================
+  // Modifiers (Scala 3 spec: Modifier — private/protected/final/sealed/
+  // abstract/override/lazy/implicit)
+  // ===========================================================
+
+  test("private val") {
+    assert(
+      parse("{ private val x = 1; x }") == Block(
+        List(Modified(List("private"), ValDef("x", None, IntLit(1)))),
+        Ident("x"),
+      ),
+    )
+  }
+
+  test("lazy val") {
+    assert(
+      parse("{ lazy val xs = expensive(); xs }") == Block(
+        List(Modified(List("lazy"), ValDef("xs", None, Apply(Ident("expensive"), Nil)))),
+        Ident("xs"),
+      ),
+    )
+  }
+
+  test("final override def") {
+    assert(
+      parse("{ final override def toString(): String = name; 0 }") == Block(
+        List(
+          Modified(
+            List("final", "override"),
+            DefDef("toString", Nil, Nil, TypeRef("String"), Ident("name")),
+          ),
+        ),
+        IntLit(0),
+      ),
+    )
+  }
+
+  test("sealed abstract class") {
+    assert(
+      parse("{ sealed abstract class Tree {}; null }") == Block(
+        List(
+          Modified(
+            List("sealed", "abstract"),
+            ClassDef(false, "Tree", Nil, Nil, Nil, UnitBlock),
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("private final case class") {
+    assert(
+      parse("{ private final case class Nil(x: Int) {}; null }") == Block(
+        List(
+          Modified(
+            List("private", "final"),
+            ClassDef(
+              true,
+              "Nil",
+              Nil,
+              List(Param("x", TypeRef("Int"), None)),
+              Nil,
+              UnitBlock,
+            ),
+          ),
+        ),
+        NullLit,
+      ),
+    )
+  }
+
+  test("implicit def") {
+    assert(
+      parse("{ implicit def intToStr(x: Int): String = s; 0 }") == Block(
+        List(
+          Modified(
+            List("implicit"),
+            DefDef(
+              "intToStr",
+              Nil,
+              List(Param("x", TypeRef("Int"), None)),
+              TypeRef("String"),
+              Ident("s"),
+            ),
+          ),
+        ),
+        IntLit(0),
+      ),
+    )
+  }
+
+  test("protected trait") {
+    assert(
+      parse("{ protected trait Showable {}; null }") == Block(
+        List(Modified(List("protected"), TraitDef("Showable", UnitBlock))),
+        NullLit,
+      ),
+    )
+  }
+
+  test("private case object") {
+    assert(
+      parse("{ private case object Empty {}; null }") == Block(
+        List(Modified(List("private"), ObjectDef(true, "Empty", Nil, UnitBlock))),
+        NullLit,
+      ),
+    )
+  }

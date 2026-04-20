@@ -146,7 +146,44 @@ object ScalaParser extends Parser:
     { case (ClassDef(c), ScalaLexer.`;`(_)) => c },
     { case (ObjectDef(o), ScalaLexer.`;`(_)) => o },
     { case (TraitDef(t), ScalaLexer.`;`(_)) => t },
+    { case (ModifiedDef(m), ScalaLexer.`;`(_)) => m },
     { case (Expr(e), ScalaLexer.`;`(_)) => e },
+  )
+
+  // =========================================================
+  // Modifiers (Scala 3 spec: Modifier — simplified; no access qualifiers
+  // like `private[this]`, no `inline`, no `transparent`, no annotations).
+  //
+  //   Modifier  ::= 'private' | 'protected' | 'final' | 'sealed'
+  //              |  'abstract' | 'override' | 'lazy' | 'implicit'
+  //   Modifiers ::= Modifier {Modifier}                    (non-empty)
+  //   ModifiedDef ::= Modifiers (ValDef | VarDef | DefDef
+  //                            | ClassDef | ObjectDef | TraitDef)
+  // =========================================================
+
+  val Modifier: Rule[String] = rule(
+    { case ScalaLexer.`private`(_) => "private" },
+    { case ScalaLexer.`protected`(_) => "protected" },
+    { case ScalaLexer.`final`(_) => "final" },
+    { case ScalaLexer.`sealed`(_) => "sealed" },
+    { case ScalaLexer.`abstract`(_) => "abstract" },
+    { case ScalaLexer.`override`(_) => "override" },
+    { case ScalaLexer.`lazy`(_) => "lazy" },
+    { case ScalaLexer.`implicit`(_) => "implicit" },
+  )
+
+  val Modifiers: Rule[List[String]] = rule(
+    { case Modifier(m) => List(m) },
+    { case (Modifiers(ms), Modifier(m)) => ms :+ m },
+  )
+
+  val ModifiedDef: Rule[ScalaTree] = rule(
+    { case (Modifiers(ms), ValDef(v)) => ScalaTree.Modified(ms, v) },
+    { case (Modifiers(ms), VarDef(v)) => ScalaTree.Modified(ms, v) },
+    { case (Modifiers(ms), DefDef(d)) => ScalaTree.Modified(ms, d) },
+    { case (Modifiers(ms), ClassDef(c)) => ScalaTree.Modified(ms, c) },
+    { case (Modifiers(ms), ObjectDef(o)) => ScalaTree.Modified(ms, o) },
+    { case (Modifiers(ms), TraitDef(t)) => ScalaTree.Modified(ms, t) },
   )
 
   /**
