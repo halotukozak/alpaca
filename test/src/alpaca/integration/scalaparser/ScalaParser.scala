@@ -46,6 +46,7 @@ object ScalaParser extends Parser:
     "or" { case (Expr(l), ScalaLexer.or(_), Expr(r)) => ScalaTree.Infix(l, "||", r) },
 
     // ---- PrefixExpr: unary operators ----
+    "uplus" { case (ScalaLexer.`\\+`(_), Expr(e)) => ScalaTree.Prefix("+", e) },
     "uminus" { case (ScalaLexer.`-`(_), Expr(e)) => ScalaTree.Prefix("-", e) },
     "unot" { case (ScalaLexer.`!`(_), Expr(e)) => ScalaTree.Prefix("!", e) },
 
@@ -119,6 +120,7 @@ object ScalaParser extends Parser:
     { case ScalaLexer.`null`(_) => ScalaTree.NullLit },
     { case ScalaLexer.charLit(c) => ScalaTree.CharLit(c.value) },
     { case ScalaLexer.stringLit(s) => ScalaTree.StringLit(s.value) },
+    { case ScalaLexer.interpStr(s) => ScalaTree.InterpolatedStr(s.value) },
 
     // ---- SimpleRef: identifier ----
     { case ScalaLexer.id(n) => ScalaTree.Ident(n.value) },
@@ -747,11 +749,19 @@ object ScalaParser extends Parser:
     production.gte.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
     production.and.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
     production.or.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
+    production.uplus.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
     production.uminus.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
     production.unot.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
     production.ifelse.after(ScalaLexer.`\\.`, ScalaLexer.`\\(`),
 
-    // Unary '-' and '!' bind tighter than binary operators
+    // Unary '+' / '-' / '!' bind tighter than binary operators
+    production.uplus.before(ScalaLexer.`\\*`, ScalaLexer.`/`, ScalaLexer.`%`),
+    production.uplus.before(ScalaLexer.`\\+`, ScalaLexer.`-`),
+    production.uplus.before(ScalaLexer.`<`, ScalaLexer.`>`, ScalaLexer.lte, ScalaLexer.gte),
+    production.uplus.before(ScalaLexer.eqeq, ScalaLexer.neq),
+    production.uplus.before(ScalaLexer.and),
+    production.uplus.before(ScalaLexer.or),
+
     production.uminus.before(ScalaLexer.`\\*`, ScalaLexer.`/`, ScalaLexer.`%`),
     production.uminus.before(ScalaLexer.`\\+`, ScalaLexer.`-`),
     production.uminus.before(ScalaLexer.`<`, ScalaLexer.`>`, ScalaLexer.lte, ScalaLexer.gte),

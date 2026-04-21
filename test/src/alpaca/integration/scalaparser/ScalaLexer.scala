@@ -76,6 +76,11 @@ val ScalaLexer = lexer:
   // as the 2-char String "\\n" — the caller post-processes if it cares.
   case x @ """'(\\.|[^'])'""" => Token["charLit"](x.slice(1, x.length - 1))
 
+  // Interpolated string literals: s"..." / f"..." / raw"..."
+  // The prefix identifier and the raw contents are kept verbatim; `$var` /
+  // `${expr}` splices are NOT re-lexed — consumer decides.
+  case x @ """(s|f|raw)"(\\.|[^"])*"""" => Token["interpStr"](x)
+
   // String literals (basic, supports backslash-escape sequences)
   case x @ """"(\\.|[^"])*"""" => Token["stringLit"](x.slice(1, x.length - 1))
 

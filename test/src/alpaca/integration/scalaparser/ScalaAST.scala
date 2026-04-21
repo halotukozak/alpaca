@@ -12,7 +12,8 @@ package integration.scalaparser
  * Productions covered (EBNF taken verbatim from spec; simplifications noted):
  *
  *   Literal       ::= integerLiteral | floatingPointLiteral
- *                   | booleanLiteral | characterLiteral | stringLiteral | 'null'
+ *                   | booleanLiteral | characterLiteral | stringLiteral
+ *                   | interpolatedStringLiteral | 'null'
  *   SimpleRef     ::= id
  *   SimpleExpr    ::= SimpleRef | Literal | BlockExpr | '(' Expr ')'
  *                   | SimpleExpr '.' id           (Select)
@@ -83,6 +84,10 @@ enum ScalaTree:
   case BoolLit(value: Boolean)
   case CharLit(value: String) // raw body between quotes; escapes un-decoded
   case StringLit(value: String)
+  // Spec: Literal ::= interpolatedStringLiteral — `s"..."` / `f"..."` / `raw"..."`.
+  // `raw` is the whole matched lexeme (including prefix + quotes); splices
+  // are NOT parsed.
+  case InterpolatedStr(raw: String)
   case NullLit
 
   // Simple references (Scala 3 spec: SimpleRef)

@@ -1307,3 +1307,49 @@ final class ScalaParserTest extends AnyFunSuite:
       ),
     )
   }
+
+  // ===========================================================
+  // Interpolated string literals (Scala 3 spec: interpolatedStringLiteral)
+  //
+  // Lexer keeps the whole lexeme (prefix + quotes + body) verbatim;
+  // `$var` / `${expr}` splices are NOT re-lexed.
+  // ===========================================================
+
+  test("s-interpolated string") {
+    assert(parse("""s"hello"""") == InterpolatedStr("""s"hello""""))
+  }
+
+  test("f-interpolated string") {
+    assert(parse("""f"pi = $pi"""") == InterpolatedStr("""f"pi = $pi""""))
+  }
+
+  test("raw-interpolated string") {
+    assert(parse("""raw"c:\path"""") == InterpolatedStr("""raw"c:\path""""))
+  }
+
+  test("interpolated string as val rhs") {
+    assert(
+      parse("""{ val greeting = s"hi $name"; greeting }""") == Block(
+        List(ValDef("greeting", None, InterpolatedStr("""s"hi $name""""))),
+        Ident("greeting"),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Unary plus (Scala 3 spec: PrefixOperator ::= '-' | '+' | '~' | '!')
+  // ===========================================================
+
+  test("unary plus") {
+    assert(parse("+x") == Prefix("+", Ident("x")))
+  }
+
+  test("unary plus binds tighter than addition") {
+    // +x + y  ==  (+x) + y
+    assert(parse("+x + y") == Infix(Prefix("+", Ident("x")), "+", Ident("y")))
+  }
+
+  test("unary plus binds tighter than multiplication") {
+    // +a * b  ==  (+a) * b
+    assert(parse("+a * b") == Infix(Prefix("+", Ident("a")), "*", Ident("b")))
+  }
