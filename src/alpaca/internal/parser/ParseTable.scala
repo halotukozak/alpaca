@@ -188,36 +188,19 @@ private[parser] object ParseTable:
       def rowExpr(row: Row): Expr[Row] =
         if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
         else
-          val sym = Symbol.newVal(
-            Symbol.spliceOwner,
-            Symbol.freshName("rowBuilder"),
-            TypeRepr.of[RowBuilder],
-            Flags.Synthetic,
-            Symbol.noSymbol,
-          )
-          val valDef = ValDef(sym, Some('{ Map.newBuilder: RowBuilder }.asTerm))
-          val builder = Ref(sym).asExprOf[RowBuilder]
+          ValDef
+            .let(Symbol.spliceOwner, "rowBuilder", '{ Map.newBuilder: RowBuilder }.asTerm): ref =>
+              val builder = ref.asExprOf[RowBuilder]
+              val additions = row.toList.map: entry =>
+                wrapped('{ $builder += ${ Expr(entry) } }).asTerm
+              Block(additions, '{ $builder.result() }.asTerm)
+            .asExprOf[Row]
 
-          val additions = row.map: entry =>
-            wrapped('{ $builder += ${ Expr(entry) } }).asTerm
-
-          Block(valDef :: additions.toList, '{ $builder.result() }.asTerm).asExprOf[Row]
-
-      val tableSym = Symbol.newVal(
-        Symbol.spliceOwner,
-        Symbol.freshName("parseTable"),
-        TypeRepr.of[Array[Row]],
-        Flags.Synthetic,
-        Symbol.noSymbol,
-      )
-      val tableValDef = ValDef(
-        tableSym,
-        Some('{ new Array[Row](${ Expr(entries.length) }) }.asTerm),
-      )
-      val tableRef = Ref(tableSym).asExprOf[Array[Row]]
-
-      val rowAssignments = entries.iterator.zipWithIndex.map: (row, i) =>
-        wrapped('{ $tableRef(${ Expr(i) }) = ${ rowExpr(row) } }).asTerm
-
-      Block(tableValDef :: rowAssignments.toList, '{ $tableRef.asInstanceOf[ParseTable] }.asTerm).asExprOf[ParseTable]
+      ValDef
+        .let(Symbol.spliceOwner, "parseTable", '{ new Array[Row](${ Expr(entries.length) }) }.asTerm): ref =>
+          val tableRef = ref.asExprOf[Array[Row]]
+          val rowAssignments = entries.iterator.zipWithIndex.map: (row, i) =>
+            wrapped('{ $tableRef(${ Expr(i) }) = ${ rowExpr(row) } }).asTerm
+          Block(rowAssignments.toList, '{ $tableRef.asInstanceOf[ParseTable] }.asTerm)
+        .asExprOf[ParseTable]
 // $COVERAGE-ON$
