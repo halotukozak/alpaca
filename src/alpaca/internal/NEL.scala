@@ -2,11 +2,12 @@ package alpaca
 package internal
 
 /**
- * An opaque type representing a non-empty list.
+ * An opaque type representing a non-empty sequence.
  *
- * This is a type-safe wrapper around List that guarantees at compile time
- * that the list contains at least one element. It is a subtype of List[A]
- * so it can be used wherever a List is expected.
+ * Backed by [[Vector]] and exposed as a subtype of [[Seq]], with a
+ * compile-time guarantee that it contains at least one element. Vector
+ * gives O(1) `size` and effectively O(1) indexed access, which matters
+ * on LR hot paths (`Item.isLastItem`, reduction dispatch, `nextSymbol`).
  *
  * @tparam A the element type
  */
@@ -34,14 +35,14 @@ private[alpaca] object NEL:
   def unapply[A](list: NEL[A]): (A, Seq[A]) = (list.head, list.tail)
 
   /**
-   * Unsafely converts a List to a NEL.
+   * Unsafely converts a [[Seq]] to a NEL.
    *
-   * This method performs a runtime check to ensure the list is non-empty.
+   * This method performs a runtime check to ensure the sequence is non-empty.
    * Use with caution as it can throw an exception.
    *
-   * @param list the list to convert
-   * @return the list as a NEL
-   * @throws IllegalArgumentException if the list is empty
+   * @param list the sequence to convert
+   * @return the sequence as a NEL
+   * @throws IllegalArgumentException if the sequence is empty
    */
   private[internal] def unsafe[A](list: Seq[A]): NEL[A] =
     if list.isEmpty then throw IllegalArgumentException("Empty list cannot be converted to NEL")
@@ -50,5 +51,5 @@ private[alpaca] object NEL:
   // $COVERAGE-OFF$
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
     def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
-      '{ NEL(${ Expr(x.head) }, ${ ToExpr.SeqToExpr(x.tail) } *) }
+      '{ NEL(${ Expr(x.head) }, ${ ToExpr.SeqToExpr(x.tail) }*) }
 // $COVERAGE-ON$
