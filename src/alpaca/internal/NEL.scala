@@ -10,7 +10,7 @@ package internal
  *
  * @tparam A the element type
  */
-opaque private[alpaca] type NEL[+A] <: List[A] = List[A]
+opaque private[alpaca] type NEL[+A] <: Seq[A] = Vector[A]
 
 private[alpaca] object NEL:
 
@@ -21,7 +21,7 @@ private[alpaca] object NEL:
    * @param tail additional elements (optional)
    * @return a new NEL
    */
-  inline def apply[A](inline head: A, inline tail: A*): NEL[A] = head :: tail.toList
+  inline def apply[A](inline head: A, inline tail: A*): NEL[A] = head +: tail.toVector
 
   /**
    * Pattern matching extractor for NEL.
@@ -31,7 +31,7 @@ private[alpaca] object NEL:
    * @param list the list to deconstruct
    * @return (head, tail)
    */
-  def unapply[A](list: NEL[A]): (A, List[A]) = (list.head, list.tail)
+  def unapply[A](list: NEL[A]): (A, Seq[A]) = (list.head, list.tail)
 
   /**
    * Unsafely converts a List to a NEL.
@@ -43,12 +43,12 @@ private[alpaca] object NEL:
    * @return the list as a NEL
    * @throws IllegalArgumentException if the list is empty
    */
-  private[internal] def unsafe[A](list: List[A]): NEL[A] =
+  private[internal] def unsafe[A](list: Seq[A]): NEL[A] =
     if list.isEmpty then throw IllegalArgumentException("Empty list cannot be converted to NEL")
-    list
+    list.toVector
 
   // $COVERAGE-OFF$
   private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
     def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
-      '{ NEL(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
+      '{ NEL(${ Expr(x.head) }, ${ ToExpr.SeqToExpr(x.tail) } *) }
 // $COVERAGE-ON$
