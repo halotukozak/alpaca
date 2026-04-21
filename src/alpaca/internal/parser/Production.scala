@@ -20,6 +20,15 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   val name: ValidName | Null
 
   /**
+   * Cached length of `rhs`. `NEL` is a `List`, so `rhs.size` is O(n); this
+   * memoises the result per production and is the value to query on LR hot
+   * paths (`Item.isLastItem`, reduction dispatch).
+   */
+  lazy val rhsSize: Int = rhs match
+    case list: List[?] => list.size
+    case _ => 0
+
+  /**
    * Converts this production to an LR(0) item with a given lookahead.
    *
    * @param lookAhead the lookahead terminal (defaults to EOF)

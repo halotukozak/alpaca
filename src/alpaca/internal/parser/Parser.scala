@@ -114,7 +114,7 @@ abstract class Parser[Ctx <: ParserCtx](
           loop(pos + 1)
 
         case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
-          val n = rhs.size
+          val n = prod.rhsSize
           val newStateIdx = stateStack(stateStack.size - 1 - n)
 
           if lhs == Symbol.Start && newStateIdx == 0 then nodeStack.last

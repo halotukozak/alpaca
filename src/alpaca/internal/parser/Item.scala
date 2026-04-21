@@ -39,7 +39,7 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
 
   /** Whether the dot is at the end of the production. */
   val isLastItem: Boolean = production match
-    case Production.NonEmpty(_, rhs, name) => rhs.sizeIs == dotPosition
+    case _: Production.NonEmpty => production.rhsSize == dotPosition
     case _: Production.Empty => true
 
   /**
