@@ -98,20 +98,20 @@ abstract class Parser[Ctx <: ParserCtx](
         case Node.Token(lexeme) => lexeme
 
     val ctx = empty()
-    val input = lexemes.toVector :+ Lexeme.EOF
 
     val stateStack = mutable.ArrayDeque.empty[Int]
     val nodeStack = mutable.ArrayDeque.empty[Node]
     stateStack += 0
     nodeStack += Node.Result(null)
 
-    @tailrec def loop(pos: Int): Node =
-      val nextSymbol = Terminal(input(pos).name)
+    @tailrec def loop(remaining: List[Lexeme[?, ?]]): Node =
+      val current = if remaining.isEmpty then Lexeme.EOF else remaining.head
+      val nextSymbol = Terminal(current.name)
       tables.parseTable(stateStack.last, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
           stateStack += gotoState
-          nodeStack += Node.Token(input(pos))
-          loop(pos + 1)
+          nodeStack += Node.Token(current)
+          loop(if remaining.isEmpty then Nil else remaining.tail)
 
         case ParseAction.Reduction(prod@Production.NonEmpty(lhs, rhs, name)) =>
           val n = rhs.size
@@ -128,7 +128,7 @@ abstract class Parser[Ctx <: ParserCtx](
             val result = tables.actionTable(prod)(ctx, RevertedArray(children))
             stateStack += gotoState
             nodeStack += Node.Result(result)
-            loop(pos)
+            loop(remaining)
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stateStack.last == 0 =>
           nodeStack.last
@@ -138,9 +138,9 @@ abstract class Parser[Ctx <: ParserCtx](
           val result = tables.actionTable(prod)(ctx, RevertedArray.empty)
           stateStack += gotoState
           nodeStack += Node.Result(result)
-          loop(pos)
+          loop(remaining)
 
-    val result = loop(pos = 0) match
+    val result = loop(lexemes) match
       case Node.Result(value) => value.asInstanceOf[R]
       case Node.Token(lexeme) => null
 
