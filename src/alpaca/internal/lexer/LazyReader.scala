@@ -53,7 +53,14 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
    */
   def subSequence(start: Int, end: Int): CharSequence =
     ensure(end - 1 + offset)
-    buffer.slice(start + offset, end + offset).mkString
+    val len = end - start
+    val out = new Array[Char](len)
+    val base = start + offset
+    var i = 0
+    while i < len do
+      out(i) = buffer(base + i)
+      i += 1
+    new String(out)
 
   /**
    * Skips the first count characters.
