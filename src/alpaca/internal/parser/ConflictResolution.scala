@@ -61,16 +61,18 @@ private[parser] object ConflictResolutionTable:
 
       def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
         val to = second.toConflictKey
-        @tailrec
-        def loop(queue: List[ConflictKey], visited: Set[ConflictKey]): Option[ParseAction] = queue match
-          case Nil => None
-          case `to` :: _ => Some(first)
-          case head :: tail =>
-            val current = table.getOrElse(head, Set.empty)
-            val neighbors = current.diff(visited)
-            loop(tail ++ neighbors, visited + head)
+        val queue = mutable.ArrayDeque[ConflictKey](first.toConflictKey)
 
-        loop(List(first.toConflictKey), Set())
+        @tailrec
+        def loop(visited: Set[ConflictKey]): Option[ParseAction] = queue.removeHeadOption() match
+          case None => None
+          case Some(`to`) => Some(first)
+          case Some(head) if visited contains head => loop(visited)
+          case Some(head) =>
+            table.get(head).foreach(queue.appendAll)
+            loop(visited + head)
+
+        loop(Set.empty)
 
       winsOver(first, second) orElse winsOver(second, first)
 
