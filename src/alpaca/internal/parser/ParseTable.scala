@@ -11,10 +11,11 @@ import scala.collection.mutable
 /**
  * An opaque type representing the LR parse table.
  *
- * The parse table maps from (state, symbol) pairs to parse actions.
- * This table is generated at compile time from the grammar.
+ * The parse table is a nested map: state -> symbol -> action. This avoids
+ * allocating a tuple key on every lookup and keeps the hash of the hot
+ * `parseTable(state, symbol)` call to a single symbol hash.
  */
-opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
+opaque private[parser] type ParseTable = Map[Int, Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
   extension (table: ParseTable)
@@ -27,16 +28,16 @@ private[parser] object ParseTable:
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
     def apply(state: Int, symbol: Symbol): ParseAction =
-      try table((state, symbol))
-      catch
-        case _: NoSuchElementException =>
-          val expected = table.keysIterator
-            .collect:
-              case (`state`, sym) => sym.name
-            .to(SortedSet)
-            .mkString(", ")
-
+      val row = table.getOrElse(state, Map.empty)
+      row.getOrElse(
+        symbol, {
+          val expected = row.keysIterator.map(_.name).to(SortedSet).mkString(", ")
           throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
+        },
+      )
+
+    private def allSymbols: List[Symbol] =
+      table.valuesIterator.flatMap(_.keysIterator).distinct.toList
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -48,11 +49,13 @@ private[parser] object ParseTable:
      */
     // it shouldn't be eager
     def toCsv(using Log): Csv =
-      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-      val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
+      val symbols = table.allSymbols
+      val states = table.keysIterator.toList.sorted
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val rows = states.map: i =>
+        val row = table(i)
+        show"$i" :: symbols.map(s => row.get(s).fold[Shown]("")(_.show))
 
       Csv(headers, rows)
 
@@ -81,16 +84,20 @@ private[parser] object ParseTable:
     )
     val states = mutable.ArrayBuffer(initialState)
     val stateIndex = mutable.HashMap(initialState -> 0)
-    val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
+    val table = mutable.HashMap.empty[Int, mutable.HashMap[Symbol, ParseAction]]
+
+    def rowFor(stateId: Int): mutable.HashMap[Symbol, ParseAction] =
+      table.getOrElseUpdate(stateId, mutable.HashMap.empty)
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
-      table.get((currStateId, symbol)) match
-        case None => table.update((currStateId, symbol), action)
+      val row = rowFor(currStateId)
+      row.get(symbol) match
+        case None => row.update(symbol, action)
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
               logger.trace(show"Conflict resolved: $action")
-              table.update((currStateId, symbol), action)
+              row.update(symbol, action)
             case None =>
               val path = toPath(currStateId, List(symbol))
               (existingAction, action) match
@@ -102,10 +109,11 @@ private[parser] object ParseTable:
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val (sourceStateId, symbol) = table
-          .collectFirst:
-            case (key, Shift(`stateId`)) => key
-          .get
+        val (sourceStateId, symbol) = table.iterator
+          .flatMap { case (srcId, row) =>
+            row.collectFirst { case (sym, Shift(`stateId`)) => (srcId, sym) }
+          }
+          .next()
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
@@ -113,6 +121,7 @@ private[parser] object ParseTable:
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
+      rowFor(currStateId) // ensure row exists even for states with no entries
       logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
@@ -131,11 +140,11 @@ private[parser] object ParseTable:
 
       currStateId += 1
 
-    table.toMap
+    table.iterator.map { case (i, row) => (i, row.toMap) }.toMap
 
   given Showable[ParseTable] = Showable: table =>
-    val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-    val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
+    val symbols = table.allSymbols
+    val states = table.keysIterator.toList.sorted
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
@@ -153,11 +162,12 @@ private[parser] object ParseTable:
       result.append("|")
 
     for i <- states do
+      val row = table(i)
       result.append('\n')
       result.append(centerText(i.toString))
       result.append("|")
       for s <- symbols do
-        result.append(centerText(table.get((i, s)).fold("")(_.show)))
+        result.append(centerText(row.get(s).fold("")(_.show)))
         result.append("|")
     result.append('\n')
     result.result()
@@ -167,32 +177,52 @@ private[parser] object ParseTable:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
 
-      type BuilderTpe = mutable.Builder[
-        ((state: Int, stepSymbol: parser.Symbol), ParseAction),
-        Map[(state: Int, stepSymbol: parser.Symbol), ParseAction],
+      type RowBuilderTpe = mutable.Builder[(parser.Symbol, ParseAction), Map[parser.Symbol, ParseAction]]
+      type OuterBuilderTpe = mutable.Builder[
+        (Int, Map[parser.Symbol, ParseAction]),
+        Map[Int, Map[parser.Symbol, ParseAction]],
       ]
 
-      val symbol = Symbol.newVal(
+      def rowExpr(row: Map[parser.Symbol, ParseAction]): Expr[Map[parser.Symbol, ParseAction]] =
+        if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
+        else
+          val rowSym = Symbol.newVal(
+            Symbol.spliceOwner,
+            Symbol.freshName("rowBuilder"),
+            TypeRepr.of[RowBuilderTpe],
+            Flags.Synthetic,
+            Symbol.noSymbol,
+          )
+          val rowValDef = ValDef(rowSym, Some('{ Map.newBuilder: RowBuilderTpe }.asTerm))
+          val rowBuilder = Ref(rowSym).asExprOf[RowBuilderTpe]
+
+          val additions = row.toList.map: entry =>
+            '{
+              def avoidTooLargeMethod(): Unit = $rowBuilder += ${ Expr(entry) }
+              avoidTooLargeMethod()
+            }.asTerm
+
+          Block(rowValDef :: additions, '{ $rowBuilder.result() }.asTerm)
+            .asExprOf[Map[parser.Symbol, ParseAction]]
+
+      val outerSym = Symbol.newVal(
         Symbol.spliceOwner,
-        Symbol.freshName("builder"),
-        TypeRepr.of[BuilderTpe],
+        Symbol.freshName("tableBuilder"),
+        TypeRepr.of[OuterBuilderTpe],
         Flags.Synthetic,
         Symbol.noSymbol,
       )
+      val outerValDef = ValDef(outerSym, Some('{ Map.newBuilder: OuterBuilderTpe }.asTerm))
+      val outerBuilder = Ref(outerSym).asExprOf[OuterBuilderTpe]
 
-      val valDef = ValDef(symbol, Some('{ Map.newBuilder: BuilderTpe }.asTerm))
+      val rowAdditions = entries.toList.map: (stateId, row) =>
+        '{
+          def avoidTooLargeMethod(): Unit =
+            $outerBuilder += ((${ Expr(stateId) }, ${ rowExpr(row) }))
+          avoidTooLargeMethod()
+        }.asTerm
 
-      val builder = Ref(symbol).asExprOf[BuilderTpe]
+      val result = '{ $outerBuilder.result() }.asTerm
 
-      val additions = entries
-        .map: entry =>
-          '{
-            def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
-            avoidTooLargeMethod()
-          }.asTerm
-        .toList
-
-      val result = '{ $builder.result() }.asTerm
-
-      Block(valDef :: additions, result).asExprOf[ParseTable]
+      Block(outerValDef :: rowAdditions, result).asExprOf[ParseTable]
 // $COVERAGE-ON$
