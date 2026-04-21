@@ -56,7 +56,7 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
     val len = end - start
     require(len >= 0, s"Invalid subsequence range: start=$start, end=$end")
     val base = start + offset
-    val out = Array.tabulate(len)(i => buffer(base + i))
+    val out = Array.better.tabulate(len)(i => buffer(base + i))
     new String(out)
 
   /**

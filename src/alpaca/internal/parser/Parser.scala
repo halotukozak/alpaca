@@ -120,7 +120,7 @@ abstract class Parser[Ctx <: ParserCtx](
           if lhs == Symbol.Start && newStateIdx == 0 then nodeStack.last
           else
             val top = nodeStack.size - 1
-            val children = Array.tabulate(n)(i => nodeStack(top - i).get)
+            val children = Array.better.tabulate(n)(i => nodeStack(top - i).get)
             stateStack.dropRightInPlace(n)
             nodeStack.dropRightInPlace(n)
 
