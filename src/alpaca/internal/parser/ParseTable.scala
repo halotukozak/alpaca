@@ -175,32 +175,18 @@ private[parser] object ParseTable:
   // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
-      import quotes.reflect.*
-
       type Row = Map[parser.Symbol, ParseAction]
       type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Row]
 
-      def wrapped(body: Expr[Unit]): Expr[Unit] = '{
-        def avoidTooLargeMethod(): Unit = $body
-        avoidTooLargeMethod()
-      }
+      def rowExpr(row: Row): Expr[Row] = avoidToLargeMethod[(parser.Symbol, ParseAction), Row, RowBuilder](
+        builder = '{ Map.newBuilder },
+        elements = row.map(Expr(_)),
+        empty = '{ Map.empty },
+      )
 
-      def rowExpr(row: Row): Expr[Row] =
-        if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
-        else
-          ValDef
-            .let(Symbol.spliceOwner, "rowBuilder", '{ Map.newBuilder: RowBuilder }.asTerm): ref =>
-              val builder = ref.asExprOf[RowBuilder]
-              val additions = row.toList.map: entry =>
-                wrapped('{ $builder += ${ Expr(entry) } }).asTerm
-              Block(additions, '{ $builder.result() }.asTerm)
-            .asExprOf[Row]
-
-      ValDef
-        .let(Symbol.spliceOwner, "parseTable", '{ new Array[Row](${ Expr(entries.length) }) }.asTerm): ref =>
-          val tableRef = ref.asExprOf[Array[Row]]
-          val rowAssignments = entries.iterator.zipWithIndex.map: (row, i) =>
-            wrapped('{ $tableRef(${ Expr(i) }) = ${ rowExpr(row) } }).asTerm
-          Block(rowAssignments.toList, '{ $tableRef.asInstanceOf[ParseTable] }.asTerm)
-        .asExprOf[ParseTable]
+      avoidToLargeMethod[Row, Array[Row], mutable.ArrayBuilder[Row]](
+        builder = '{ mutable.ArrayBuilder.ofRef[Row].tap(_.sizeHint(${ Expr(entries.length) })) },
+        elements = entries.map(rowExpr),
+        empty = '{ Array.empty },
+      )
 // $COVERAGE-ON$
