@@ -1256,3 +1256,54 @@ final class ScalaParserTest extends AnyFunSuite:
       ),
     )
   }
+
+  // ===========================================================
+  // Character literals (Scala 3 spec: Literal — characterLiteral)
+  // ===========================================================
+
+  test("char literal") {
+    assert(parse("'a'") == CharLit("a"))
+  }
+
+  test("char literal digit") {
+    assert(parse("'7'") == CharLit("7"))
+  }
+
+  test("char literal escape (stored raw)") {
+    // Lexer keeps escape sequences verbatim — consumer decodes if needed
+    assert(parse("'\\n'") == CharLit("\\n"))
+  }
+
+  test("char literal as pattern") {
+    assert(
+      parse("{ case 'y' => 1 case _ => 0 }") == PartialFun(
+        List(
+          MatchCase(LitPat(CharLit("y")), None, IntLit(1)),
+          MatchCase(Wildcard, None, IntLit(0)),
+        ),
+      ),
+    )
+  }
+
+  // ===========================================================
+  // Import statements (Scala 3 spec: Import — simplified to dotted path)
+  // ===========================================================
+
+  test("simple import") {
+    assert(parse("{ import foo; null }") == Block(List(Import(List("foo"))), NullLit))
+  }
+
+  test("dotted import path") {
+    assert(
+      parse("{ import foo.bar.baz; null }") == Block(List(Import(List("foo", "bar", "baz"))), NullLit),
+    )
+  }
+
+  test("import before definitions") {
+    assert(
+      parse("{ import scala.collection; val x = 1; x }") == Block(
+        List(Import(List("scala", "collection")), ValDef("x", None, IntLit(1))),
+        Ident("x"),
+      ),
+    )
+  }

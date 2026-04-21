@@ -33,6 +33,7 @@ val ScalaLexer = lexer:
   case "while\\b" => Token["while"]
   case "throw\\b" => Token["throw"]
   case "return\\b" => Token["return"]
+  case "import\\b" => Token["import"]
   // Modifiers (Scala 3 spec: LocalModifier / AccessModifier / Modifier)
   case "private\\b" => Token["private"]
   case "protected\\b" => Token["protected"]
@@ -69,6 +70,11 @@ val ScalaLexer = lexer:
 
   // Integer literals
   case x @ """\d+""" => Token["intLit"](x.toLong)
+
+  // Character literals — simplified: store the raw middle content as String.
+  // Single unescaped char: `'a'` => "a". Escape sequences like `'\n'` stored
+  // as the 2-char String "\\n" — the caller post-processes if it cares.
+  case x @ """'(\\.|[^'])'""" => Token["charLit"](x.slice(1, x.length - 1))
 
   // String literals (basic, supports backslash-escape sequences)
   case x @ """"(\\.|[^"])*"""" => Token["stringLit"](x.slice(1, x.length - 1))

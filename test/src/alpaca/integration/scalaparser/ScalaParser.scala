@@ -117,6 +117,7 @@ object ScalaParser extends Parser:
     { case ScalaLexer.`true`(_) => ScalaTree.BoolLit(true) },
     { case ScalaLexer.`false`(_) => ScalaTree.BoolLit(false) },
     { case ScalaLexer.`null`(_) => ScalaTree.NullLit },
+    { case ScalaLexer.charLit(c) => ScalaTree.CharLit(c.value) },
     { case ScalaLexer.stringLit(s) => ScalaTree.StringLit(s.value) },
 
     // ---- SimpleRef: identifier ----
@@ -147,7 +148,24 @@ object ScalaParser extends Parser:
     { case (ObjectDef(o), ScalaLexer.`;`(_)) => o },
     { case (TraitDef(t), ScalaLexer.`;`(_)) => t },
     { case (ModifiedDef(m), ScalaLexer.`;`(_)) => m },
+    { case (ImportDef(i), ScalaLexer.`;`(_)) => i },
     { case (Expr(e), ScalaLexer.`;`(_)) => e },
+  )
+
+  // =========================================================
+  // Import (Scala 3 spec: BlockStat ::= Import — simplified)
+  //
+  //   ImportDef ::= 'import' id {'.' id}
+  //
+  // No selectors: `import foo.{bar, baz}` and `import foo._` not supported.
+  // =========================================================
+
+  val ImportDef: Rule[ScalaTree] = rule:
+    case (ScalaLexer.`import`(_), ImportPath(p)) => ScalaTree.Import(p)
+
+  val ImportPath: Rule[List[String]] = rule(
+    { case ScalaLexer.id(n) => List(n.value) },
+    { case (ImportPath(p), ScalaLexer.`\\.`(_), ScalaLexer.id(n)) => p :+ n.value },
   )
 
   // =========================================================
@@ -685,6 +703,7 @@ object ScalaParser extends Parser:
     { case ScalaLexer.`true`(_) => ScalaPattern.LitPat(ScalaTree.BoolLit(true)) },
     { case ScalaLexer.`false`(_) => ScalaPattern.LitPat(ScalaTree.BoolLit(false)) },
     { case ScalaLexer.`null`(_) => ScalaPattern.LitPat(ScalaTree.NullLit) },
+    { case ScalaLexer.charLit(c) => ScalaPattern.LitPat(ScalaTree.CharLit(c.value)) },
     { case ScalaLexer.stringLit(s) => ScalaPattern.LitPat(ScalaTree.StringLit(s.value)) },
     "constrpat" { case (ScalaLexer.id(n), ScalaLexer.`\\(`(_), Patterns(ps), ScalaLexer.`\\)`(_)) =>
       ScalaPattern.ConstrPat(n.value, ps)

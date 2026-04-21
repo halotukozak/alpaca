@@ -12,7 +12,7 @@ package integration.scalaparser
  * Productions covered (EBNF taken verbatim from spec; simplifications noted):
  *
  *   Literal       ::= integerLiteral | floatingPointLiteral
- *                   | booleanLiteral | stringLiteral | 'null'
+ *                   | booleanLiteral | characterLiteral | stringLiteral | 'null'
  *   SimpleRef     ::= id
  *   SimpleExpr    ::= SimpleRef | Literal | BlockExpr | '(' Expr ')'
  *                   | SimpleExpr '.' id           (Select)
@@ -38,6 +38,7 @@ package integration.scalaparser
  *   Modifiers     ::= Modifier {Modifier}
  *   Modifier      ::= 'private' | 'protected' | 'final' | 'sealed'
  *                   | 'abstract' | 'override' | 'lazy' | 'implicit'
+ *   Import        ::= 'import' id {'.' id}                 (simple path; no selectors)
  *   While         ::= 'while' '(' Expr ')' Expr
  *   Throw         ::= 'throw' Expr
  *   Return        ::= 'return' Expr
@@ -80,6 +81,7 @@ enum ScalaTree:
   case IntLit(value: Long)
   case FloatLit(value: Double)
   case BoolLit(value: Boolean)
+  case CharLit(value: String) // raw body between quotes; escapes un-decoded
   case StringLit(value: String)
   case NullLit
 
@@ -128,6 +130,9 @@ enum ScalaTree:
 
   // Spec: Def preceded by one or more Modifiers (private / final / etc.)
   case Modified(mods: List[String], inner: ScalaTree)
+
+  // Spec: BlockStat ::= Import — simplified to a dotted path, no selectors
+  case Import(path: List[String])
 
   // Spec: BlockExpr ::= '{' CaseClauses '}' — partial function literal
   case PartialFun(cases: List[MatchCase])
