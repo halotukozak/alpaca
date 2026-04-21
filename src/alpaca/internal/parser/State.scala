@@ -71,5 +71,5 @@ private[parser] object State:
         .foldLeft(state + item): (acc, production) =>
           lookAheads.foldLeft(acc): (acc, lookAhead) =>
             val item = production.toItem(lookAhead)
-            if state.contains(item) then acc else fromItem(acc, item, productions, firstSet)
+            if acc.contains(item) then acc else fromItem(acc, item, productions, firstSet)
     else state + item
