@@ -85,7 +85,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * parse the input lexemes using an LR parsing algorithm.
    *
    * @tparam R the result type
-   * @param lexemes   the list of lexemes to parse
+   * @param lexemes the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
@@ -113,8 +113,8 @@ abstract class Parser[Ctx <: ParserCtx](
           nodeStack += Node.Token(input(pos))
           loop(pos + 1)
 
-        case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
-          val n = prod.rhsSize
+        case ParseAction.Reduction(prod@Production.NonEmpty(lhs, rhs, name)) =>
+          val n = prod.rhs.size
           val newStateIdx = stateStack(stateStack.size - 1 - n)
 
           if lhs == Symbol.Start && newStateIdx == 0 then nodeStack.last
@@ -133,7 +133,7 @@ abstract class Parser[Ctx <: ParserCtx](
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stateStack.last == 0 =>
           nodeStack.last
 
-        case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
+        case ParseAction.Reduction(prod@Production.Empty(lhs, name)) =>
           val ParseAction.Shift(gotoState) = tables.parseTable(stateStack.last, lhs).runtimeChecked
           val result = tables.actionTable(prod)(ctx, RevertedArray.empty)
           stateStack += gotoState
@@ -165,7 +165,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withLog:
           case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
         val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
-          case '{ rule(${ Varargs(cases) }*) } =>
+          case '{ rule(${ Varargs(cases) } *) } =>
             cases.flatMap:
               case '{ ($name: ValidName).apply($_ : ProductionDefinition[?]) } => name.value
               case _ => None
@@ -189,7 +189,7 @@ def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withLog:
     )
     .runtimeChecked match
     case ('[refinement], '[fields]) =>
-      '{ DummyProductionSelector.asInstanceOf[ProductionSelector { type Fields = fields } & refinement] }
+      '{ DummyProductionSelector.asInstanceOf[ProductionSelector {type Fields = fields} & refinement] }
 
 private object DummyProductionSelector extends ProductionSelector:
   override def selectDynamic(name: String): Any = dummy
