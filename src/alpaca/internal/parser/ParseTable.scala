@@ -7,6 +7,7 @@ import alpaca.internal.parser.ParseAction.*
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
+import scala.util.boundary, boundary.break
 
 /**
  * An opaque type representing the LR parse table.
@@ -19,8 +20,10 @@ import scala.collection.mutable
 opaque private[parser] type ParseTable = Array[Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
-  private[parser] def fromMap(m: Map[Int, Map[Symbol, ParseAction]]): ParseTable =
-    Array.tabulate(m.size)(i => m.getOrElse(i, Map.empty))
+  inline private[parser] def allocate(n: Int): Array[AnyRef] =
+    new Array[Map[Symbol, ParseAction]](n).asInstanceOf[Array[AnyRef]]
+
+  inline private[parser] def unsafeWrap(arr: Array[AnyRef]): ParseTable = arr.asInstanceOf[ParseTable]
 
   extension (table: ParseTable)
     /**
@@ -31,12 +34,11 @@ private[parser] object ParseTable:
      * @return the parse action to take
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
-    def apply(state: Int, symbol: Symbol): ParseAction = table(state).getOrElse(
-      symbol, {
+    def apply(state: Int, symbol: Symbol): ParseAction = table(state).get(symbol) match
+      case Some(action) => action
+      case None =>
         val expected = table(state).keysIterator.map(_.name).to(SortedSet).mkString(", ")
         throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
-      },
-    )
 
     private def allSymbols: List[Symbol] =
       table.iterator.flatMap(_.keysIterator).distinct.toList
@@ -54,9 +56,11 @@ private[parser] object ParseTable:
       val symbols = table.allSymbols
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = table.indices.toList.map: i =>
-        val row = table(i)
-        show"$i" :: symbols.map(s => row.get(s).fold[Shown]("")(_.show))
+      val rows = table.indices
+        .map: i =>
+          val row = table(i)
+          show"$i" :: symbols.map(s => row.get(s).fold[Shown]("")(_.show))
+        .toList
 
       Csv(headers, rows)
 
@@ -85,14 +89,10 @@ private[parser] object ParseTable:
     )
     val states = mutable.ArrayBuffer(initialState)
     val stateIndex = mutable.HashMap(initialState -> 0)
-    val tableRows = mutable.ArrayBuffer.empty[mutable.HashMap[Symbol, ParseAction]]
-
-    def rowFor(stateId: Int): mutable.HashMap[Symbol, ParseAction] =
-      while tableRows.sizeIs <= stateId do tableRows += mutable.HashMap.empty
-      tableRows(stateId)
+    val tableRows = mutable.ArrayBuffer(mutable.HashMap.empty[Symbol, ParseAction])
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
-      val row = rowFor(currStateId)
+      val row = tableRows(currStateId)
       row.get(symbol) match
         case None => row.update(symbol, action)
         case Some(existingAction) =>
@@ -111,11 +111,14 @@ private[parser] object ParseTable:
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val (sourceStateId, symbol) = tableRows.iterator.zipWithIndex
-          .flatMap:
-            case (row, srcId) =>
-              row.collectFirst { case (sym, Shift(`stateId`)) => (srcId, sym) }
-          .next()
+        val predecessor = boundary[Option[(Int, Symbol)]]:
+          for srcId <- tableRows.indices do
+            tableRows(srcId).foreach:
+              case (sym, Shift(`stateId`)) => break(Some((srcId, sym)))
+              case _ =>
+          None
+        val (sourceStateId, symbol) =
+          predecessor.getOrElse(throw AlgorithmError(show"No predecessor state found for state $stateId"))
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
@@ -123,7 +126,6 @@ private[parser] object ParseTable:
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
-      rowFor(currStateId) // ensure row exists even for states with no entries
       logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
@@ -135,6 +137,7 @@ private[parser] object ParseTable:
           newState, {
             val newId = states.length
             states += newState
+            tableRows += mutable.HashMap.empty
             newId
           },
         )
@@ -142,7 +145,7 @@ private[parser] object ParseTable:
 
       currStateId += 1
 
-    Array.tabulate(tableRows.length)(tableRows(_).toMap)
+    Array.better.tabulate(tableRows.length)(tableRows(_).toMap)
 
   given Showable[ParseTable] = Showable: table =>
     val symbols = table.allSymbols
@@ -206,8 +209,21 @@ private[parser] object ParseTable:
         if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
         else mapBuilder[parser.Symbol, ParseAction]("rowBuilder", row.toList.map(Expr(_)))
 
-      val outerEntries = entries.toList.zipWithIndex.map: (row, i) =>
-        '{ (${ Expr(i) }, ${ rowExpr(row) }) }
+      val tableSym = Symbol.newVal(
+        Symbol.spliceOwner,
+        Symbol.freshName("parseTable"),
+        TypeRepr.of[Array[AnyRef]],
+        Flags.Synthetic,
+        Symbol.noSymbol,
+      )
+      val tableValDef = ValDef(tableSym, Some('{ ParseTable.allocate(${ Expr(entries.length) }) }.asTerm))
+      val tableRef = Ref(tableSym).asExprOf[Array[AnyRef]]
 
-      '{ ParseTable.fromMap(${ mapBuilder[Int, Map[parser.Symbol, ParseAction]]("tableBuilder", outerEntries) }) }
+      val rowAssignments = entries.toList.zipWithIndex.map: (row, i) =>
+        '{
+          def avoidTooLargeMethod(): Unit = $tableRef(${ Expr(i) }) = ${ rowExpr(row) }
+          avoidTooLargeMethod()
+        }.asTerm
+
+      Block(tableValDef :: rowAssignments, '{ ParseTable.unsafeWrap($tableRef) }.asTerm).asExprOf[ParseTable]
 // $COVERAGE-ON$
