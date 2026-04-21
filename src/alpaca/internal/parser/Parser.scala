@@ -105,7 +105,7 @@ abstract class Parser[Ctx <: ParserCtx](
     nodeStack += Node.Result(null)
 
     @tailrec def loop(remaining: List[Lexeme[?, ?]]): Node =
-      val current: Lexeme[?, ?] = if remaining.isEmpty then Lexeme.EOF else remaining.head
+      val current = if remaining.isEmpty then Lexeme.EOF else remaining.head
       val nextSymbol = Terminal(current.name)
       tables.parseTable(stateStack.last, nextSymbol) match
         case ParseAction.Shift(gotoState) =>
