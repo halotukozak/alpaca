@@ -178,30 +178,29 @@ private[parser] object ParseTable:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
       import quotes.reflect.*
 
-      type MapBuilderTpe[K, V] = mutable.Builder[(K, V), Map[K, V]]
-
-      def mapBuilder[K: Type, V: Type](entries: List[Expr[(K, V)]]): Expr[Map[K, V]] =
-        val sym = Symbol.newVal(
-          Symbol.spliceOwner,
-          Symbol.freshName("rowBuilder"),
-          TypeRepr.of[MapBuilderTpe[K, V]],
-          Flags.Synthetic,
-          Symbol.noSymbol,
-        )
-        val valDef = ValDef(sym, Some('{ Map.newBuilder: MapBuilderTpe[K, V] }.asTerm))
-        val builder = Ref(sym).asExprOf[MapBuilderTpe[K, V]]
-
-        val additions = entries.map: entry =>
-          '{
-            def avoidTooLargeMethod(): Unit = $builder += $entry
-            avoidTooLargeMethod()
-          }.asTerm
-
-        Block(valDef :: additions, '{ $builder.result() }.asTerm).asExprOf[Map[K, V]]
+      type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Map[parser.Symbol, ParseAction]]
 
       def rowExpr(row: Map[parser.Symbol, ParseAction]): Expr[Map[parser.Symbol, ParseAction]] =
         if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
-        else mapBuilder[parser.Symbol, ParseAction](row.toList.map(Expr(_)))
+        else
+          val sym = Symbol.newVal(
+            Symbol.spliceOwner,
+            Symbol.freshName("rowBuilder"),
+            TypeRepr.of[RowBuilder],
+            Flags.Synthetic,
+            Symbol.noSymbol,
+          )
+          val valDef = ValDef(sym, Some('{ Map.newBuilder: RowBuilder }.asTerm))
+          val builder = Ref(sym).asExprOf[RowBuilder]
+
+          val additions = row.toList.map: entry =>
+            '{
+              def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
+              avoidTooLargeMethod()
+            }.asTerm
+
+          Block(valDef :: additions, '{ $builder.result() }.asTerm)
+            .asExprOf[Map[parser.Symbol, ParseAction]]
 
       val tableSym = Symbol.newVal(
         Symbol.spliceOwner,
