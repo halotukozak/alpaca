@@ -16,7 +16,7 @@ import scala.collection.mutable
  * can efficiently skip over processed characters.
  *
  * @param reader the underlying Reader to read from
- * @param size the total size of the input (if known)
+ * @param size   the total size of the input (if known)
  */
 //todo: use Ox
 final class LazyReader(private val reader: Reader, private var size: Long) extends CharSequence, Closeable:
@@ -54,12 +54,9 @@ final class LazyReader(private val reader: Reader, private var size: Long) exten
   def subSequence(start: Int, end: Int): CharSequence =
     ensure(end - 1 + offset)
     val len = end - start
-    val out = new Array[Char](len)
+    require(len >= 0, s"Invalid subsequence range: start=$start, end=$end")
     val base = start + offset
-    var i = 0
-    while i < len do
-      out(i) = buffer(base + i)
-      i += 1
+    val out = Array.tabulate(len)(i => buffer(base + i))
     new String(out)
 
   /**
