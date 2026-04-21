@@ -21,7 +21,6 @@ import boundary.break
 opaque private[parser] type ParseTable = Array[Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
-
   extension (table: ParseTable)
     /**
      * Gets the parse action for a given state and symbol.
@@ -180,6 +179,13 @@ private[parser] object ParseTable:
 
       type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Map[parser.Symbol, ParseAction]]
 
+      // Each statement is wrapped in its own local def to keep the enclosing
+      // method under the JVM's 64KB bytecode limit for large grammars.
+      def wrapped(body: Expr[Unit]): Term = '{
+        def avoidTooLargeMethod(): Unit = $body
+        avoidTooLargeMethod()
+      }.asTerm
+
       def rowExpr(row: Map[parser.Symbol, ParseAction]): Expr[Map[parser.Symbol, ParseAction]] =
         if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
         else
@@ -194,10 +200,7 @@ private[parser] object ParseTable:
           val builder = Ref(sym).asExprOf[RowBuilder]
 
           val additions = row.toList.map: entry =>
-            '{
-              def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
-              avoidTooLargeMethod()
-            }.asTerm
+            wrapped('{ $builder += ${ Expr(entry) } })
 
           Block(valDef :: additions, '{ $builder.result() }.asTerm)
             .asExprOf[Map[parser.Symbol, ParseAction]]
@@ -205,21 +208,18 @@ private[parser] object ParseTable:
       val tableSym = Symbol.newVal(
         Symbol.spliceOwner,
         Symbol.freshName("parseTable"),
-        TypeRepr.of[ParseTable],
+        TypeRepr.of[Array[AnyRef]],
         Flags.Synthetic,
         Symbol.noSymbol,
       )
       val tableValDef = ValDef(
         tableSym,
-        Some('{ new Array[Map[parser.Symbol, ParseAction]](${ Expr(entries.length) }) }.asTerm),
+        Some('{ new Array[Map[?, ?]](${ Expr(entries.length) }).asInstanceOf[Array[AnyRef]] }.asTerm),
       )
-      val tableRef = Ref(tableSym).asExprOf[Array[Map[parser.Symbol, ParseAction]]]
+      val tableRef = Ref(tableSym).asExprOf[Array[AnyRef]]
 
       val rowAssignments = entries.toList.zipWithIndex.map: (row, i) =>
-        '{
-          def avoidTooLargeMethod(): Unit = $tableRef(${ Expr(i) }) = ${ rowExpr(row) }
-          avoidTooLargeMethod()
-        }.asTerm
+        wrapped('{ $tableRef(${ Expr(i) }) = ${ rowExpr(row) } })
 
-      Block(tableValDef :: rowAssignments, '{ $tableRef: ParseTable }.asTerm).asExprOf[ParseTable]
+      Block(tableValDef :: rowAssignments, '{ $tableRef.asInstanceOf[ParseTable] }.asTerm).asExprOf[ParseTable]
 // $COVERAGE-ON$
