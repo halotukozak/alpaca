@@ -7,7 +7,8 @@ import alpaca.internal.parser.ParseAction.*
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
-import scala.util.boundary, boundary.break
+import scala.util.boundary
+import boundary.break
 
 /**
  * An opaque type representing the LR parse table.
@@ -20,10 +21,6 @@ import scala.util.boundary, boundary.break
 opaque private[parser] type ParseTable = Array[Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
-  inline private[parser] def allocate(n: Int): Array[AnyRef] =
-    new Array[Map[Symbol, ParseAction]](n).asInstanceOf[Array[AnyRef]]
-
-  inline private[parser] def unsafeWrap(arr: Array[AnyRef]): ParseTable = arr.asInstanceOf[ParseTable]
 
   extension (table: ParseTable)
     /**
@@ -108,17 +105,17 @@ private[parser] object ParseTable:
                 case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
                 case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
+    // noinspection ScalaUnreachableCode
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val predecessor = boundary[Option[(Int, Symbol)]]:
+        val (sourceStateId, symbol) = boundary[(Int, Symbol)]:
           for srcId <- tableRows.indices do
             tableRows(srcId).foreach:
-              case (sym, Shift(`stateId`)) => break(Some((srcId, sym)))
+              case (sym, Shift(`stateId`)) => break((srcId, sym))
               case _ =>
-          None
-        val (sourceStateId, symbol) =
-          predecessor.getOrElse(throw AlgorithmError(show"No predecessor state found for state $stateId"))
+          throw AlgorithmError(show"No predecessor state found for state $stateId")
+
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
@@ -183,13 +180,10 @@ private[parser] object ParseTable:
 
       type MapBuilderTpe[K, V] = mutable.Builder[(K, V), Map[K, V]]
 
-      def mapBuilder[K: Type, V: Type](
-        name: String,
-        entries: List[Expr[(K, V)]],
-      ): Expr[Map[K, V]] =
+      def mapBuilder[K: Type, V: Type](entries: List[Expr[(K, V)]]): Expr[Map[K, V]] =
         val sym = Symbol.newVal(
           Symbol.spliceOwner,
-          Symbol.freshName(name),
+          Symbol.freshName("rowBuilder"),
           TypeRepr.of[MapBuilderTpe[K, V]],
           Flags.Synthetic,
           Symbol.noSymbol,
@@ -207,17 +201,20 @@ private[parser] object ParseTable:
 
       def rowExpr(row: Map[parser.Symbol, ParseAction]): Expr[Map[parser.Symbol, ParseAction]] =
         if row.isEmpty then '{ Map.empty[parser.Symbol, ParseAction] }
-        else mapBuilder[parser.Symbol, ParseAction]("rowBuilder", row.toList.map(Expr(_)))
+        else mapBuilder[parser.Symbol, ParseAction](row.toList.map(Expr(_)))
 
       val tableSym = Symbol.newVal(
         Symbol.spliceOwner,
         Symbol.freshName("parseTable"),
-        TypeRepr.of[Array[AnyRef]],
+        TypeRepr.of[ParseTable],
         Flags.Synthetic,
         Symbol.noSymbol,
       )
-      val tableValDef = ValDef(tableSym, Some('{ ParseTable.allocate(${ Expr(entries.length) }) }.asTerm))
-      val tableRef = Ref(tableSym).asExprOf[Array[AnyRef]]
+      val tableValDef = ValDef(
+        tableSym,
+        Some('{ new Array[Map[parser.Symbol, ParseAction]](${ Expr(entries.length) }) }.asTerm),
+      )
+      val tableRef = Ref(tableSym).asExprOf[Array[Map[parser.Symbol, ParseAction]]]
 
       val rowAssignments = entries.toList.zipWithIndex.map: (row, i) =>
         '{
@@ -225,5 +222,5 @@ private[parser] object ParseTable:
           avoidTooLargeMethod()
         }.asTerm
 
-      Block(tableValDef :: rowAssignments, '{ ParseTable.unsafeWrap($tableRef) }.asTerm).asExprOf[ParseTable]
+      Block(tableValDef :: rowAssignments, '{ $tableRef: ParseTable }.asTerm).asExprOf[ParseTable]
 // $COVERAGE-ON$
