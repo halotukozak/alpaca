@@ -107,10 +107,10 @@ trait LexerCtx extends Product:
 
   /**
    * The raw string that was matched for the last token.
-   * @note This is for internal use only and should not be accessed directly.
+   * @note Internal API — the lexer macro reads this field at user-site, so it
+   *       has to be source-visible outside the `alpaca` package.
    */
-  @publicInBinary
-  private[alpaca] var lastRawMatched: String = compiletime.uninitialized
+  var lastRawMatched: String = compiletime.uninitialized
 
   /**
    * The remaining text to be tokenized.
