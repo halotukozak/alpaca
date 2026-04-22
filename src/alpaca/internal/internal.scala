@@ -2,6 +2,7 @@ package alpaca
 package internal
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
+import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 /**
@@ -237,6 +238,28 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
             )
         .toList,
     )
+
+private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[A, To]: Type](
+  builder: Expr[B],
+  elements: Iterable[Expr[A]],
+  empty: Expr[To],
+)(using quotes: Quotes,
+): Expr[To] =
+  import quotes.reflect.*
+  if elements.isEmpty then empty
+  else
+    ValDef
+      .let(Symbol.spliceOwner, "builder", builder.asTerm): ref =>
+        val builder = ref.asExprOf[B]
+        val additions = elements
+          .map: entry =>
+            '{
+              def local(): Unit = $builder += $entry
+              local()
+            }.asTerm
+          .toList
+        Block(additions, '{ $builder.result() }.asTerm)
+      .asExprOf[To]
 // $COVERAGE-ON$
 
 /**

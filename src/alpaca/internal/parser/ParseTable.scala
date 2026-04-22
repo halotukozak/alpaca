@@ -7,14 +7,18 @@ import alpaca.internal.parser.ParseAction.*
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
+import scala.util.boundary
+import boundary.break
 
 /**
  * An opaque type representing the LR parse table.
  *
- * The parse table maps from (state, symbol) pairs to parse actions.
- * This table is generated at compile time from the grammar.
+ * State IDs are dense consecutive integers starting at 0, so the table is
+ * stored as an array indexed by state, with each cell holding a symbol ->
+ * action map. Lookup is a single array index plus one symbol hash, with no
+ * boxing on the state key.
  */
-opaque private[parser] type ParseTable = Map[(state: Int, stepSymbol: Symbol), ParseAction]
+opaque private[parser] type ParseTable = Array[Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
   extension (table: ParseTable)
@@ -26,17 +30,14 @@ private[parser] object ParseTable:
      * @return the parse action to take
      * @throws AlgorithmError if no action is defined for this state/symbol combination
      */
-    def apply(state: Int, symbol: Symbol): ParseAction =
-      try table((state, symbol))
-      catch
-        case _: NoSuchElementException =>
-          val expected = table.keysIterator
-            .collect:
-              case (`state`, sym) => sym.name
-            .to(SortedSet)
-            .mkString(", ")
+    def apply(state: Int, symbol: Symbol): ParseAction = table(state).get(symbol) match
+      case Some(action) => action
+      case None =>
+        val expected = table(state).keysIterator.map(_.name).to(SortedSet).mkString(", ")
+        throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
 
-          throw AlgorithmError(s"Unexpected symbol '${symbol.name}' in state $state. Expected one of: $expected")
+    private def allSymbols: List[Symbol] =
+      table.iterator.flatMap(_.keysIterator).distinct.toList
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -48,11 +49,14 @@ private[parser] object ParseTable:
      */
     // it shouldn't be eager
     def toCsv(using Log): Csv =
-      val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-      val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
+      val symbols = table.allSymbols
 
       val headers = show"State" :: symbols.map(_.show)
-      val rows = states.map(i => show"$i" :: symbols.map(s => table.get((i, s)).fold[Shown]("")(_.show)))
+      val rows = table.indices
+        .map: i =>
+          val row = table(i)
+          show"$i" :: symbols.map(s => row.get(s).fold[Shown]("")(_.show))
+        .toList
 
       Csv(headers, rows)
 
@@ -81,16 +85,17 @@ private[parser] object ParseTable:
     )
     val states = mutable.ArrayBuffer(initialState)
     val stateIndex = mutable.HashMap(initialState -> 0)
-    val table = mutable.Map.empty[(state: Int, stepSymbol: Symbol), ParseAction]
+    val tableRows = mutable.ArrayBuffer(mutable.HashMap.empty[Symbol, ParseAction])
 
     def addToTable(symbol: Symbol, action: ParseAction): Unit =
-      table.get((currStateId, symbol)) match
-        case None => table.update((currStateId, symbol), action)
+      val row = tableRows(currStateId)
+      row.get(symbol) match
+        case None => row.update(symbol, action)
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) =>
               logger.trace(show"Conflict resolved: $action")
-              table.update((currStateId, symbol), action)
+              row.update(symbol, action)
             case None =>
               val path = toPath(currStateId, List(symbol))
               (existingAction, action) match
@@ -99,13 +104,17 @@ private[parser] object ParseTable:
                 case (red: Reduction, Shift(_)) => throw ShiftReduceConflict(symbol, red, path)
                 case (Shift(_), Shift(_)) => throw AlgorithmError("Shift-Shift conflict should never happen")
 
+    // noinspection ScalaUnreachableCode
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
       else
-        val (sourceStateId, symbol) = table
-          .collectFirst:
-            case (key, Shift(`stateId`)) => key
-          .get
+        val (sourceStateId, symbol) = boundary[(Int, Symbol)]:
+          for srcId <- tableRows.indices do
+            tableRows(srcId).foreach:
+              case (sym, Shift(`stateId`)) => break((srcId, sym))
+              case _ =>
+          throw AlgorithmError(show"No predecessor state found for state $stateId")
+
         if sourceStateId == stateId then
           logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
           symbol :: acc
@@ -124,6 +133,7 @@ private[parser] object ParseTable:
           newState, {
             val newId = states.length
             states += newState
+            tableRows += mutable.HashMap.empty
             newId
           },
         )
@@ -131,11 +141,10 @@ private[parser] object ParseTable:
 
       currStateId += 1
 
-    table.toMap
+    Array.better.tabulate(tableRows.length)(tableRows(_).toMap)
 
   given Showable[ParseTable] = Showable: table =>
-    val symbols = table.keysIterator.map(_.stepSymbol).distinct.toList
-    val states = table.keysIterator.map(_.state).distinct.toList.sorted // todo: SortedSet?
+    val symbols = table.allSymbols
 
     def centerText(text: String, width: Int = 10): String =
       if text.length >= width then text
@@ -152,12 +161,13 @@ private[parser] object ParseTable:
       result.append(centerText(s.show))
       result.append("|")
 
-    for i <- states do
+    for i <- table.indices do
+      val row = table(i)
       result.append('\n')
       result.append(centerText(i.toString))
       result.append("|")
       for s <- symbols do
-        result.append(centerText(table.get((i, s)).fold("")(_.show)))
+        result.append(centerText(row.get(s).fold("")(_.show)))
         result.append("|")
     result.append('\n')
     result.result()
@@ -165,34 +175,18 @@ private[parser] object ParseTable:
   // $COVERAGE-OFF$
   given ToExpr[ParseTable] with
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
-      import quotes.reflect.*
+      type Row = Map[parser.Symbol, ParseAction]
+      type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Row]
 
-      type BuilderTpe = mutable.Builder[
-        ((state: Int, stepSymbol: parser.Symbol), ParseAction),
-        Map[(state: Int, stepSymbol: parser.Symbol), ParseAction],
-      ]
-
-      val symbol = Symbol.newVal(
-        Symbol.spliceOwner,
-        Symbol.freshName("builder"),
-        TypeRepr.of[BuilderTpe],
-        Flags.Synthetic,
-        Symbol.noSymbol,
+      def rowExpr(row: Row): Expr[Row] = avoidTooLargeMethod[(parser.Symbol, ParseAction), Row, RowBuilder](
+        builder = '{ Map.newBuilder },
+        elements = row.map(Expr(_)),
+        empty = '{ Map.empty },
       )
 
-      val valDef = ValDef(symbol, Some('{ Map.newBuilder: BuilderTpe }.asTerm))
-
-      val builder = Ref(symbol).asExprOf[BuilderTpe]
-
-      val additions = entries
-        .map: entry =>
-          '{
-            def avoidTooLargeMethod(): Unit = $builder += ${ Expr(entry) }
-            avoidTooLargeMethod()
-          }.asTerm
-        .toList
-
-      val result = '{ $builder.result() }.asTerm
-
-      Block(valDef :: additions, result).asExprOf[ParseTable]
+      avoidTooLargeMethod[Row, Array[Row], mutable.ArrayBuilder[Row]](
+        builder = '{ mutable.ArrayBuilder.ofRef[Row].tap(_.sizeHint(${ Expr(entries.length) })) },
+        elements = entries.map(rowExpr),
+        empty = '{ Array.empty[Row] },
+      )
 // $COVERAGE-ON$
