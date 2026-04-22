@@ -239,12 +239,12 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
         .toList,
     )
 
-private def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[A, To]: Type](
+private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[A, To]: Type](
   builder: Expr[B],
   elements: Iterable[Expr[A]],
   empty: Expr[To],
 )(using quotes: Quotes,
-) =
+): Expr[To] =
   import quotes.reflect.*
   if elements.isEmpty then empty
   else

@@ -178,15 +178,15 @@ private[parser] object ParseTable:
       type Row = Map[parser.Symbol, ParseAction]
       type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Row]
 
-      def rowExpr(row: Row): Expr[Row] = avoidToLargeMethod[(parser.Symbol, ParseAction), Row, RowBuilder](
+      def rowExpr(row: Row): Expr[Row] = avoidTooLargeMethod[(parser.Symbol, ParseAction), Row, RowBuilder](
         builder = '{ Map.newBuilder },
         elements = row.map(Expr(_)),
         empty = '{ Map.empty },
       )
 
-      avoidToLargeMethod[Row, Array[Row], mutable.ArrayBuilder[Row]](
+      avoidTooLargeMethod[Row, Array[Row], mutable.ArrayBuilder[Row]](
         builder = '{ mutable.ArrayBuilder.ofRef[Row].tap(_.sizeHint(${ Expr(entries.length) })) },
         elements = entries.map(rowExpr),
-        empty = '{ Array.empty },
+        empty = '{ Array.empty[Row] },
       )
 // $COVERAGE-ON$
