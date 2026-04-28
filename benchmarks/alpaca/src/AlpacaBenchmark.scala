@@ -23,6 +23,8 @@ class AlpacaBenchmark:
       "iterative_json",
       "recursive_json",
       "big_grammar",
+      "flat_list",
+      "deep_nested",
     ),
   )
   var scenario: String = uninitialized
@@ -30,7 +32,7 @@ class AlpacaBenchmark:
   @Param(Array("100", "500", "1000", "2000", "5000", "10000"))
   var size: String = uninitialized
 
-  // Input text loaded from file
+  // Input text loaded from file (or synthesised in-memory for flat_list / deep_nested)
   private var input: String = uninitialized
 
   // Pre-built closures that call the correct lexer/parser for this scenario.
@@ -44,21 +46,33 @@ class AlpacaBenchmark:
 
   @Setup(Level.Trial)
   def setup(): Unit =
-    val fileName = s"${scenario}_$size.txt"
-    // Walk up from CWD to find benchmarks/inputs/ — JMH fork CWD varies by Mill version
-    val cwd = Paths.get("").toAbsolutePath
-    val candidates = Iterator
-      .iterate(cwd)(_.getParent)
-      .takeWhile(_ != null)
-      .take(5)
-      .flatMap { dir =>
-        Seq(dir.resolve(s"inputs/$fileName"), dir.resolve(s"benchmarks/inputs/$fileName"))
-      }
-      .toSeq
-    val inputPath = candidates
-      .find(Files.exists(_))
-      .getOrElse(sys.error(s"Input file not found for $scenario/$size. CWD=$cwd, tried: ${candidates.mkString(", ")}"))
-    input = new String(Files.readAllBytes(inputPath))
+    val n = size.toInt
+
+    scenario match
+      case "flat_list" =>
+        // `n` tokens of `a` separated by spaces: stresses the LR reduction loop
+        // on a single long left-recursive production.
+        input = ("a " * n).trim
+      case "deep_nested" =>
+        // `n` levels of nested parens around a single `0`: stresses the parser's
+        // recursive reduction chain.
+        input = "(" * n + "0" + ")" * n
+      case _ =>
+        val fileName = s"${scenario}_$size.txt"
+        // Walk up from CWD to find benchmarks/inputs/ — JMH fork CWD varies by Mill version
+        val cwd = Paths.get("").toAbsolutePath
+        val candidates = Iterator
+          .iterate(cwd)(_.getParent)
+          .takeWhile(_ != null)
+          .take(5)
+          .flatMap: dir =>
+            Seq(dir.resolve(s"inputs/$fileName"), dir.resolve(s"benchmarks/inputs/$fileName"))
+          .toSeq
+        val inputPath = candidates
+          .find(Files.exists(_))
+          .getOrElse:
+            sys.error(s"Input file not found for $scenario/$size. CWD=$cwd, tried: ${candidates.mkString(", ")}")
+        input = new String(Files.readAllBytes(inputPath))
 
     scenario match
       case s if s.contains("math") =>
@@ -93,6 +107,28 @@ class AlpacaBenchmark:
           BigGrammarParser.parse(tokens)
         val (_, preTokenized) = BigGrammarLexer.tokenize(input)
         preTokenizedParseFn = () => BigGrammarParser.parse(preTokenized)
+
+      case "flat_list" =>
+        lexFn = (in: String) => FlatListLexer.tokenize(in)
+        parseFn = (in: String) =>
+          val (_, tokens) = FlatListLexer.tokenize(in)
+          FlatListParser.parse(tokens)
+        fullParseFn = (in: String) =>
+          val (_, tokens) = FlatListLexer.tokenize(in)
+          FlatListParser.parse(tokens)
+        val (_, preTokenized) = FlatListLexer.tokenize(input)
+        preTokenizedParseFn = () => FlatListParser.parse(preTokenized)
+
+      case "deep_nested" =>
+        lexFn = (in: String) => DeepNestedLexer.tokenize(in)
+        parseFn = (in: String) =>
+          val (_, tokens) = DeepNestedLexer.tokenize(in)
+          DeepNestedParser.parse(tokens)
+        fullParseFn = (in: String) =>
+          val (_, tokens) = DeepNestedLexer.tokenize(in)
+          DeepNestedParser.parse(tokens)
+        val (_, preTokenized) = DeepNestedLexer.tokenize(input)
+        preTokenizedParseFn = () => DeepNestedParser.parse(preTokenized)
 
   @Benchmark
   def lex(bh: Blackhole): Unit =
