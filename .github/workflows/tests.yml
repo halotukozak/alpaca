@@ -38,23 +38,23 @@ jobs:
             ${{ runner.os }}-mill-
 
       - name: Compile
-        run: ./mill compile
+        run: ./mill __.compile
 
       - name: Compile tests
         run: |
           echo "Starting test compilation..."
           START_TIME=$(date +%s)
-          ./mill test.compile
+          ./mill __.test.compile
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
           echo "Test compilation completed in ${DURATION}s"
           echo "TEST_COMPILE_TIME=${DURATION}" >> $GITHUB_ENV
 
       - name: Run tests
-        run: ./mill test
+        run: ./mill __.test
 
       - name: Code coverage
-        run: ./mill scoverage.xmlCoberturaReport
+        run: ./mill jvm.scoverage.xmlCoberturaReport
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v6
@@ -66,7 +66,7 @@ jobs:
         run: ./mill mill.scalalib.scalafmt/checkFormatAll
 
       - name: Generate Docs
-        run: ./mill docJar
+        run: ./mill jvm.docJar
 
       - name: Report Test Compilation Time
         if: always()

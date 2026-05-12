@@ -3,12 +3,11 @@ package internal
 package lexer
 
 import alpaca.internal.lexer.ErrorHandling.Strategy
+import alpaca.internal.lexer.regex.TokenMatcher
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.publicInBinary
 import scala.collection.mutable
-import scala.util.boundary
-import scala.util.boundary.break
 
 /**
  * The result of compiling a lexer definition.
@@ -56,44 +55,44 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
     val globalCtx = empty()
     globalCtx.text = OffsetCharSequence(input)
 
-    val matcher = compiled.matcher(globalCtx.text)
     val acc = mutable.ListBuffer.empty[Lexeme]
 
     while !globalCtx.text.isEmpty do
-      matcher.reset(globalCtx.text)
+      val (token, matched) = matcher.matchAt(globalCtx.text, 0) match
+        case Some((priority, end)) if end > 0 =>
+          val matchedStr = globalCtx.text.subSequence(0, end).toString
+          globalCtx.lastRawMatched = matchedStr
+          val found = tokensArray(priority)
+          globalCtx.text = globalCtx.text.from(end)
+          (found, matchedStr)
 
-      // noinspection ScalaUnreachableCode
-      val (token, matched) = if matcher.lookingAt then
-        val matched = matcher.group(0)
-        globalCtx.lastRawMatched = matched
-        globalCtx.text = globalCtx.text.from(matcher.end)
+        case _ =>
+          errorHandling(globalCtx) match
+            case Strategy.Throw(ex) =>
+              throw ex
 
-        val found = boundary:
-          for i <- 1 to matcher.groupCount if matcher.start(i) != -1 do break(groupToTokenMap(i))
-          throw AlgorithmError(s"${matcher.pattern} matched but no token defined for it")
+            case Strategy.IgnoreToken =>
+              matcher.findFirst(globalCtx.text, 1) match
+                case Some((firstMatching, _, _)) =>
+                  val matchedStr = globalCtx.text.subSequence(0, firstMatching).toString
+                  globalCtx.lastRawMatched = matchedStr
+                  globalCtx.text = globalCtx.text.from(firstMatching)
+                  (RecoveredToken(matchedStr), matchedStr)
+                case None =>
+                  val matchedStr = globalCtx.text.charAt(0).toString
+                  globalCtx.lastRawMatched = matchedStr
+                  globalCtx.text = globalCtx.text.from(1)
+                  (RecoveredToken(matchedStr), matchedStr)
 
-        (found, matched)
-      else
-        errorHandling(globalCtx) match
-          case Strategy.Throw(ex) =>
-            throw ex
+            case Strategy.IgnoreChar =>
+              val matchedStr = globalCtx.text.charAt(0).toString
+              globalCtx.lastRawMatched = matchedStr
+              globalCtx.text = globalCtx.text.from(1)
+              (RecoveredToken(matchedStr), matchedStr)
 
-          case Strategy.IgnoreToken if matcher.find =>
-            val firstMatching = matcher.start
-            val matched = globalCtx.text.subSequence(0, firstMatching).toString
-            globalCtx.lastRawMatched = matched
-            globalCtx.text = globalCtx.text.from(firstMatching)
-            (RecoveredToken(matched), matched)
-
-          case Strategy.IgnoreChar | Strategy.IgnoreToken =>
-            val matched = globalCtx.text.charAt(0).toString
-            globalCtx.lastRawMatched = matched
-            globalCtx.text = globalCtx.text.from(1)
-            (RecoveredToken(matched), matched)
-
-          case Strategy.Stop =>
-            globalCtx.text = ""
-            (null, null)
+            case Strategy.Stop =>
+              globalCtx.text = ""
+              (null, null)
 
       if token != null && matched != null then
         betweenStages(token, matched, globalCtx)
@@ -101,18 +100,10 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 
     (globalCtx, acc.toList)
 
-  /** The compiled pattern that matches all defined tokens. */
-  protected def compiled: java.util.regex.Pattern
+  /** Compiled token-matcher; built at macro time. */
+  protected def matcher: TokenMatcher
 
-  private lazy val groupToTokenMap: Array[Token[?, Ctx, ?]] =
-    val matcher = compiled.matcher("")
-    val totalGroups = matcher.groupCount
-    val map = new Array[Token[?, Ctx, ?]](totalGroups + 1)
-
-    tokens.foreach: token =>
-      val groupIndex = compiled.namedGroups.get(token.info.regexGroupName)
-      if groupIndex != null then map(groupIndex) = token
-    map
+  private lazy val tokensArray: Vector[Token[?, Ctx, ?]] = tokens.toVector
 
 extension (input: CharSequence)
   private[alpaca] def from(pos: Int): CharSequence = input match

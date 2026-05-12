@@ -3,8 +3,8 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
+import alpaca.internal.lexer.regex.{Regex, RegexParseError, RegexParser, TokenMatcher}
 
-import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.{publicInBinary, switch}
 import scala.reflect.NameTransformer
@@ -93,10 +93,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[Token[?, Ctx, ?]])]](body))
         .unzip
 
-      val patterns = infos.map(_.pattern)
-      RegexChecker.checkPatterns(patterns)
-      RegexChecker.checkPatterns(patterns.reverse)
-
       (
         tokens = accTokens ::: tokens.map:
           case '{ type name <: ValidName; type tokenTpe <: Token[name, Ctx, ?]; $token: tokenTpe } =>
@@ -117,8 +113,25 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         show"Token name \"$name\" is defined ${duplicates.size.toString} times. Combine the patterns into a single case using alternatives, e.g.: case x @ (\"pattern1\" | \"pattern2\") => Token[x]",
       )
 
+  logger.trace("parsing regex patterns")
+  val parsedRegexes: List[Regex] = infos.map: info =>
+    RegexParser.parse(info.pattern) match
+      case Right(r) => r
+      case Left(err: RegexParseError.UnsupportedFeature) =>
+        report.errorAndAbort(
+          show"Unsupported regex feature `${err.feature}` at position ${err.position.toString} in pattern \"${info.pattern}\" for token \"${info.name}\"",
+        )
+      case Left(err: RegexParseError.InvalidSyntax) =>
+        report.errorAndAbort(
+          show"Invalid regex pattern \"${info.pattern}\" for token \"${info.name}\" at position ${err.position.toString}: ${err.message}. If you meant to match a literal character, escape it with a backslash (e.g., \"\\\\+\" instead of \"+\")",
+        )
+
   logger.trace("checking regex patterns")
-  RegexChecker.checkPatterns(infos.map(_.pattern))
+  val items: List[(name: String, regex: Regex)] = infos
+    .zip(parsedRegexes)
+    .map: (info, r) =>
+      (name = info.name, regex = r)
+  RegexChecker.checkRegexes(items)
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
   val types = Refined(
@@ -138,20 +151,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
     case ('[refinedTpe], '[fields], '[types]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
-      infos.foreach: info =>
-        try Pattern.compile(info.pattern)
-        catch
-          case e: PatternSyntaxException =>
-            report.errorAndAbort(
-              show"Invalid regex pattern \"${info.pattern}\" for token \"${info.name}\": ${e.getDescription}. If you meant to match a literal character, escape it with a backslash (e.g., \"\\\\+\" instead of \"+\")",
-            )
-
-      val regex = Expr:
-        infos
-          .map:
-            case TokenInfo(_, regexGroupName, pattern) => show"(?<$regexGroupName>$pattern)"
-          .mkString("|")
-          .tap(Pattern.compile) // we'd like to compile it here to fail in compile time if regex is invalid
+      val matcherExpr = '{ TokenMatcher.fromRegexes(${ Varargs(parsedRegexes.map(Expr(_))) }*) }
 
       '{
         {
@@ -161,7 +161,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
             override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 
-            override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
+            override protected val matcher: TokenMatcher = $matcherExpr
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe & types]
       }
 // $COVERAGE-ON$
