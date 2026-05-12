@@ -2,34 +2,29 @@ package alpaca
 package internal
 package lexer
 
-import dregex.Regex
-
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import alpaca.internal.lexer.regex.{Regex, Subset}
 
 /**
- * Utility for checking regex patterns for shadowing issues.
+ * Cross-platform shadow detection for token regex patterns.
  *
- * This object provides methods to check if any token patterns are
- * shadowed by others, which would mean they could never be matched.
+ * A pattern is shadowed if every string it matches is also matched (as a prefix)
+ * by an earlier pattern, meaning the earlier pattern would always be selected first.
+ * Implemented via Brzozowski-derivative DFA emptiness check on `L(later · Σ*) ⊆ L(earlier · Σ*)`.
  */
 private[lexer] object RegexChecker:
 
   /**
-   * Checks a sequence of regex patterns for shadowing.
+   * Checks a priority-ordered sequence of pre-parsed regexes for shadowing.
    *
-   * A pattern is shadowed if it is a subset of an earlier pattern,
-   * meaning the earlier pattern would always match first and the
-   * shadowed pattern would never be used.
-   *
-   * @param patterns the regex patterns to check.
+   * @throws ShadowException if any pattern is shadowed by an earlier one.
    */
-  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
+  def checkRegexes(items: List[(name: String, regex: Regex)])(using Log): Unit = items match
     case Nil => ()
-    case patterns =>
+    case _ =>
       logger.trace("checking regex patterns for shadowing...")
-      val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
-
-      for
-        i <- patterns.indices
-        j <- (i + 1) until regexes.size
-      do if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))
+      val withSuffix = items.map((name, r) => name -> Subset.of(r).withAnySuffix)
+      withSuffix.tails.foreach:
+        case Nil => ()
+        case (earlierName, earlierSub) :: laters =>
+          laters.foreach: (laterName, laterSub) =>
+            if laterSub.subset(earlierSub) then throw ShadowException(laterName, earlierName)
