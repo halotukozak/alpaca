@@ -16,7 +16,7 @@ import scala.collection.mutable
  * lazily as inputs are consumed and is bounded by the size of the reachable derivative
  * state space (finite up to similarity, thanks to smart-constructor normalization).
  */
-final class TokenMatcher private[regex] (initial: Vector[Subset]):
+final class TokenMatcher private[regex] (private val initial: Array[Subset]):
 
   /** Per-Subset cache: ASCII fast path is an Array index 0..127; non-ASCII fall back to a HashMap. */
   private val asciiCache = mutable.HashMap.empty[Subset, Array[AnyRef]]
@@ -41,15 +41,18 @@ final class TokenMatcher private[regex] (initial: Vector[Subset]):
    *         no pattern matches any (possibly empty) prefix at `start`.
    */
   def matchAt(input: CharSequence, start: Int): Option[(priority: Int, end: Int)] =
-    var state = initial
-    var lastAccept = state.firstNullable.map(idx => (priority = idx, end = start))
+    val state = initial.clone()
+    var lastAccept = firstNullable(state).map(idx => (priority = idx, end = start))
 
     var i = start
-    while i < input.length && !state.allEmpty do
+    while i < input.length && !allEmpty(state) do
       val c = Character.codePointAt(input, i)
-      state = state.map(cachedDerive(_, c))
+      var k = 0
+      while k < state.length do
+        state(k) = cachedDerive(state(k), c)
+        k += 1
       i += Character.charCount(c)
-      state.firstNullable.foreach: idx =>
+      firstNullable(state).foreach: idx =>
         lastAccept = Some((priority = idx, end = i))
 
     lastAccept
@@ -66,13 +69,22 @@ final class TokenMatcher private[regex] (initial: Vector[Subset]):
           p += Character.charCount(Character.codePointAt(input, p))
     Option(result)
 
+  private def firstNullable(state: Array[Subset]): Option[Int] =
+    var k = 0
+    while k < state.length do
+      if state(k).nullable then return Some(k)
+      k += 1
+    None
+
+  private def allEmpty(state: Array[Subset]): Boolean =
+    var k = 0
+    while k < state.length do
+      if state(k) != Subset.empty then return false
+      k += 1
+    true
+
 object TokenMatcher:
 
   /** Build a matcher from pre-parsed regexes (use this from macros after compile-time parsing). */
-  def fromRegexes(initial: Regex*): TokenMatcher = TokenMatcher(initial.iterator.map(Subset.of).toVector)
-
-extension (s: Vector[Subset])
-  private[regex] def firstNullable: Option[Int] = s.iterator.zipWithIndex.collectFirst:
-    case (sub, idx) if sub.nullable => idx
-
-  private[regex] def allEmpty: Boolean = s.forall(_ == Subset.empty)
+  def fromRegexes(initial: Regex*): TokenMatcher =
+    TokenMatcher(initial.iterator.map(Subset.of).toArray)
