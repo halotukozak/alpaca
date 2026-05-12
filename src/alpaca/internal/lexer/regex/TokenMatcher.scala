@@ -63,17 +63,18 @@ final class TokenMatcher private[regex] (initial: Array[Subset]):
    */
   def matchAt(input: CharSequence, start: Int): Option[(priority: Int, end: Int)] =
     var sid = initialId
-    var lastAccept =
-      val p = acceptPriority(sid)
-      if p >= 0 then Some((priority = p, end = start)) else None
+    var lastPriority = acceptPriority(sid)
+    var lastEnd = start
     var i = start
     while i < input.length && !isDead(sid) do
       val c = Character.codePointAt(input, i)
       sid = transition(sid, c)
       i += Character.charCount(c)
       val p = acceptPriority(sid)
-      if p >= 0 then lastAccept = Some((priority = p, end = i))
-    lastAccept
+      if p >= 0 then
+        lastPriority = p
+        lastEnd = i
+    if lastPriority >= 0 then Some((priority = lastPriority, end = lastEnd)) else None
 
   /** First position `>= from` at which some pattern matches a non-empty prefix. */
   def findFirst(input: CharSequence, from: Int): Option[(start: Int, priority: Int, end: Int)] =
