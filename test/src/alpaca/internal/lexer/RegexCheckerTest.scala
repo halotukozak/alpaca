@@ -2,6 +2,8 @@ package alpaca
 package internal
 package lexer
 
+import alpaca.internal.lexer.regex.{Regex, RegexParser}
+
 import org.scalatest.LoneElement
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -9,84 +11,118 @@ import org.scalatest.matchers.should.Matchers
 final class RegexCheckerTest extends AnyFunSuite with Matchers with LoneElement:
   private given DebugSettings = DebugSettings.default
 
-  test("checkPatterns should return None for non-overlapping patterns") {
+  private def items(patterns: String*): List[(name: String, regex: Regex)] =
+    patterns.toList.map: p =>
+      RegexParser.parse(p) match
+        case Right(r) => (name = p, regex = r)
+        case Left(err) => fail(s"expected successful parse of /$p/, got $err")
+
+  test("checkRegexes should pass for non-overlapping patterns") {
     withLog:
-      val patterns = List(
-        "[a-zA-Z_][a-zA-Z0-9_]*",
-        "[+-]?[0-9]+",
-        "=",
-        "[ \\t\\n]+",
-      )
       noException shouldBe thrownBy:
-        RegexChecker.checkPatterns(patterns)
+        RegexChecker.checkRegexes(
+          items(
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "[+-]?[0-9]+",
+            "=",
+            "[ \\t\\n]+",
+          ),
+        )
   }
 
-  test("checkPatterns should throw ShadowException for overlapping patterns") {
+  test("checkRegexes should throw ShadowException for overlapping patterns") {
     withLog:
-      val patterns = List(
-        "[a-zA-Z_][a-zA-Z0-9_]*",
-        "\\*",
-        "=",
-        "[a-zA-Z]+",
-        "[ \\t\\n]+",
-      )
       intercept[ShadowException]:
-        RegexChecker.checkPatterns(patterns)
+        RegexChecker.checkRegexes(
+          items(
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "\\*",
+            "=",
+            "[a-zA-Z]+",
+            "[ \\t\\n]+",
+          ),
+        )
       .getMessage should include("Pattern [a-zA-Z]+ is shadowed by [a-zA-Z_][a-zA-Z0-9_]*")
   }
 
-  test("checkPatterns should report prefix shadowing") {
+  test("checkRegexes should report prefix shadowing") {
     withLog:
-      val patterns = List(
-        "i",
-        "\\*",
-        "if",
-        "=",
-        "[a-zA-Z]+",
-        "[ \\t\\n]+",
-      )
       intercept[ShadowException]:
-        RegexChecker.checkPatterns(patterns)
+        RegexChecker.checkRegexes(
+          items(
+            "i",
+            "\\*",
+            "if",
+            "=",
+            "[a-zA-Z]+",
+            "[ \\t\\n]+",
+          ),
+        )
       .getMessage should include("Pattern if is shadowed by i")
   }
 
-  test("checkPatterns should report identical patterns as overlapping") {
+  test("checkRegexes should report identical patterns as overlapping") {
     withLog:
-      val patterns = List(
-        "[a-zA-Z_][a-zA-Z0-9_]*",
-        "\\*",
-        "=",
-        "[a-zA-Z_][a-zA-Z0-9_]*",
-        "[ \\t\\n]+",
-      )
       intercept[ShadowException]:
-        RegexChecker.checkPatterns(patterns)
+        RegexChecker.checkRegexes(
+          items(
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "\\*",
+            "=",
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "[ \\t\\n]+",
+          ),
+        )
       .getMessage should include("Pattern [a-zA-Z_][a-zA-Z0-9_]* is shadowed by [a-zA-Z_][a-zA-Z0-9_]*")
   }
 
-  test("checkPatterns should not report patterns in proper order") {
+  test("checkRegexes should not report patterns in proper order") {
     withLog:
-      val patterns = List(
-        "if",
-        "\\*",
-        "when",
-        "i",
-        "=",
-        "[a-zA-Z_][a-zA-Z0-9_]*",
-        "[ \\t\\n]+",
-      )
       noException shouldBe thrownBy:
-        RegexChecker.checkPatterns(patterns)
+        RegexChecker.checkRegexes(
+          items(
+            "if",
+            "\\*",
+            "when",
+            "i",
+            "=",
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "[ \\t\\n]+",
+          ),
+        )
   }
 
-  test("checkPatterns should handle empty pattern list") {
+  test("checkRegexes should handle empty pattern list") {
     withLog:
       noException shouldBe thrownBy:
-        RegexChecker.checkPatterns(Nil)
+        RegexChecker.checkRegexes(Nil)
   }
 
-  test("checkPatterns should handle single pattern") {
+  test("checkRegexes should handle single pattern") {
     withLog:
       noException shouldBe thrownBy:
-        RegexChecker.checkPatterns(List("[a-zA-Z_][a-zA-Z0-9_]*"))
+        RegexChecker.checkRegexes(items("[a-zA-Z_][a-zA-Z0-9_]*"))
+  }
+
+  test("handles CalcLexer-like patterns") {
+    withLog:
+      noException shouldBe thrownBy:
+        RegexChecker.checkRegexes(
+          items(
+            " ",
+            "\\t",
+            "[a-zA-Z_][a-zA-Z0-9_]*",
+            "\\+",
+            "-",
+            "\\*",
+            "/",
+            "=",
+            ",",
+            "\\(",
+            "\\)",
+            "\\d+",
+            "#.*",
+            "\n+",
+          ),
+        )
   }
