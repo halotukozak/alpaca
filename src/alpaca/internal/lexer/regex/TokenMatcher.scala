@@ -12,26 +12,47 @@ import scala.collection.mutable
  * the longest prefix match across all patterns; ties broken by lowest priority index
  * (i.e., the first pattern in the input list wins).
  *
- * Derivatives are memoized per `(Subset, codepoint)` pair across calls. The cache grows
- * lazily as inputs are consumed and is bounded by the size of the reachable derivative
- * state space (finite up to similarity, thanks to smart-constructor normalization).
+ * States are interned to integer IDs the first time they are reached; transitions
+ * (per state, per code point) are then cached in flat arrays indexed by state ID.
+ * After warm-up the hot loop is pure integer array indexing — no `Subset` equality,
+ * no `HashMap` lookups, no per-character allocation.
  */
-final class TokenMatcher private[regex] (private val initial: Array[Subset]):
+final class TokenMatcher private[regex] (initial: Array[Subset]):
 
-  /** Per-Subset cache: ASCII fast path is an Array index 0..127; non-ASCII fall back to a HashMap. */
-  private val asciiCache = mutable.HashMap.empty[Subset, Array[AnyRef]]
-  private val unicodeCache = mutable.HashMap.empty[Subset, mutable.HashMap[Int, Subset]]
+  private val stateToId = mutable.HashMap.empty[Vector[Subset], Int]
+  private val idToState = mutable.ArrayBuffer.empty[Vector[Subset]]
+  private val asciiTrans = mutable.ArrayBuffer.empty[Array[Int]]
+  private val unicodeTrans = mutable.ArrayBuffer.empty[mutable.HashMap[Int, Int]]
+  private val acceptPriority = mutable.ArrayBuffer.empty[Int]
+  private val isDead = mutable.ArrayBuffer.empty[Boolean]
 
-  private def cachedDerive(s: Subset, c: Int): Subset =
+  private val initialId = registerState(initial.toVector)
+
+  private def registerState(s: Vector[Subset]): Int =
+    stateToId.get(s) match
+      case Some(id) => id
+      case None =>
+        val id = idToState.length
+        stateToId(s) = id
+        idToState.append(s)
+        val arr = new Array[Int](128)
+        java.util.Arrays.fill(arr, -1)
+        asciiTrans.append(arr)
+        unicodeTrans.append(mutable.HashMap.empty)
+        acceptPriority.append(firstNullablePriority(s))
+        isDead.append(s.forall(_ == Subset.empty))
+        id
+
+  private def transition(fromId: Int, c: Int): Int =
     if c < 128 then
-      val arr = asciiCache.getOrElseUpdate(s, new Array[AnyRef](128))
+      val arr = asciiTrans(fromId)
       val cached = arr(c)
-      if cached != null then cached.asInstanceOf[Subset]
+      if cached >= 0 then cached
       else
-        val v = s.derive(c)
-        arr(c) = v.asInstanceOf[AnyRef]
-        v
-    else unicodeCache.getOrElseUpdate(s, mutable.HashMap.empty).getOrElseUpdate(c, s.derive(c))
+        val nextId = registerState(idToState(fromId).map(_.derive(c)))
+        arr(c) = nextId
+        nextId
+    else unicodeTrans(fromId).getOrElseUpdate(c, registerState(idToState(fromId).map(_.derive(c))))
 
   /**
    * Match a token starting at `start` in `input`.
@@ -41,20 +62,17 @@ final class TokenMatcher private[regex] (private val initial: Array[Subset]):
    *         no pattern matches any (possibly empty) prefix at `start`.
    */
   def matchAt(input: CharSequence, start: Int): Option[(priority: Int, end: Int)] =
-    val state = initial.clone()
-    var lastAccept = firstNullable(state).map(idx => (priority = idx, end = start))
-
+    var sid = initialId
+    var lastAccept =
+      val p = acceptPriority(sid)
+      if p >= 0 then Some((priority = p, end = start)) else None
     var i = start
-    while i < input.length && !allEmpty(state) do
+    while i < input.length && !isDead(sid) do
       val c = Character.codePointAt(input, i)
-      var k = 0
-      while k < state.length do
-        state(k) = cachedDerive(state(k), c)
-        k += 1
+      sid = transition(sid, c)
       i += Character.charCount(c)
-      firstNullable(state).foreach: idx =>
-        lastAccept = Some((priority = idx, end = i))
-
+      val p = acceptPriority(sid)
+      if p >= 0 then lastAccept = Some((priority = p, end = i))
     lastAccept
 
   /** First position `>= from` at which some pattern matches a non-empty prefix. */
@@ -69,19 +87,12 @@ final class TokenMatcher private[regex] (private val initial: Array[Subset]):
           p += Character.charCount(Character.codePointAt(input, p))
     Option(result)
 
-  private def firstNullable(state: Array[Subset]): Option[Int] =
+  private def firstNullablePriority(s: Vector[Subset]): Int =
     var k = 0
-    while k < state.length do
-      if state(k).nullable then return Some(k)
+    while k < s.length do
+      if s(k).nullable then return k
       k += 1
-    None
-
-  private def allEmpty(state: Array[Subset]): Boolean =
-    var k = 0
-    while k < state.length do
-      if state(k) != Subset.empty then return false
-      k += 1
-    true
+    -1
 
 object TokenMatcher:
 
