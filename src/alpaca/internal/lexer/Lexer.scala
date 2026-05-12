@@ -3,9 +3,8 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
-import alpaca.internal.lexer.regex.{Regex, RegexParseError, RegexParser}
+import alpaca.internal.lexer.regex.{Regex, RegexParseError, RegexParser, TokenMatcher}
 
-import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.{publicInBinary, switch}
 import scala.reflect.NameTransformer
@@ -152,20 +151,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
     case ('[refinedTpe], '[fields], '[types]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
-      infos.foreach: info =>
-        try Pattern.compile(info.pattern)
-        catch
-          case e: PatternSyntaxException =>
-            report.errorAndAbort(
-              show"Invalid regex pattern \"${info.pattern}\" for token \"${info.name}\": ${e.getDescription}. If you meant to match a literal character, escape it with a backslash (e.g., \"\\\\+\" instead of \"+\")",
-            )
-
-      val regex = Expr:
-        infos
-          .map:
-            case TokenInfo(_, regexGroupName, pattern) => show"(?<$regexGroupName>$pattern)"
-          .mkString("|")
-          .tap(Pattern.compile) // we'd like to compile it here to fail in compile time if regex is invalid
+      val matcherExpr = '{ TokenMatcher.fromRegexes(${ Varargs(parsedRegexes.map(Expr(_))) }*) }
 
       '{
         {
@@ -175,7 +161,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
             override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 
-            override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
+            override protected val matcher: TokenMatcher = $matcherExpr
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe & types]
       }
 // $COVERAGE-ON$
