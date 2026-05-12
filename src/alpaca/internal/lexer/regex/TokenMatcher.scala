@@ -18,10 +18,20 @@ import scala.collection.mutable
  */
 final class TokenMatcher private[regex] (initial: Vector[Subset]):
 
-  private val cache = mutable.HashMap.empty[Subset, mutable.HashMap[Int, Subset]]
+  /** Per-Subset cache: ASCII fast path is an Array index 0..127; non-ASCII fall back to a HashMap. */
+  private val asciiCache = mutable.HashMap.empty[Subset, Array[AnyRef]]
+  private val unicodeCache = mutable.HashMap.empty[Subset, mutable.HashMap[Int, Subset]]
 
   private def cachedDerive(s: Subset, c: Int): Subset =
-    cache.getOrElseUpdate(s, mutable.HashMap.empty).getOrElseUpdate(c, s.derive(c))
+    if c < 128 then
+      val arr = asciiCache.getOrElseUpdate(s, new Array[AnyRef](128))
+      val cached = arr(c)
+      if cached != null then cached.asInstanceOf[Subset]
+      else
+        val v = s.derive(c)
+        arr(c) = v.asInstanceOf[AnyRef]
+        v
+    else unicodeCache.getOrElseUpdate(s, mutable.HashMap.empty).getOrElseUpdate(c, s.derive(c))
 
   /**
    * Match a token starting at `start` in `input`.
