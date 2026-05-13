@@ -27,6 +27,24 @@ final class TokenMatcher private[regex] (initial: Array[Subset]):
   private var stateCount: Int = 0
 
   private val initialId = registerState(initial.toVector)
+  warmupAsciiDfa()
+
+  /** Eagerly enumerate all ASCII-reachable states so the hot loop never falls into the miss branch. */
+  private def warmupAsciiDfa(): Unit =
+    val queue = mutable.Queue.empty[Int]
+    queue.enqueue(initialId)
+    val visited = mutable.HashSet.empty[Int]
+    visited += initialId
+    while queue.nonEmpty do
+      val sid = queue.dequeue()
+      if !stateInfo(sid).isDead then
+        var c = 0
+        while c < 128 do
+          val next = asciiTransition(sid, c)
+          if !visited.contains(next) then
+            visited += next
+            queue.enqueue(next)
+          c += 1
 
   private def grow(): Unit =
     val n = asciiTrans.length * 2
