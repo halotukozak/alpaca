@@ -48,7 +48,7 @@ private[alpaca] object Production:
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   /** ToExpr instance for lifting productions to compile-time expressions. */
-// $COVERAGE-OFF$
+  // $COVERAGE-OFF$
   given ToExpr[Production] with
     def apply(x: Production)(using Quotes): Expr[Production] = x match
       case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }

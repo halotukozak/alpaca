@@ -85,7 +85,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * parse the input lexemes using an LR parsing algorithm.
    *
    * @tparam R the result type
-   * @param lexemes   the list of lexemes to parse
+   * @param lexemes the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =

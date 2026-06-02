@@ -45,8 +45,8 @@ private[parser] object FirstSet:
         val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
 
         val production = tail match
-          case head :: next => Production.NonEmpty(lhs, NEL(head, next*))
-          case Nil => Production.Empty(lhs)
+          case head +: next => Production.NonEmpty(lhs, NEL(head, next*))
+          case _ => Production.Empty(lhs)
 
         if firstSet(head).contains(Symbol.Empty)
         then addImports(newFirstSet, production)

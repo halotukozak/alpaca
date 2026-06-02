@@ -10,9 +10,9 @@ package parser
  * lookahead terminal. For example: `E -> E • + T, $` means we have
  * recognized `E` and expect `+` next, with `$` as the lookahead.
  *
- * @param production the grammar production
+ * @param production  the grammar production
  * @param dotPosition the position of the dot (0 to production.rhs.size)
- * @param lookAhead the lookahead terminal
+ * @param lookAhead   the lookahead terminal
  */
 private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal)(using Log):
   production match
