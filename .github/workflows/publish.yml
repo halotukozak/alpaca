@@ -18,9 +18,19 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      # Mill's SonatypeCentralPublishModule hardcodes MILL_PGP_SECRET_BASE64 and expects
+      # base64, while PGP_PRIVATE_KEY (shared with the scala-cli/Gradle publish workflows)
+      # is stored armored -- derive the base64 form at runtime instead of keeping a second
+      # copy of the key around.
+      - name: Derive MILL_PGP_SECRET_BASE64 from PGP_PRIVATE_KEY
+        env:
+          PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
+        run: |
+          encoded="$(printf '%s' "$PGP_PRIVATE_KEY" | base64 -w0)"
+          echo "::add-mask::$encoded"
+          echo "MILL_PGP_SECRET_BASE64=$encoded" >> "$GITHUB_ENV"
       - run: ./mill mill.javalib.SonatypeCentralPublishModule/
         env:
-          MILL_PGP_PASSPHRASE: ${{ secrets.MILL_PGP_PASSPHRASE }}
-          MILL_PGP_SECRET_BASE64: ${{ secrets.MILL_PGP_SECRET_BASE64 }}
-          MILL_SONATYPE_PASSWORD: ${{ secrets.MILL_SONATYPE_PASSWORD }}
-          MILL_SONATYPE_USERNAME: ${{ secrets.MILL_SONATYPE_USERNAME }}
+          MILL_PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          MILL_SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          MILL_SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
