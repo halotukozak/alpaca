@@ -60,7 +60,8 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: halotukozak/alpaca
+          slug: halotukozak-com/alpaca
+          fail_ci_if_error: false
 
       - name: ScalaFmt
         run: ./mill mill.scalalib.scalafmt/checkFormatAll
