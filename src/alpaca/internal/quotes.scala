@@ -9,7 +9,8 @@ package internal
  * This provides convenient access to macro-related types without
  * requiring explicit imports of scala.quoted members.
  */
-export scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
+export scala.quoted.{Expr, FromExpr, Quotes, ToExpr, ToExprFactory, Type, Varargs}
+export scala.quoted.QuotedFactoryGivens.toExprFactoryBridge
 
 /**
  * Exports the Mirror type for type-class derivation.

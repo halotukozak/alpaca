@@ -48,7 +48,11 @@ private[alpaca] object NEL:
     list
 
   // $COVERAGE-OFF$
-  private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
-    def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
-      '{ NEL(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
+  private[internal] given [A: ToExprFactory] => ToExprFactory[NEL[A]]:
+    def apply()(using Type[NEL[A]]): ToExpr[NEL[A]] = new ToExpr[NEL[A]]:
+      def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] = summon[Type[NEL[A]]] match
+        case '[NEL[t]] =>
+          given Type[A] = Type.of[t].asInstanceOf[Type[A]]
+          given ToExpr[A] = summon[ToExprFactory[A]].apply()
+          '{ NEL(${ Expr(x.head) }, ${ ToExpr.ListToExpr(x.tail) }*) }
 // $COVERAGE-ON$

@@ -25,7 +25,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param pattern the regex pattern that matches this token
  */
 //todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
-private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String)
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String) derives ToExprFactory
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -60,10 +60,6 @@ private[lexer] object TokenInfo:
   given Default[TokenInfo] = () => TokenInfo("", "", "")
 
   given Showable[TokenInfo] = Showable.fromToString
-
-  given ToExpr[TokenInfo]:
-    def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
-      '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
 // $COVERAGE-ON$
 /**
  * Base trait for all token types.

@@ -11,7 +11,7 @@ package parser
  *
  * @param rhs the right-hand side sequence of symbols
  */
-private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.type):
+private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.type) derives ToExprFactory:
 
   /** The left-hand side non-terminal of the production. */
   val lhs: NonTerminal
@@ -46,11 +46,3 @@ private[alpaca] object Production:
     case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
-
-  /** ToExpr instance for lifting productions to compile-time expressions. */
-// $COVERAGE-OFF$
-  given ToExpr[Production] with
-    def apply(x: Production)(using Quotes): Expr[Production] = x match
-      case NonEmpty(lhs, rhs, name) => '{ NonEmpty(${ Expr(lhs) }, ${ Expr(rhs) }, ${ Expr(name) }) }
-      case Empty(lhs, name) => '{ Empty(${ Expr(lhs) }, ${ Expr(name) }) }
-// $COVERAGE-ON$
