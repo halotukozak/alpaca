@@ -190,6 +190,117 @@ final class RegexParserTest extends AnyFunSuite with Matchers:
     parse("") shouldBe Eps
   }
 
+  test("parses \\xhh hex escape") {
+    parse("\\x41") shouldBe Regex.lit('A')
+  }
+
+  test("parses \\x{h...h} hex escape") {
+    parse("\\x{41}") shouldBe Regex.lit('A')
+    parse("\\x{1F600}") shouldBe Regex(CharSet.single(0x1f600))
+  }
+
+  test("rejects \\x{} escape above the max code point") {
+    RegexParser.parse("\\x{110000}") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
+  test("rejects incomplete \\x escape") {
+    RegexParser.parse("\\x4") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+    RegexParser.parse("\\x4g") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
+  test("parses \\uhhhh unicode escape") {
+    parse("\\u0041") shouldBe Regex.lit('A')
+  }
+
+  test("parses \\0 octal escape") {
+    parse("\\01") shouldBe Regex.lit(0x01.toChar)
+    parse("\\012") shouldBe Regex.lit(0x0a.toChar)
+    parse("\\0101") shouldBe Regex.lit('A')
+  }
+
+  test("rejects \\0 with no following octal digit") {
+    RegexParser.parse("\\0") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
+  test("\\0 octal escape stops at 2 digits when a 3rd would overflow 0377") {
+    // digits after the leading `0` are "777": 0o77 (63) would overflow to 0o777 (511 > 0o377),
+    // so only the first two digits are consumed and the trailing `7` is a separate literal
+    parse("\\0777") shouldBe Regex.lit(0x3f.toChar).concat(Regex.lit('7'))
+  }
+
+  test("parses \\cX control escape") {
+    parse("\\cA") shouldBe Regex.lit(0x01.toChar)
+  }
+
+  test("rejects incomplete \\c escape") {
+    RegexParser.parse("\\c") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
+  test("parses \\Q...\\E quoted literal") {
+    parse("\\Qa.b*\\E") shouldBe Regex.literal("a.b*")
+  }
+
+  test("backslash has no special meaning inside \\Q...\\E") {
+    parse("\\Qa\\b\\E") shouldBe Regex.literal("a\\b")
+  }
+
+  test("parses unterminated \\Q as literal to end of pattern") {
+    parse("\\Qa.b") shouldBe Regex.literal("a.b")
+  }
+
+  test("parses hex/unicode/octal/control escapes inside a character class") {
+    parse("[\\x41\\u0042\\0103\\cA]") shouldBe Regex(
+      CharSet.normalize(
+        Range('A', 'A'),
+        Range('B', 'B'),
+        Range('C', 'C'),
+        Range(0x01, 0x01),
+      ),
+    )
+  }
+
+  test("parses \\R linebreak matcher") {
+    val linebreak = Regex(
+      CharSet.normalize(
+        Range('\n', '\n'),
+        Range(0x0b, 0x0b),
+        Range('\f', '\f'),
+        Range('\r', '\r'),
+        Range(0x85, 0x85),
+        Range(0x2028, 0x2029),
+      ),
+    )
+    parse("\\R") shouldBe (Regex.literal("\r\n") | linebreak)
+  }
+
+  test("\\b inside a character class means backspace") {
+    parse("[\\b]") shouldBe Regex.lit(0x08.toChar)
+  }
+
+  test("\\b outside a character class is an unsupported word boundary") {
+    RegexParser.parse("\\b") shouldBe a[Left[RegexParseError.UnsupportedFeature, ?]]
+  }
+
+  test("rejects undefined letter escapes") {
+    RegexParser.parse("\\m") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+    RegexParser.parse("\\y") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
+  test("rejects unsupported but recognized Java escapes") {
+    RegexParser.parse("\\G") shouldBe a[Left[RegexParseError.UnsupportedFeature, ?]]
+    RegexParser.parse("\\k") shouldBe a[Left[RegexParseError.UnsupportedFeature, ?]]
+    RegexParser.parse("\\X") shouldBe a[Left[RegexParseError.UnsupportedFeature, ?]]
+  }
+
+  test("accepts quantifier bounds up to the cap") {
+    RegexParser.parse(s"a{${Regex.maxRepeatBound}}") shouldBe a[Right[?, Regex]]
+  }
+
+  test("rejects quantifier bounds above the cap") {
+    RegexParser.parse(s"a{${Regex.maxRepeatBound + 1}}") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+    RegexParser.parse(s"a{0,${Regex.maxRepeatBound + 1}}") shouldBe a[Left[RegexParseError.InvalidSyntax, ?]]
+  }
+
   test("parses complex realistic pattern") {
     val idStart = Regex(
       CharSet.normalize(

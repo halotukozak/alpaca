@@ -39,6 +39,9 @@ private[lexer] object Subset:
     /** `true` iff `L(a) ⊆ L(b)`. */
     def subset(b: Subset): Boolean = (a & !b).isEmpty
 
+    /** `true` iff `L(a) ⊆ L(b)` and `L(a) ≠ L(b)`. */
+    def properSubset(b: Subset): Boolean = a.subset(b) && !b.subset(a)
+
     /** `true` iff `L(a) = ∅`. */
     def isEmpty: Boolean = isEmptyImpl(a)
 

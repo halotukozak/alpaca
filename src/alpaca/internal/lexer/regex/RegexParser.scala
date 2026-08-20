@@ -25,13 +25,17 @@ private[lexer] object RegexParseError:
 /**
  * Java-regex-style parser producing a normalized [[Regex]].
  *
- * Supported subset (see [[Regex]] doc): literals, escapes (\d \D \s \S \w \W \t \n \r \\
- * and meta-escapes \. \* \+ \? \( \) \[ \] \{ \} \| \^ \$ \-), `.`, char classes
- * `[...]` `[^...]` with ranges, alternation `|`, groups `(...)` (capturing or `(?:...)`,
- * flag groups are NOT supported), quantifiers `*` `+` `?` `{n}` `{n,}` `{n,m}`.
+ * Supported subset (see [[Regex]] doc): literals, escapes (\d \D \s \S \w \W \t \n \r \f
+ * \a \e \v \cX \0[n[n]] \xhh \x{h...h} \uhhhh \Q...\E \R and meta-escapes \. \* \+ \? \(
+ * \) \[ \] \{ \} \| \^ \$ \-), `.`, char classes `[...]` `[^...]` with ranges (`\b` inside
+ * a class means backspace, matching Java), alternation `|`, groups `(...)` (capturing or
+ * `(?:...)`, flag groups are NOT supported), quantifiers `*` `+` `?` `{n}` `{n,}` `{n,m}`
+ * (bounds capped at [[Regex.maxRepeatBound]]).
  *
- * Unsupported: anchors `^` `$` `\b` `\B`, lookaround, backreferences `\1`..`\9`, Unicode
- * properties `\p{...}`, named groups, flag groups.
+ * Unsupported: anchors `^` `$` `\b` `\B` `\A` `\Z` `\z` `\G`, lookaround, backreferences
+ * `\1`..`\9` `\k<name>` `\g{...}`, Unicode properties `\p{...}`, grapheme clusters `\X`,
+ * named groups, flag groups. Any other undefined letter escape (e.g. `\m`, `\y`, `\q`) is
+ * rejected as invalid syntax, matching `java.util.regex.Pattern`'s own behavior.
  */
 private[lexer] object RegexParser:
 
@@ -52,6 +56,16 @@ private[lexer] object RegexParser:
     Range('A', 'Z'),
     Range('0', '9'),
     Range('_', '_'),
+  )
+
+  /** What `\R` matches as a single code point, i.e. everything but the two-char `\r\n` case. */
+  private val linebreakSet: CharSet = CharSet.normalize(
+    Range('\n', '\n'),
+    Range(0x0b, 0x0b),
+    Range('\f', '\f'),
+    Range('\r', '\r'),
+    Range(0x85, 0x85),
+    Range(0x2028, 0x2029),
   )
 
   /**
@@ -148,6 +162,8 @@ private[lexer] object RegexParser:
         case _ => fail(s"expected `,` or `}` at position $pos")
       expect('}')
       if hi < lo then fail(s"invalid quantifier bounds {$lo,$hi}: upper bound must be >= lower bound")
+      if lo > Regex.maxRepeatBound || (hi != Int.MaxValue && hi > Regex.maxRepeatBound) then
+        fail(s"quantifier bound exceeds maximum supported value of ${Regex.maxRepeatBound} (got {$lo,$hi})")
       a.repeat(lo, hi)
 
     private def readNumber(): Int =
@@ -225,19 +241,39 @@ private[lexer] object RegexParser:
       cur match
         case '\\' =>
           pos += 1
-          readEscapedChar() match
+          readEscapedChar(inClass = true) match
             case Left(_) => fail("shorthand escapes (\\d, \\s, \\w, ...) are not supported inside character classes")
             case Right(c) => c
         case _ => consume().toInt
 
     private def parseEscape(): Regex =
       expect('\\')
-      readEscapedChar() match
-        case Left(set) => Regex(set)
-        case Right(c) => Regex(CharSet.single(c))
+      if eof then fail("dangling backslash")
+      cur match
+        case 'Q' =>
+          pos += 1
+          parseQuoted()
+        case 'R' =>
+          pos += 1
+          Regex.literal("\r\n") | Regex(linebreakSet)
+        case _ =>
+          readEscapedChar(inClass = false) match
+            case Left(set) => Regex(set)
+            case Right(c) => Regex(CharSet.single(c))
 
-    /** Reads char following `\\`. Either expands to a [[CharSet]] (shorthand) or yields a single code point. */
-    private def readEscapedChar(): Either[CharSet, Int] =
+    /** Consumes literal text up to (and including) `\E`, or to the end of the pattern if absent. */
+    private def parseQuoted(): Regex =
+      val end = src.indexOf("\\E", pos)
+      val text = if end < 0 then src.substring(pos) else src.substring(pos, end)
+      pos = if end < 0 then src.length else end + 2
+      Regex.literal(text)
+
+    /**
+     * Reads char following `\\`. Either expands to a [[CharSet]] (shorthand) or yields a
+     * single code point. `inClass` mirrors Java's rule that `\b` means backspace inside a
+     * character class, rather than a word boundary.
+     */
+    private def readEscapedChar(inClass: Boolean): Either[CharSet, Int] =
       if eof then fail("dangling backslash")
       val c = src.charAt(pos)
       pos += 1
@@ -252,9 +288,72 @@ private[lexer] object RegexParser:
         case 'n' => Right('\n'.toInt)
         case 'r' => Right('\r'.toInt)
         case 'f' => Right('\f'.toInt)
-        case '0' => Right(0)
+        case 'a' => Right(0x07)
+        case 'e' => Right(0x1b)
+        case 'v' => Right(0x0b)
+        case 'b' if inClass => Right(0x08)
         case 'b' | 'B' => unsupported(s"word boundary `\\$c`")
-        case 'A' | 'z' | 'Z' => unsupported(s"anchor `\\$c`")
+        case 'A' | 'Z' | 'z' | 'G' => unsupported(s"anchor `\\$c`")
         case 'p' | 'P' => unsupported("Unicode property")
+        case 'k' => unsupported("named backreference `\\k`")
+        case 'g' => unsupported("backreference `\\g`")
+        case 'X' => unsupported("grapheme cluster `\\X`")
+        case 'c' => Right(readControlEscape())
+        case 'x' => Right(readHexEscape())
+        case 'u' => Right(readUnicodeEscape())
+        case '0' => Right(readOctalEscape())
         case d if d.isDigit => unsupported(s"backreference `\\$d`")
+        case l if l.isLetter => fail(s"illegal/unsupported escape sequence `\\$l` at position $pos")
         case _ => Right(c.toInt)
+
+    /** `\cx`: control character `x XOR 0x40`. */
+    private def readControlEscape(): Int =
+      if eof then fail(s"incomplete `\\c` escape at position $pos")
+      consume().toInt ^ 0x40
+
+    /** `\xhh` (exactly 2 hex digits) or `\x{h...h}` (1+ hex digits, a valid code point). */
+    private def readHexEscape(): Int =
+      if !eof && cur == '{' then
+        pos += 1
+        val start = pos
+        while !eof && cur != '}' do pos += 1
+        if eof then fail("unterminated `\\x{...}` escape")
+        val text = src.substring(start, pos)
+        pos += 1
+        if text.isEmpty then fail("empty `\\x{}` escape")
+        val cp =
+          try Integer.parseInt(text, 16)
+          catch case _: NumberFormatException => fail(s"invalid hexadecimal escape sequence `\\x{$text}`")
+        if cp < 0 || cp > CharSet.maxCodePoint then fail(s"invalid code point `\\x{$text}`")
+        cp
+      else
+        if pos + 2 > src.length then fail("incomplete `\\x` escape")
+        val text = src.substring(pos, pos + 2)
+        try
+          val v = Integer.parseInt(text, 16)
+          pos += 2
+          v
+        catch case _: NumberFormatException => fail(s"invalid hexadecimal escape sequence `\\x$text`")
+
+    /** `\uhhhh`: exactly 4 hex digits. */
+    private def readUnicodeEscape(): Int =
+      if pos + 4 > src.length then fail("incomplete `\\u` escape")
+      val text = src.substring(pos, pos + 4)
+      try
+        val v = Integer.parseInt(text, 16)
+        pos += 4
+        v
+      catch case _: NumberFormatException => fail(s"invalid unicode escape sequence `\\u$text`")
+
+    /** `\0n`, `\0nn` or `\0mnn` octal escape, mirroring `java.util.regex.Pattern`'s own grammar. */
+    private def readOctalEscape(): Int =
+      def isOctal(ch: Char): Boolean = ch >= '0' && ch <= '7'
+      if eof || !isOctal(cur) then fail("illegal octal escape sequence")
+      val n = consume() - '0'
+      if !eof && isOctal(cur) then
+        val m = consume() - '0'
+        if !eof && isOctal(cur) && (n << 6) + (m << 3) + (cur - '0') <= 0xff then
+          val o = consume() - '0'
+          n * 64 + m * 8 + o
+        else n * 8 + m
+      else n

@@ -3,9 +3,7 @@ package internal
 package lexer
 package regex
 
-import alpaca.internal.lexer.regex.Regex.{Compl, Star}
-
-import scala.annotation.tailrec
+import scala.annotation.{publicInBinary, tailrec}
 import scala.quoted.{Expr, Quotes, ToExpr, Varargs}
 import scala.util.control.TailCalls.{done, tailcall, TailRec}
 
@@ -18,16 +16,28 @@ import scala.util.control.TailCalls.{done, tailcall, TailRec}
  * Raw case class constructors are inaccessible — only pattern matching via the
  * generated `unapply` methods is allowed.
  *
- * Supports literals, escapes (\d \D \s \S \w \W \t \n \r and meta-escapes),
- * character classes (including ranges and negation), `.`, alternation `|`,
- * non-capturing-style groups `(...)`, quantifiers `*` `+` `?` `{n}` `{n,}` `{n,m}`.
+ * Supports literals, escapes (\d \D \s \S \w \W \t \n \r \f \a \e \v \cX \0[n[n]] \xhh
+ * \x{h...h} \uhhhh \Q...\E \R and meta-escapes), character classes (including ranges and
+ * negation), `.`, alternation `|`, non-capturing-style groups `(...)`, quantifiers `*` `+`
+ * `?` `{n}` `{n,}` `{n,m}` (bounds capped at [[Regex.maxRepeatBound]]).
  *
  * Unsupported (parser returns [[RegexParseError.UnsupportedFeature]]):
- * anchors `^` `$` `\b` `\B`, lookaround `(?=` `(?!` `(?<=` `(?<!`, backreferences `\1`..`\9`.
+ * anchors `^` `$` `\b` `\B` `\A` `\Z` `\z` `\G`, lookaround `(?=` `(?!` `(?<=` `(?<!`,
+ * backreferences `\1`..`\9` `\k<name>` `\g{...}`, Unicode properties `\p{...}`, grapheme
+ * clusters `\X`.
  */
 private[lexer] sealed trait Regex
 
 private[lexer] object Regex:
+
+  /**
+   * Upper bound on quantifier bounds accepted by [[repeat]]. `{n,m}` is unfolded into an
+   * `n`- (or `m`-) sized chain of [[Concat]] nodes, so unbounded values would let a single
+   * malformed token pattern build an unbounded/exponential AST at compile time. Real lexer
+   * token patterns never need bounds anywhere near this size.
+   */
+  val maxRepeatBound: Int = 1000
+
   def apply(set: CharSet): Regex = if set.isEmpty then Empty else Chars(set)
 
   /** Matches the empty string ε. */
@@ -79,6 +89,10 @@ private[lexer] object Regex:
     /** Quantifier `this{n,m}` where m can be `Int.MaxValue` for unbounded. */
     def repeat(lo: Int, hi: Int): Regex =
       require(lo >= 0 && hi >= lo, s"invalid bounds {$lo,$hi}")
+      require(
+        lo <= Regex.maxRepeatBound && (hi == Int.MaxValue || hi <= Regex.maxRepeatBound),
+        s"quantifier bound exceeds maximum supported value of ${Regex.maxRepeatBound} (got {$lo,$hi})",
+      )
       val mandatory = (1 to lo).foldLeft[Regex](Regex.Eps)((acc, _) => r.concat(acc))
       if hi == Int.MaxValue then mandatory.concat(star)
       else mandatory.concat((1 to (hi - lo)).foldLeft[Regex](Regex.Eps)((acc, _) => Regex.Eps | (r.concat(acc))))
@@ -160,8 +174,15 @@ private[lexer] object Regex:
       case Compl(inner) => '{ ! ${ Expr(inner) } }
   // $COVERAGE-ON$
 
-/** Sorted, non-overlapping, merged ranges over Int code points. */
-private[regex] final class CharSet(val ranges: Vector[Range]) extends AnyVal:
+/**
+ * Sorted, non-overlapping, merged ranges over Int code points.
+ *
+ * The primary constructor is restricted to [[CharSet]]'s own companion so every instance
+ * is built through a normalizing smart constructor ([[CharSet.normalize]], [[CharSet.single]],
+ * [[CharSet.range]], [[CharSet.empty]], [[CharSet.all]]); `complement` and `intersect` rely on
+ * that invariant.
+ */
+private[regex] final class CharSet @publicInBinary private[CharSet] (val ranges: Vector[Range]) extends AnyVal:
 
   def contains(c: Int): Boolean = ranges.exists(r => c >= r.lo && c <= r.hi)
 
