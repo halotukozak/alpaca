@@ -238,13 +238,12 @@ private[regex] object CharSet:
   // $COVERAGE-ON$
 
 /** Single closed code-point range. */
-private[regex] final case class Range private (lo: Int, hi: Int)
-private[regex] object Range:
-  def apply(lo: Int, hi: Int): Range =
-    require(0 <= lo && lo <= hi && hi <= CharSet.maxCodePoint, s"invalid code-point range [$lo, $hi]")
-    new Range(lo, hi)
-  def apply(lo: Char, hi: Char): Range = Range(lo.toInt, hi.toInt)
+private[regex] final case class Range (lo: Int, hi: Int) {
+  require(0 <= lo && lo <= hi && hi <= CharSet.maxCodePoint, s"invalid code-point range [$lo, $hi]")
 
+  def this (lo: Char, hi: Char) = this(lo.toInt, hi.toInt)
+}
+private[regex] object Range:
   // $COVERAGE-OFF$
   given ToExpr[Range]:
     def apply(x: Range)(using Quotes): Expr[Range] =
