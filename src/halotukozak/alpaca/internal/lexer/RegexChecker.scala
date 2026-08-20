@@ -24,13 +24,11 @@ private[lexer] object RegexChecker:
    *
    * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match // todo: find better way
+  def checkPatterns(patterns: List[String]): Unit = patterns match // todo: find better way
     case Nil => ()
     case patterns =>
-      logger.trace("checking regex patterns for shadowing...")
-      val regexes = Regex.compile(patterns.map(_ + ".*").asJava)
-
       for
+        regexes = Regex.compile(patterns.map(_ + ".*").asJava)
         i <- patterns.indices
         j <- (i + 1) until regexes.size
       do if regexes.get(j).isSubsetOf(regexes.get(i)) then throw ShadowException(patterns(j), patterns(i))

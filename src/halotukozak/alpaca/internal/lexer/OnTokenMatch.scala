@@ -31,10 +31,8 @@ object OnTokenMatch:
   inline given auto[Ctx <: LexerCtx]: OnTokenMatch[Ctx] = ${ autoImpl[Ctx] }
 
   // $COVERAGE-OFF$
-  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[OnTokenMatch[Ctx]] = withLog:
+  private def autoImpl[Ctx <: LexerCtx: Type](using quotes: Quotes): Expr[OnTokenMatch[Ctx]] =
     import quotes.reflect.*
-
-    logger.trace(show"deriving OnTokenMatch for ${Type.of[Ctx]}")
 
     val parents = TypeRepr
       .of[Ctx]
@@ -51,7 +49,6 @@ object OnTokenMatch:
     val derivedOnTokenMatch = parents
       .map:
         case '[type ctx >: Ctx <: LexerCtx; ctx] =>
-          logger.trace(show"summoning OnTokenMatch for parent ${Type.of[ctx]}")
           Expr
             .summonIgnoring[OnTokenMatch[ctx]]('{ OnTokenMatch }.asTerm.symbol.methodMember("auto")*)
             .getOrElse(report.errorAndAbort(show"No OnTokenMatch instance found for ${Type.of[ctx]}"))

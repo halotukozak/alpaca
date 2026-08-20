@@ -3,7 +3,8 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.parser.ParseAction.Reduction
+import ParseAction.Reduction
+import halotukozak.alpaca.internal.{AlpacaException, DebugSettings, Shown}
 
 import scala.annotation.constructorOnly
 
@@ -27,7 +28,7 @@ private[alpaca] final class ShiftReduceConflict(
   symbol: Symbol,
   red: Reduction,
   path: List[Symbol],
-)(using @constructorOnly log: Log,
+)(using @constructorOnly ds: DebugSettings,
 ) extends ConflictException(
     show"""
           |Shift \"$symbol\" vs Reduce $red
@@ -47,7 +48,7 @@ private[alpaca] final class ReduceReduceConflict(
   red1: Reduction,
   red2: Reduction,
   path: List[Symbol],
-)(using @constructorOnly log: Log,
+)(using @constructorOnly ds: DebugSettings,
 ) extends ConflictException(
     show"""
           |Reduce $red1 vs Reduce $red2
@@ -67,7 +68,7 @@ private[alpaca] final class ReduceReduceConflict(
 private[alpaca] final class InconsistentConflictResolution(
   node: ConflictKey,
   path: List[ConflictKey],
-)(using @constructorOnly log: Log,
+)(using @constructorOnly ds: DebugSettings,
 ) extends ConflictException(
     show"""
           |Inconsistent conflict resolution detected:

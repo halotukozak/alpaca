@@ -3,6 +3,8 @@ package alpaca
 package internal
 package parser
 
+import halotukozak.alpaca.internal.Showable
+
 /**
  * Represents a parse action in the LR parse table.
  *
@@ -17,14 +19,14 @@ private[parser] object ParseAction:
   /**
    * Shift action: read the input symbol and move to a new state.
    */
-  sealed case class Shift(state: Int) extends AnyVal with ParseAction
+  sealed case class Shift(state: Int) extends AnyVal , ParseAction
 
   /**
    * Reduce action: apply a production rule to reduce symbols.
    */
-  sealed case class Reduction(production: Production) extends AnyVal with ParseAction
+  sealed case class Reduction(production: Production) extends AnyVal , ParseAction
 
-  given Showable[ParseAction] = Showable:
+  given Showable[ParseAction] =
     case Shift(state) => show"S$state"
     case Reduction(production) => show"$production"
 

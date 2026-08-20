@@ -2,7 +2,6 @@ package halotukozak
 package alpaca
 
 import halotukozak.alpaca.internal.lexer.LazyReader
-
 import java.nio.file.Files
 import scala.util.Using
 

@@ -1,8 +1,9 @@
 package halotukozak
 package alpaca
-package internal.parser
+package internal
+package parser
 
-import halotukozak.alpaca.Production as P
+import halotukozak.alpaca.{lexer, ParserCtx, Token, Production as P}
 import org.scalatest.LoneElement
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

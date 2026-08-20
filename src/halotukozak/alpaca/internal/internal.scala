@@ -1,23 +1,10 @@
+
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.collection.mutable
-import scala.concurrent.duration.{Duration, FiniteDuration}
 
-/**
- * A dummy value for compile-time placeholders.
- *
- * This function returns null cast to any type. It is used exclusively in
- * compile-time contexts (macros) as a placeholder value that should never
- * actually be evaluated at runtime.
- *
- * @tparam T the type to cast to
- * @return null cast to type T
- * @note This is for compile-time use only and should never be called at runtime
- */
-private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
 
 /**
  * A TreeMap that replaces symbol references in a tree.
@@ -30,7 +17,7 @@ private[alpaca] def dummy[T]: T = null.asInstanceOf[T]
  * @param quotes the Quotes instance
  */
 // $COVERAGE-OFF$
-private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(using Log):
+private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -43,23 +30,20 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
    * @param queries pairs of (symbol to find, replacement term)
    * @return a TreeMap that performs the replacements
    */
-  def apply(queries: (find: Symbol, replace: Term)*): TreeMap =
-    logger.trace(show"creating ReplaceRefs with ${queries.size} queries")
-    new TreeMap:
-      // skip NoSymbol
-      private val filtered = queries.filterNot(_.find.isNoSymbol)
+  def apply(queries: (find: Symbol, replace: Term)*): TreeMap = new TreeMap:
+    // skip NoSymbol
+    private val filtered = queries.filterNot(_.find.isNoSymbol)
 
-      override def transformTerm(tree: Term)(owner: Symbol): Term =
-        filtered
-          .collectFirst:
-            case (find, replace) if find == tree.symbol =>
-              logger.trace(show"replacing reference to $find with $replace")
-              replace
-          .getOrElse:
-            val term = tree match
-              case block: Block => block.changeOwner(owner)
-              case other => other
-            super.transformTerm(term)(owner)
+    override def transformTerm(tree: Term)(owner: Symbol): Term =
+      filtered
+        .collectFirst:
+          case (find, replace) if find == tree.symbol =>
+            replace
+        .getOrElse:
+          val term = tree match
+            case block: Block => block.changeOwner(owner)
+            case other => other
+          super.transformTerm(term)(owner)
 
 /**
  * A helper for creating lambda expressions during macro expansion.
@@ -70,7 +54,7 @@ private[internal] final class ReplaceRefs[Q <: Quotes](using val quotes: Q)(usin
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(using Log):
+private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -81,7 +65,6 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(usi
    * @return an expression of type F
    */
   def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
-    logger.trace(show"creating lambda of type ${Type.of[F]}")
     require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
@@ -89,7 +72,9 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q)(usi
     Lambda(
       Symbol.spliceOwner,
       MethodType(params.zipWithIndex.map((_, i) => show"$$arg$i"))(_ => params, _ => r),
-      (sym, args) => rhsFn.unsafeApply((sym, args))(using Default[Expr[?]].transform(_.asTerm)),
+      (sym, args) =>
+        if !rhsFn.isDefinedAt((sym, args)) then raiseShouldNeverBeCalled[(Symbol, List[Tree])]((sym, args))
+        rhsFn.apply((sym, args)),
     ).asExprOf[F]
 
 /**
@@ -123,33 +108,6 @@ private[internal] given [T: FromExpr as fromExpr] => FromExpr[T | Null]:
     case '{ $_ : Null } => Some(null)
     case value: Expr[T] @unchecked => fromExpr.unapply(value)
 // $COVERAGE-ON$
-/**
- * Starts a background timeout watcher for compilation.
- *
- * This helper spawns a daemon thread that waits for the duration
- * configured in [[Log.debugSettings.compilationTimeout]]. If the timeout
- * is a finite [[scala.concurrent.duration.FiniteDuration]] and elapses
- * without the watcher thread being interrupted, the thread will
- * self-interrupt. For infinite timeouts, no action is taken.
- *
- * This API is fire-and-forget: it returns `Unit`, and the timeout watcher
- * thread cannot be cancelled through this method.
- */
-private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit =
-  val callerThread = Thread.currentThread()
-
-  new Thread:
-    override def run(): Unit =
-      summon[Log].debugSettings.compilationTimeout.runtimeChecked match
-        case duration: FiniteDuration =>
-          try Thread.sleep(duration.toMillis)
-          catch case _: InterruptedException => return
-          callerThread.interrupt()
-        case Duration.Inf => ()
-        case Duration.MinusInf => callerThread.interrupt()
-  .tap: t =>
-    t.setDaemon(true)
-    t.start()
 
 /**
  * A helper class for overriding symbols in macro expansion.
@@ -162,7 +120,7 @@ private[alpaca] def timeoutOnTooLongCompilation()(using Log): Unit =
  * @param quotes the Quotes instance
  */
 // $COVERAGE-OFF$
-private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q)(using Log):
+private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
   /**
@@ -178,10 +136,8 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
     val baseSymbol = symbol(parent)
     val owner = baseSymbol.overridingSymbol(parent) match
       case owner if owner.isNoSymbol =>
-        logger.warn(show"overriding $baseSymbol resulted in NoSymbol, using base symbol instead")
         baseSymbol
       case owner =>
-        logger.trace(show"overriding symbol $baseSymbol in $parent, new owner: $owner")
         owner
 
     body(using owner.asQuotes)(owner)
@@ -263,12 +219,6 @@ private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[
       .asExprOf[To]
 // $COVERAGE-ON$
 
-/**
- * The number of available processor threads.
- *
- * This constant is used for parallel operations during compilation.
- */
-private[internal] val threads = Runtime.getRuntime.availableProcessors
 
 extension [T](t: T)
   inline private[alpaca] def tap[U](inline f: T => U): T =
