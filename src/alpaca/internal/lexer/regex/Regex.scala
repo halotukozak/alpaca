@@ -161,7 +161,7 @@ private[lexer] object Regex:
   // $COVERAGE-ON$
 
 /** Sorted, non-overlapping, merged ranges over Int code points. */
-private[regex] final case class CharSet(ranges: Vector[Range]):
+private[regex] final class CharSet(val ranges: Vector[Range]) extends AnyVal:
 
   def contains(c: Int): Boolean = ranges.exists(r => c >= r.lo && c <= r.hi)
 
@@ -233,14 +233,20 @@ private[regex] object CharSet:
   // $COVERAGE-OFF$
   given ToExpr[CharSet]:
     def apply(s: CharSet)(using Quotes): Expr[CharSet] =
-      val rangeExprs = s.ranges.map(r => '{ Range(${ Expr(r.lo) }, ${ Expr(r.hi) }) })
+      val rangeExprs: Seq[Expr[Range]] = s.ranges.map(Expr.apply)
       '{ CharSet(Vector(${ Varargs(rangeExprs) }*)) }
   // $COVERAGE-ON$
 
 /** Single closed code-point range. */
-private[regex] type Range = (lo: Int, hi: Int)
+private[regex] final case class Range private (lo: Int, hi: Int)
 private[regex] object Range:
   def apply(lo: Int, hi: Int): Range =
     require(0 <= lo && lo <= hi && hi <= CharSet.maxCodePoint, s"invalid code-point range [$lo, $hi]")
-    (lo, hi)
+    new Range(lo, hi)
   def apply(lo: Char, hi: Char): Range = Range(lo.toInt, hi.toInt)
+
+  // $COVERAGE-OFF$
+  given ToExpr[Range]:
+    def apply(x: Range)(using Quotes): Expr[Range] =
+      '{ Range(${ Expr(x.lo) }, ${ Expr(x.hi) }) }
+// $COVERAGE-ON$

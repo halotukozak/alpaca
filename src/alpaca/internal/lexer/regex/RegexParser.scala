@@ -72,7 +72,7 @@ private[lexer] object RegexParser:
   private final class Parser(private val src: String):
     var pos: Int = 0
 
-    def fail(msg: String): Nothing =
+    private def fail(msg: String): Nothing =
       throw new InvalidSyntaxSignal(msg, pos)
 
     private def unsupported(feature: String): Nothing =
