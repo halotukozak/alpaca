@@ -54,7 +54,7 @@ final class RegexAlgebraTest extends AnyFunSuite with Matchers:
 
   test("alt merges Chars by union") {
     val merged = Regex.lit('a') | Regex.lit('b')
-    merged shouldBe Regex(CharSet.normalize(('a'.toInt, 'a'.toInt), ('b'.toInt, 'b'.toInt)))
+    merged shouldBe Regex(CharSet.normalize(Range('a'.toInt, 'a'.toInt), Range('b'.toInt, 'b'.toInt)))
   }
 
   // inter -----------------------------------------------------------------
@@ -132,4 +132,9 @@ final class RegexAlgebraTest extends AnyFunSuite with Matchers:
   test("repeat rejects invalid bounds") {
     an[IllegalArgumentException] shouldBe thrownBy(rA.repeat(-1, 0))
     an[IllegalArgumentException] shouldBe thrownBy(rA.repeat(3, 2))
+  }
+
+  test("repeat rejects bounds above maxRepeatBound") {
+    an[IllegalArgumentException] shouldBe thrownBy(rA.repeat(0, Regex.maxRepeatBound + 1))
+    an[IllegalArgumentException] shouldBe thrownBy(rA.repeat(Regex.maxRepeatBound + 1, Regex.maxRepeatBound + 1))
   }
