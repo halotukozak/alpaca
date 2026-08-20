@@ -112,7 +112,7 @@ You can provide a custom `ErrorHandling` instance for your context type. Four st
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.ErrorHandling
+import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -121,19 +121,24 @@ case class BrainLexContext(
 ) extends LexerCtx with PositionTracking with LineTracking
 
 // Custom error handler: report position and throw
-given ErrorHandling[BrainLexContext] = ctx =>
+given ErrorHandling
+[BrainLexContext
+] = ctx =>
   ErrorHandling.Strategy.Throw:
-    RuntimeException(s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'")
+    RuntimeException
+(s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'")
 ```
 
 To silently skip unknown characters (useful for BrainFuck where non-command characters are comments):
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.ErrorHandling
+import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Skip unrecognized characters instead of throwing
-given ErrorHandling[LexerCtx.Default] = _ =>
+given ErrorHandling
+[LexerCtx.Default
+] = _ =>
   ErrorHandling.Strategy.IgnoreChar
 ```
 

@@ -203,19 +203,27 @@ Define the `given` in the **trait companion**, not the case class companion. Put
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.OnTokenMatch
+import halotukozak.alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
-trait IndentTracking extends LexerCtx:
-  this: Product =>
-  var indentLevel: Int
+trait IndentTracking extends LexerCtx
+
+:
+this: Product =>
+var indentLevel: Int
 
 // Step 2: given in TRAIT COMPANION
-object IndentTracking:
-  given OnTokenMatch[IndentTracking] =
-    case (_, "\t", ctx) => ctx.indentLevel += 1
-    case (_, "\n", ctx) => ctx.indentLevel = 0
-    case _ => ()
+object IndentTracking
+
+:
+given OnTokenMatch
+[IndentTracking
+] =
+case (_, "\t", ctx)
+=> ctx.indentLevel += 1
+case (_, "\n", ctx)
+=> ctx.indentLevel = 0
+case _ => ()
 
 // Step 3: Case class extends the trait
 case class MyCtx(
@@ -224,9 +232,12 @@ case class MyCtx(
 
 // Step 4: Auto composition happens at compile time
 val Lexer = lexer[MyCtx]:
-  case "\t" => Token.Ignored
-  case "\n" => Token.Ignored
-  case id @ "[a-z]+" => Token["ID"](id)
+case "\t"
+=> Token.Ignored
+case "\n"
+=> Token.Ignored
+case id
+@"[a-z]+" => Token["ID"](id)
 ```
 
 </details>

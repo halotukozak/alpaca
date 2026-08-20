@@ -103,6 +103,8 @@ computes the result.
 
 ```scala 3 sc:nocompile
 import alpaca.*
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{rule, Rule}
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(

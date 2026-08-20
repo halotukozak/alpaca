@@ -110,19 +110,23 @@ By default, the lexer throws on unmatched input. You can customize this with an 
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.ErrorHandling
+import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Option A: skip unrecognized characters silently
-given ErrorHandling[BrainLexContext] = _ =>
+given ErrorHandling
+[BrainLexContext
+] = _ =>
   ErrorHandling.Strategy.IgnoreChar
 ```
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.ErrorHandling
+import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Option B: stop gracefully, returning what was tokenized so far
-given ErrorHandling[BrainLexContext] = _ =>
+given ErrorHandling
+[BrainLexContext
+] = _ =>
   ErrorHandling.Strategy.Stop
 ```
 

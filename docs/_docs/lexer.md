@@ -190,7 +190,7 @@ For large files, use `LazyReader` instead of loading the entire file into a `Str
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.internal.lexer.LazyReader
+import halotukozak.alpaca.internal.lexer.LazyReader
 import java.nio.file.Path
 
 val reader = LazyReader.from(Path.of("program.bf"))
