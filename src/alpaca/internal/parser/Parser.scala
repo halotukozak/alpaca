@@ -42,7 +42,6 @@ abstract class Parser[Ctx <: ParserCtx](
    * This is the starting point for parsing.
    */
   val root: Rule[?]
-  
 
   /**
    * Provides access to the parser context within rule definitions.

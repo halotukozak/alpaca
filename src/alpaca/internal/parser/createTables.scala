@@ -190,7 +190,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
       logger.trace("Conflict resolution rules extracted, building conflict resolution table.")
 
-      var givenResolutions: Expr[Resolutions[p] | Null] = '{ (null) }
+      var givenResolutions: Expr[Resolutions[p] | Null] = '{ null }
 
       val resolutionExprs = scala.util
         .Try:
