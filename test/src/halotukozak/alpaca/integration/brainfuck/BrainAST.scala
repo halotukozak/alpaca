@@ -1,5 +1,6 @@
 package halotukozak
-package alpaca.integration.brainfuck
+package alpaca
+package integration.brainfuck
 
 import scala.collection.mutable
 

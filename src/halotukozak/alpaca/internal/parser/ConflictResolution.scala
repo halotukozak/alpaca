@@ -3,6 +3,8 @@ package alpaca
 package internal
 package parser
 
+import halotukozak.alpaca.internal.{DebugSettings, Showable}
+
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -16,7 +18,7 @@ opaque private[parser] type ConflictKey = Production | String
 private[parser] object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
-  given Showable[ConflictKey] = Showable:
+  given Showable[ConflictKey] =
     case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
     case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
     case p: Production => show"Reduction(${p.name.nn})"
@@ -52,9 +54,7 @@ private[parser] object ConflictResolutionTable:
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
      */
-    def get(first: ParseAction, second: ParseAction)(symbol: Symbol)(using Log): Option[ParseAction] =
-      logger.trace(show"resolving conflict between $first and $second on symbol $symbol")
-
+    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] =
       extension (action: ParseAction)
         def toConflictKey: ConflictKey = action match
           case ParseAction.Reduction(prod) => prod
@@ -77,8 +77,7 @@ private[parser] object ConflictResolutionTable:
 
       winsOver(first, second) orElse winsOver(second, first)
 
-    def verifyNoConflicts()(using Log): Unit =
-      logger.trace("verifying conflict resolution table for cycles...")
+    def verifyNoConflicts()(using DebugSettings): Unit =
       enum VisitState:
         case Unvisited, Visited, Processed
 
@@ -107,8 +106,7 @@ private[parser] object ConflictResolutionTable:
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
 
-    def toMermaid(using Log): String =
-      logger.trace("generating Mermaid conflict resolution graph")
+    def toMermaid: String =
       val sb = new StringBuilder
       sb.append("graph TD\n")
 
@@ -153,7 +151,7 @@ private[parser] object ConflictResolutionTable:
   /**
    * Showable instance for displaying conflict resolution tables.
    */
-  given Showable[ConflictResolutionTable] = Showable: table =>
+  given Showable[ConflictResolutionTable] = table =>
     table
       .map: (k, v) =>
         def show(x: ConflictKey): String = x match

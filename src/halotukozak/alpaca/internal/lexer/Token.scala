@@ -3,9 +3,13 @@ package alpaca
 package internal
 package lexer
 
+import halotukozak.alpaca.internal.{Default, RuleOnly, Showable, ValidName}
+import halotukozak.alpaca.{LexerCtx, SepValue}
+
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.annotation.{compileTimeOnly, publicInBinary, unused}
+import scala.quoted.{Quotes, ToExprFactory}
 
 /**
  * Type alias for context manipulation functions.
@@ -26,7 +30,7 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
  * @param pattern the regex pattern that matches this token
  */
 //todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
-private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String)
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String) derives ToExprFactory
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -43,7 +47,7 @@ private[lexer] object TokenInfo:
    * @return a TokenInfo expression
    */
 // $COVERAGE-OFF$
-  def apply(name: String, pattern: String)(using quotes: Quotes)(using Log): (Type[? <: ValidName], TokenInfo) =
+  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (
@@ -61,10 +65,6 @@ private[lexer] object TokenInfo:
   given Default[TokenInfo] = () => TokenInfo("", "", "")
 
   given Showable[TokenInfo] = Showable.fromToString
-
-  given ToExpr[TokenInfo]:
-    def apply(x: TokenInfo)(using Quotes): Expr[TokenInfo] =
-      '{ TokenInfo(${ Expr(x.name) }, ${ Expr(x.regexGroupName) }, ${ Expr(x.pattern) }) }
 // $COVERAGE-ON$
 /**
  * Base trait for all token types.
@@ -107,13 +107,14 @@ private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCt
   type LexemeTpe <: Lexeme[Name, Value @uv] // & LexemeRefinement
 
   @compileTimeOnly(RuleOnly)
-  inline def unapply(@unused x: Any): Option[LexemeTpe] = dummy
+  inline def unapply(@unused x: Any): Option[LexemeTpe] = null.asInstanceOf[Option[LexemeTpe]]
   @compileTimeOnly(RuleOnly)
-  inline def List: PartialFunction[Any, List[LexemeTpe]] = dummy
+  inline def List: PartialFunction[Any, List[LexemeTpe]] = null.asInstanceOf[PartialFunction[Any, List[LexemeTpe]]]
   @compileTimeOnly(RuleOnly)
-  inline def Option: PartialFunction[Any, Option[LexemeTpe]] = dummy
+  inline def Option: PartialFunction[Any, Option[LexemeTpe]] = null.asInstanceOf[PartialFunction[Any, Option[LexemeTpe]]]
   @compileTimeOnly(RuleOnly)
-  inline def SeparatedBy[Separator]: PartialFunction[Any, List[LexemeTpe | SepValue[Separator]]] = dummy
+  inline def SeparatedBy[Separator]: PartialFunction[Any, List[LexemeTpe | SepValue[Separator]]] =
+    null.asInstanceOf[PartialFunction[Any, List[LexemeTpe | SepValue[Separator]]]]
 
 /**
  * A token that is matched but not included in the output.

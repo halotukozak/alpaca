@@ -2,7 +2,7 @@ package halotukozak
 package alpaca
 package integration
 
-import halotukozak.alpaca.{Rule, Token}
+import alpaca.{Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
 /** Validates the expression-evaluator tutorial code compiles and runs correctly. */

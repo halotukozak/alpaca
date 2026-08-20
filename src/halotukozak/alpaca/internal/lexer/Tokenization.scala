@@ -3,7 +3,7 @@ package alpaca
 package internal
 package lexer
 
-import halotukozak.alpaca.internal.lexer.ErrorHandling.Strategy
+import alpaca.internal.lexer.ErrorHandling.Strategy
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.publicInBinary
@@ -27,7 +27,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 ) extends Selectable:
   type Fields <: AnyNamedTuple
   type LexemeFields <: AnyNamedTuple
-  final type Lexeme = halotukozak.alpaca.internal.lexer.Lexeme[?, ?] withFields LexemeFields
+  final type Lexeme = lexer.Lexeme[?, ?] withFields LexemeFields
 
   /** List of all tokens defined in this lexer, including ignored tokens. */
   @publicInBinary

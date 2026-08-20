@@ -3,7 +3,8 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.parser.Symbol.SyntheticInfix
+import Symbol.SyntheticInfix
+import halotukozak.alpaca.internal.Showable
 
 import scala.reflect.NameTransformer
 import scala.util.Random
@@ -28,7 +29,7 @@ private[parser] trait Symbol extends Any:
  *
  * @param name the name of the non-terminal
  */
-sealed case class NonTerminal(name: String) extends AnyVal with Symbol
+sealed case class NonTerminal(name: String) extends AnyVal, Symbol
 
 object NonTerminal:
 
@@ -62,7 +63,7 @@ object NonTerminal:
  *
  * @param name the name of the terminal (token name)
  */
-sealed case class Terminal(name: String) extends AnyVal with Symbol
+sealed case class Terminal(name: String) extends AnyVal, Symbol
 
 object Terminal:
   /**
@@ -88,15 +89,14 @@ private[parser] object Symbol:
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
-  given Showable[Symbol] = Showable: symbol =>
-    NameTransformer.encode(symbol.name) match
-      case encoded if !summon[Log].debugSettings.enableVerboseNames || encoded == symbol.name =>
-        if symbol.name.contains(SyntheticInfix) then show"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
-        else symbol.name
-      case encoded => show"${symbol.name} ($encoded)"
+  given Showable[Symbol] = symbol =>
+    if symbol.name.contains(SyntheticInfix) then show"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
+    else
+      val encoded = NameTransformer.encode(symbol.name)
+      if encoded == symbol.name then symbol.name else show"${symbol.name} ($encoded)"
 
   // $COVERAGE-OFF$
-  given [S <: Symbol]: ToExpr[S] with
+  given [S <: Symbol] => ToExpr[S]:
     def apply(x: S)(using Quotes): Expr[S] =
       x.match
         case x: NonTerminal => '{ NonTerminal(${ Expr(x.name) }) }

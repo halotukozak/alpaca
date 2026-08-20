@@ -1,26 +1,26 @@
 package halotukozak
 package alpaca
 
-import halotukozak.alpaca.internal.*
-import halotukozak.alpaca.internal.lexer.{Lexeme, Token}
-import halotukozak.alpaca.internal.parser.*
+import alpaca.internal.*
+import alpaca.internal.lexer.{Lexeme, Token}
+import alpaca.internal.parser.*
 
 import scala.annotation.{compileTimeOnly, unused}
 import scala.deriving.Mirror
 
-type Parser[Ctx <: ParserCtx] = halotukozak.alpaca.internal.parser.Parser[Ctx]
+type Parser[Ctx <: ParserCtx] = parser.Parser[Ctx]
 
-opaque type Resolutions[P <: Parser[?]] = Set[ConflictResolution]
+opaque type Resolutions[P <: parser.Parser[?]] = Set[ConflictResolution]
 
-sealed trait ResolutionCtx[P <: Parser[?]]
+sealed trait ResolutionCtx[P <: parser.Parser[?]]
 object ResolutionCtx:
-  private val reusable = new ResolutionCtx[Parser[?]] {}
-  private[alpaca] def refl[P <: Parser[?]]: ResolutionCtx[P] = reusable.asInstanceOf[ResolutionCtx[P]]
-def resolutions[P <: Parser[?]](elements: (ResolutionCtx[P] ?=> ConflictResolution)*): Resolutions[P] =
+  private val reusable = new ResolutionCtx[parser.Parser[?]] {}
+  private[alpaca] def refl[P <: parser.Parser[?]]: ResolutionCtx[P] = reusable.asInstanceOf[ResolutionCtx[P]]
+def resolutions[P <: parser.Parser[?]](elements: (ResolutionCtx[P] ?=> ConflictResolution)*): Resolutions[P] =
   elements.map(_.apply(using ResolutionCtx.refl)).toSet
 
 @compileTimeOnly(ConflictResolutionOnly)
-transparent inline protected def production[P <: Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
+transparent inline protected def production[P <: parser.Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
   productionImpl[P]
 }
 
@@ -63,7 +63,7 @@ type ProductionDefinition[R] = PartialFunction[Tuple | Lexeme[?, ?], R]
  * @return a Rule instance
  */
 @compileTimeOnly(ParserOnly)
-inline def rule[R](@unused productions: ProductionDefinition[R]*): Rule[R] = dummy
+inline def rule[R](@unused productions: ProductionDefinition[R]*): Rule[R] = null.asInstanceOf[Rule[R]]
 
 extension (name: String)
   /**
@@ -91,7 +91,7 @@ extension (name: String)
    * @return the original production, annotated with the given name
    */
   @compileTimeOnly(ParserOnly)
-  inline def apply[R](production: ProductionDefinition[R]): production.type = dummy
+  inline def apply[R](production: ProductionDefinition[R]): production.type = production
 
 /**
  * The runtime value type of a separator symbol used by `.SeparatedBy`.
@@ -131,7 +131,7 @@ trait Rule[R]:
    * @return Some(result) if the match succeeds
    */
   @compileTimeOnly(RuleOnly)
-  inline def unapply(@unused x: Any): Option[R] = dummy
+  inline def unapply(@unused x: Any): Option[R] = null.asInstanceOf[Option[R]]
 
   /**
    * Pattern matching extractor for lists of this rule.
@@ -141,7 +141,7 @@ trait Rule[R]:
    * @return a partial function that extracts a list of results
    */
   @compileTimeOnly(RuleOnly)
-  inline def List: PartialFunction[Any, List[R]] = dummy
+  inline def List: PartialFunction[Any, List[R]] = null.asInstanceOf[PartialFunction[Any, List[R]]]
 
   /**
    * Pattern matching extractor for optional occurrences of this rule.
@@ -151,7 +151,7 @@ trait Rule[R]:
    * @return a partial function that extracts an optional result
    */
   @compileTimeOnly(RuleOnly)
-  inline def Option: PartialFunction[Any, Option[R]] = dummy
+  inline def Option: PartialFunction[Any, Option[R]] = null.asInstanceOf[PartialFunction[Any, Option[R]]]
 
   /**
    * Matches zero or more occurrences of this rule delimited by `Separator`,
@@ -164,7 +164,8 @@ trait Rule[R]:
    * @tparam Separator a token type or a rule's `.type`
    */
   @compileTimeOnly(RuleOnly)
-  inline def SeparatedBy[Separator]: PartialFunction[Any, List[R | SepValue[Separator]]] = dummy
+  inline def SeparatedBy[Separator]: PartialFunction[Any, List[R | SepValue[Separator]]] =
+    null.asInstanceOf[PartialFunction[Any, List[R | SepValue[Separator]]]]
 
 /**
  * Base trait for parser global context.
@@ -198,7 +199,8 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def after(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def after(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution =
+    null.asInstanceOf[ConflictResolution]
 
   /**
    * Specifies that this production/token should have lower precedence than others.
@@ -214,7 +216,8 @@ extension (first: Production | Token[?, ?, ?])
    * @return a conflict resolution rule
    */
   @compileTimeOnly(RuleOnly)
-  inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution = dummy
+  inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution =
+    null.asInstanceOf[ConflictResolution]
 
 object Production:
 
@@ -228,7 +231,7 @@ object Production:
    * @return a production reference
    */
   @compileTimeOnly(ConflictResolutionOnly)
-  inline def apply(@unused symbols: (Rule[?] | Token[?, ?, ?])*): Production = dummy
+  inline def apply(@unused symbols: (Rule[?] | Token[?, ?, ?])*): Production = null.asInstanceOf[Production]
 
 object ParserCtx:
 

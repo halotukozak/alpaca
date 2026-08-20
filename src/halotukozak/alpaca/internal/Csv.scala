@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 import scala.NamedTuple.NamedTuple
 
@@ -32,7 +31,7 @@ private[internal] object Csv:
    */
 
   /// todo it should be printed to the code lazy
-  given Showable[Csv] = Showable: csv =>
+  given Showable[Csv] = csv =>
     val header = csv.headers.mkShow(",")
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
     show"$header\n$rows"
@@ -48,14 +47,14 @@ private[internal] object Csv:
      * @return a Csv representation of the named tuples
      */
 
-    inline def toCsv(using Log): Csv =
+    inline def toCsv: Csv =
       Csv(
         compiletime.constValueTuple[N].toShowableList,
         rows.map(_.toTuple.toShowableList),
       )
 
   extension [T <: Tuple](tuple: T)
-    inline private def toShowableList(using Log) = compiletime
+    inline private def toShowableList = compiletime
       .summonAll[Tuple.Map[T, Showable]]
       .zip(tuple)
       .toList

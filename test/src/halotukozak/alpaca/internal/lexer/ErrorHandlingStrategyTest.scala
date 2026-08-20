@@ -1,7 +1,8 @@
 package halotukozak
-package alpaca
-package internal.lexer
+package alpaca.internal.lexer
 
+import halotukozak.alpaca.{lexer, LexerCtx, Token}
+import halotukozak.alpaca.internal.lexer.ErrorHandling
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

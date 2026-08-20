@@ -3,8 +3,8 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.lexer.Token
-import halotukozak.alpaca.internal.parser.ParserExtractors.*
+import alpaca.internal.lexer.Token
+import alpaca.internal.parser.ParserExtractors.*
 
 import scala.reflect.NameTransformer
 
@@ -19,7 +19,7 @@ import scala.reflect.NameTransformer
  * @tparam Ctx the parser context type
  */
 // $COVERAGE-OFF$
-private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q)(using Log):
+private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type](using val quotes: Q):
   import quotes.reflect.*
 
   private def symbolFromType(tpe: TypeRepr): parser.Symbol.NonEmpty = tpe.dealias.widen.asType match
@@ -84,7 +84,6 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
     case skipTypedOrTest(
           Unapply(Select(Extractor.SeparatedBy(_, name, separator), Names.Unapply), Nil, List(Extractor.Bind(bind))),
         ) =>
-      logger.trace(show"extracted separated-by ref: $name")
       val fresh = NonTerminal.fresh(name)
       val nonEmpty = NonTerminal.fresh(show"${name}_nonEmpty")
       (
@@ -111,15 +110,12 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
     case Extractor.NonTerminal(name, bind, null) =>
-      logger.trace(show"extracted non-terminal ref: $name")
       (symbol = NonTerminal(name), bind = bind, others = Nil)
 
     case Extractor.Terminal(name, bind, null) =>
-      logger.trace(show"extracted terminal ref: $name")
       (symbol = Terminal(name), bind = bind, others = Nil)
 
     case Extractor.Symbol(name, bind, Names.Option) =>
-      logger.trace(show"extracted optional: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,
@@ -134,7 +130,6 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       )
 
     case Extractor.Symbol(name, bind, Names.List) =>
-      logger.trace(show"extracted repeated: $name")
       val fresh = NonTerminal.fresh(name)
       (
         symbol = fresh,

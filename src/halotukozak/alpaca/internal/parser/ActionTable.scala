@@ -3,6 +3,9 @@ package alpaca
 package internal
 package parser
 
+import halotukozak.alpaca.ParserCtx
+import halotukozak.alpaca.internal.RevertedArray
+
 /**
  * Type alias for semantic actions in the parser.
  *
