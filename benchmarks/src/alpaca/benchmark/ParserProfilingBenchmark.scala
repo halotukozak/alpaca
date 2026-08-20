@@ -1,7 +1,6 @@
 package alpaca.benchmark
 
-import alpaca.*
-import alpaca.internal.lexer.Lexeme
+import halotukozak.alpaca.internal.lexer.Lexeme
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
