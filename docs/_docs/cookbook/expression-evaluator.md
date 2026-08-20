@@ -58,24 +58,24 @@ Without conflict resolution, this grammar is ambiguous -- the compiler reports s
 ## Conflict Resolution
 
 ```scala sc:nocompile
-  override val resolutions = Set(
-    // Exponentiation: right-associative, highest binary precedence
-    CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
-    production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`),
+given Resolutions[CalcParser.type] = resolutions(
+  // Exponentiation: right-associative, highest binary precedence
+  CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
+  production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-    // Unary minus binds tighter than * /
-    production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`),
+  // Unary minus binds tighter than * /
+  production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-    // Multiplication/division: left-associative, higher than +/-
-    production.times.before(CalcLexer.`\\*`, CalcLexer.`/`),
-    production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`),
+  // Multiplication/division: left-associative, higher than +/-
+  production.times.before(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-    // Addition/subtraction: left-associative, lowest binary precedence
-    production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`),
-    production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-    production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`),
-    production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-  )
+  // Addition/subtraction: left-associative, lowest binary precedence
+  production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+  production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+  production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+)
 ```
 
 The precedence hierarchy from highest to lowest: `**` > unary `-` > `*` `/` > `+` `-`.

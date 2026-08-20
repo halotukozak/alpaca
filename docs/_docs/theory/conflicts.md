@@ -71,7 +71,7 @@ A minimal example — declaring left-associativity and precedence for the `plus`
 ```scala sc:nocompile
 import alpaca.*
 
-override val resolutions = Set(
+given Resolutions[CalcParser.type] = resolutions(
   production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),  // left-associative: reduce + before shifting + or -
   production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE), // lower precedence: shift * or / before reducing +
 )
@@ -83,9 +83,9 @@ The complete CalcParser resolution set — including `minus`, `times`, and `div`
 
 Conflicts are detected at compile time when the LR(1) parse table is constructed by the `extends Parser` macro. A conflict causes a compile error (`ShiftReduceConflict` or `ReduceReduceConflict`) — no conflict checking happens at runtime.
 
-When you add `override val resolutions = Set(...)`, the macro incorporates your priority declarations into the table construction and re-checks for consistency. A cycle in your declarations (`InconsistentConflictResolution`) is also reported at compile time.
+When you add a `given Resolutions[MyParser.type] = resolutions(...)`, the macro incorporates your priority declarations into the table construction and re-checks for consistency. A cycle in your declarations (`InconsistentConflictResolution`) is also reported at compile time.
 
-> **Compile-time processing:** Alpaca builds the LR(1) parse table when you define `object MyParser extends Parser`. Any conflict — shift/reduce or reduce/reduce — is reported as a compile error immediately, before your code runs. When you add `override val resolutions = Set(...)`, the macro incorporates your priority declarations into the table construction and re-checks for consistency.
+> **Compile-time processing:** Alpaca builds the LR(1) parse table when you define `object MyParser extends Parser`. Any conflict — shift/reduce or reduce/reduce — is reported as a compile error immediately, before your code runs. When you add a `given Resolutions[MyParser.type] = resolutions(...)`, the macro incorporates your priority declarations into the table construction and re-checks for consistency.
 
 ## Cross-links
 

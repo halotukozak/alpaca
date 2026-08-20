@@ -69,7 +69,7 @@ The parser does not know whether `1 + 2 + 3` should reduce `1 + 2` first (left-a
 
 ## Step 4: Adding Conflict Resolution
 
-Adding `override val resolutions` declares which action wins in each conflict state. The full resolution set for the calculator encodes standard BODMAS precedence (`*` and `/` before `+` and `-`) and left-associativity for all four operators:
+Adding a `given Resolutions[CalcParser.type]` declares which action wins in each conflict state. The full resolution set for the calculator encodes standard BODMAS precedence (`*` and `/` before `+` and `-`) and left-associativity for all four operators. The `given` is declared *after* the parser object, as a sibling declaration at the same scope -- see [Conflict Resolution](../conflict-resolution.md#where-resolutions-live) for why:
 
 ```scala sc:nocompile
 import alpaca.*
@@ -86,16 +86,16 @@ object CalcParser extends Parser:
   val root: Rule[Double] = rule:
     case Expr(v) => v
 
-  override val resolutions = Set(
-    // + and - are left-associative with equal precedence
-    production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    // * and / are left-associative; bind tighter than + and -
-    production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
-    production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
-  )
+given Resolutions[CalcParser.type] = resolutions(
+  // + and - are left-associative with equal precedence
+  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  // * and / are left-associative; bind tighter than + and -
+  production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
+  production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
+)
 ```
 
 Key decisions in the resolution set:
@@ -168,7 +168,7 @@ Each piece of the CalcParser traces back to a theory concept:
 | `extends Parser` generates LR(1) table | LR parse table construction — see [Why LR?](why-lr.md) |
 | Shift/reduce loop | LR parse mechanics — see [Shift-Reduce Parsing](shift-reduce.md) |
 | `ShiftReduceConflict` compile error | Grammar ambiguity — see [Conflicts & Disambiguation](conflicts.md) |
-| `override val resolutions = Set(...)` | Conflict resolution — see [Conflict Resolution](../conflict-resolution.md) |
+| `given Resolutions[CalcParser.type] = resolutions(...)` | Conflict resolution — see [Conflict Resolution](../conflict-resolution.md) |
 | `case (Expr(a), ...) => a + b` | Semantic actions — see [Semantic Actions](semantic-actions.md) |
 | `parse()` returns `7.0: Double` | Typed results via S-attributed translation |
 

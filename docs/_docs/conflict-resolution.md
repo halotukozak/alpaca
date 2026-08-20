@@ -7,7 +7,7 @@ The BrainFuck grammar from [Getting Started](getting-started.md) has no conflict
 <details>
 <summary>Under the hood: compile-time resolution</summary>
 
-When you define `override val resolutions = Set(...)`, the Alpaca macro incorporates your precedence declarations into the LR(1) parse table at compile time. Conflicts (`ShiftReduceConflict`, `ReduceReduceConflict`) and cycles (`InconsistentConflictResolution`) are detected and reported as compile errors. At runtime, the resolved table executes deterministically.
+When you define a `given Resolutions[MyParser.type] = resolutions(...)`, the Alpaca macro incorporates your precedence declarations into the LR(1) parse table at compile time. Conflicts (`ShiftReduceConflict`, `ReduceReduceConflict`) and cycles (`InconsistentConflictResolution`) are detected and reported as compile errors. At runtime, the resolved table executes deterministically.
 
 </details>
 
@@ -18,6 +18,30 @@ When you define `override val resolutions = Set(...)`, the Alpaca macro incorpor
 **Reduce/reduce conflict:** two productions can reduce the same token sequence. If `Integer -> Num` and `Float -> Num` are both valid and the parser has `Num` on the stack, it cannot decide which reduction to apply.
 
 Both are detected at compile time. They do not manifest as runtime errors.
+
+## Where resolutions Live
+
+`Resolutions` is a type class, keyed by the parser type: `Resolutions[P <: Parser[?]]`. You provide an instance with `given Resolutions[MyParser.type] = resolutions(...)`, and Alpaca picks it up via implicit search when it builds `MyParser`'s parse table.
+
+Because the `given` refers to `MyParser.type`, it must be declared **after** the full parser object, as a sibling declaration at the same scope -- not as a member inside the object:
+
+```scala sc:nocompile
+import alpaca.*
+
+object CalcParser extends Parser:              // object first, fully defined
+  val Expr: Rule[Int] = rule(
+    "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+    { case Lexer.NUMBER(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
+
+given Resolutions[CalcParser.type] = resolutions(  // given AFTER
+  production.plus.before(Lexer.PLUS),
+)
+```
+
+`production.name` inside `resolutions(...)` still refers to productions by name without qualification -- it is resolved by the inferred parser type `P`, not by textual scope. Only bare non-terminal references passed to `Production(symbols*)` need to be qualified with the parser object's name (see [The Production(symbols*) Selector](#the-productionsymbols-selector)).
 
 ## Reading the Error Messages
 
@@ -52,6 +76,10 @@ object CalcParser extends Parser:
   )
   val root = rule:
     case Expr(e) => e
+
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(Lexer.PLUS, Lexer.MINUS),
+)
 ```
 
 The name must be a string literal placed immediately before the brace. Not all productions need names -- only those you reference in `resolutions`. Referencing an undefined name produces: _"Production with name 'typo' not found"_.
@@ -70,7 +98,7 @@ Full example for a calculator:
 ```scala sc:nocompile
 import alpaca.*
 
-override val resolutions = Set(
+given Resolutions[CalcParser.type] = resolutions(
   // + and - are left-associative and have equal precedence
   production.plus.before(Lexer.PLUS, Lexer.MINUS),
   production.minus.before(Lexer.PLUS, Lexer.MINUS),
@@ -88,18 +116,18 @@ Reading `production.plus.before(Lexer.PLUS, Lexer.MINUS)`: when the parser has r
 
 ## The Production(symbols*) Selector
 
-For unnamed productions, use `Production(symbols*)` to identify them by their right-hand side:
+For unnamed productions, use `Production(symbols*)` to identify them by their right-hand side. Because `resolutions` is now declared *outside* the parser object (see [Where resolutions Live](#where-resolutions-live) below), non-terminals must be qualified with the parser object's name:
 
 ```scala sc:nocompile
 import alpaca.*
 import alpaca.Production as P
 
-override val resolutions = Set(
-  P(Expr, Lexer.TIMES, Expr).before(Lexer.PLUS, Lexer.MINUS),
+given Resolutions[CalcParser.type] = resolutions(
+  P(CalcParser.Expr, Lexer.TIMES, CalcParser.Expr).before(Lexer.PLUS, Lexer.MINUS),
 )
 ```
 
-Both `production.name` and `Production(symbols*)` can coexist in one `resolutions` set.
+Both `production.name` and `Production(symbols*)` can coexist in one `resolutions(...)` call.
 
 ## Token-Side Resolution
 
@@ -108,7 +136,7 @@ Both `production.name` and `Production(symbols*)` can coexist in one `resolution
 ```scala sc:nocompile
 import alpaca.*
 
-override val resolutions = Set(
+given Resolutions[CalcParser.type] = resolutions(
   Lexer.exp.before(production.uplus, production.uminus),
 )
 ```
@@ -132,26 +160,6 @@ production.assign.after(Lexer.ASSIGN)  // shift first -> right grouping
 ## Conflict Cycle Detection
 
 The compiler detects cycles in the transitive closure of constraints. A cycle (A before B before C before A) is contradictory and produces an `InconsistentConflictResolution` error showing the full cycle path.
-
-## Ordering Constraint
-
-`resolutions` must be the **last val** in the parser object. The macro reads declarations top-to-bottom. If `resolutions` appears before a rule declaration, `production.name` references fail with _"Production with name X not found"_.
-
-```scala sc:nocompile
-import alpaca.*
-
-object CalcParser extends Parser:
-  val Expr: Rule[Int] = rule(           // rules first
-    "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
-    { case Lexer.NUMBER(n) => n.value },
-  )
-  val root = rule:                      // root second
-    case Expr(e) => e
-
-  override val resolutions = Set(       // resolutions LAST
-    production.plus.before(Lexer.PLUS),
-  )
-```
 
 ## Best Practices
 

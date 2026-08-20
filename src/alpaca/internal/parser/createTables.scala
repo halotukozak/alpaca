@@ -255,7 +255,11 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           case (production, action) => Expr.ofTuple(Expr(production) -> action)
 
       '{
-        $givenResolutions // to avoid unused implicit warning
+        // referenced only to avoid an unused-implicit warning; kept lazy and never forced,
+        // since eagerly forcing it here (during Tables[Ctx] construction, i.e. during the
+        // parser object's own <init>) would deadlock against `given Resolutions[P]` instances
+        // that refer back to the parser object (e.g. via `Production(MyParser.SomeRule, ...)`)
+        lazy val _ = $givenResolutions
         ($parseTable: ParseTable, ActionTable($actionTable.toMap))
       }
 // $COVERAGE-ON$

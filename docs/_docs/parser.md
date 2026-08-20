@@ -85,13 +85,14 @@ val FunctionDef: Rule[BrainAST] = rule:
 Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
 
 ```scala sc:nocompile
-val Expr: Rule[Int] = rule(
-  "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
-  "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
-  "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
-)
+object MyParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+    "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
+    "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
+  )
 
-override val resolutions = Set(
+given Resolutions[MyParser.type] = resolutions(
   production.`left-add`.before(Lexer.PLUS),
   production.`shift.left`.before(Lexer.SHL),
   production.`if then`.before(Lexer.THEN),
@@ -193,11 +194,11 @@ object CalcParser extends Parser:
   val root = rule:
     case Expr(e) => e
 
-  override val resolutions = Set(
-    production.plus.before(CalcLexer.PLUS),  // left-associative
-  )
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(CalcLexer.PLUS),  // left-associative
+)
 ```
 
-`resolutions` must be the **last val** in the parser object. See [Conflict Resolution](conflict-resolution.md) for details.
+`Resolutions` is a type class: the `given` must be declared **after** the parser object, as a sibling declaration, not as a member inside it. See [Conflict Resolution](conflict-resolution.md#where-resolutions-live) for details.
 
 See [Parser Context](parser-context.md) for custom state, [Extractors](extractors.md) for all pattern forms, and [Debug Settings](debug-settings.md) for compile-time debugging.
