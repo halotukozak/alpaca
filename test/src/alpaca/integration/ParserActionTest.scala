@@ -42,9 +42,9 @@ final class ParserActionTest extends AnyFunSuite:
           val result = v * 2
           result
 
-      override val resolutions = Set(
-        production.add.before(BugLexer.`+`),
-      )
+    given Resolutions[MultiActionBug.type] = resolutions(
+      production.add.before(BugLexer.`+`),
+    )
 
     val (_, lexemes) = BugLexer.tokenize("1 + 2")
     val (_, result) = MultiActionBug.parse(lexemes)

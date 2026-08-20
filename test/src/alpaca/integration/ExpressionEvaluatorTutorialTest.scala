@@ -55,24 +55,24 @@ final class ExpressionEvaluatorTutorialTest extends AnyFunSuite:
       { case CalcLexer.int(n) => n.value.toDouble },
     )
 
-    override val resolutions = Set(
-      // Exponentiation: right-associative, highest binary precedence
-      CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
-      production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`),
+  given Resolutions[ExprEvalParser.type] = resolutions(
+    // Exponentiation: right-associative, highest binary precedence
+    CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
+    production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-      // Unary minus binds tighter than * /
-      production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`),
+    // Unary minus binds tighter than * /
+    production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-      // Multiplication/division: left-associative, higher than +/-
-      production.times.before(CalcLexer.`\\*`, CalcLexer.`/`),
-      production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`),
+    // Multiplication/division: left-associative, higher than +/-
+    production.times.before(CalcLexer.`\\*`, CalcLexer.`/`),
+    production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`),
 
-      // Addition/subtraction: left-associative, lowest binary precedence
-      production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`),
-      production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-      production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`),
-      production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-    )
+    // Addition/subtraction: left-associative, lowest binary precedence
+    production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+    production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+    production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`),
+    production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+  )
 
   test("basic arithmetic") {
     val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")

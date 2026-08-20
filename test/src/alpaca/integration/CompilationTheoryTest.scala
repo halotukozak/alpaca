@@ -144,7 +144,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
       { case CTLexer.`=`(_) => "=" },
     )
 
-    override val resolutions = Set(
+  given Resolutions[ASTPrinterParser.type] = resolutions(
       production.bareIf.after(CTLexer.`else`),
       CTLexer.`'`.before(
         production.uMinus,

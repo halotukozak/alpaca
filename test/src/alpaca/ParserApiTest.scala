@@ -1,7 +1,5 @@
 package alpaca
 
-import Production as P
-
 import alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -66,15 +64,18 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     val root = rule:
       case Statement(stmt) => stmt
 
-    override val resolutions = Set(
-      P(CalcLexer.MINUS, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      P(Expr, CalcLexer.DIVIDE, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      P(Expr, CalcLexer.TIMES, Expr).before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
-      production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-      production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-      production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-      production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    )
+  given Resolutions[CalcApiParser.type] = resolutions(
+    Production(CalcLexer.MINUS, CalcApiParser.Expr)
+      .before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+    Production(CalcApiParser.Expr, CalcLexer.DIVIDE, CalcApiParser.Expr)
+      .before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+    Production(CalcApiParser.Expr, CalcLexer.TIMES, CalcApiParser.Expr)
+      .before(CalcLexer.DIVIDE, CalcLexer.TIMES, CalcLexer.PLUS, CalcLexer.MINUS),
+    production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+    production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+    production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+    production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  )
 
   test("basic recognition of various tokens and literals") {
     CalcApiParser.parse(CalcLexer.tokenize("a = 3 + 4 * (5 + 6)").lexemes) should matchPattern:

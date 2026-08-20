@@ -23,9 +23,7 @@ final class Issue198FixTest extends AnyFunSuite with Matchers:
         { case MyLexer.Num(n) => n.value },
       )
 
-      override val resolutions = Set(
-        production.`if-else`.after(MyLexer.Num),
-      )
+    given Resolutions[Issue198Parser.type] = resolutions(production.`if-else`.after(MyLexer.Num))
 
-    assert(Issue198Parser.resolutions.nonEmpty)
+    assert(summon[Resolutions[Issue198Parser.type]].asInstanceOf[Set[?]].nonEmpty)
   }
