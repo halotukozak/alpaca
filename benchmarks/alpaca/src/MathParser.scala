@@ -20,17 +20,17 @@ object MathParser extends Parser:
 
   val root: Rule[Int] = rule { case Expr(v) => v }
 
-  override val resolutions = Set(
-    // multiplication and division are left associative (reduction before shift)
-    production.mul.before(MathLexer.`\\*`, MathLexer.`/`),
-    production.div.before(MathLexer.`\\*`, MathLexer.`/`),
-    // addition and subtraction have lower precedence than multiplication and division
-    production.plus.after(MathLexer.`\\*`, MathLexer.`/`),
-    production.minus.after(MathLexer.`\\*`, MathLexer.`/`),
-    // addition and subtraction are left associative (reduction before shift)
-    production.plus.before(MathLexer.`\\+`, MathLexer.`-`),
-    production.minus.before(MathLexer.`\\+`, MathLexer.`-`),
-  )
+given Resolutions[MathParser.type] = resolutions(
+  // multiplication and division are left associative (reduction before shift)
+  production.mul.before(MathLexer.`\\*`, MathLexer.`/`),
+  production.div.before(MathLexer.`\\*`, MathLexer.`/`),
+  // addition and subtraction have lower precedence than multiplication and division
+  production.plus.after(MathLexer.`\\*`, MathLexer.`/`),
+  production.minus.after(MathLexer.`\\*`, MathLexer.`/`),
+  // addition and subtraction are left associative (reduction before shift)
+  production.plus.before(MathLexer.`\\+`, MathLexer.`-`),
+  production.minus.before(MathLexer.`\\+`, MathLexer.`-`),
+)
 
 @main def mathParserMain(): Unit =
   import java.nio.file.{Files, Paths}

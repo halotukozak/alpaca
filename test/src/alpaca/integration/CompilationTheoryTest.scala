@@ -144,35 +144,35 @@ final class CompilationTheoryTest extends AnyFunSuite:
       { case CTLexer.`=`(_) => "=" },
     )
 
-    override val resolutions = Set(
-      production.bareIf.after(CTLexer.`else`),
-      CTLexer.`'`.before(
-        production.uMinus,
-        production.mul,
-        production.div,
-        production.matrixMul,
-        production.matrixDiv,
+  given Resolutions[ASTPrinterParser.type] = resolutions(
+    production.bareIf.after(CTLexer.`else`),
+    CTLexer.`'`.before(
+      production.uMinus,
+      production.mul,
+      production.div,
+      production.matrixMul,
+      production.matrixDiv,
+    ),
+    production.uMinus
+      .before(
+        CTLexer.`\\.\\*`,
+        CTLexer.`\\./`,
+        CTLexer.`\\*`,
+        CTLexer.`/`,
       ),
-      production.uMinus
-        .before(
-          CTLexer.`\\.\\*`,
-          CTLexer.`\\./`,
-          CTLexer.`\\*`,
-          CTLexer.`/`,
-        ),
-      production.mul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      production.div.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      production.matrixMul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      production.matrixDiv.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
-      CTLexer.`\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
-      CTLexer.`/`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
-      CTLexer.`\\.\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
-      CTLexer.`\\./`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
-      production.add.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      production.sub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      production.matrixAdd.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-      production.matrixSub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
-    )
+    production.mul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+    production.div.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+    production.matrixMul.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+    production.matrixDiv.before(CTLexer.`\\*`, CTLexer.`/`, CTLexer.`\\.\\*`, CTLexer.`\\./`),
+    CTLexer.`\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+    CTLexer.`/`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+    CTLexer.`\\.\\*`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+    CTLexer.`\\./`.before(production.add, production.sub, production.matrixAdd, production.matrixSub),
+    production.add.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+    production.sub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+    production.matrixAdd.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+    production.matrixSub.before(CTLexer.`\\.\\+`, CTLexer.`\\.\\-`, CTLexer.`\\+`, CTLexer.`-`),
+  )
 
   test("special functions, initializations") {
     withLazyReader("""

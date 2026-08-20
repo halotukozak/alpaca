@@ -44,33 +44,6 @@ abstract class Parser[Ctx <: ParserCtx](
   val root: Rule[?]
 
   /**
-   * The set of conflict resolution rules for this parser.
-   *
-   * Override this to resolve shift/reduce or reduce/reduce conflicts
-   * by specifying precedence relationships between productions and tokens.
-   */
-  val resolutions: Set[ConflictResolution] = Set.empty
-
-  /**
-   * Provides compile-time access to named productions for use in conflict resolution definitions.
-   *
-   * This method allows you to reference productions by their names as defined in your parser.
-   * It is typically used when specifying conflict resolutions, enabling you to refer to productions
-   * in a type-safe and compile-time-checked manner.
-   *
-   * Example usage:
-   * {{{
-   *   override val resolutions = Set(
-   *     production.plus.after(production.times)
-   *   )
-   * }}}
-   *
-   * @note This is a compile-time only feature and should be used within parser definitions.
-   */
-  @compileTimeOnly(ConflictResolutionOnly)
-  transparent inline protected def production: ProductionSelector = ${ productionImpl }
-
-  /**
    * Provides access to the parser context within rule definitions.
    *
    * This is compile-time only and can only be used inside parser rule definitions.
@@ -150,11 +123,11 @@ private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKin
   mutable.Map.empty
 
 // $COVERAGE-OFF$
-def productionImpl(using quotes: Quotes): Expr[ProductionSelector] = withLog:
+def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionSelector] = withLog:
   import quotes.reflect.*
 
-  val parserSymbol = Symbol.spliceOwner.owner.owner
-  val parserTpe = parserSymbol.typeRef
+  val parserTpe = TypeRepr.of[P]
+  val parserSymbol = parserTpe.typeSymbol
 
   logger.trace(show"Generating production selector for $parserSymbol")
 

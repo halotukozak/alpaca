@@ -68,7 +68,7 @@ final class ParseTableTest extends AnyFunSuite with Matchers with LoneElement:
       val root = rule:
        case A(a) => a 
 
-      override val resolutions = Set(
+    given Resolutions[CycleParser.type] = resolutions(
         production.A.before(CalcLexer.`+`),
         CalcLexer.`+`.before(P(CalcLexer.`+`)),
         P(CalcLexer.`+`).before(production.A),

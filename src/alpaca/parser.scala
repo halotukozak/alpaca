@@ -9,6 +9,20 @@ import scala.deriving.Mirror
 
 type Parser[Ctx <: ParserCtx] = alpaca.internal.parser.Parser[Ctx]
 
+opaque type Resolutions[P <: Parser[?]] = Set[ConflictResolution]
+
+sealed trait ResolutionCtx[P <: Parser[?]]
+object ResolutionCtx:
+  private val reusable = new ResolutionCtx[Parser[?]] {}
+  private[alpaca] def refl[P <: Parser[?]]: ResolutionCtx[P] = reusable.asInstanceOf[ResolutionCtx[P]]
+def resolutions[P <: Parser[?]](elements: (ResolutionCtx[P] ?=> ConflictResolution)*): Resolutions[P] =
+  elements.map(_.apply(using ResolutionCtx.refl)).toSet
+
+@compileTimeOnly(ConflictResolutionOnly)
+transparent inline protected def production[P <: Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
+  productionImpl[P]
+}
+
 /**
  * Defines a single production in a grammar rule.
  *
@@ -66,7 +80,7 @@ extension (name: String)
    * )
    *
    * // In conflict resolution:
-   * override val resolutions = Set(
+   * given Resoltions[???] = resolutions(
    *   production.sum.after(Lexer.+),
    * )
    * }}}

@@ -75,14 +75,14 @@ object CalcParser extends Parser:
   val root: Rule[Double] = rule:
     case Expr(e) => e
 
-  override val resolutions = Set(
-    production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
-    production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-    production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
-  )
+given Resolutions[CalcParser.type] = resolutions(
+  production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+)
 ```
 
 The grammar is ambiguous, but the resolutions tell the parser exactly how to handle every conflict.
@@ -157,15 +157,15 @@ object ExtendedParser extends Parser:
     // ... other operations
   )
 
-  override val resolutions = Set(
-    // * and / bind tighter than + and -
-    production.mul.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
-    production.div.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
-    production.add.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
-    production.sub.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
-    production.add.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
-    production.sub.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
-  )
+given Resolutions[ExtendedParser.type] = resolutions(
+  // * and / bind tighter than + and -
+  production.mul.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
+  production.div.before(ExtendedLexer.`*`, ExtendedLexer.`/`),
+  production.add.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
+  production.sub.before(ExtendedLexer.`+`, ExtendedLexer.`-`),
+  production.add.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
+  production.sub.after(ExtendedLexer.`*`, ExtendedLexer.`/`),
+)
 ```
 
 Without the resolutions, the compiler reports:

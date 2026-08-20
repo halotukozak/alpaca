@@ -81,28 +81,28 @@ final class MathTest extends AnyFunSuite:
       val root: Rule[Double] = rule:
         case Expr(v) => v
 
-      override val resolutions = Set(
-        CalcLexer.exp.before(
-          production.uplus,
-          production.uminus,
-          production.mod,
-          production.exp,
-          production.fdiv,
-          production.times,
-          production.divide,
-        ),
-        production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.uplus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.times.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.fdiv.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.mod.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-        production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
-        production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
-      )
+    given Resolutions[MathParser.type] = resolutions(
+      CalcLexer.exp.before(
+        production.uplus,
+        production.uminus,
+        production.mod,
+        production.exp,
+        production.fdiv,
+        production.times,
+        production.divide,
+      ),
+      production.exp.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.uplus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.uminus.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.times.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.divide.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.fdiv.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.mod.before(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.plus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.plus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+      production.minus.after(CalcLexer.`\\*`, CalcLexer.`/`, CalcLexer.fdiv, CalcLexer.`%`),
+      production.minus.before(CalcLexer.`\\+`, CalcLexer.`-`),
+    )
 
     val input = "1 + 2"
     val (_, lexemes) = CalcLexer.tokenize(input)

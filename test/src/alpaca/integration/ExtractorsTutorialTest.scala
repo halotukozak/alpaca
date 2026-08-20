@@ -33,9 +33,9 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
         { case MyLexer.NUM(n) => n.value },
       )
 
-      override val resolutions = Set(
-        production.plus.before(MyLexer.`+`),
-      )
+    given Resolutions[TerminalMatchParser.type] = resolutions(
+      production.plus.before(MyLexer.`+`),
+    )
 
     val (_, lexemes) = MyLexer.tokenize("1 + 2 + 3")
     val (_, result) = TerminalMatchParser.parse(lexemes)
@@ -56,9 +56,9 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
       val Stmt: Rule[String] = rule:
         case Expr(e) => s"Expression result: $e"
 
-      override val resolutions = Set(
-        production.plus.before(MyLexer.`+`),
-      )
+    given Resolutions[NonTerminalMatchParser.type] = resolutions(
+      production.plus.before(MyLexer.`+`),
+    )
 
     val (_, lexemes) = MyLexer.tokenize("1 + 2")
     val (_, result) = NonTerminalMatchParser.parse(lexemes)
@@ -178,9 +178,9 @@ final class ExtractorsTutorialTest extends AnyFunSuite:
         { case MyLexer.NUM(n) => n.value },
       )
 
-      override val resolutions = Set(
-        production.times.before(MyLexer.`*`),
-      )
+    given Resolutions[TupleMatchParser.type] = resolutions(
+      production.times.before(MyLexer.`*`),
+    )
 
     val (_, lexemes) = MyLexer.tokenize("(2 * 3)")
     val (_, result) = TupleMatchParser.parse(lexemes)
