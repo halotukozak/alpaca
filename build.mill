@@ -15,7 +15,7 @@ import mill.contrib.jmh.JmhModule
 import mill.util.VcsVersion
 
 object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPublishModule:
-  def scalaVersion = "3.8.3-RC1"
+  def scalaVersion = "3.9.0-RC6"
 
   def scoverageVersion = "2.5.2"
 
