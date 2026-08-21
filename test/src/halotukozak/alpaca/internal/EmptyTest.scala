@@ -1,6 +1,7 @@
 package halotukozak
 package alpaca.internal
 
+import halotukozak.alpaca.internal.Empty
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -39,14 +40,14 @@ final class EmptyTest extends AnyFunSuite with Matchers:
 
   test("cannot derive Empty when any parameter lacks a default (compile-time)") {
     """
-      |import halotukozak.alpaca.core.Empty
+      |import alpaca.core.Empty
       |case class Mixed(a: Int, b: String = "b") derives Empty
       |""".stripMargin shouldNot compile
   }
 
   test("cannot derive Empty for non-case classes (compile-time)") {
     """
-      |import halotukozak.alpaca.core.Empty
+      |import alpaca.core.Empty
       |class Regular(val x: Int) derives Empty
       |""".stripMargin shouldNot compile
   }

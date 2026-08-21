@@ -1,8 +1,12 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
+
+import halotukozak.commons.containsOnly
 
 import scala.annotation.implicitNotFound
+import halotukozak.made.Made
+import halotukozak.made.MadeFieldElem
+import halotukozak.made.label
 
 /**
  * A type class for creating empty instances of types.
@@ -16,6 +20,16 @@ import scala.annotation.implicitNotFound
 private[alpaca] trait Empty[T] extends (() => T)
 
 private[alpaca] object Empty:
+  inline private def collectDefaults(elems: Tuple)(using elems.type containsOnly MadeFieldElem): Tuple =
+    inline elems match
+      case EmptyTuple => EmptyTuple
+      case _: (head *: tail) =>
+        val head = elems.head.asInstanceOf[head & MadeFieldElem]
+        inline head.default match
+          case _: Null =>
+            compiletime.error("Cannot derive Empty for " + head.label + " because it has no default value.")
+          case default =>
+            default *: collectDefaults(elems.tail.asInstanceOf[tail & Tuple.Tail[elems.type]])
 
   /**
    * Automatically derives an Empty instance for any Product type with default parameters.
@@ -26,51 +40,9 @@ private[alpaca] object Empty:
    * @tparam T the Product type to derive Empty for
    * @return an Empty instance that creates default instances
    */
-  // either way it must be inlined for generic classes
-  inline given derived[T <: Product]: Empty[T] = ${ derivedImpl[T] }
-  // $COVERAGE-OFF$
-
-  private def derivedImpl[T <: Product: Type](using quotes: Quotes): Expr[Empty[T]] = withLog:
-    timeoutOnTooLongCompilation()
-
-    import quotes.reflect.*
-
-    val tpe = TypeRepr.of[T]
-    logger.trace(show"deriving Empty for $tpe")
-
-    val constructor = tpe.classSymbol.get.primaryConstructor
-
-    val defaultParameters = tpe.classSymbol.get.companionClass.methodMembers.iterator
-      .collect:
-        case m if m.name.startsWith("$lessinit$greater$default$") =>
-          m.name.stripPrefix("$lessinit$greater$default$").toInt - 1 -> Ref(m)
-      .toMap
-
-    logger.trace(show"found ${defaultParameters.size} default parameters")
-
-    val parameters = constructor.paramSymss
-      .collect:
-        case params if !params.exists(_.isTypeParam) =>
-          params.iterator.zipWithIndex
-            .map:
-              case (param, idx) if param.flags.is(Flags.HasDefault) =>
-                logger.trace(show"parameter $param has default value")
-                defaultParameters(idx)
-              case (param, _) =>
-                report.errorAndAbort(
-                  show"Cannot derive Empty for ${Type.of[T]}: parameter $param does not have a default value",
-                )
-            .toList
-
-    val value =
-      New(TypeTree.of[T])
-        .select(constructor)
-        .appliedToTypes(tpe.typeArgs)
-        .appliedToArgss(parameters)
-        .asExprOf[T]
-
-    '{
-      new Empty[T]:
-        def apply(): T = $value
-    }
+  inline given derived[T <: Product: Made.Of as m]: Empty[T] = inline m match
+    case m: Made.ProductOf[T] =>
+      () => m.fromTuple(collectDefaults(m.elems).asInstanceOf[m.ElemTypes])
+    case _ =>
+      compiletime.error("Cannot derive Empty for non-Product types.")
 // $COVERAGE-ON$
