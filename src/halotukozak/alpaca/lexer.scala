@@ -1,0 +1,209 @@
+package halotukozak
+package alpaca
+
+import halotukozak.alpaca.internal.*
+import halotukozak.alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
+import halotukozak.alpaca.internal.lexer.Token as LexerToken
+
+import scala.NamedTuple.NamedTuple
+import scala.annotation.{compileTimeOnly, publicInBinary}
+
+/**
+ * Creates a lexer from a DSL-based definition.
+ *
+ * This is the main entry point for defining a lexer. It uses a macro to
+ * compile the lexer definition into efficient tokenization code.
+ *
+ * Example:
+ * {{{
+ * val myLexer = lexer {
+ *   case "\\d+" => Token["number"]
+ *   case "[a-zA-Z]+" => Token["identifier"]
+ *   case "\\s+" => Token.Ignored
+ * }
+ * }}}
+ *
+ * @tparam Ctx the global context type, defaults to DefaultGlobalCtx
+ * @param rules the lexer rules as a partial function
+ * @param betweenStages implicit OnTokenMatch for context updates
+ * @param errorHandling implicit ErrorHandling for custom error recovery
+ * @param empty implicit Empty instance to create the initial context
+ * @return a Tokenization instance that can tokenize input strings
+ */
+transparent inline def lexer[Ctx <: LexerCtx](
+  using Ctx withDefault LexerCtx.Default,
+)(
+  inline rules: Ctx ?=> LexerDefinition[Ctx],
+)(using
+  betweenStages: OnTokenMatch[Ctx],
+  m: Mirror.Of[Ctx],
+  errorHandling: ErrorHandling[Ctx],
+  empty: Empty[Ctx],
+): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
+  ${
+    lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
+      '{ rules },
+      '{ betweenStages },
+      '{ errorHandling },
+      '{ empty },
+    )
+  }
+
+/** Factory methods for creating token definitions in the lexer DSL. */
+object Token:
+
+  /**
+   * Creates an ignored token that will be matched but not included in the output.
+   *
+   * This is compile-time only and should only be used inside lexer definitions.
+   *
+   * @param ctx the lexer context
+   * @return a token that will be ignored
+   */
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def Ignored(using ctx: LexerCtx): IgnoredToken[ctx.type] = dummy
+
+  /**
+   * Creates a token that captures the matched string.
+   *
+   * This is compile-time only and should only be used inside lexer definitions.
+   *
+   * @tparam Name the token name
+   * @param ctx the lexer context
+   * @return a token definition
+   */
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ValidName](using ctx: LexerCtx): Token[Name, ctx.type, String] = dummy
+
+  /**
+   * Creates a token with a custom value extractor.
+   *
+   * This is compile-time only and should only be used inside lexer definitions.
+   *
+   * @tparam Name the token name
+   * @param value the value to extract from the match
+   * @param ctx   the lexer context
+   * @return a token definition
+   */
+  @compileTimeOnly("Should never be called outside the lexer definition")
+  def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] = dummy
+
+/** Propagates the lexer context through the DSL so that token constructors can access it implicitly. */
+transparent inline def ctx(using c: LexerCtx): c.type = c
+
+/**
+ * Trait for the global context used during tokenization.
+ *
+ * The global context maintains state during lexing, including the current
+ * position in the input, the last matched token, and the remaining text to process.
+ * Users can extend this trait to add custom state tracking.
+ */
+trait LexerCtx extends Product:
+  /**
+   * The last lexeme that was created.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var lastLexeme: Lexeme[?, ?] | Null = compiletime.uninitialized
+
+  /**
+   * The raw string that was matched for the last token.
+   * @note Internal API — the lexer macro reads this field at user-site, so it
+   *       has to be source-visible outside the `alpaca` package.
+   */
+  var lastRawMatched: String = compiletime.uninitialized
+
+  /**
+   * The remaining text to be tokenized.
+   * @note This is for internal use only and should not be accessed directly.
+   */
+  @publicInBinary
+  private[alpaca] var text: CharSequence = compiletime.uninitialized
+
+object LexerCtx:
+
+  /**
+   * Automatic Copyable instance for any GlobalCtx that is a Product (case class).
+   *
+   * @tparam Ctx the context type
+   */
+  given [Ctx <: LexerCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
+    Copyable.derived
+
+  /**
+   * Default OnTokenMatch implementation that updates the context after each match.
+   *
+   * This implementation:
+   * - Updates lastRawMatched with the matched text
+   * - Creates a new Lexeme for defined tokens
+   * - Advances the text position
+   * - Applies any context modifications
+   */
+  given OnTokenMatch[LexerCtx] with
+    private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
+
+    override def apply(token: LexerToken[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
+      case DefinedToken(info, modifyCtx, remapping) =>
+        modifyCtx(ctx)
+        val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
+        ctx.lastLexeme = Lexeme(
+          name = info.name,
+          value = remapping(ctx),
+          text = raw,
+          fieldNames = fieldNames,
+          fieldValues = ctx.productIterator.toArray,
+        )
+
+      case InternalIgnoredToken(_, modifyCtx) =>
+        modifyCtx(ctx)
+
+  /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
+  given ErrorHandling[LexerCtx] = ctx =>
+    ErrorHandling.Strategy.Throw(new RuntimeException(s"Unexpected character: '${ctx.text.charAt(0)}'"))
+
+  /**
+   * An empty lexer context with no extra state tracking.
+   *
+   * This is the simplest context that only tracks the remaining text.
+   * Use this when you don't need line or position tracking.
+   */
+  final case class Empty() extends LexerCtx
+
+  /**
+   * The default lexer context with position and line tracking.
+   *
+   * This context tracks:
+   * - The current column position within the line (1-based, resets on newlines)
+   * - The current line number (1-based)
+   *
+   * This is the most commonly used context and provides useful information
+   * for error reporting. The `text` field is inherited from [[LexerCtx]].
+   *
+   * @param position the current column position within the line (1-based)
+   * @param line     the current line number (1-based)
+   */
+  final case class Default(
+    var position: Int = 1,
+    var line: Int = 1,
+  ) extends LexerCtx
+      with PositionTracking
+      with LineTracking
+
+  object Default:
+    /** Default error handler for [[Default]] that includes line and position information in the error message. */
+    given ErrorHandling[Default] = ctx =>
+      ErrorHandling.Strategy.Throw:
+        new RuntimeException(
+          s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'",
+        )
+
+/**
+ * Type alias for lexer rule definitions.
+ *
+ * A lexer definition is a partial function that maps string patterns
+ * (as regex literals) to token definitions.
+ *
+ * @tparam Ctx the global context type
+ */
+
+type LexerDefinition[Ctx <: LexerCtx] = PartialFunction[String, Token[ValidName, Ctx, Any]]
