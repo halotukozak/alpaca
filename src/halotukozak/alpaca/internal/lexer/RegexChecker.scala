@@ -3,42 +3,28 @@ package alpaca
 package internal
 package lexer
 
-import halotukozak.regex.{RegexParser, Subset}
+import halotukozak.regex.{Regex, Subset}
 
 /**
- * Utility for checking regex patterns for shadowing issues.
+ * Cross-platform shadow detection for token regex patterns.
  *
- * This object provides methods to check if any token patterns are
- * shadowed by others, which would mean they could never be matched.
+ * A pattern is shadowed if every string it matches is also matched (as a prefix)
+ * by an earlier pattern, meaning the earlier pattern would always be selected first.
+ * Implemented via Brzozowski-derivative DFA emptiness check on `L(later . Sigma*) subseteq L(earlier . Sigma*)`.
  */
 private[lexer] object RegexChecker:
 
   /**
-   * Checks a sequence of regex patterns for shadowing.
+   * Checks a priority-ordered sequence of pre-parsed regexes for shadowing.
    *
-   * A pattern is shadowed if it is a subset of an earlier pattern,
-   * meaning the earlier pattern would always match first and the
-   * shadowed pattern would never be used.
-   *
-   * Patterns using syntax this parser doesn't support (see [[halotukozak.regex.RegexParser]])
-   * are skipped rather than failing the build - shadow detection is a best-effort diagnostic,
-   * not a guarantee.
-   *
-   * @param patterns the regex patterns to check.
+   * @throws ShadowException if any pattern is shadowed by an earlier one.
    */
-  def checkPatterns(patterns: List[String]): Unit = patterns match
+  def checkRegexes(items: List[(name: String, regex: Regex)]): Unit = items match
     case Nil => ()
-    case patterns =>
-      val subsets = patterns.map(parseOrSkip)
-
-      for
-        i <- patterns.indices
-        j <- (i + 1) until subsets.size
-        si <- subsets(i)
-        sj <- subsets(j)
-      do if sj.withAnySuffix.subset(si.withAnySuffix) then throw ShadowException(patterns(j), patterns(i))
-
-  private def parseOrSkip(pattern: String): Option[Subset] =
-    RegexParser.parse(pattern) match
-      case Right(r) => Some(Subset.of(r))
-      case Left(_) => None
+    case _ =>
+      val withSuffix = items.map((name, r) => name -> Subset.of(r).withAnySuffix)
+      withSuffix.tails.foreach:
+        case Nil => ()
+        case (earlierName, earlierSub) :: laters =>
+          laters.foreach: (laterName, laterSub) =>
+            if laterSub.subset(earlierSub) then throw ShadowException(laterName, earlierName)

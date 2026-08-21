@@ -4,6 +4,7 @@ package internal
 package lexer
 
 import halotukozak.alpaca.internal.ValidName
+import halotukozak.regex.{Regex, RegexParseError, RegexParser}
 
 import scala.annotation.tailrec
 
@@ -62,8 +63,19 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           val patterns = alternatives.map:
             case Literal(StringConstant(str)) => str
             case other => raiseShouldNeverBeCalled[String](other)
-          RegexChecker.checkPatterns(patterns)
-          RegexChecker.checkPatterns(patterns.reverse)
+          val items: List[(name: String, regex: Regex)] = patterns.map: p =>
+            RegexParser.parse(p) match
+              case Right(r) => (name = p, regex = r)
+              case Left(err: RegexParseError.UnsupportedFeature) =>
+                quotes.reflect.report.errorAndAbort(
+                  show"Unsupported regex feature `${err.feature}` at position ${err.position.toString} in pattern \"$p\"",
+                )
+              case Left(err: RegexParseError.InvalidSyntax) =>
+                quotes.reflect.report.errorAndAbort(
+                  show"Invalid regex pattern \"$p\" at position ${err.position.toString}: ${err.message}",
+                )
+          RegexChecker.checkRegexes(items)
+          RegexChecker.checkRegexes(items.reverse)
           TokenInfo(str, patterns.mkShow("|")) :: Nil
         case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
