@@ -43,6 +43,11 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "-Yshow-suppressed-errors",
     "-Yshow-var-bounds",
     "-Werror",
+    // Scala 3.9 generates larger trees for lexerImpl/createTablesImpl than 3.8 did, pushing
+    // them past the compiler's hardcoded 3000-node coverage-instrumentation threshold
+    // (dotty.tools.dotc.transform.InstrumentCoverage.MaxInstrumentableTreeNodes - not
+    // configurable). Silence just that one diagnostic; -Werror stays hard for everything else.
+    "-Wconf:msg=Skipping coverage instrumentation.*:s",
     "-Wunused:all",
     // lexerImpl/createTablesImpl exceed Scoverage's hardcoded instrumentation size limit
     // under this compiler version (dotty's MaxInstrumentableTreeNodes = 3000 tree nodes,
@@ -92,8 +97,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
   )
 
   def mvnDeps = Seq(
-    mvn"com.github.marianobarrios:dregex:0.9.0",
-    mvn"org.jparsec:jparsec:3.1",
+    mvn"com.halotukozak::regex::0.0.1",
     mvn"org.slf4j:slf4j-api:2.0.18",
     mvn"org.slf4j:slf4j-simple:2.0.18",
     mvn"com.halotukozak::made::0.4.0",
