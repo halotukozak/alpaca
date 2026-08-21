@@ -3,7 +3,7 @@ package alpaca
 package internal
 package lexer
 
-import halotukozak.alpaca.Token as TokenDef
+import alpaca.Token as TokenDef
 
 import java.util.regex.{Pattern, PatternSyntaxException}
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
@@ -17,12 +17,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = withLog:
-  timeoutOnTooLongCompilation()
-
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] =
   import quotes.reflect.*
 
-  type TokenRefn = Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
+  type TokenRefn = lexer.Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
 
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
@@ -34,7 +32,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   val (tokens, infos) = cases.foldLeft(
     (
-      tokens = List.empty[(expr: Expr[Token[?, Ctx, ?] & TokenRefn], name: ValidName)],
+      tokens = List.empty[(expr: Expr[lexer.Token[?, Ctx, ?] & TokenRefn], name: ValidName)],
       infos = List.empty[TokenInfo],
     ),
   ):
@@ -45,27 +43,29 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       )
 
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
-        : PartialFunction[Expr[TokenDef[ValidName, Ctx, Any]], List[(TokenInfo, Expr[Token[?, Ctx, ?]])]] =
+        : PartialFunction[Expr[TokenDef[ValidName, Ctx, Any]], List[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])]] =
         case '{ Token.Ignored(using $_) } =>
-          logger.trace("extractSimple(1)")
-          compileNameAndPattern[Nothing](tree).unsafeMap:
+          compileNameAndPattern[Nothing](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ IgnoredToken[name, Ctx](${ Expr(tokenInfo) }, $ctxManipulation) })
+            case other =>
+              raiseShouldNeverBeCalled(other)
 
         case '{ type name <: ValidName; Token[name](using $_) } =>
-          logger.trace("extractSimple(2)")
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ DefinedToken[name, Ctx, Unit](${ Expr(tokenInfo) }, $ctxManipulation, _ => ()) })
+            case other =>
+              raiseShouldNeverBeCalled(other)
 
         case '{ type name <: ValidName; Token[name]($value: String)(using $_) } if value.asTerm.symbol == tree.symbol =>
-          logger.trace("extractSimple(3)")
-          compileNameAndPattern[name](tree).unsafeMap:
+          compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               (tokenInfo, '{ DefinedToken[name, Ctx, String](${ Expr(tokenInfo) }, $ctxManipulation, _.lastRawMatched) })
+            case other =>
+              raiseShouldNeverBeCalled(other)
 
         case '{ type name <: ValidName; Token[name]($value: value)(using $_) } =>
-          logger.trace("extractSimple(4)")
           compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
               // we need to widen here to avoid weird types
@@ -76,9 +76,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                       replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                   (tokenInfo, '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) })
             case (_, tokenInfo) =>
-              raiseShouldNeverBeCalled[(TokenInfo, Expr[Token[?, Ctx, ?]])](tokenInfo)
+              raiseShouldNeverBeCalled[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])](tokenInfo)
 
-      logger.trace("extracting tokens from body")
       val (infos, tokens) = extractSimple('{ _ => () })
         .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
@@ -91,7 +90,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                   )(methSym)
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDef[ValidName, Ctx, Any]])
-        .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[Token[?, Ctx, ?]])]](body))
+        .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])]](body))
         .unzip
 
       val patterns = infos.map(_.pattern)
@@ -100,7 +99,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       (
         tokens = accTokens ::: tokens.map:
-          case '{ type name <: ValidName; type tokenTpe <: Token[name, Ctx, ?]; $token: tokenTpe } =>
+          case '{ type name <: ValidName; type tokenTpe <: lexer.Token[name, Ctx, ?]; $token: tokenTpe } =>
             (expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] }, name = ValidName.from[name])
         ,
         infos = accInfos ::: infos,
@@ -108,7 +107,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  logger.trace("checking for duplicate token names")
   infos
     .groupBy(_.name)
     .iterator
@@ -118,7 +116,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         show"Token name \"$name\" is defined ${duplicates.size.toString} times. Combine the patterns into a single case using alternatives, e.g.: case x @ (\"pattern1\" | \"pattern2\") => Token[x]",
       )
 
-  logger.trace("checking regex patterns")
   RegexChecker.checkPatterns(infos.map(_.pattern))
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
@@ -133,9 +130,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
     '{ $fieldName: @switch }.asTerm,
     tokens.map: (expr, name) =>
       CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
-  ).asExprOf[Token[?, Ctx, ?]]
+  ).asExprOf[lexer.Token[?, Ctx, ?]]
 
-  logger.trace("creating tokenization class instance")
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
     case ('[refinedTpe], '[fields], '[types]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
@@ -158,9 +154,9 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         {
           new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
             @publicInBinary
-            override private[alpaca] val tokens: List[Token[?, Ctx, ?]] = $tokensExpr
+            override private[alpaca] val tokens: List[lexer.Token[?, Ctx, ?]] = $tokensExpr
 
-            override def selectDynamic(name: String): Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
+            override def selectDynamic(name: String): lexer.Token[?, Ctx, ?] = ${ selectDynamicImpl('{ name }) }
 
             override protected val compiled: java.util.regex.Pattern = Pattern.compile($regex)
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe & types]

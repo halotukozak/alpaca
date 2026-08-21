@@ -12,7 +12,7 @@ package internal
  * @tparam Q the default type
  */
 //todo: better name
-infix private[alpaca] class withDefault[T, Q]
+infix private[alpaca] class withDefault[T, Q] extends compiletime.Erased
 
 private[alpaca] trait withDefaultLowImplicitPriority:
 
@@ -22,7 +22,7 @@ private[alpaca] trait withDefaultLowImplicitPriority:
    * @tparam Provided the type that was explicitly provided
    * @tparam Default the default type (ignored)
    */
-  given useProvided[Provided, Default]: (Provided withDefault Default) = new (Provided withDefault Default)
+  inline given useProvided[Provided, Default]: (Provided withDefault Default) = new (Provided withDefault Default)
 
 private[alpaca] object withDefault extends withDefaultLowImplicitPriority:
 
@@ -31,4 +31,4 @@ private[alpaca] object withDefault extends withDefaultLowImplicitPriority:
    *
    * @tparam Default the default type to use
    */
-  given useDefault[Default]: (Default withDefault Default) = new (Default withDefault Default)
+  inline given useDefault[Default]: (Default withDefault Default) = new (Default withDefault Default)

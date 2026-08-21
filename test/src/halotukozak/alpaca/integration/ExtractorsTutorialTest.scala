@@ -3,6 +3,8 @@ package alpaca
 package integration
 
 import halotukozak.alpaca.internal.lexer.Lexeme
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{lexer, resolutions, rule, Resolutions, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 
 /** Validates the extractors tutorial patterns compile and run correctly. */

@@ -3,7 +3,7 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.parser.ParseAction.*
+import alpaca.internal.parser.ParseAction.*
 
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
@@ -49,10 +49,10 @@ private[parser] object ParseTable:
      * @return a Csv representation of the parse table
      */
     // it shouldn't be eager
-    def toCsv(using Log): Csv =
+    def toCsv: Csv =
       val symbols = table.allSymbols
 
-      val headers = show"State" :: symbols.map(_.show)
+      val headers = show"State" :: symbols.map(s => show"${s.name}")
       val rows = table.indices
         .map: i =>
           val row = table(i)
@@ -73,10 +73,9 @@ private[parser] object ParseTable:
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
   // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
-  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using Log): ParseTable =
-    logger.trace("building first set...")
+  def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
+    : ParseTable =
     val firstSet = FirstSet(productions)
-    logger.trace("building states and parse table...")
     var currStateId = 0
     val initialState = State.fromItem(
       State.empty,
@@ -94,9 +93,7 @@ private[parser] object ParseTable:
         case None => row.update(symbol, action)
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
-            case Some(action) =>
-              logger.trace(show"Conflict resolved: $action")
-              row.update(symbol, action)
+            case Some(action) => row.update(symbol, action)
             case None =>
               val path = toPath(currStateId, List(symbol))
               (existingAction, action) match
@@ -116,14 +113,11 @@ private[parser] object ParseTable:
               case _ =>
           throw AlgorithmError(show"No predecessor state found for state $stateId")
 
-        if sourceStateId == stateId then
-          logger.debug(show"Unable to trace back path for state, cycle detected near symbol: $symbol")
-          symbol :: acc
+        if sourceStateId == stateId then symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
     while states.sizeIs > currStateId do
       val currState = states(currStateId)
-      logger.trace(show"processing state $currStateId")
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
@@ -144,7 +138,7 @@ private[parser] object ParseTable:
 
     Array.better.tabulate(tableRows.length)(tableRows(_).toMap)
 
-  given Showable[ParseTable] = Showable: table =>
+  given Showable[ParseTable] = table =>
     val symbols = table.allSymbols
 
     def centerText(text: String, width: Int = 10): String =
@@ -174,12 +168,12 @@ private[parser] object ParseTable:
     result.result()
 
   // $COVERAGE-OFF$
-  given ToExpr[ParseTable] with
+  given ToExpr[ParseTable]:
     def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
-      type Row = Map[parser.Symbol, ParseAction]
-      type RowBuilder = mutable.Builder[(parser.Symbol, ParseAction), Row]
+      type Row = Map[Symbol, ParseAction]
+      type RowBuilder = mutable.Builder[(Symbol, ParseAction), Row]
 
-      def rowExpr(row: Row): Expr[Row] = avoidTooLargeMethod[(parser.Symbol, ParseAction), Row, RowBuilder](
+      def rowExpr(row: Row): Expr[Row] = avoidTooLargeMethod[(Symbol, ParseAction), Row, RowBuilder](
         builder = '{ Map.newBuilder },
         elements = row.map(Expr(_)),
         empty = '{ Map.empty },

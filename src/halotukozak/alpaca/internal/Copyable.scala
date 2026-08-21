@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 import scala.annotation.implicitNotFound
 import scala.deriving.Mirror

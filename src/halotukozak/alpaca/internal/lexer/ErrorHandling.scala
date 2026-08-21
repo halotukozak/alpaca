@@ -3,6 +3,8 @@ package alpaca
 package internal
 package lexer
 
+import halotukozak.alpaca.LexerCtx
+
 import scala.annotation.implicitNotFound
 
 /**

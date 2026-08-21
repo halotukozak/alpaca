@@ -1,7 +1,8 @@
 package halotukozak
-package alpaca
-package internal.lexer
+package alpaca.internal.lexer
 
+import halotukozak.alpaca.internal.lexer.LazyReader
+import halotukozak.alpaca.withLazyReader
 import org.scalatest.funsuite.AnyFunSuite
 
 import java.io.StringReader

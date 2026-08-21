@@ -2,6 +2,9 @@ package halotukozak
 package alpaca
 package integration.brainfuck
 
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{rule, ParserCtx, Rule}
+
 import scala.collection.mutable
 
 case class BrainParserCtx(functions: mutable.Set[String] = mutable.Set.empty) extends ParserCtx

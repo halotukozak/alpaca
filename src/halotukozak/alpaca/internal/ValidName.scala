@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 /**
  * Type alias for valid token names.
@@ -14,9 +13,8 @@ type ValidName = String & Singleton
 
 private[alpaca] object ValidName:
   // $COVERAGE-OFF$
-  private[alpaca] def from[Name <: ValidName: Type](using quotes: Quotes)(using Log): ValidName =
+  private[alpaca] def from[Name <: ValidName: Type](using quotes: Quotes): ValidName =
     import quotes.reflect.*
-    logger.trace(show"extracting ValidName from ${Type.of[Name]}")
     TypeRepr.of[Name] match
       case ConstantType(StringConstant(str)) => str
       case x => raiseShouldNeverBeCalled(x.show)
@@ -28,7 +26,7 @@ private[alpaca] object ValidName:
    *
    * @param name the token name to validate
    */
-  private[alpaca] def check(name: String)(using quotes: Quotes)(using Log): Unit =
+  private[alpaca] def check(name: String)(using quotes: Quotes): Unit =
     import quotes.reflect.*
 
     name match

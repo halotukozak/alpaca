@@ -2,6 +2,7 @@ package halotukozak
 package alpaca
 package integration
 
+import halotukozak.alpaca.internal.parser.Parser
 import org.scalatest.funsuite.AnyFunSuite
 
 final class CompilationTheoryTest extends AnyFunSuite:

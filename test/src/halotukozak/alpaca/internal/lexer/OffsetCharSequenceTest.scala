@@ -1,7 +1,7 @@
 package halotukozak
-package alpaca
-package internal.lexer
+package alpaca.internal.lexer
 
+import halotukozak.alpaca.internal.lexer.OffsetCharSequence
 import org.scalatest.funsuite.AnyFunSuite
 
 final class OffsetCharSequenceTest extends AnyFunSuite:
