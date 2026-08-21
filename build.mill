@@ -98,7 +98,7 @@ object `package` extends Module:
     )
 
     def mvnDeps = Seq(
-      mvn"com.halotukozak::regex::0.0.2-SNAPSHOT",
+      mvn"com.halotukozak::regex::0.0.2",
       mvn"com.halotukozak::made::0.4.0",
     )
 
