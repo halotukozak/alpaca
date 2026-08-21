@@ -88,7 +88,7 @@ jobs:
             > benchmark-result.json
 
       - name: Upload Benchmark Result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compilation-benchmark-result
           path: benchmark-result.json
