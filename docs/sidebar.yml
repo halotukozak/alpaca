@@ -3,9 +3,8 @@ subsection:
   - title: Getting Started
     page: getting-started.md
   - title: Lexer
+    index: lexer.md
     subsection:
-      - title: Lexer
-        page: lexer.md
       - title: Lexer Context
         page: lexer-context.md
       - title: Error Recovery
@@ -13,9 +12,8 @@ subsection:
       - title: Between Stages
         page: on-token-match.md
   - title: Parser
+    index: parser.md
     subsection:
-      - title: Parser
-        page: parser.md
       - title: Parser Context
         page: parser-context.md
       - title: Extractors
@@ -23,13 +21,10 @@ subsection:
       - title: Conflict Resolution
         page: conflict-resolution.md
   - title: Tooling
-    subsection:
-      - title: Debug Settings
-        page: debug-settings.md
+    page: debug-settings.md
   - title: Cookbook
+    index: cookbook/expression-evaluator.md
     subsection:
-      - title: Expression Evaluator
-        page: cookbook/expression-evaluator.md
       - title: JSON Parser
         page: cookbook/json-parser.md
       - title: Contextual Lexing
@@ -37,9 +32,8 @@ subsection:
       - title: BrainFuck Interpreter
         page: cookbook/brainfuck-interpreter.md
   - title: Theory
+    index: theory/pipeline.md
     subsection:
-      - title: The Compilation Pipeline
-        page: theory/pipeline.md
       - title: Tokens and Lexemes
         page: theory/tokens.md
       - title: "The Lexer: Regex to Finite Automata"
