@@ -1,7 +1,9 @@
 package halotukozak
 package alpaca.internal
 
+import halotukozak.alpaca.internal.withDefault
 import org.scalatest.funsuite.AnyFunSuite
+
 import scala.reflect.ClassTag
 
 final class withDefaultTest extends AnyFunSuite:

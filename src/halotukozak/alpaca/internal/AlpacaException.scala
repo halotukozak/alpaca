@@ -1,8 +1,6 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
-import scala.annotation.constructorOnly
 import scala.util.control.NoStackTrace
 
 /**
@@ -13,7 +11,7 @@ import scala.util.control.NoStackTrace
  *
  * @param message the error message
  */
-private[alpaca] abstract class AlpacaException(message: Shown) extends Exception(message) with NoStackTrace
+private[alpaca] abstract class AlpacaException(message: Shown) extends Exception(message), NoStackTrace
 
 /**
  * Exception thrown when Alpaca macro compilation takes too long.
@@ -21,5 +19,4 @@ private[alpaca] abstract class AlpacaException(message: Shown) extends Exception
  * This exception is raised when the compilation timeout configured in
  * DebugSettings is exceeded during macro expansion.
  */
-private[alpaca] class AlpacaTimeoutException()(using @constructorOnly log: Log)
-  extends AlpacaException("Alpaca compilation timeout")
+private[alpaca] class AlpacaTimeoutException extends AlpacaException("Alpaca compilation timeout")

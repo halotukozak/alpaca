@@ -3,7 +3,7 @@ package alpaca
 package internal
 package lexer
 
-import scala.annotation.constructorOnly
+import halotukozak.alpaca.internal.AlpacaException
 
 /**
  * Exception thrown when a token pattern is shadowed by another pattern.
@@ -14,5 +14,5 @@ import scala.annotation.constructorOnly
  * @param first the pattern that is shadowed
  * @param second the pattern that shadows it
  */
-private[alpaca] final class ShadowException(first: String, second: String)(using @constructorOnly log: Log)
+private[alpaca] final class ShadowException(first: String, second: String)
   extends AlpacaException(show"Pattern $first is shadowed by $second")

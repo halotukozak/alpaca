@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 // $COVERAGE-OFF$
 
@@ -16,4 +15,8 @@ export scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
  * Exports the Mirror type for type-class derivation.
  */
 export scala.deriving.Mirror
+
+export scala.quoted.QuotedFactoryGivens.given
+export scala.quoted.{FromExprFactory, ToExprFactory}
+
 // $COVERAGE-ON$

@@ -3,6 +3,8 @@ package alpaca
 package internal
 package lexer
 
+import halotukozak.alpaca.internal.ValidName
+
 import scala.NamedTuple.AnyNamedTuple
 import scala.util.boundary
 import scala.util.boundary.break

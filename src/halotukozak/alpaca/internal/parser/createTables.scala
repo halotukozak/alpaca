@@ -3,8 +3,8 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.Csv.toCsv
-import halotukozak.alpaca.internal.lexer.Token
+import alpaca.internal.Csv.toCsv
+import alpaca.internal.lexer.Token
 
 import scala.reflect.NameTransformer
 
@@ -52,18 +52,13 @@ private[alpaca] object Tables:
 // $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = withLog:
-  timeoutOnTooLongCompilation()
-
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] =
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
   parserTpe.asType match
     case '[type p <: Parser[Ctx]; p] =>
-
-      logger.trace(show"createTablesImpl for: $parserSymbol")
-
       val ctxSymbol = parserSymbol.methodMember("ctx").head
       val parserName = parserSymbol.name.stripSuffix("$")
       val replaceRefs = new ReplaceRefs[quotes.type]
@@ -81,9 +76,10 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 binds.iterator.zipWithIndex
                   .collect:
                     case (Some(bind), idx) => ((bind.symbol, bind.symbol.typeRef.asType), Expr(idx))
-                  .unsafeFlatMap:
+                  .flatMap:
                     case ((bind, '[t]), idx) =>
                       Some((find = bind, replace = '{ $paramExpr($idx).asInstanceOf[t] }.asTerm))
+                    case other => raiseShouldNeverBeCalled(other)
                   .toList
 
               replaceRefs(replacements*).transformTerm(rhs)(methSym)
@@ -109,7 +105,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 )
               case (other, _) =>
                 report.errorAndAbort(show"Unexpected production definition: $other", other.pos)
-            .unsafeFlatMap:
+            .flatMap:
               case (c @ CaseDef(_, Some(_), _), _) =>
                 report.error("Guards are not supported yet", c.pos)
                 None
@@ -128,34 +124,30 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                   production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
                   action = createAction(binds, rhs),
                 ) :: others.flatten
+              case other => raiseShouldNeverBeCalled(other)
             .toList
 
       val rules = parserTpe.typeSymbol.declarations.iterator.collect:
         case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
 
-      logger.trace("Rules extracted, building parse table.")
-
       val table = rules
-        .unsafeFlatMap:
+        .flatMap:
           case ValDef(ruleName, _, Some(rhs)) => extractEBNF(ruleName)(rhs.asExprOf[Rule[?]])
           case DefDef(ruleName, _, _, Some(rhs)) =>
             extractEBNF(ruleName)(
               rhs.asExprOf[Rule[?]],
             ) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
           case other: ValOrDefDef if other.rhs.isEmpty => report.errorAndAbort("Enable -Yretain-trees compiler flag")
+          case other => raiseShouldNeverBeCalled(other)
         .toList
         .tap: table =>
           // csv may be not the best format for this due to the commas
           logger.toFile(show"$parserName/actionTable.dbg.csv", true)(table.toCsv)
 
-      logger.trace("Productions extracted, building conflict resolution table.")
-
       val productions = table
         .map(_.production)
         .tap: table =>
           logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
-
-      logger.trace("Productions extracted, building parse and action tables.")
 
       def findProduction(call: Expr[Production]): Production =
         val productionsByName = productions.iterator
@@ -167,29 +159,24 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         call match
           case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
             val decodedName = NameTransformer.decode(name)
-            logger.trace(show"Looking for production with name '$decodedName' (original: '$name')")
             productionsByName.getOrElse(
               decodedName,
               report.errorAndAbort(show"Production with name '$decodedName' not found", call),
             )
 
-          case '{ halotukozak.alpaca.Production(${ Varargs(rhs) }*) } =>
+          case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
             val args = rhs
               .map[parser.Symbol.NonEmpty]:
                 case '{ type ruleType <: Rule[?]; $_ : ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
                 case '{ type name <: ValidName; $_ : Token[name, ?, ?] } => Terminal(ValidName.from[name])
               .toList
 
-            logger.trace(show"Looking for production with RHS '${args.mkShow(", ")}'")
-
             productionsByRhs.getOrElse(
               NEL.unsafe(args),
               report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found", call),
             )
 
-          case definition => raiseShouldNeverBeCalled(definition)(using () => ???)
-
-      logger.trace("Conflict resolution rules extracted, building conflict resolution table.")
+          case definition => raiseShouldNeverBeCalled(definition)
 
       var givenResolutions: Expr[Resolutions[p] | Null] = '{ null }
 
@@ -211,17 +198,16 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         case '{ $prod: Production } => ConflictKey(findProduction(prod))
         case '{ $_ : Token[name, ?, ?] } => ConflictKey(ValidName.from[name])
 
-      logger.trace("Building conflict resolution table.")
-
       val conflictResolutionTable = ConflictResolutionTable(
         resolutionExprs.iterator
-          .unsafeFlatMap:
+          .flatMap:
             case '{ (ctx: ResolutionCtx[p]) ?=> ($after: Production | Token[?, ?, ?]).after(${ Varargs(befores) }*) } =>
               befores.map((_, after))
             case '{ (ctx: ResolutionCtx[p]) ?=>
                   ($before: Production | Token[?, ?, ?]).before(${ Varargs(afters) }*)
                 } =>
               afters.map((before, _))
+            case other => raiseShouldNeverBeCalled(other)
           .foldLeft(Map.empty[ConflictKey, Set[ConflictKey]]):
             case (acc, (before, after)) =>
               acc.updatedWith(extractKey(before)):
@@ -232,8 +218,6 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         logger.toFile(show"$parserName/conflictResolutions.mmd", true)(table.toMermaid)
         table.verifyNoConflicts()
 
-      logger.trace("Conflict resolution table built, identifying root production.")
-
       val root = table
         .collectFirst:
           case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
@@ -241,8 +225,6 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           report.errorAndAbort(
             show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }",
           )
-
-      logger.trace("Root production identified, generating parse and action tables.")
 
       val parseTable = Expr:
         ParseTable(

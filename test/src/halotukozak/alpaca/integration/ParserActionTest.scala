@@ -2,7 +2,6 @@ package halotukozak
 package alpaca
 package integration
 
-import halotukozak.alpaca.*
 import org.scalatest.funsuite.AnyFunSuite
 
 final class ParserActionTest extends AnyFunSuite:
