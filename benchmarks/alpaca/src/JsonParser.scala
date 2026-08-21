@@ -1,6 +1,7 @@
 package bench.alpaca
 
-import alpaca.*
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{lexer, parse, rule, Rule, Token}
 
 val JsonLexer = lexer {
   // ignoring whitespaces

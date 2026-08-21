@@ -1,0 +1,30 @@
+package halotukozak
+package alpaca
+package internal.parser
+
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+
+final class Issue198FixTest extends AnyFunSuite with Matchers:
+
+  val MyLexer = lexer:
+    case "if" => Token["IF"]
+    case "else" => Token["ELSE"]
+    case value @ "[1-9][0-9]*" => Token["Num"](value.toInt)
+
+  case class MyCtx() extends ParserCtx
+
+  test("hyphenated production name should compile") {
+    object Issue198Parser extends Parser[MyCtx]:
+      val root = rule:
+        case Expr(e) => e
+
+      val Expr: Rule[Int] = rule(
+        "if-else" { case (MyLexer.IF(_), MyLexer.Num(n), MyLexer.ELSE(_)) => n.value },
+        { case MyLexer.Num(n) => n.value },
+      )
+
+    given Resolutions[Issue198Parser.type] = resolutions(production.`if-else`.after(MyLexer.Num))
+
+    assert(summon[Resolutions[Issue198Parser.type]].asInstanceOf[Set[?]].nonEmpty)
+  }

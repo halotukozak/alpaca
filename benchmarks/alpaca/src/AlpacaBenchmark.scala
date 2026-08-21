@@ -5,8 +5,7 @@ import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
 import java.nio.file.{Files, Paths}
 import scala.compiletime.uninitialized
-
-import alpaca.*
+import halotukozak.alpaca.*
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.AverageTime))

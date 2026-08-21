@@ -1,6 +1,7 @@
 package bench.alpaca
 
-import alpaca.*
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{lexer, rule, Rule, Token}
 
 // Synthetic big-grammar lexer with 30 keyword token types plus numbers and whitespace.
 // Token names are 2-char codes (ka-kz, la-ld) to avoid prefix shadowing in the regex lexer.
