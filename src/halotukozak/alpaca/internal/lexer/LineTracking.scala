@@ -3,6 +3,8 @@ package alpaca
 package internal
 package lexer
 
+import halotukozak.alpaca.LexerCtx
+
 /**
  * A trait for contexts that track line numbers.
  *

@@ -3,6 +3,8 @@ package alpaca
 package internal
 package parser
 
+import halotukozak.alpaca.internal.{AlgorithmError, DebugSettings, Showable}
+
 /**
  * Represents an LR(1) item in the parser's state machine.
  *
@@ -15,7 +17,12 @@ package parser
  * @param dotPosition the position of the dot (0 to production.rhs.size)
  * @param lookAhead   the lookahead terminal
  */
-private[parser] final case class Item(production: Production, dotPosition: Int, lookAhead: Terminal)(using Log):
+private[parser] final case class Item(
+  production: Production,
+  dotPosition: Int,
+  lookAhead: Terminal,
+)(using DebugSettings,
+):
   production match
     case Production.NonEmpty(_, rhs, name) =>
       if dotPosition < 0 || rhs.sizeIs < dotPosition then
@@ -49,17 +56,15 @@ private[parser] final case class Item(production: Production, dotPosition: Int, 
    * @param firstSet the FIRST set calculator
    * @return the set of terminals that could appear next
    */
-  def nextTerminals(firstSet: FirstSet)(using Log): Set[Terminal] =
-    logger.trace(show"computing next terminals for item $this")
-    production match
-      case Production.NonEmpty(lhs, rhs, name) =>
-        rhs.lift(dotPosition + 1) match
-          case Some(symbol: Symbol) => firstSet.first(symbol)
-          case None => Set(lookAhead)
-      case _: Production.Empty => throw AlgorithmError(show"$this is an empty production, has no next terminals")
+  def nextTerminals(firstSet: FirstSet): Set[Terminal] = production match
+    case Production.NonEmpty(lhs, rhs, name) =>
+      rhs.lift(dotPosition + 1) match
+        case Some(symbol: Symbol) => firstSet.first(symbol)
+        case None => Set(lookAhead)
+    case _: Production.Empty => throw AlgorithmError(show"$this is an empty production, has no next terminals")
 
 private[parser] object Item:
-  given Showable[Item] = Showable:
+  given Showable[Item] =
     case Item(Production.NonEmpty(lhs, rhs, name), dotPosition, lookAhead) =>
       val (left, right) = rhs.splitAt(dotPosition)
       show"$lhs -> ${left.mkShow}•${right.mkShow}, $lookAhead"

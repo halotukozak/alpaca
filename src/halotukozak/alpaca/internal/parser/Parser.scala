@@ -3,9 +3,12 @@ package alpaca
 package internal
 package parser
 
-import halotukozak.alpaca.internal.*
+import alpaca.internal.*
+import alpaca.internal.parser.*
 import halotukozak.alpaca.internal.lexer.Lexeme
-import halotukozak.alpaca.internal.parser.*
+import halotukozak.alpaca.internal.{fieldsTpeFrom, refinementTpeFrom, withDefault, Empty, RevertedArray, RuleOnly, ValidName}
+import halotukozak.alpaca.{rule, ParserCtx, ProductionDefinition, Rule}
+import halotukozak.alpaca.internal.parser.Tables
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
@@ -19,7 +22,7 @@ import scala.collection.mutable
  *
  * @note This is a compile-time only feature and should be used within parser definitions.
  */
-transparent private[alpaca] trait ProductionSelector extends Selectable:
+transparent private[alpaca] trait ProductionSelector extends Selectable, compiletime.Erased:
   def selectDynamic(name: String): Any
 
 /**
@@ -50,7 +53,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * This is compile-time only and can only be used inside parser rule definitions.
    */
   @compileTimeOnly(RuleOnly)
-  inline protected final def ctx: Ctx = dummy
+  inline protected final def ctx: Ctx = null.asInstanceOf[Ctx]
 
   /**
    * Parses a list of lexemes using the defined grammar.
@@ -124,19 +127,18 @@ private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKin
   mutable.Map.empty
 
 // $COVERAGE-OFF$
-def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionSelector] = withLog:
+def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionSelector] =
   import quotes.reflect.*
-
-  val parserTpe = TypeRepr.of[P]
-  val parserSymbol = parserTpe.typeSymbol
-
-  logger.trace(show"Generating production selector for $parserSymbol")
-
   cachedProductions
     .getOrElseUpdate(
-      parserTpe.asType, {
-        val rules = parserTpe.typeSymbol.declarations.iterator.collect:
-          case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
+      Type.of[P], {
+        val rules = TypeRepr
+          .of[P]
+          .typeSymbol
+          .declarations
+          .iterator
+          .collect:
+            case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree
 
         val extractName: PartialFunction[Expr[Rule[?]], Seq[String]] =
           case '{ rule(${ Varargs(cases) }*) } =>
@@ -146,11 +148,8 @@ def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionS
 
         val fields = rules
           .flatMap:
-            case ValDef(name, _, Some(rhs)) =>
-              logger.trace(show"Extracting production names from rule $name")
-              extractName(rhs.asExprOf[Rule[?]])
+            case ValDef(name, _, Some(rhs)) => extractName(rhs.asExprOf[Rule[?]])
             case DefDef(name, _, _, Some(rhs)) =>
-              logger.trace(show"Extracting production names from rule $name")
               extractName(rhs.asExprOf[Rule[?]]) // todo: or error? https://github.com/halotukozak/alpaca/issues/230
             case _ =>
               report.error("Define resolutions as the last field of the parser.")
@@ -165,6 +164,15 @@ def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionS
     case ('[refinement], '[fields]) =>
       '{ DummyProductionSelector.asInstanceOf[ProductionSelector { type Fields = fields } & refinement] }
 
+/**
+ * A real (non-null) placeholder instance of [[ProductionSelector]].
+ *
+ * `production.someName` is meant to be intercepted and rewritten entirely at compile
+ * time, but the underlying `resolutions(...)` call is an ordinary runtime function, so
+ * this placeholder still gets evaluated and `.selectDynamic` still gets called on it.
+ * It must be a real object rather than `null.asInstanceOf[...]`, otherwise that call
+ * NPEs instead of reaching the `.after`/`.before` extension methods, which are inline
+ * and discard their receiver/arguments entirely.
+ */
 private object DummyProductionSelector extends ProductionSelector:
-  override def selectDynamic(name: String): Any = dummy
-// $COVERAGE-ON$
+  override def selectDynamic(name: String): Any = null

@@ -2,6 +2,8 @@ package halotukozak
 package alpaca
 
 import halotukozak.alpaca.internal.Copyable
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{ctx, lexer, resolutions, rule, ParserCtx, Production, Resolutions, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

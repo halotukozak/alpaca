@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 import scala.collection.Factory
 
@@ -43,6 +42,10 @@ private[internal] object Default:
   given [T] => (quotes: Quotes) => Default[Expr[T]] = () => '{ ??? }
 
   given [T <: AnyKind] => (quotes: Quotes) => Default[Type[T]] = () => Type.of[Nothing].asInstanceOf[Type[T]]
+
+  given [T] => (quotes: Quotes) => Default[quotes.reflect.Term] =
+    import quotes.reflect.*
+    Default[Expr[T]].transform(_.asTerm)
 
   given (quotes: Quotes) => Default[quotes.reflect.TypeRepr] =
     import quotes.reflect.*

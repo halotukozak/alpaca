@@ -3,6 +3,8 @@ package alpaca
 package internal
 package lexer
 
+import halotukozak.alpaca.internal.ValidName
+
 import scala.annotation.tailrec
 
 /**
@@ -15,7 +17,7 @@ import scala.annotation.tailrec
  * @tparam Q the Quotes type
  * @param quotes the Quotes instance
  */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q)(using Log):
+private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q):
   import quotes.reflect.*
 
 // $COVERAGE-OFF$
@@ -31,49 +33,39 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @return a list of TokenInfo expressions
    */
   def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
-    logger.trace("compiling name and pattern")
     @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
-      logger.trace(show"looping with tpe=$tpe and pattern=$pattern")
       (tpe, pattern) match
         // case x @ "regex" => Token[x.type]
         case (TermRef(_, name), Bind(bind, Literal(StringConstant(regex)))) if name == bind =>
-          logger.trace(show"matched simple regex with bind $bind and regex $regex")
           TokenInfo(regex, regex) :: Nil
         // case x @ ("regex" | "regex2") => Token[x.type]
         case (TermRef(_, name), Bind(bind, Alternatives(alternatives))) if name == bind =>
-          logger.trace(
-            show"matched alternative regex with bind $bind and alternatives ${alternatives.mkShow("[", ", ", "]")}",
-          )
-          alternatives.unsafeMap:
+          alternatives.map:
             case Literal(StringConstant(str)) => TokenInfo(str, str)
+            case other => raiseShouldNeverBeCalled(other)
         // case x @ <?> => Token[<?>]
         case (tpe, Bind(_, tree)) =>
-          logger.trace(show"matched bind with tpe=$tpe and tree=$tree")
           loop(tpe, tree)
         // case x : "regex" => Token.Ignored
         case (tpe, Literal(StringConstant(str))) if tpe =:= TypeRepr.of[Nothing] =>
-          logger.trace(show"matched ignored token with tpe=$tpe and str=$str")
           TokenInfo(str, str) :: Nil
         // case x : ("regex" | "regex2") => Token.Ignored
         case (tpe, Alternatives(alternatives)) if tpe =:= TypeRepr.of[Nothing] =>
-          logger.trace(show"matched ignored token with tpe=$tpe and alternatives ${alternatives.mkShow}")
-          alternatives.unsafeMap:
+          alternatives.map:
             case Literal(StringConstant(str)) => TokenInfo(str, str)
+            case other => raiseShouldNeverBeCalled(other)
         // case x : "regex" => Token["name"]
         case (ConstantType(StringConstant(name)), Literal(StringConstant(regex))) =>
-          logger.trace(show"matched named token with name=$name and regex=$regex")
           TokenInfo(name, regex) :: Nil
         // case x : ("regex" | "regex2") => Token["name"]
         case (ConstantType(StringConstant(str)), Alternatives(alternatives)) =>
-          logger.trace(show"matched named token with name=$str and alternatives ${alternatives.mkShow}")
-          val patterns = alternatives.unsafeMap:
+          val patterns = alternatives.map:
             case Literal(StringConstant(str)) => str
+            case other => raiseShouldNeverBeCalled[String](other)
           RegexChecker.checkPatterns(patterns)
           RegexChecker.checkPatterns(patterns.reverse)
           TokenInfo(str, patterns.mkShow("|")) :: Nil
         case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
-      .tap: res =>
-        logger.trace(show"compiled name and pattern to ${res.mkShow}")
 // $COVERAGE-ON$

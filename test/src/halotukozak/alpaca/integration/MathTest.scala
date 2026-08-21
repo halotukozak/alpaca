@@ -2,7 +2,8 @@ package halotukozak
 package alpaca
 package integration
 
-import halotukozak.alpaca.{Rule, Token}
+import halotukozak.alpaca.{lexer, resolutions, rule, withLazyReader, Resolutions, Rule, Token}
+import halotukozak.alpaca.internal.parser.Parser
 import org.scalatest.funsuite.AnyFunSuite
 
 final class MathTest extends AnyFunSuite:

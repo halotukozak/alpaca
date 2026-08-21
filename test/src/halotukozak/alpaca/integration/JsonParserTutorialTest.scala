@@ -2,7 +2,10 @@ package halotukozak
 package alpaca
 package integration
 
+import halotukozak.alpaca.internal.parser.Parser
+import halotukozak.alpaca.{lexer, rule, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
+
 import annotation.nowarn
 
 /** Validates the json-parser tutorial code compiles and runs correctly. */

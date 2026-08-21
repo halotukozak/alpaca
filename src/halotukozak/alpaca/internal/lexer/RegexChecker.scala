@@ -26,10 +26,9 @@ private[lexer] object RegexChecker:
    *
    * @param patterns the regex patterns to check.
    */
-  def checkPatterns(patterns: List[String])(using Log): Unit = patterns match
+  def checkPatterns(patterns: List[String]): Unit = patterns match
     case Nil => ()
     case patterns =>
-      logger.trace("checking regex patterns for shadowing...")
       val subsets = patterns.map(parseOrSkip)
 
       for
@@ -39,9 +38,7 @@ private[lexer] object RegexChecker:
         sj <- subsets(j)
       do if sj.withAnySuffix.subset(si.withAnySuffix) then throw ShadowException(patterns(j), patterns(i))
 
-  private def parseOrSkip(pattern: String)(using Log): Option[Subset] =
+  private def parseOrSkip(pattern: String): Option[Subset] =
     RegexParser.parse(pattern) match
       case Right(r) => Some(Subset.of(r))
-      case Left(err) =>
-        logger.trace(s"skipping shadow-check for pattern `$pattern`: ${err.message}")
-        None
+      case Left(_) => None

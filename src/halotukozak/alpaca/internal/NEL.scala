@@ -1,6 +1,5 @@
 package halotukozak
-package alpaca
-package internal
+package alpaca.internal
 
 /**
  * An opaque type representing a non-empty sequence.
@@ -50,7 +49,6 @@ private[alpaca] object NEL:
     list.toVector
 
   // $COVERAGE-OFF$
-  private[internal] given [A: {Type, ToExpr}]: ToExpr[NEL[A]] with
-    def apply(x: NEL[A])(using Quotes): Expr[NEL[A]] =
-      '{ NEL(${ Expr(x.head) }, ${ ToExpr.SeqToExpr(x.tail) }*) }
+  private[internal] def toExprImpl[A: {Type, ToExpr}](x: NEL[A])(using Quotes): Expr[NEL[A]] =
+    '{ NEL(${ Expr(x.head) }, ${ ToExpr.SeqToExpr(x.tail) }*) }
 // $COVERAGE-ON$

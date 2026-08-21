@@ -1,15 +1,16 @@
 package halotukozak
 package alpaca
-package internal.parser
+package internal
+package parser
 
 import halotukozak.alpaca.internal.parser.ParseAction.*
-import halotukozak.alpaca.internal.{AlgorithmError, DebugSettings, Log, NEL}
+import halotukozak.alpaca.internal.{AlgorithmError, DebugSettings, NEL}
+import halotukozak.alpaca.internal.parser.{ConflictResolutionTable, NonTerminal, ParseTable, Production, Symbol, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 final class ParseTableRuntimeTest extends AnyFunSuite with Matchers:
   private given DebugSettings = DebugSettings.default
-  private given Log = new Log
 
   private val emptyResolutions = ConflictResolutionTable(Map.empty)
 
@@ -45,7 +46,7 @@ final class ParseTableRuntimeTest extends AnyFunSuite with Matchers:
     val csv = ParseTable(productions, emptyResolutions).toCsv
 
     csv.headers.head should include("State")
-    val headerNames = csv.headers.map(_.toString)
+    val headerNames = csv.headers
     headerNames should contain(Num.name)
     headerNames should contain(Plus.name)
   }

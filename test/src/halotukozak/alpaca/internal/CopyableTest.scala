@@ -1,6 +1,7 @@
 package halotukozak
 package alpaca.internal
 
+import halotukozak.alpaca.internal.Copyable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -53,12 +54,12 @@ final class CopyableTest extends AnyFunSuite with Matchers:
   test("cannot derive Copyable for non-case classes or non-product types (compile-time)") {
     // String is not a case class => should not typecheck
     """
-      |import halotukozak.alpaca.core.Copyable
+      |import alpaca.core.Copyable
       |val c = Copyable.derived[String]""".stripMargin shouldNot compile
 
     // Define a plain (non-case) class and try to derive should fail
     """
-      |import halotukozak.alpaca.core.Copyable
+      |import alpaca.core.Copyable
       |class Regular(val x: Int)
       |val c = Copyable.derived[Regular]
       |""".stripMargin shouldNot compile

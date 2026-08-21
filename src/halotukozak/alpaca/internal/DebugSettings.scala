@@ -1,8 +1,5 @@
 package halotukozak
-package alpaca
-package internal
-
-import scala.concurrent.duration.{Duration, DurationInt}
+package alpaca.internal
 
 /**
  * Configuration for debugging and compilation settings.
@@ -17,21 +14,13 @@ import scala.concurrent.duration.{Duration, DurationInt}
  */
 private[internal] final case class DebugSettings(
   debugDirectory: Option[String],
-  compilationTimeout: Duration,
-  enableVerboseNames: Boolean,
-  logOut: Map[logger.Level, logger.Out],
 )
 
 private[internal] object DebugSettings:
   private final val Directory = "debugDirectory"
-  private final val Timeout = "compilationTimeout"
-  private final val EnableVerboseNames = "enableVerboseNames"
 
   val default: DebugSettings = DebugSettings(
     debugDirectory = None,
-    compilationTimeout = 90.seconds,
-    enableVerboseNames = false,
-    logOut = logger.Level.values.map(l => (l, l.default)).toMap,
   )
 
   // $COVERAGE-OFF$
@@ -48,19 +37,5 @@ private[internal] object DebugSettings:
 
     DebugSettings(
       debugDirectory = settings.get(Directory),
-      compilationTimeout = settings.get(Timeout).map(Duration.create).getOrElse(90.seconds),
-      enableVerboseNames = settings.get(EnableVerboseNames).exists(_.toBoolean),
-      logOut = logger.Level.values
-        .map: level =>
-          (
-            level,
-            settings
-              .get(level.toString)
-              .map: name =>
-                try logger.Out.valueOf(name)
-                catch case _: IllegalArgumentException => level.default
-              .getOrElse(level.default),
-          )
-        .toMap,
     )
 // $COVERAGE-ON$
