@@ -50,6 +50,7 @@ object `package` extends ScalaModule with ScoverageModule with SonatypeCentralPu
     "--coverage-exclude-files:.*Lexer.*",
     "--coverage-exclude-files:.*createTables.*",
     "-experimental",
+    "-language:experimental.erasedDefinitions",
     "-preview",
     s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
     // "-Xmacro-settings:trace=file",
