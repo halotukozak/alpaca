@@ -1,0 +1,83 @@
+name: Comment Compilation Benchmark
+
+on:
+  workflow_run:
+    workflows: ["Test Compilation Benchmark"]
+    types: [completed]
+
+jobs:
+  comment:
+    name: Post Benchmark Comment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Download Benchmark Result
+        uses: actions/download-artifact@v4
+        with:
+          name: compilation-benchmark-result
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upsert PR Comment
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('benchmark-result.json', 'utf8'));
+
+            const baseMean = result.base_mean;
+            const currMean = result.curr_mean;
+
+            const diff = currMean - baseMean;
+            const perc = (diff / baseMean) * 100;
+
+            const diffAbs = Math.abs(diff).toFixed(3);
+            const percAbs = Math.abs(perc).toFixed(2);
+
+            let status = 'faster';
+            let emoji = '✅';
+            if (perc > 1) {
+              status = 'slower';
+              emoji = '⚠️';
+            } else if (Math.abs(perc) <= 1) {
+              status = 'unchanged';
+              emoji = 'ℹ️';
+            }
+
+            const body = [
+              '### 📊 Test Compilation Benchmark',
+              '',
+              '| Branch | Average Time |',
+              '| :--- | :--- |',
+              `| **Base (${result.base_ref})** | ${baseMean.toFixed(3)}s |`,
+              `| **Current (${result.head_ref})** | ${currMean.toFixed(3)}s |`,
+              '',
+              `**Result:** Current branch is **${diffAbs}s ${status}** (${percAbs}%) ${emoji}`
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: result.pr_number,
+            });
+
+            const botComment = comments.find(c => c.body.includes('### 📊 Test Compilation Benchmark'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: result.pr_number,
+                body: body
+              });
+            }
