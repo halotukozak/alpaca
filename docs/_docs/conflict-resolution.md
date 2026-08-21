@@ -120,7 +120,7 @@ For unnamed productions, use `Production(symbols*)` to identify them by their ri
 
 ```scala sc:nocompile
 import alpaca.*
-import alpaca.Production as P
+import halotukozak.alpaca.Production as P
 
 given Resolutions[CalcParser.type] = resolutions(
   P(CalcParser.Expr, Lexer.TIMES, CalcParser.Expr).before(Lexer.PLUS, Lexer.MINUS),
