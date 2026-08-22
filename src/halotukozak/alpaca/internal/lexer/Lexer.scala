@@ -119,7 +119,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   SubsetChecker.checkRegexes(
     for (info, regex) <- infos.zip(parsedRegexes)
-    yield (info.name, Subset.of(regex).withAnySuffix),
+    yield (info.pattern, Subset.of(regex).withAnySuffix),
   )
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))

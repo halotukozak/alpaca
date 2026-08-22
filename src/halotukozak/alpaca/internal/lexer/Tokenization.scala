@@ -73,22 +73,24 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
               throw ex
 
             case Strategy.IgnoreToken =>
-              matcher.findFirst(globalCtx.text, 1) match
+              val cpLen = Character.charCount(Character.codePointAt(globalCtx.text, 0))
+              matcher.findFirst(globalCtx.text, cpLen) match
                 case Some((firstMatching, _, _)) =>
                   val matchedStr = globalCtx.text.subSequence(0, firstMatching).toString
                   globalCtx.lastRawMatched = matchedStr
                   globalCtx.text = globalCtx.text.from(firstMatching)
                   (RecoveredToken(matchedStr), matchedStr)
                 case None =>
-                  val matchedStr = globalCtx.text.charAt(0).toString
+                  val matchedStr = globalCtx.text.subSequence(0, cpLen).toString
                   globalCtx.lastRawMatched = matchedStr
-                  globalCtx.text = globalCtx.text.from(1)
+                  globalCtx.text = globalCtx.text.from(cpLen)
                   (RecoveredToken(matchedStr), matchedStr)
 
             case Strategy.IgnoreChar =>
-              val matchedStr = globalCtx.text.charAt(0).toString
+              val cpLen = Character.charCount(Character.codePointAt(globalCtx.text, 0))
+              val matchedStr = globalCtx.text.subSequence(0, cpLen).toString
               globalCtx.lastRawMatched = matchedStr
-              globalCtx.text = globalCtx.text.from(1)
+              globalCtx.text = globalCtx.text.from(cpLen)
               (RecoveredToken(matchedStr), matchedStr)
 
             case Strategy.Stop =>
