@@ -43,14 +43,14 @@ jobs:
             ${{ runner.os }}-mill-
 
       - name: Generate docs
-        run: ./mill docJar
+        run: ./mill jvm.docJar
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
           # Upload entire repository
-          path: 'out/docJar.dest/docs'
+          path: 'out/jvm/docJar.dest/docs'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
