@@ -4,7 +4,7 @@ package internal
 package lexer
 
 import alpaca.Token as TokenDef
-import halotukozak.regex.{Regex, RegexParseError, RegexParser, TokenMatcher}
+import halotukozak.regex.{Regex, RegexParser, Subset, TokenMatcher}
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.annotation.{publicInBinary, switch}
@@ -112,23 +112,15 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         show"Token name \"$name\" is defined ${duplicates.size.toString} times. Combine the patterns into a single case using alternatives, e.g.: case x @ (\"pattern1\" | \"pattern2\") => Token[x]",
       )
 
-  val parsedRegexes: List[Regex] = infos.map: info =>
+  val parsedRegexes = infos.map: info =>
     RegexParser.parse(info.pattern) match
-      case Right(r) => r
-      case Left(err: RegexParseError.UnsupportedFeature) =>
-        report.errorAndAbort(
-          show"Unsupported regex feature `${err.feature}` at position ${err.position.toString} in pattern \"${info.pattern}\" for token \"${info.name}\"",
-        )
-      case Left(err: RegexParseError.InvalidSyntax) =>
-        report.errorAndAbort(
-          show"Invalid regex pattern \"${info.pattern}\" for token \"${info.name}\" at position ${err.position.toString}: ${err.message}. If you meant to match a literal character, escape it with a backslash (e.g., \"\\\\+\" instead of \"+\")",
-        )
+      case Right(regex) => regex
+      case Left(err) => report.errorAndAbort(err.toString)
 
-  val items: List[(name: String, regex: Regex)] = infos
-    .zip(parsedRegexes)
-    .map: (info, r) =>
-      (name = info.name, regex = r)
-  RegexChecker.checkRegexes(items)
+  SubsetChecker.checkRegexes(
+    for (info, regex) <- infos.zip(parsedRegexes)
+    yield (info.name, Subset.of(regex).withAnySuffix),
+  )
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
   val types = Refined(

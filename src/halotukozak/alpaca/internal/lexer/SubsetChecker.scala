@@ -3,7 +3,7 @@ package alpaca
 package internal
 package lexer
 
-import halotukozak.regex.{Regex, Subset}
+import halotukozak.regex.Subset
 
 /**
  * Cross-platform shadow detection for token regex patterns.
@@ -12,19 +12,19 @@ import halotukozak.regex.{Regex, Subset}
  * by an earlier pattern, meaning the earlier pattern would always be selected first.
  * Implemented via Brzozowski-derivative DFA emptiness check on `L(later . Sigma*) subseteq L(earlier . Sigma*)`.
  */
-private[lexer] object RegexChecker:
+private[lexer] object SubsetChecker:
 
   /**
    * Checks a priority-ordered sequence of pre-parsed regexes for shadowing.
    *
    * @throws ShadowException if any pattern is shadowed by an earlier one.
    */
-  def checkRegexes(items: List[(name: String, regex: Regex)]): Unit = items match
+  def checkRegexes(items: List[(name: String, subset: Subset)]): Unit = items match
     case Nil => ()
     case _ =>
-      val withSuffix = items.map((name, r) => name -> Subset.of(r).withAnySuffix)
-      withSuffix.tails.foreach:
-        case Nil => ()
-        case (earlierName, earlierSub) :: laters =>
-          laters.foreach: (laterName, laterSub) =>
-            if laterSub.subset(earlierSub) then throw ShadowException(laterName, earlierName)
+      for
+        suffix <- items.tails
+        if suffix.nonEmpty
+        (earlierName, earlierSub) :: laters = suffix.runtimeChecked
+        (laterName, laterSub) <- laters
+      do if laterSub.subset(earlierSub) then throw ShadowException(laterName, earlierName)
