@@ -54,7 +54,10 @@ jobs:
             (
               cd "$dir"
 
-              hyperfine --runs 5 --prepare "./mill clean && ./mill compile" "./mill test.compile" --export-json "../${dir}.json"
+              hyperfine --runs 5 \
+                --prepare "./mill clean && (./mill jvm.compile native.compile || ./mill compile)" \
+                "./mill jvm.test.compile native.test.compile || ./mill test.compile" \
+                --export-json "../${dir}.json"
             )
             echo "::endgroup::"
           }

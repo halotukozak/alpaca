@@ -4,6 +4,7 @@ package internal
 package lexer
 
 import halotukozak.alpaca.internal.ValidName
+import halotukozak.regex.Subset
 
 import scala.annotation.tailrec
 
@@ -62,8 +63,12 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
           val patterns = alternatives.map:
             case Literal(StringConstant(str)) => str
             case other => raiseShouldNeverBeCalled[String](other)
-          RegexChecker.checkPatterns(patterns)
-          RegexChecker.checkPatterns(patterns.reverse)
+          val items = patterns.map: pattern =>
+            Subset.parse(pattern) match
+              case Right(subset) => (name = pattern, subset = subset.withAnySuffix)
+              case Left(err) => report.errorAndAbort(err.message)
+          SubsetChecker.checkRegexes(items)
+          SubsetChecker.checkRegexes(items.reverse)
           TokenInfo(str, patterns.mkShow("|")) :: Nil
         case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
