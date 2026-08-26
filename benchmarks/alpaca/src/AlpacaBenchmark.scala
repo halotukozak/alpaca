@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import java.nio.file.{Files, Paths}
 import scala.compiletime.uninitialized
 import halotukozak.alpaca.*
+import halotukozak.alpaca.bench.{MathLexer, MathParser}
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.AverageTime))
