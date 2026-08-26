@@ -46,8 +46,28 @@ pieces of information:
 
 The tokenization output for a simple expression illustrates this:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:tokens-brain-lexer
+import halotukozak.alpaca.*
+
+val BrainLexer = lexer:
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case "\\." => Token["print"]
+  case "," => Token["read"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" => Token["functionOpen"]
+  case "\\)" => Token["functionClose"]
+  case "!" => Token["functionCall"]
+  case "." => Token.Ignored
+  case "\n" => Token.Ignored
+```
+
+```scala sc-compile-with:tokens-brain-lexer
+import halotukozak.alpaca.*
 
 val (_, lexemes) = BrainLexer.tokenize("foo(++)")
 // lexemes: List[Lexeme] =
