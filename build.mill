@@ -56,8 +56,6 @@ object `package` extends Module:
       "--coverage-exclude-files:.*Lexer.*",
       "--coverage-exclude-files:.*createTables.*",
       "-experimental",
-      "-language:experimental.erasedDefinitions",
-      "-preview",
       s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
       // "-Xmacro-settings:trace=file",
       //  "-Yprofile-enabled",
