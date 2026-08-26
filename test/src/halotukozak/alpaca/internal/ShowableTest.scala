@@ -40,6 +40,13 @@ final class ShowableTest extends AnyFunSuite with Matchers:
     assert(shown == "Address(city: Wonderland, zip: 12345)")
   }
 
+  test("Showable should include field names for NamedTuple") {
+    val person = (name = "Alice", age = 30)
+    val shown: String = show"$person"
+
+    assert(shown == "NamedTuple(name: Alice, age: 30)")
+  }
+
   test("Showable should not convert unsupported types") {
     """|
        |import Showable._

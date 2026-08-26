@@ -9,13 +9,13 @@ import scala.NamedTuple.NamedTuple
  * This case class holds tabular data with headers and rows that can be
  * displayed as a CSV string. It is used internally for debug output.
  *
- * Note: Future improvements may include making this Tuple-based for
- * better type safety and performance.
+ * Note: cannot be made Tuple-based (see #225/#228) because ParseTable.toCsv
+ * builds headers/rows from a grammar-dependent, runtime-known column count
+ * (table.allSymbols), which has no fixed compile-time arity.
  *
  * @param headers the column headers
  * @param rows the data rows, each containing values for each column
  */
-//todo: make Tuple-based in the future for better type safety and performance https://github.com/halotukozak/alpaca/issues/228
 private[internal] final case class Csv(
   headers: List[Shown],
   rows: List[List[Shown]],
