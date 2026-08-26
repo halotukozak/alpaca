@@ -115,14 +115,7 @@ val CalcLexer = lexer:
   case "\\s+" => Token.Ignored
 ```
 
-<!-- sc:nocompile: the grammar is genuinely ambiguous, so CalcParser's macro expansion requires the
-     given Resolutions[CalcParser.type] below to be in scope to avoid a ShiftReduceConflict -- but that
-     Resolutions instance needs the `production` selector, which is declared `protected` in
-     `halotukozak.alpaca` (src/halotukozak/alpaca/parser.scala:23) and so isn't resolvable from a doc
-     snippet (or from any real downstream consumer's code) compiled outside that package. Filed as
-     https://github.com/halotukozak-com/alpaca/issues/477. -->
-
-```scala sc:nocompile
+```scala sc-compile-with:cfg-calc-lexer
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
