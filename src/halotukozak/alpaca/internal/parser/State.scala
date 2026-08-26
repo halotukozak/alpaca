@@ -5,6 +5,7 @@ package parser
 
 import halotukozak.alpaca.internal.DebugSettings
 
+import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
 
 /**
@@ -66,13 +67,18 @@ private[parser] object State:
    */
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet)(using DebugSettings)
     : State =
-    if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
-      val lookAheads = item.nextTerminals(firstSet)
+    @tailrec def loop(state: State, worklist: List[Item]): State = worklist match
+      case Nil => state
+      case item :: rest =>
+        if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
+          val newState = state + item
+          val lookAheads = item.nextTerminals(firstSet)
+          val newItems = productions.iterator
+            .filter(_.lhs == item.nextSymbol)
+            .flatMap(production => lookAheads.iterator.map(production.toItem))
+            .filterNot(newState.contains)
+            .toList
+          loop(newState, newItems ::: rest)
+        else loop(state + item, rest)
 
-      productions.iterator
-        .filter(_.lhs == item.nextSymbol)
-        .foldLeft(state + item): (acc, production) =>
-          lookAheads.foldLeft(acc): (acc, lookAhead) =>
-            val item = production.toItem(lookAhead)
-            if acc.contains(item) then acc else fromItem(acc, item, productions, firstSet)
-    else state + item
+    loop(state, item :: Nil)

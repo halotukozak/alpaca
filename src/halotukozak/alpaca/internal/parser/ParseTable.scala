@@ -72,7 +72,10 @@ private[parser] object ParseTable:
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  // todo: can be parallelized with Ox? https://github.com/halotukozak/alpaca/issues/31
+  // Deliberately sequential (see #31): states are discovered incrementally as a side
+  // effect of processing earlier ones, so parallelizing safely would need a frontier-based
+  // BFS rewrite with concurrent state dedup -- not worth the correctness risk without a
+  // measured compile-time bottleneck on a real grammar.
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
     : ParseTable =
     val firstSet = FirstSet(productions)

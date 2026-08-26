@@ -98,7 +98,13 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
  * @param ctxManipulation function to update context
  * @param remapping function to extract value from context
  */
-//todo: may be invariant? https://github.com/halotukozak/alpaca/issues/234
+// Ctx must stay covariant (see #234): the `lexer` macro constructs each token as
+// `Token[Name, ctx.type, Value]` and then widens them all into a single
+// `List[Token[?, Ctx, ?]]` (see Lexer.scala). That widening only type-checks if Ctx is
+// covariant. The `@uv` annotations below are safe despite Ctx also appearing in argument
+// position (`ctxManipulation`, `remapping`): `ctx.type` is a compile-time-only device to
+// tag which lexer a token belongs to — at runtime there is exactly one Ctx instance per
+// lexer, so the variance escape hatch is never actually exercised unsoundly.
 private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   @publicInBinary private[alpaca] info: TokenInfo,
   private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
