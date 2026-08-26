@@ -34,8 +34,12 @@ Add a low-priority pattern that matches any single character. The BrainFuck lexe
 
 Alternatively, emit an `ERROR` token and let the parser decide what to do:
 
-```scala sc:nocompile
-case "." => Token["ERROR"]
+```scala
+import halotukozak.alpaca.*
+
+val ErrorTokenLexer = lexer:
+  case "[a-zA-Z]+" => Token["ID"]
+  case "." => Token["ERROR"]
 ```
 
 ### Strategy: Stop Gracefully
@@ -101,11 +105,32 @@ Alpaca's parser currently has minimal error recovery:
 
 Semantic error handling is up to your code. The BrainFuck interpreter uses `require()` in rule bodies to validate constraints:
 
-```scala sc:nocompile
-val FunctionCall: Rule[BrainAST] = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-    require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
-    BrainAST.FunctionCall(name.value)
+```scala sc-hidden sc-name:ert-semantic-setup
+import halotukozak.alpaca.*
+import scala.collection.mutable
+
+val BrainLexer = lexer:
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "!" => Token["functionCall"]
+  case "\\s+" => Token.Ignored
+
+enum BrainAST:
+  case FunctionCall(name: String)
+
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
+```
+
+```scala sc-compile-with:ert-semantic-setup
+object BrainParser extends Parser[BrainParserCtx]:
+  val root: Rule[BrainAST] = rule:
+    case FunctionCall(fc) => fc
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
+      BrainAST.FunctionCall(name.value)
 ```
 
 This throws a `RuntimeException` on semantic errors. For better error reporting, accumulate errors in the parser context rather than throwing.
