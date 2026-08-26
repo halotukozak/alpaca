@@ -1,9 +1,9 @@
 package halotukozak
 package alpaca
 
-import alpaca.internal.*
-import alpaca.internal.lexer.{Lexeme, Token}
-import alpaca.internal.parser.*
+import halotukozak.alpaca.internal.*
+import halotukozak.alpaca.internal.lexer.{Lexeme, Token}
+import halotukozak.alpaca.internal.parser.*
 
 import scala.annotation.{compileTimeOnly, unused}
 import scala.deriving.Mirror
@@ -20,9 +20,8 @@ def resolutions[P <: parser.Parser[?]](elements: (ResolutionCtx[P] ?=> ConflictR
   elements.map(_.apply(using ResolutionCtx.refl)).toSet
 
 @compileTimeOnly(ConflictResolutionOnly)
-transparent inline def production[P <: parser.Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
-  productionImpl[P]
-}
+transparent inline def production[P <: parser.Parser[?]](using ResolutionCtx[P]): ProductionSelector =
+  ${ productionImpl[P] }
 
 /**
  * Defines a single production in a grammar rule.
