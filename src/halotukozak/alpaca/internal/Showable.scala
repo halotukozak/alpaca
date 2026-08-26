@@ -70,8 +70,8 @@ private[internal] object Showable:
 
   def fromToString[T]: Showable[T] = (_.toString)
 
-  // todo: add names https://github.com/halotukozak/alpaca/issues/233
-  given [N <: Tuple, V <: Tuple: Showable] => Showable[NamedTuple[N, V]] = (_.toTuple.show)
+  inline given [N <: Tuple, V <: Tuple] => (m: Made.Of[NamedTuple[N, V]]) => Showable[NamedTuple[N, V]] =
+    derived[NamedTuple[N, V]](using m)
 
   // $COVERAGE-OFF$
   given [T] => (quotes: Quotes) => Showable[Expr[T]] =
