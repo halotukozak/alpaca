@@ -150,13 +150,7 @@ object FunctionDefParser extends Parser[BrainParserCtx]:
 
 Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
 
-<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is `protected` in
-     halotukozak.alpaca and unresolvable from a normal doc snippet compiled outside that
-     package. The `package halotukozak.alpaca` workaround (which grants access on other
-     pages) fails specifically on this page with "this kind of statement is not allowed
-     here". See https://github.com/halotukozak-com/alpaca/issues/477. -->
-
-```scala sc:nocompile
+```scala sc-hidden sc-name:named-prod-lexer
 import halotukozak.alpaca.*
 
 val Lexer = lexer:
@@ -166,7 +160,9 @@ val Lexer = lexer:
   case "then" => Token["THEN"]
   case x @ "[0-9]+" => Token["NUM"](x.toInt)
   case "\\s+" => Token.Ignored
+```
 
+```scala sc-compile-with:named-prod-lexer
 object MyParser extends Parser:
   val root: Rule[Int] = rule:
     case Expr(e) => e
@@ -179,9 +175,9 @@ object MyParser extends Parser:
   )
 
 given Resolutions[MyParser.type] = resolutions(
-  production.`left-add`.before(Lexer.PLUS),
-  production.`shift.left`.before(Lexer.SHL),
-  production.`if then`.before(Lexer.THEN),
+  production.`left-add`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
+  production.`shift.left`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
+  production.`if then`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
 )
 ```
 
@@ -327,18 +323,16 @@ Ambiguous grammars produce compile-time errors. The BrainFuck grammar has no con
 
 Quick example:
 
-<!-- sc:nocompile: same `production` visibility issue as above -- protected in
-     halotukozak.alpaca, and the package-clause workaround fails on this page too.
-     See https://github.com/halotukozak-com/alpaca/issues/477. -->
-
-```scala sc:nocompile
+```scala sc-hidden sc-name:calc-quick-lexer
 import halotukozak.alpaca.*
 
 val CalcLexer = lexer:
   case "\\+" => Token["PLUS"]
   case x @ "[0-9]+" => Token["NUMBER"](x.toInt)
   case "\\s+" => Token.Ignored
+```
 
+```scala sc-compile-with:calc-quick-lexer
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },

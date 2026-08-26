@@ -74,14 +74,7 @@ No `resolutions` needed — the grammar itself is unambiguous.
 
 Keep all operators at the same grammar level and use `before`/`after` to declare precedence:
 
-<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is declared `protected` in
-     `halotukozak.alpaca`, so it isn't resolvable from a doc snippet compiled outside that package.
-     The `package halotukozak.alpaca` first-line workaround (see [Full Calculator Example](full-example.md))
-     hits "this kind of statement is not allowed here" on this page, same as on
-     [Context-Free Grammars](cfg.md) and [Conflicts and Disambiguation](conflicts.md).
-     Filed as https://github.com/halotukozak-com/alpaca/issues/477. -->
-
-```scala sc:nocompile
+```scala sc-compile-with:op-calc-lexer
 import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
@@ -150,13 +143,29 @@ val ExtendedLexer = lexer:
 
 The parser uses a flat grammar with conflict resolution for precedence:
 
-<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is declared `protected` in
-     `halotukozak.alpaca`, so it isn't resolvable from a doc snippet compiled outside that package.
-     The `package halotukozak.alpaca` first-line workaround hits "this kind of statement is not
-     allowed here" on this page (see the note on the CalcParser resolutions example above).
-     Filed as https://github.com/halotukozak-com/alpaca/issues/477. -->
+```scala sc-hidden sc-name:op-brain-ast
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case Add(n: Int)
+  case Sub(n: Int)
+  case Inc, Dec
+```
 
-```scala sc:nocompile
+```scala sc-hidden sc-name:op-brain-arith-lexer
+import halotukozak.alpaca.*
+
+val ExtendedLexer = lexer:
+  case "\\+" => Token["+"]
+  case "-" => Token["-"]
+  case "\\*" => Token["*"]
+  case "/" => Token["/"]
+  case "\\(" => Token["("]
+  case "\\)" => Token[")"]
+  case n @ "[0-9]+" => Token["NUM"](n.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:op-brain-ast,op-brain-arith-lexer
 import halotukozak.alpaca.*
 
 object ExtendedParser extends Parser:

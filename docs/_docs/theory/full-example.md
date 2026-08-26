@@ -71,11 +71,7 @@ The parser does not know whether `1 + 2 + 3` should reduce `1 + 2` first (left-a
 
 Adding a `given Resolutions[CalcParser.type]` declares which action wins in each conflict state. The full resolution set for the calculator encodes standard BODMAS precedence (`*` and `/` before `+` and `-`) and left-associativity for all four operators. The `given` is declared *after* the parser object, as a sibling declaration at the same scope -- see [Conflict Resolution](../conflict-resolution.md#where-resolutions-live) for why:
 
-```scala sc:nocompile
-// sc:nocompile: `production` is `protected` in halotukozak.alpaca and not resolvable from a
-// normal doc snippet (halotukozak-com/alpaca#477). The `package halotukozak.alpaca`-prefix
-// workaround does not work on this page (parse error, and a site-wide toplevel-definition
-// collision with another page's snippet), so this block is left uncompiled.
+```scala sc-name:full-example-parser sc-compile-with:calc-lexer
 import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
@@ -114,11 +110,7 @@ For the full conflict resolution DSL — including `Production(symbols*)` select
 
 With conflict resolution in place, the compiler builds the LR(1) parse table without errors. The parser is ready:
 
-```scala sc:nocompile
-// sc:nocompile: depends on the resolved CalcParser above, which is left uncompiled
-// (see halotukozak-com/alpaca#477).
-import halotukozak.alpaca.*
-
+```scala sc-compile-with:full-example-parser
 val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")
 val (_, result)  = CalcParser.parse(lexemes)
 // result: Double | Null = 7.0   (not 9.0 — * binds tighter than +)
