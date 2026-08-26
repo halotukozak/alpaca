@@ -18,8 +18,8 @@ When you write a `lexer:` block without a type parameter, the lexer uses `LexerC
 - `position` -- 1-based column within the current line, incremented by the matched length and reset to 1 on newlines
 - `line` -- 1-based line number, incremented on each newline character
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case "\\+" => Token["inc"]
@@ -53,8 +53,8 @@ Mutable state fields must be `var`, not `val` -- the lexer assigns to them direc
 
 The BrainFuck lexer from [Getting Started](getting-started.md) does not validate bracket matching -- it tokenizes `]` even without a prior `[`. To fix that, we track bracket depth in a custom context:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:lc-brainlex
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var brackets: Int = 0,
@@ -90,7 +90,7 @@ val BrainLexer = lexer[BrainLexContext]:
 
 The type parameter `lexer[BrainLexContext]` tells the macro which context to use. The final context state is returned as the `ctx` component of the named tuple from `tokenize()`:
 
-```scala sc:nocompile
+```scala sc-compile-with:lc-brainlex
 val (finalCtx, lexemes) = BrainLexer.tokenize("[>+<-]")
 // finalCtx.squareBrackets == 0  -- balanced
 ```
@@ -99,14 +99,15 @@ val (finalCtx, lexemes) = BrainLexer.tokenize("[>+<-]")
 
 Inside a `lexer[Ctx]:` block, the name `ctx` is implicitly available and refers to the current context object. You can read and write any `var` field on it:
 
-```scala sc:nocompile
-case "\\[" =>
-  ctx.squareBrackets += 1       // write
-  Token["jumpForward"]
-case "\\]" =>
-  require(ctx.squareBrackets > 0, "Mismatched brackets")  // read + validate
-  ctx.squareBrackets -= 1       // write
-  Token["jumpBack"]
+```scala sc-compile-with:lc-brainlex
+val ExampleLexer = lexer[BrainLexContext]:
+  case "\\[" =>
+    ctx.squareBrackets += 1       // write
+    Token["jumpForward"]
+  case "\\]" =>
+    require(ctx.squareBrackets > 0, "Mismatched brackets")  // read + validate
+    ctx.squareBrackets -= 1       // write
+    Token["jumpBack"]
 ```
 
 > **Note on guards:** Guards (`case "regex" if condition =>`) are not supported in lexer rules. Use the rule body to read context state and decide what to emit -- you cannot filter matches before they occur.
@@ -115,8 +116,8 @@ case "\\]" =>
 
 Each `Lexeme` carries a snapshot of all context fields at the moment of the match. Access them by name via `Selectable`:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case "\\+" => Token["inc"]
@@ -137,8 +138,8 @@ Two important details:
 
 For custom contexts, all case class fields appear in the snapshot:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -170,8 +171,9 @@ Alpaca provides two stackable traits for common tracking needs:
 
 You can use these traits independently or together. `LexerCtx.Default` extends both. To add them to a custom context:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
+import halotukozak.alpaca.internal.lexer.{PositionTracking, LineTracking}
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -201,29 +203,20 @@ If you define your own trait extending `LexerCtx` and provide a `given OnTokenMa
 
 Define the `given` in the **trait companion**, not the case class companion. Putting it on the case class bypasses auto-composition: the lexer uses your hook but skips the default hook that advances the text cursor, and tokenization loops indefinitely.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 import halotukozak.alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
-trait IndentTracking extends LexerCtx
-
-:
-this: Product =>
-var indentLevel: Int
+trait IndentTracking extends LexerCtx:
+  var indentLevel: Int
 
 // Step 2: given in TRAIT COMPANION
-object IndentTracking
-
-:
-given OnTokenMatch
-[IndentTracking
-] =
-case (_, "\t", ctx)
-=> ctx.indentLevel += 1
-case (_, "\n", ctx)
-=> ctx.indentLevel = 0
-case _ => ()
+object IndentTracking:
+  given OnTokenMatch[IndentTracking] =
+    case (_, "\t", ctx) => ctx.indentLevel += 1
+    case (_, "\n", ctx) => ctx.indentLevel = 0
+    case _ => ()
 
 // Step 3: Case class extends the trait
 case class MyCtx(
@@ -232,12 +225,9 @@ case class MyCtx(
 
 // Step 4: Auto composition happens at compile time
 val Lexer = lexer[MyCtx]:
-case "\t"
-=> Token.Ignored
-case "\n"
-=> Token.Ignored
-case id
-@"[a-z]+" => Token["ID"](id)
+  case "\t" => Token.Ignored
+  case "\n" => Token.Ignored
+  case id @ "[a-z]+" => Token["ID"](id)
 ```
 
 </details>
@@ -246,8 +236,8 @@ case id
 
 For cases where you need no tracking at all -- no position, no line counter, no custom fields -- use `LexerCtx.Empty`:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val Lexer = lexer[LexerCtx.Empty]:
   case "\\+" => Token["inc"]
