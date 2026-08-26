@@ -200,7 +200,7 @@ parsed.result.nn.eval(mem)
 
 ## Testing
 
-Key assertions from the test suite:
+Assertions covering the base eight commands, matching Alpaca's own integration test suite:
 
 ```scala sc-compile-with:brainEval
 // Lexer
@@ -212,7 +212,11 @@ val ast = BrainParser.parse(BrainLexer.tokenize("[>+<-]").lexemes).result
 assert(ast == BrainAST.Root(List(
   BrainAST.While(List(BrainAST.Next, BrainAST.Inc, BrainAST.Prev, BrainAST.Dec))
 )))
+```
 
+The repeat-count, named-cell, and function extensions built up over this guide aren't part of that base test suite -- they're illustrative, and follow from the grammar and evaluator shown above:
+
+```scala sc-compile-with:brainEval
 // Repeat count
 val ast2 = BrainParser.parse(BrainLexer.tokenize("3+").lexemes).result
 assert(ast2 == BrainAST.Root(List(BrainAST.Repeat(3, BrainAST.Inc))))

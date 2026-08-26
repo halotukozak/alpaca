@@ -12,7 +12,7 @@ import halotukozak.alpaca.*
 The `lexer` block is a Scala 3 macro. At compile time, it:
 
 1. Validates every regex pattern
-2. Checks for overlapping (shadowing) patterns using the [dregex](https://github.com/marianobarrios/dregex) library
+2. Checks for overlapping (shadowing) patterns using Alpaca's own [`regex`](https://github.com/halotukozak/regex) library (`SubsetChecker`, a Brzozowski-derivative DFA emptiness check)
 3. Merges all patterns into a single combined regex with named capture groups
 4. Generates the tokenization loop
 

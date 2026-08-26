@@ -5,7 +5,7 @@ The Alpaca lexer provides two layers of error feedback: compile-time validation 
 <details>
 <summary>Under the hood: compile-time validation</summary>
 
-The `lexer` macro validates token definitions at compile time. Pattern shadowing (`ShadowException`), invalid regex syntax, and unsupported guards are caught during compilation. The macro performs pairwise regex inclusion checks using the dregex library to ensure every pattern is reachable.
+The `lexer` macro validates token definitions at compile time. Pattern shadowing (`ShadowException`), invalid regex syntax, and unsupported guards are caught during compilation. The macro performs pairwise regex inclusion checks using Alpaca's own `regex` library (`SubsetChecker`) to ensure every pattern is reachable.
 
 </details>
 

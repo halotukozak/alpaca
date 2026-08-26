@@ -155,8 +155,8 @@ Each call to `tokenize()` follows this sequence:
 3. `OnTokenMatch` runs. The default `OnTokenMatch[LexerCtx]` applies any rule-body context changes (`modifyCtx`), derives a snapshot from the context's `Product` elements (case class fields), overrides the snapshot's `text` field with the matched string, and — for `DefinedToken`s — builds a `Lexeme` from the token name, value, and snapshot.
 4. If the matched token is `Token.Ignored` (or a recovery token), `OnTokenMatch` still runs the context modifications and tracking updates but does not emit a `Lexeme`. The token is invisible to the parser.
 5. Tracking hooks (`PositionTracking`, `LineTracking`, custom traits) run as part of the composed `OnTokenMatch`, updating `position`, `line`, etc.
-5. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
-6. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
+6. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
+7. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
 
 The `Lexeme` list is immutable after `tokenize()` returns. The parser does not alter the lexeme data.
 
