@@ -22,7 +22,7 @@ import scala.collection.mutable
  *
  * @note This is a compile-time only feature and should be used within parser definitions.
  */
-transparent private[alpaca] trait ProductionSelector extends Selectable, compiletime.Erased:
+transparent private[alpaca] trait ProductionSelector extends Selectable:
   def selectDynamic(name: String): Any
 
 /**

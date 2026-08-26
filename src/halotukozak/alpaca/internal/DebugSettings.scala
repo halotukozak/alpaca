@@ -17,25 +17,17 @@ private[internal] final case class DebugSettings(
 )
 
 private[internal] object DebugSettings:
-  private final val Directory = "debugDirectory"
+  private final val DirectoryEnvVar = "ALPACA_DEBUG_DIR"
 
   val default: DebugSettings = DebugSettings(
     debugDirectory = None,
   )
 
   // $COVERAGE-OFF$
-  given (quotes: Quotes) => DebugSettings =
-    import quotes.reflect.*
-
-    val settings = CompilationInfo.XmacroSettings
-      .flatMap:
-        case s"$key=$value" => Some((key, value))
-        case value =>
-          report.warning(s"Invalid debug setting: $value")
-          None
-      .toMap
-
-    DebugSettings(
-      debugDirectory = settings.get(Directory),
-    )
+  // Read from an env var rather than -Xmacro-settings/CompilationInfo.XmacroSettings:
+  // that API is @experimental, and being @experimental is contagious to every caller of
+  // the lexer/parser macros -- forcing consumers of this library onto -experimental too.
+  given DebugSettings = DebugSettings(
+    debugDirectory = sys.env.get(DirectoryEnvVar),
+  )
 // $COVERAGE-ON$

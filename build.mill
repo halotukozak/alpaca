@@ -56,10 +56,6 @@ object `package` extends Module:
       "--coverage-exclude-files:.*Lexer.*",
       "--coverage-exclude-files:.*createTables.*",
       "-experimental",
-      "-language:experimental.erasedDefinitions",
-      "-preview",
-      s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true",
-      // "-Xmacro-settings:trace=file",
       //  "-Yprofile-enabled",
       //  s"-Yprofile-trace:$moduleDir/debug/compile-trace.json",
     )
@@ -129,7 +125,8 @@ object `package` extends Module:
 
     object alpaca extends BenchmarkScalaModule with JmhModule:
       def scalaVersion = build.jvm.scalaVersion()
-      override def scalacOptions = Seq("-experimental", "-preview", "-Yretain-trees")
+      override def scalacOptions =
+        Seq("-experimental", "-preview", "-Yretain-trees", "-language:experimental.erasedDefinitions")
       def moduleDeps = Seq(build.jvm)
 
     object fastparse extends BenchmarkScalaModule:
