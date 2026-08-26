@@ -68,8 +68,13 @@ Priorities are transitive via BFS: if reducing `times` beats shifting `PLUS`, an
 
 A minimal example — declaring left-associativity and precedence for the `plus` production only:
 
+<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is declared `protected` in
+     `halotukozak.alpaca` (src/halotukozak/alpaca/parser.scala:23), so it isn't resolvable from a doc
+     snippet compiled outside that package -- same root cause as the CalcParser snippet on
+     [Context-Free Grammars](cfg.md). Filed as https://github.com/halotukozak-com/alpaca/issues/477. -->
+
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 given Resolutions[CalcParser.type] = resolutions(
   production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),  // left-associative: reduce + before shifting + or -
