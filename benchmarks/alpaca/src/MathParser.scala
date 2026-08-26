@@ -1,7 +1,9 @@
-package bench.alpaca
+package halotukozak
+package alpaca
+package bench
 
 import halotukozak.alpaca.internal.parser.Parser
-import halotukozak.alpaca.{lexer, production, resolutions, rule, Resolutions, Rule, Token}
+import halotukozak.alpaca.{lexer, resolutions, rule, Resolutions, Rule, Token}
 
 val MathLexer = lexer {
   case "\\s+" => Token.Ignored
