@@ -80,7 +80,7 @@ extension (name: String)
    * )
    *
    * // In conflict resolution:
-   * given Resoltions[???] = resolutions(
+   * given Resolutions[MyParser.type] = resolutions(
    *   production.sum.after(Lexer.+),
    * )
    * }}}
@@ -254,11 +254,11 @@ object ParserCtx:
 extension [Ctx <: ParserCtx](parser: Parser[Ctx])
 
   /**
-   * Parses a list of lexems using the defined grammar.
+   * Parses a list of lexemes using the defined grammar.
    *
    * This is a convenience method that infers the result type from the root rule.
    *
-   * @param lexems the list of lexems to parse
+   * @param lexems the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
   inline def parse(lexems: List[Lexeme[?, ?]]): (

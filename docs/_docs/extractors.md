@@ -236,9 +236,8 @@ The user-visible fields are:
 - **`text: String`** — the raw matched characters; always a `String` regardless of token type
 - **`position: Int`** — 1-based column within the current line at match time (post-match; resets on newlines)
 - **`line: Int`** — line number at match time
-- **`fields: Map[String, Any]`** — all context fields at match time, accessible by name
 
-`Lexeme` extends `Selectable`, so field access is type-safe at compile time — `id.position` returns `Int`, not `Any`.
+`Lexeme` extends `Selectable`, so custom context fields captured at match time are also accessible by name, type-safely at compile time — `id.position` returns `Int`, not `Any`. There is no aggregate `fields: Map[String, Any]` accessor; each field is exposed individually through structural selection.
 The type refinement is encoded in the `tokenize()` return type and flows through to the parser.
 
 A concrete example of the snapshot embedded in each lexeme:

@@ -92,16 +92,16 @@ string matched by B is also matched by A (that is, L(B) ⊆ L(A), meaning every 
 language is also in A's language), and A appears before B in the lexer definition. If this
 occurs, B will never match — it is dead code.
 
-Alpaca's `RegexChecker` uses the `dregex` library (a Scala/JVM library for decidable regex
-operations) to check at compile time whether any pattern's language is a subset of an earlier
-pattern's language. If shadowing is detected, the macro throws a `ShadowException` with a
-compile error pointing to the offending patterns.
+Alpaca's `SubsetChecker` uses its own `regex` library (a Brzozowski-derivative DFA implementation
+for decidable regex operations) to check at compile time whether any pattern's language is a
+subset of an earlier pattern's language. If shadowing is detected, the macro throws a
+`ShadowException` with a compile error pointing to the offending patterns.
 
 **Example:** If you wrote the integer pattern `"[0-9]+"` before the decimal pattern
 `"[0-9]+(\\.[0-9]+)?"`, the integer pattern would shadow the decimal one — every decimal like
 `"3.14"` is also matched by `"[0-9]+"` up to the decimal point, but more critically the integer
-pattern can match the prefix `"3"` and would consume it first. The `dregex` check catches this
-ordering mistake at compile time rather than silently producing wrong output at runtime.
+pattern can match the prefix `"3"` and would consume it first. The `SubsetChecker` check catches
+this ordering mistake at compile time rather than silently producing wrong output at runtime.
 
 In `CalcLexer`, the decimal pattern `"[0-9]+(\\.[0-9]+)?"` is listed first, before any simpler
 integer-only pattern, so no shadowing occurs.

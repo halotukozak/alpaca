@@ -7,30 +7,30 @@ BrainFuck is a minimal language, but we extend it with repeat counts, named cell
 ## Prerequisites
 
 - JDK 21 or later
-- Mill 1.1.3+ (or SBT — see [Installation](index.md#installation) for SBT/Scala CLI setup)
-- Scala 3.8.3-RC1 or later
+- Mill 1.1.8+ (or SBT — see [Installation](index.md#installation) for SBT/Scala CLI setup)
+- Scala 3.9.0-RC6 or later
 
 ## Project Setup
 
 Create a Mill project with Alpaca as a dependency:
 
 ```mill
-//| mill-version: 1.1.3
+//| mill-version: 1.1.8
 //| mill-jvm-version: 21
 
 import mill._
 import mill.scalalib._
 
 object brainfuck extends ScalaModule {
-  def scalaVersion = "3.8.3-RC1"
-  def scalacOptions = Seq("-Yretain-trees")
+  def scalaVersion = "3.9.0-RC6"
+  def scalacOptions = Seq("-Yretain-trees", "-experimental")
   def mvnDeps = Seq(
-    mvn"com.halotukozak::alpaca:0.1.0"
+    mvn"com.halotukozak::alpaca:0.1.4"
   )
 }
 ```
 
-The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your lexer and parser definitions at compile time, and this flag tells the compiler to preserve that information.
+The `-Yretain-trees` flag is required. Alpaca's macros inspect the AST of your lexer and parser definitions at compile time, and this flag tells the compiler to preserve that information. The `-experimental` flag is also required: the lexer/parser macros still touch a couple of `@experimental` compiler APIs internally, and that annotation propagates outward to callers.
 
 ## Step 1: The Lexer
 
@@ -92,7 +92,7 @@ Each `case` maps a regex pattern to a token. `Token["next"]` creates a named tok
 
 Three tokens carry values via the `@` binding:
 - `count @ "[0-9]+"` captures the matched digits, then `Token["repeat"](count.toInt)` converts them to an `Int`.
-- `cell @ "\\$[a-z]+"` captures the full match (including `$`), then `Token["cell"](cell.drop(1))` strips the prefix.
+- `cell @ "\\$[A-Za-z]+"` captures the full match (including `$`), then `Token["cell"](cell.drop(1))` strips the prefix.
 - `name @ "[A-Za-z]+"` captures the function name as-is.
 
 The custom context `BrainLexContext` tracks bracket depth. Inside rule bodies, `ctx` gives access to the context — the lexer increments and decrements counters and uses `require` to catch mismatched brackets at lex time.

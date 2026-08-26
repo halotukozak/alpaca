@@ -18,19 +18,19 @@ A type-safe lexer and parser library for Scala 3, featuring compile-time validat
 Add Alpaca as a dependency in your `build.mill`:
 
 ```mill
-//| mill-version: 1.1.3
+//| mill-version: 1.1.8
 //| mill-jvm-version: 21
 
 import mill._
 import mill.scalalib._
 
 object myproject extends ScalaModule {
-  def scalaVersion = "3.8.3-RC1"
+  def scalaVersion = "3.9.0-RC6"
 
-  def scalacOptions = Seq("-Yretain-trees")
+  def scalacOptions = Seq("-Yretain-trees", "-experimental")
 
   def mvnDeps = Seq(
-    mvn"com.halotukozak::alpaca:0.1.0"
+    mvn"com.halotukozak::alpaca:0.1.4"
   )
 }
 ```
@@ -40,14 +40,14 @@ object myproject extends ScalaModule {
 Add Alpaca to your `build.sbt`:
 
 ```sbt
-libraryDependencies += "com.halotukozak" %% "alpaca" % "0.1.0"
+libraryDependencies += "com.halotukozak" %% "alpaca" % "0.1.4"
 ```
 
-Make sure you're using Scala 3.8.3-RC1 or later and enable the required compiler flag:
+Make sure you're using Scala 3.9.0-RC6 or later and enable the required compiler flags:
 
 ```sbt
-scalaVersion := "3.8.3-RC1"
-scalacOptions += "-Yretain-trees"
+scalaVersion := "3.9.0-RC6"
+scalacOptions ++= Seq("-Yretain-trees", "-experimental")
 ```
 
 ### Scala CLI
@@ -55,9 +55,9 @@ scalacOptions += "-Yretain-trees"
 Use Alpaca directly in your Scala CLI scripts:
 
 ```scala
-//> using scala "3.8.3-RC1"
-//> using dep "com.halotukozak::alpaca:0.1.0"
-//> using option "-Yretain-trees"
+//> using scala "3.9.0-RC6"
+//> using dep "com.halotukozak::alpaca:0.1.4"
+//> using options "-Yretain-trees" "-experimental"
 
 import halotukozak.alpaca.*
 
@@ -155,7 +155,7 @@ Runtime benchmarks are **not** run automatically in CI on push or pull requests.
 ### Prerequisites
 
 - JDK 21 or later
-- Mill 1.1.3 or later
+- Mill 1.1.8 or later
 
 ### Build Commands
 
