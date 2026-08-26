@@ -83,6 +83,19 @@ final class ErrorHandlingStrategyTest extends AnyFunSuite with Matchers:
     exception.getMessage should include("Unexpected character: 'b'")
   }
 
+  test("remainingText should expose the unmatched input to a custom ErrorHandling instance") {
+    var seenFirstChar: Char = ' '
+    given ErrorHandling[LexerCtx.Default] = ctx =>
+      seenFirstChar = ctx.remainingText.charAt(0)
+      ErrorHandling.Strategy.IgnoreChar
+
+    val L = lexer:
+      case "a" => Token["A"]
+
+    L.tokenize("a!a")
+    seenFirstChar shouldBe '!'
+  }
+
   test("Strategy.IgnoreChar should update position correctly") {
     given ErrorHandling[LexerCtx.Default] = _ => ErrorHandling.Strategy.IgnoreChar
 
