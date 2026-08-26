@@ -31,10 +31,24 @@ Alpaca provides three EBNF operators that work on both `Rule[R]` and terminals:
 
 In Alpaca:
 
-```scala sc:nocompile
-val root: Rule[BrainAST] = rule:
-  case Operation.List(stmts) => BrainAST.Root(stmts)
-  // stmts: List[BrainAST]
+```scala
+import halotukozak.alpaca.*
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case Inc
+
+val EbnfLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "\\s+" => Token.Ignored
+
+object EbnfParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+    // stmts: List[BrainAST]
+
+  val Operation: Rule[BrainAST] = rule:
+    case EbnfLexer.inc(_) => BrainAST.Inc
 ```
 
 This is equivalent to the EBNF notation `root → {Operation}`.
@@ -45,10 +59,20 @@ This is equivalent to the EBNF notation `root → {Operation}`.
 
 In Alpaca:
 
-```scala sc:nocompile
-val root = rule:
-  case (Num(n), Num.Option(maybeNum)) =>
-    (n, maybeNum)   // maybeNum: Option[Int]
+```scala
+import halotukozak.alpaca.*
+
+val NumLexer = lexer:
+  case n @ "[0-9]+" => Token["num"](n.toInt)
+  case "\\s+" => Token.Ignored
+
+object NumParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case NumLexer.num(n) => n.value
+
+  val root: Rule[(Int, Option[Int])] = rule:
+    case (Num(n), Num.Option(maybeNum)) =>
+      (n, maybeNum)   // maybeNum: Option[Int]
 ```
 
 This is equivalent to the EBNF notation `root → Num [Num]`.
@@ -61,10 +85,21 @@ This is equivalent to the EBNF notation `root → Num [Num]`.
 
 The `Separator` type parameter is a token type (e.g. ``MyLexer.`,` ``) or a rule's singleton type (e.g. `Sep.type`).
 
-```scala sc:nocompile
-val root: Rule[List[Any]] = rule:
-  case Num.SeparatedBy[MyLexer.`,`](items) => items
-  // For "1,2,3": items == List(1, <","-lexeme>, 2, <","-lexeme>, 3)
+```scala
+import halotukozak.alpaca.*
+
+val MyLexer = lexer:
+  case n @ "[0-9]+" => Token["num"](n.toInt)
+  case "," => Token[","]
+  case "\\s+" => Token.Ignored
+
+object MyParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case MyLexer.num(n) => n.value
+
+  val root: Rule[List[Any]] = rule:
+    case Num.SeparatedBy[MyLexer.`,`](items) => items
+    // For "1,2,3": items == List(1, <","-lexeme>, 2, <","-lexeme>, 3)
 ```
 
 This is equivalent to the EBNF notation `root → [Num {"," Num}]`.
@@ -103,17 +138,46 @@ In practice, the macro generates a fresh synthetic non-terminal (with a randomiz
 
 Use `.List` for **unseparated** sequences — elements that follow each other with no delimiter:
 
-```scala sc:nocompile
-// Good: BrainFuck operations have no separators
-case Operation.List(stmts) => BrainAST.Root(stmts)
+```scala
+import halotukozak.alpaca.*
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case Inc
+
+val EbnfLexer2 = lexer:
+  case "\\+" => Token["inc"]
+  case "\\s+" => Token.Ignored
+
+object EbnfParser2 extends Parser:
+  val Operation: Rule[BrainAST] = rule:
+    case EbnfLexer2.inc(_) => BrainAST.Inc
+
+  // Good: BrainFuck operations have no separators
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
 ```
 
 Use `.SeparatedBy[Sep]` for **separator-delimited** sequences (comma-separated lists, semicolon-separated statements):
 
-```scala sc:nocompile
-// Good: JSON members are separated by commas
-val ObjectMembers: Rule[List[Any]] = rule:
-  case ObjectMember.SeparatedBy[JsonLexer.`,`](members) => members
+```scala
+import halotukozak.alpaca.*
+
+val JsonLexer = lexer:
+  case n @ "[0-9]+" => Token["num"](n.toInt)
+  case "," => Token[","]
+  case "\\s+" => Token.Ignored
+
+object JsonMemberParser extends Parser:
+  val ObjectMember: Rule[Int] = rule:
+    case JsonLexer.num(n) => n.value
+
+  // Good: JSON members are separated by commas
+  val ObjectMembers: Rule[List[Any]] = rule:
+    case ObjectMember.SeparatedBy[JsonLexer.`,`](members) => members
+
+  val root: Rule[List[Any]] = rule:
+    case ObjectMembers(members) => members
 ```
 
 Use **explicit recursion** only when you need to customise the action — for example, dropping separators from the result instead of preserving them, or building a non-`List` shape.
