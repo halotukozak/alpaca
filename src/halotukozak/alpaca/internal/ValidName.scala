@@ -8,7 +8,9 @@ package alpaca.internal
  * compile-time type safety.
  */
 
-//todo: make it opaque with ban on underscore https://github.com/halotukozak/alpaca/issues/223
+// ValidName is only ever used as a compile-time bound on type parameters (Name <: ValidName),
+// never as the type of an actual value, so opaque type would hide nothing (see #223).
+// The underscore ban is enforced separately, at macro time, by ValidName.check.
 type ValidName = String & Singleton
 
 private[alpaca] object ValidName:
