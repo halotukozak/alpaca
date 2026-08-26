@@ -23,7 +23,7 @@ jobs:
           path: base
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 21
           distribution: temurin
@@ -54,7 +54,10 @@ jobs:
             (
               cd "$dir"
 
-              hyperfine --runs 5 --prepare "./mill clean && ./mill compile" "./mill test.compile" --export-json "../${dir}.json"
+              hyperfine --runs 5 \
+                --prepare "./mill clean && (./mill jvm.compile native.compile || ./mill compile)" \
+                "./mill jvm.test.compile native.test.compile || ./mill test.compile" \
+                --export-json "../${dir}.json"
             )
             echo "::endgroup::"
           }

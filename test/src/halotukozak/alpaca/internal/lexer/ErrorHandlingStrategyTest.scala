@@ -6,8 +6,6 @@ import halotukozak.alpaca.internal.lexer.ErrorHandling
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import java.util.regex.Pattern
-
 final class ErrorHandlingStrategyTest extends AnyFunSuite with Matchers:
 
   test("Strategy.Throw should throw the provided exception") {
