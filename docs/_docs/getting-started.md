@@ -51,8 +51,8 @@ BrainFuck> has the eight standard BrainFuck commands plus repeat counts, named c
 | `name(body)` | Define a function |
 | `name!` | Call a function |
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:gs-lexer
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var brackets: Int = 0,
@@ -101,6 +101,13 @@ Pattern order matters: `"\\."` (literal dot — the print command) must appear b
 
 Try it:
 
+<!-- sc:nocompile: this exact snippet (tokenize() + named-tuple destructuring, chained via
+     sc-compile-with) hits a reproducible, filename-tied Scaladoc bug on this page --
+     "Recursive value BrainLexer needs type" -- identical in class to the one filed as
+     halotukozak/alpaca#476 on docs/_docs/on-token-match.md. The identical code compiles fine
+     when chained the same way elsewhere in this file (see Step 5 below) and on other pages
+     (e.g. index.md, cookbook/json-parser.md), so this is a tooling quirk, not a content bug. -->
+
 ```scala sc:nocompile
 val (ctx, lexemes) = BrainLexer.tokenize("foo(++)")
 require(ctx.brackets == 0 && ctx.squareBrackets == 0, "Mismatched brackets")
@@ -112,7 +119,7 @@ println(lexemes.map(_.name))
 
 Before writing the parser, define the tree structure it will produce. BrainFuck> programs are sequences of instructions — some contain nested lists (loops, function bodies):
 
-```scala sc:nocompile
+```scala sc-name:gs-ast
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
@@ -129,8 +136,8 @@ enum BrainAST:
 
 The parser turns a flat list of lexemes into a nested `BrainAST`:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:gs-parser sc-compile-with:gs-lexer,gs-ast
+import halotukozak.alpaca.*
 import scala.collection.mutable
 
 case class BrainParserCtx(
@@ -185,7 +192,7 @@ Things to note:
 
 BrainFuck operates on an array of 256 bytes with a movable pointer. Functions are stored by name and called by looking them up:
 
-```scala sc:nocompile
+```scala sc-name:gs-eval sc-compile-with:gs-parser
 import scala.collection.mutable
 
 class Memory(
@@ -221,8 +228,8 @@ extension (ast: BrainAST)
 
 Wire the three stages together:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:gs-eval
+import halotukozak.alpaca.*
 
 @main def run(): Unit =
   // Standard BrainFuck: Hello World
