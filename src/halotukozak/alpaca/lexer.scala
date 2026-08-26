@@ -156,6 +156,15 @@ trait LexerCtx extends Product:
   @publicInBinary
   private[alpaca] var text: CharSequence = compiletime.uninitialized
 
+  /**
+   * A read-only view of the text still remaining to be tokenized.
+   *
+   * Exposed so a custom [[ErrorHandling]] instance can inspect the character(s)
+   * that failed to match any token rule, e.g. to build a diagnostic message
+   * such as `unexpected '${ctx.remainingText.charAt(0)}'`.
+   */
+  final def remainingText: CharSequence = text
+
 object LexerCtx:
 
   /**
