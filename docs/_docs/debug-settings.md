@@ -45,7 +45,7 @@ Each log level can be configured with one of three output modes:
 
 Add debug settings to your `scalacOptions` in `build.mill`:
 
-```scala sc:nocompile
+```mill
 import mill._
 import mill.scalalib._
 
@@ -68,7 +68,7 @@ object myproject extends ScalaModule {
 
 **Tip:** You can combine multiple settings in a single flag using commas:
 
-```scala sc:nocompile
+```mill
 override def scalacOptions = Seq(
   s"-Xmacro-settings:debugDirectory=$moduleDir/debug,enableVerboseNames=true,trace=stdout"
 )
@@ -116,13 +116,13 @@ scala-cli run MyLexer.scala \
 
 Or add directives in your Scala file:
 
-```scala sc:nocompile
+```scala
 //> using scala "3.8.3-RC1"
 //> using dep "com.halotukozak::alpaca:0.1.0"
 //> using options "-Xmacro-settings:debugDirectory=/absolute/path/to/debug"
 //> using options "-Xmacro-settings:enableVerboseNames=true"
 
-import alpaca.*
+import halotukozak.alpaca.*
 
 // Your code here
 ```
@@ -133,7 +133,7 @@ import alpaca.*
 
 Here's a complete example for debugging a complex parser:
 
-```scala sc:nocompile
+```mill
 // build.mill
 import mill._
 import mill.scalalib._
