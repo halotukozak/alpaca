@@ -19,14 +19,37 @@ When you define a `given Resolutions[MyParser.type] = resolutions(...)`, the Alp
 
 Both are detected at compile time. They do not manifest as runtime errors.
 
+> **A note on the snippets below:** every example on this page that declares a
+> `given Resolutions[...]` uses the `production` selector, which is currently declared
+> `protected` in `halotukozak.alpaca` (`src/halotukozak/alpaca/parser.scala:23`) and so
+> cannot be resolved from code compiled outside that package -- including these doc
+> snippets, and any real downstream consumer's own code. Filed as
+> [halotukozak/alpaca#477](https://github.com/halotukozak-com/alpaca/issues/477). Those
+> snippets are marked `sc:nocompile` until that's fixed; the token/lexer definitions they
+> build on compile for real.
+
 ## Where resolutions Live
 
 `Resolutions` is a type class, keyed by the parser type: `Resolutions[P <: Parser[?]]`. You provide an instance with `given Resolutions[MyParser.type] = resolutions(...)`, and Alpaca picks it up via implicit search when it builds `MyParser`'s parse table.
 
 Because the `given` refers to `MyParser.type`, it must be declared **after** the full parser object, as a sibling declaration at the same scope -- not as a member inside the object:
 
+```scala sc-hidden sc-name:cr-lexer
+import halotukozak.alpaca.*
+
+val Lexer = lexer:
+  case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "=" => Token["ASSIGN"]
+  case "\\^" => Token["EXP"]
+  case "\\s+" => Token.Ignored
+```
+
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:              // object first, fully defined
   val Expr: Rule[Int] = rule(
@@ -65,7 +88,7 @@ production.plus.before(Lexer.PLUS)
 To reference a production in `resolutions`, name it with a string literal placed before the `{ case ... }` block:
 
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Int] = rule(
@@ -96,7 +119,7 @@ Four resolution forms:
 Full example for a calculator:
 
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 given Resolutions[CalcParser.type] = resolutions(
   // + and - are left-associative and have equal precedence
@@ -119,7 +142,7 @@ Reading `production.plus.before(Lexer.PLUS, Lexer.MINUS)`: when the parser has r
 For unnamed productions, use `Production(symbols*)` to identify them by their right-hand side. Because `resolutions` is now declared *outside* the parser object (see [Where resolutions Live](#where-resolutions-live) below), non-terminals must be qualified with the parser object's name:
 
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 import halotukozak.alpaca.Production as P
 
 given Resolutions[CalcParser.type] = resolutions(
@@ -134,7 +157,7 @@ Both `production.name` and `Production(symbols*)` can coexist in one `resolution
 `before`/`after` can be called on a token directly:
 
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 given Resolutions[CalcParser.type] = resolutions(
   Lexer.exp.before(production.uplus, production.uminus),
