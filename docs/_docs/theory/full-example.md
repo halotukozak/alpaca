@@ -4,8 +4,8 @@ The preceding theory pages have built up each component of the compiler pipeline
 
 CalcLexer tokenizes arithmetic expressions into the seven token classes introduced in [Tokens and Lexemes](tokens.md).
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:calc-lexer
+import halotukozak.alpaca.*
 
 val CalcLexer = lexer:
   case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
@@ -39,8 +39,8 @@ This grammar is ambiguous — the expression `1 + 2 * 3` can be parsed in two wa
 
 The bare CalcParser definition — grammar productions with semantic actions but no conflict resolution — triggers a compile error:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:calc-lexer sc:fail
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -72,7 +72,11 @@ The parser does not know whether `1 + 2 + 3` should reduce `1 + 2` first (left-a
 Adding a `given Resolutions[CalcParser.type]` declares which action wins in each conflict state. The full resolution set for the calculator encodes standard BODMAS precedence (`*` and `/` before `+` and `-`) and left-associativity for all four operators. The `given` is declared *after* the parser object, as a sibling declaration at the same scope -- see [Conflict Resolution](../conflict-resolution.md#where-resolutions-live) for why:
 
 ```scala sc:nocompile
-import alpaca.*
+// sc:nocompile: `production` is `protected` in halotukozak.alpaca and not resolvable from a
+// normal doc snippet (halotukozak-com/alpaca#477). The `package halotukozak.alpaca`-prefix
+// workaround does not work on this page (parse error, and a site-wide toplevel-definition
+// collision with another page's snippet), so this block is left uncompiled.
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -111,7 +115,9 @@ For the full conflict resolution DSL — including `Production(symbols*)` select
 With conflict resolution in place, the compiler builds the LR(1) parse table without errors. The parser is ready:
 
 ```scala sc:nocompile
-import alpaca.*
+// sc:nocompile: depends on the resolved CalcParser above, which is left uncompiled
+// (see halotukozak-com/alpaca#477).
+import halotukozak.alpaca.*
 
 val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")
 val (_, result)  = CalcParser.parse(lexemes)

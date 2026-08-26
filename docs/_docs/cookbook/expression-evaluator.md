@@ -6,8 +6,8 @@ This guide builds a math expression evaluator supporting arithmetic (`+`, `-`, `
 
 ## The Lexer
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:calc-lexer
+import halotukozak.alpaca.*
 
 val CalcLexer = lexer:
   case "\\s+" => Token.Ignored
@@ -27,8 +27,8 @@ Note that `"\\*\\*"` (exponentiation) must appear before `"\\*"` (multiplication
 
 Named productions (`"plus"`, `"times"`, etc.) let us reference specific alternatives in conflict resolution:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:calc-lexer sc:fail
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val root: Rule[Double] = rule:
@@ -56,6 +56,15 @@ object CalcParser extends Parser:
 Without conflict resolution, this grammar is ambiguous -- the compiler reports shift/reduce conflicts for every binary operator.
 
 ## Conflict Resolution
+
+<!-- sc:nocompile: the grammar is genuinely ambiguous, so CalcParser's macro expansion requires
+     the given Resolutions[CalcParser.type] below to be in scope to avoid a ShiftReduceConflict --
+     but that Resolutions instance needs the `production` selector, which is declared `protected`
+     in halotukozak.alpaca (src/halotukozak/alpaca/parser.scala:23) and so isn't resolvable from a
+     doc snippet compiled outside that package (or from any real downstream consumer's code).
+     Filed as https://github.com/halotukozak-com/alpaca/issues/477. The `package halotukozak.alpaca`
+     prefix workaround that works elsewhere on the site (see full-example.md) fails on this page with
+     "this kind of statement is not allowed here", a separate Scaladoc snippet-compiler quirk. -->
 
 ```scala sc:nocompile
 given Resolutions[CalcParser.type] = resolutions(
@@ -85,6 +94,9 @@ The precedence hierarchy from highest to lowest: `**` > unary `-` > `*` `/` > `+
 - `Token.before(productions)` = prefer shifting this token over reducing those productions
 
 ## Running It
+
+<!-- sc:nocompile: depends on the fully resolved CalcParser from the previous section, which
+     doesn't compile as a doc snippet -- see https://github.com/halotukozak-com/alpaca/issues/477. -->
 
 ```scala sc:nocompile
 val input = "sin(pi / 2) + 2 ** 3 * 4"

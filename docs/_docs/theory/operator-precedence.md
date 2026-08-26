@@ -32,8 +32,22 @@ This grammar is **unambiguous**. The structure forces `*` and `/` to bind tighte
 
 In Alpaca:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:op-calc-lexer
+import halotukozak.alpaca.*
+
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "\\(" => Token["LPAREN"]
+  case "\\)" => Token["RPAREN"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:op-calc-lexer
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -60,8 +74,15 @@ No `resolutions` needed — the grammar itself is unambiguous.
 
 Keep all operators at the same grammar level and use `before`/`after` to declare precedence:
 
+<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is declared `protected` in
+     `halotukozak.alpaca`, so it isn't resolvable from a doc snippet compiled outside that package.
+     The `package halotukozak.alpaca` first-line workaround (see [Full Calculator Example](full-example.md))
+     hits "this kind of statement is not allowed here" on this page, same as on
+     [Context-Free Grammars](cfg.md) and [Conflicts and Disambiguation](conflicts.md).
+     Filed as https://github.com/halotukozak-com/alpaca/issues/477. -->
+
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -105,8 +126,8 @@ Standard BrainFuck has no operator precedence — `+` always means "increment by
 
 The extended lexer adds arithmetic tokens:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val ExtendedLexer = lexer:
   // Standard BrainFuck
@@ -129,8 +150,14 @@ val ExtendedLexer = lexer:
 
 The parser uses a flat grammar with conflict resolution for precedence:
 
+<!-- sc:nocompile: `production` (used below inside `resolutions(...)`) is declared `protected` in
+     `halotukozak.alpaca`, so it isn't resolvable from a doc snippet compiled outside that package.
+     The `package halotukozak.alpaca` first-line workaround hits "this kind of statement is not
+     allowed here" on this page (see the note on the CalcParser resolutions example above).
+     Filed as https://github.com/halotukozak-com/alpaca/issues/477. -->
+
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 object ExtendedParser extends Parser:
   val root: Rule[BrainAST] = rule:

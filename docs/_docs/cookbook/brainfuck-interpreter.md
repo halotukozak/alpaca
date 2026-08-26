@@ -29,7 +29,7 @@ Everything else is a comment.
 
 ## The AST
 
-```scala sc:nocompile
+```scala sc-name:brainAST
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
@@ -44,8 +44,8 @@ enum BrainAST:
 
 The lexer tracks bracket depth in a custom context to catch mismatches at lex time:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:brainLexer
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var brackets: Int = 0,
@@ -85,8 +85,8 @@ val BrainLexer = lexer[BrainLexContext]:
 
 The parser uses `ParserCtx` to track defined function names and reject calls to undefined functions:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:brainAST,brainLexer sc-name:brainParser
+import halotukozak.alpaca.*
 import scala.collection.mutable
 
 case class BrainParserCtx(
@@ -117,18 +117,18 @@ object BrainParser extends Parser[BrainParserCtx]:
   val FunctionDef: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
           Operation.List(ops), BrainLexer.functionClose(_)) =>
-      require(ctx.functions.add(name.value), s"Function ${name.value} is already defined")
+      require(BrainParser.this.ctx.functions.add(name.value), s"Function ${name.value} is already defined")
       BrainAST.FunctionDef(name.value, ops)
 
   val FunctionCall: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-      require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
+      require(BrainParser.this.ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
       BrainAST.FunctionCall(name.value)
 ```
 
 ## The Evaluator
 
-```scala sc:nocompile
+```scala sc-compile-with:brainParser sc-name:brainEval
 import scala.collection.mutable
 
 class Memory(
@@ -162,8 +162,8 @@ extension (ast: BrainAST)
 
 ## Running Programs
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:brainEval
+import halotukozak.alpaca.*
 
 @main def run(): Unit =
   val program = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
@@ -176,25 +176,25 @@ import alpaca.*
 
 With repeat counts and named cells:
 
-```scala sc:nocompile
+```scala sc-compile-with:brainEval
 val program = "$a 3+ $b 5+ $a ."
-val (ctx, lexemes) = BrainLexer.tokenize(program)
-require(ctx.squareBrackets == 0 && ctx.brackets == 0, "Mismatched brackets")
-val (_, ast) = BrainParser.parse(lexemes)
+val lexed = BrainLexer.tokenize(program)
+require(lexed.ctx.squareBrackets == 0 && lexed.ctx.brackets == 0, "Mismatched brackets")
+val parsed = BrainParser.parse(lexed.lexemes)
 val mem = Memory()
-ast.nn.eval(mem)
+parsed.result.nn.eval(mem)
 // cell 'a' (index 0) = 3, cell 'b' (index 1) = 5, pointer back to 'a', prints char 3
 ```
 
 With functions:
 
-```scala sc:nocompile
+```scala sc-compile-with:brainEval
 val program = "$a foo(3+)foo!foo!."
-val (ctx, lexemes) = BrainLexer.tokenize(program)
-require(ctx.squareBrackets == 0 && ctx.brackets == 0, "Mismatched brackets")
-val (_, ast) = BrainParser.parse(lexemes)
+val lexed = BrainLexer.tokenize(program)
+require(lexed.ctx.squareBrackets == 0 && lexed.ctx.brackets == 0, "Mismatched brackets")
+val parsed = BrainParser.parse(lexed.lexemes)
 val mem = Memory()
-ast.nn.eval(mem)
+parsed.result.nn.eval(mem)
 // cell 'a' = 6 (two calls to foo, each adding 3), then prints char 6
 ```
 
@@ -202,29 +202,29 @@ ast.nn.eval(mem)
 
 Key assertions from the test suite:
 
-```scala sc:nocompile
+```scala sc-compile-with:brainEval
 // Lexer
-val (_, tokens) = BrainLexer.tokenize("><+-.,")
+val tokens = BrainLexer.tokenize("><+-.,").lexemes
 assert(tokens.map(_.name) == List("next", "prev", "inc", "dec", "print", "read"))
 
 // Parser
-val (_, ast) = BrainParser.parse(BrainLexer.tokenize("[>+<-]")._2)
+val ast = BrainParser.parse(BrainLexer.tokenize("[>+<-]").lexemes).result
 assert(ast == BrainAST.Root(List(
   BrainAST.While(List(BrainAST.Next, BrainAST.Inc, BrainAST.Prev, BrainAST.Dec))
 )))
 
 // Repeat count
-val (_, ast2) = BrainParser.parse(BrainLexer.tokenize("3+")._2)
+val ast2 = BrainParser.parse(BrainLexer.tokenize("3+").lexemes).result
 assert(ast2 == BrainAST.Root(List(BrainAST.Repeat(3, BrainAST.Inc))))
 
 // Named cells
 val mem = Memory()
-BrainParser.parse(BrainLexer.tokenize("$a 3+ $b 5+")._2)._2.nn.eval(mem)
+BrainParser.parse(BrainLexer.tokenize("$a 3+ $b 5+").lexemes).result.nn.eval(mem)
 assert(mem.cells(0) == 3 && mem.cells(1) == 5)  // auto-allocated indices
 
 // Evaluator
 val mem2 = Memory()
-BrainParser.parse(BrainLexer.tokenize("+++++[-]")._2)._2.nn.eval(mem2)
+BrainParser.parse(BrainLexer.tokenize("+++++[-]").lexemes).result.nn.eval(mem2)
 assert(mem2.cells(0) == 0)  // cell cleared by loop
 ```
 
