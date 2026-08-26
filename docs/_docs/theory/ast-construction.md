@@ -42,11 +42,7 @@ val CalcLexer = lexer:
   case "\\s+" => Token.Ignored
 ```
 
-<!-- sc:nocompile: this repeats a left-recursive `Expr -> Expr + Expr` production, which is
-     ambiguous and needs a Resolutions instance to disambiguate -- but that needs the protected
-     `production` selector, unusable outside halotukozak.alpaca. See halotukozak/alpaca#477. -->
-
-```scala sc:nocompile
+```scala sc-compile-with:ac-calc-lexer
 object CalcParser extends Parser:
   val root: Rule[Double] = rule:
     case Expr(v) => v
@@ -55,6 +51,10 @@ object CalcParser extends Parser:
     "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
     { case CalcLexer.float(x) => x.value },
   )
+
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(CalcLexer.`\\+`),
+)
 ```
 
 Each reduction produces a `Double`. By the time parsing finishes, the result is a single number. No tree is ever built.
