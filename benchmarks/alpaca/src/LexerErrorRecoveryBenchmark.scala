@@ -28,7 +28,8 @@ private object ErrorRecoveryInputs:
 
   private val validUnits = Vector("identifier42", "42", "anotherName", "100", "value7")
 
-  /** Builds an input of roughly `targetSize` chars, with `errorRatePercent`% of positions
+  /**
+   * Builds an input of roughly `targetSize` chars, with `errorRatePercent`% of positions
    * replaced by an unmatched character, interspersed between otherwise-valid tokens.
    */
   def build(targetSize: Int, errorRatePercent: Int): String =
