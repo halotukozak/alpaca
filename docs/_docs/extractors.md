@@ -13,15 +13,44 @@ The Alpaca macro transforms patterns like `BrainLexer.inc(n)` into code that ext
 
 Use `MyLexer.TOKEN(binding)` to match a terminal. The `binding` is a `Lexeme` -- **not** the extracted value. Use `binding.value` to access the semantic content.
 
-```scala sc:nocompile
-// Value-bearing token: use binding.value
-{ case BrainLexer.functionName(name) => name.value }   // name: Lexeme, name.value: String
+```scala sc-hidden sc-name:ExtractorsCore
+import halotukozak.alpaca.*
 
-// Structural token: discard the binding
-{ case BrainLexer.jumpForward(_) => ... }
+val BrainLexer = lexer:
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "!" => Token["functionCall"]
+  case "\\+" => Token["inc"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
 
-// Backtick quoting for special-character names (e.g., if a lexer defines Token["\\+"])
-{ case MyLexer.`\\+`(_) => ... }
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case While(ops: List[BrainAST])
+  case Inc
+  case FunctionCall(name: String)
+```
+
+```scala sc-compile-with:ExtractorsCore
+object TerminalExtractorParser extends Parser:
+  val root: Rule[String] = rule(
+    // Value-bearing token: use binding.value
+    { case BrainLexer.functionName(name) => name.value },   // name: Lexeme, name.value: String
+    // Structural token: discard the binding
+    { case BrainLexer.jumpForward(_) => "loop start" },
+  )
+```
+
+Special-character token names (e.g., a lexer defining `Token["\\+"]`) need backtick quoting to reference in a pattern:
+
+```scala
+import halotukozak.alpaca.*
+
+val MyLexer = lexer:
+  case "\\+" => Token["\\+"]
+
+object EscapedTokenParser extends Parser:
+  val root: Rule[Unit] = rule:
+    case MyLexer.`\\+`(_) => ()
 ```
 
 **Pitfall:** After `BrainLexer.functionName(name)`, the variable `name` is a `Lexeme`, not a `String`. Using `name` where a `String` is expected is a type error. Always use `name.value`.
@@ -30,13 +59,21 @@ Use `MyLexer.TOKEN(binding)` to match a terminal. The `binding` is a `Lexeme` --
 
 Use `Rule(binding)` to match a non-terminal. This calls `Rule[R].unapply`, extracting the value of type `R` produced during the parse:
 
-```scala sc:nocompile
-// While(whl) extracts the BrainAST produced by the While rule
-{ case While(whl) => whl }   // whl: BrainAST
+```scala sc-compile-with:ExtractorsCore
+object NonTerminalExtractorParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
 
-// Multiple non-terminals in a tuple
-{ case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
-    BrainAST.While(stmts) }
+  val While: Rule[BrainAST] = rule:
+    // Multiple non-terminals in a tuple
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    // While(whl) extracts the BrainAST produced by the While rule
+    { case While(whl) => whl },   // whl: BrainAST
+  )
 ```
 
 Rules can refer to themselves recursively. The macro handles left recursion and mutual recursion automatically.
@@ -45,15 +82,23 @@ Rules can refer to themselves recursively. The macro handles left recursion and 
 
 Multi-symbol productions match a **tuple**; single-symbol productions match **directly**:
 
-```scala sc:nocompile
-val Operation: Rule[BrainAST] = rule(
-  // Multi-symbol: tuple pattern with parentheses
-  { case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-      BrainAST.FunctionCall(name.value) },
-  // Single-symbol: no parentheses
-  { case BrainLexer.inc(_) => BrainAST.Inc },
-  { case While(whl) => whl },
-)
+```scala sc-compile-with:ExtractorsCore
+object TuplePatternParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    // Multi-symbol: tuple pattern with parentheses
+    { case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+        BrainAST.FunctionCall(name.value) },
+    // Single-symbol: no parentheses
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case While(whl) => whl },
+  )
 ```
 
 ## EBNF Extractors: .List
@@ -62,32 +107,40 @@ val Operation: Rule[BrainAST] = rule(
 
 The BrainFuck parser uses `.List` for the root and for loop bodies:
 
-```scala sc:nocompile
-val root: Rule[BrainAST] = rule:
-  case Operation.List(stmts) => BrainAST.Root(stmts)
-  // stmts: List[BrainAST] -- zero or more operations
+```scala sc-compile-with:ExtractorsCore
+object ListRuleParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+    // stmts: List[BrainAST] -- zero or more operations
 
-val While: Rule[BrainAST] = rule:
-  case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
-    BrainAST.While(stmts)
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case While(whl) => whl },
+  )
 ```
 
 `.List` also works on terminals:
 
-```scala sc:nocompile
-val root = rule:
-  case BrainLexer.inc.List(incs) =>
-    incs    // List[Lexeme] -- zero or more inc tokens
+```scala sc-compile-with:ExtractorsCore
+object IncListParser extends Parser:
+  val root = rule:
+    case BrainLexer.inc.List(incs) =>
+      incs    // List[Lexeme] -- zero or more inc tokens
 ```
 
 ## EBNF Extractors: .Option
 
 `Rule.Option(binding)` binds to an `Option[R]`. The macro generates an empty production (→ `None`) and a single-element production (→ `Some`).
 
-```scala sc:nocompile
-val root = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionCall(_).Option(call)) =>
-    (name.value, call)   // call: Option[Lexeme]
+```scala sc-compile-with:ExtractorsCore
+object OptionRuleParser extends Parser:
+  val root = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall.Option(call)) =>
+      (name.value, call)   // call: Option[Lexeme]
 ```
 
 ## EBNF Extractors: .SeparatedBy
@@ -99,18 +152,37 @@ The type parameter `Separator` is the type of the separator symbol:
 - For a **token separator**, pass the token as a type (e.g. ``MyLexer.`,` ``). The refinement on the tokenization makes the token name a valid type.
 - For a **rule separator**, pass the rule's singleton type (e.g. `Sep.type`).
 
-```scala sc:nocompile
+```scala sc-hidden sc-name:CommaLexer
+import halotukozak.alpaca.*
+
+val MyLexer = lexer:
+  case "\\s+" => Token.Ignored
+  case "," => Token[","]
+  case x @ "[0-9]+" => Token["NUM"](x.toInt)
+```
+
+```scala sc-compile-with:CommaLexer
 // Token separator: comma-separated numbers
-val root: Rule[List[Any]] = rule:
-  case Num.SeparatedBy[MyLexer.`,`](items) => items
-  // items: List[Int | Lexeme] -- values interleaved with comma lexemes
+object TokenSeparatorParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case MyLexer.NUM(n) => n.value
 
+  val root: Rule[List[Any]] = rule:
+    case Num.SeparatedBy[MyLexer.`,`](items) => items
+    // items: List[Int | Lexeme] -- values interleaved with comma lexemes
+```
+
+```scala sc-compile-with:CommaLexer
 // Rule separator: separator carries a semantic value
-val root: Rule[List[Any]] = rule:
-  case Num.SeparatedBy[Sep.type](items) => items
+object RuleSeparatorParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case MyLexer.NUM(n) => n.value
 
-val Sep: Rule[String] = rule:
-  case MyLexer.`,`(_) => ","
+  val Sep: Rule[String] = rule:
+    case MyLexer.`,`(_) => ","
+
+  val root: Rule[List[Any]] = rule:
+    case Num.SeparatedBy[Sep.type](items) => items
 // For "1,2,3", items == List(1, ",", 2, ",", 3)
 ```
 
@@ -128,16 +200,25 @@ When a terminal extractor binds a variable, the variable is a `Lexeme` carrying 
 | `binding.position` | `Int` | Character position (post-match) |
 | `binding.line` | `Int` | Line number |
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:CalcLexerPreamble
+import halotukozak.alpaca.*
 
-val Num: Rule[Int] = rule:
-  case CalcLexer.NUMBER(n) => n.value
+val CalcLexer = lexer:
+  case "\\s+" => Token.Ignored
+  case "," => Token["COMMA"]
+  case x @ "[0-9]+" => Token["NUMBER"](x.toInt)
+  case x @ "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"](x)
+```
 
-val root = rule:
-  case (Num(n), CalcLexer.COMMA(_), Num.Option(opt), CalcLexer.COMMA(_), Num.List(lst)) =>
-    (n, opt, lst)
-    // n: Int, opt: Option[Int], lst: List[Int]
+```scala sc-compile-with:CalcLexerPreamble
+object LexemeFieldsParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case CalcLexer.NUMBER(n) => n.value
+
+  val root: Rule[(Int, Option[Int], List[Int])] = rule:
+    case (Num(n), CalcLexer.COMMA(_), Num.Option(opt), CalcLexer.COMMA(_), Num.List(lst)) =>
+      (n, opt, lst)
+      // n: Int, opt: Option[Int], lst: List[Int]
 
 // "1,,3"       => (1, None, List(3))
 // "1,2,1 2 3"  => (1, Some(2), List(1, 2, 3))
@@ -162,8 +243,8 @@ The type refinement is encoded in the `tokenize()` return type and flows through
 
 A concrete example of the snapshot embedded in each lexeme:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val MiniLang = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
@@ -193,17 +274,23 @@ See [Between Stages](on-token-match.md) for the full Lexeme structure, context s
 
 After binding a terminal, use dot notation to access any field from the context snapshot:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:CalcLexerPreamble
+import scala.collection.mutable
 
-{ case CalcLexer.ID(id) =>
-    val name = id.value      // String — the identifier text
-    val raw  = id.text       // String — matched characters
-    val pos  = id.position   // Int — character position
-    val ln   = id.line       // Int — line number
-    // Use for error reporting:
-    ctx.errors.append(("undefined", id, id.line))
-}
+case class ErrorTrackingCtx(
+  errors: mutable.Buffer[(String, Any, Int)] = mutable.Buffer.empty,
+) extends ParserCtx
+
+object FieldAccessParser extends Parser[ErrorTrackingCtx]:
+  val root: Rule[Int] = rule:
+    case CalcLexer.ID(id) =>
+      val name = id.value      // String — the identifier text
+      val raw  = id.text       // String — matched characters
+      val pos  = id.position   // Int — character position
+      val ln   = id.line       // Int — line number
+      // Use for error reporting:
+      ctx.errors.append(("undefined", id, id.line))
+      pos
 ```
 
 Field access is type-safe via the `Selectable` refinement on `Lexeme`. The `position` and `line` fields are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. Custom context fields (e.g., `name.squareBrackets`) are accessible if the lexer context declares them.
