@@ -277,4 +277,4 @@ Pattern order matters here: `"\\."` (literal dot -- the BF print command) must a
 
 Later pages extend this lexer with [custom context](lexer-context.md) (bracket counting), [error recovery](lexer-error-recovery.md), and value-bearing tokens for function names.
 
-See [Debug Settings](debug-settings.md) for compile-time debug output, log levels, and timeout configuration.
+See [Debug Settings](debug-settings.md) for dumping the parser's generated grammar tables during compilation.
