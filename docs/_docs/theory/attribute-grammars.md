@@ -20,13 +20,25 @@ An *S-attributed grammar* uses only synthesized attributes. Values flow strictly
 
 Alpaca naturally supports S-attributed grammars. Every `rule` production returns a value computed from the matched children:
 
-```scala sc:nocompile
-val Expr: Rule[Double] = rule(
-  // Expr.val = Expr₁.val + Term.val (synthesized)
-  { case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b },
-  // Expr.val = Term.val (synthesized)
-  { case Term(t) => t },
-)
+```scala
+import halotukozak.alpaca.*
+
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "\\s+" => Token.Ignored
+
+object CalcParser extends Parser:
+  val Expr: Rule[Double] = rule(
+    // Expr.val = Expr₁.val + Term.val (synthesized)
+    { case (Expr(a), CalcLexer.PLUS(_), Term(b)) => a + b },
+    // Expr.val = Term.val (synthesized)
+    { case Term(t) => t },
+  )
+  val Term: Rule[Double] = rule:
+    case CalcLexer.NUMBER(n) => n.value
+  val root: Rule[Double] = rule:
+    case Expr(e) => e
 ```
 
 The LR parsing algorithm evaluates S-attributed grammars in a single bottom-up pass — exactly how Alpaca's shift/reduce loop works. When a production is reduced, its semantic action runs with the children's values already computed and available.
@@ -43,21 +55,51 @@ L-attributed grammars can be evaluated in a single left-to-right pass. They are 
 
 Alpaca does not have formal inherited attributes. Instead, `ParserCtx` provides a shared mutable state that flows through all reductions:
 
-```scala sc:nocompile
+```scala sc-name:attr-brain-defs sc-hidden
+import halotukozak.alpaca.*
+import scala.collection.mutable
+
+enum BrainAST:
+  case Inc, Dec
+  case FunctionDef(name: String, ops: List[BrainAST])
+  case FunctionCall(name: String)
+
+val BrainLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" => Token["functionOpen"]
+  case "\\)" => Token["functionClose"]
+  case "!" => Token["functionCall"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:attr-brain-defs
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
 ) extends ParserCtx
 
-val FunctionDef: Rule[BrainAST] = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
-        Operation.List(ops), BrainLexer.functionClose(_)) =>
-    ctx.functions.add(name.value)   // "inherited" state: writes to shared context
-    BrainAST.FunctionDef(name.value, ops)
+object BrainParser extends Parser[BrainParserCtx]:
+  val root: Rule[BrainAST] = rule:
+    case Operation(op) => op
 
-val FunctionCall: Rule[BrainAST] = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-    require(ctx.functions.contains(name.value), s"Undefined function: ${name.value}")
-    BrainAST.FunctionCall(name.value)
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case FunctionDef(fdef) => fdef },
+    { case FunctionCall(call) => call },
+  )
+
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+          Operation.List(ops), BrainLexer.functionClose(_)) =>
+      ctx.functions.add(name.value)   // "inherited" state: writes to shared context
+      BrainAST.FunctionDef(name.value, ops)
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      require(ctx.functions.contains(name.value), s"Undefined function: ${name.value}")
+      BrainAST.FunctionCall(name.value)
 ```
 
 `ctx.functions` acts like an inherited attribute: information from an earlier reduction (`FunctionDef`) is visible to a later one (`FunctionCall`). But unlike formal inherited attributes:
