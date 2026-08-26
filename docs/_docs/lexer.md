@@ -2,8 +2,8 @@
 
 The Alpaca lexer transforms raw text into a stream of structured tokens. You define lexical rules as regex patterns paired with token constructors, and the macro generates a tokenizer at compile time.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 ```
 
 <details>
@@ -24,8 +24,8 @@ At runtime, `tokenize()` executes the generated code. If a pattern is invalid or
 
 A lexer is defined with the `lexer` block. Each `case` branch maps a regex pattern to a token constructor. Patterns are tried in order; the first match wins.
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:BrainLexer
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case ">" => Token["next"]
@@ -46,24 +46,25 @@ The result is a `Tokenization` object. It can tokenize input strings, provides t
 
 Patterns are Java regex strings, validated at compile time. Backslashes must be doubled inside Scala string literals: `"\\+"` matches a literal `+`, and `"\\d+"` matches one or more digits.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
-// Literals that are regex metacharacters need escaping
-case "\\+" => Token["inc"]         // literal +
-case "\\." => Token["print"]       // literal .
-case "\\[" => Token["jumpForward"] // literal [
+val Lexer = lexer:
+  // Literals that are regex metacharacters need escaping
+  case "\\+" => Token["inc"]         // literal +
+  case "\\." => Token["print"]       // literal .
+  case "\\[" => Token["jumpForward"] // literal [
 
-// Non-metacharacters need no escaping
-case ">" => Token["next"]          // literal >
-case "-" => Token["dec"]           // literal -
-case "," => Token["read"]          // literal ,
+  // Non-metacharacters need no escaping
+  case ">" => Token["next"]          // literal >
+  case "-" => Token["dec"]           // literal -
+  case "," => Token["read"]          // literal ,
 
-// Character classes and quantifiers
-case "[0-9]+" => Token["NUM"]      // one or more digits
-case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"] // identifier
-case "\\s+" => Token.Ignored       // whitespace
-case "\\r?\\n" => Token.Ignored    // newline (Unix or Windows)
+  // Character classes and quantifiers
+  case "[0-9]+" => Token["NUM"]      // one or more digits
+  case "[a-zA-Z_][a-zA-Z0-9_]*" => Token["ID"] // identifier
+  case "\\r?\\n" => Token.Ignored    // newline (Unix or Windows)
+  case "\\s+" => Token.Ignored       // whitespace
 ```
 
 An invalid regex (unmatched parentheses, bad quantifiers) produces a compile-time error. Two patterns that match the same input produce a compile-time shadowing error -- reorder or merge them to fix it.
@@ -76,8 +77,8 @@ Tokens come in three forms.
 
 `Token["NAME"]` creates a token with a `Unit` value. The token name becomes both the lexeme's `.name` field and the accessor on the lexer object. To access the matched text, use `lexeme.text` from the context snapshot.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case ">" => Token["next"]
@@ -93,8 +94,8 @@ val (_, lexemes) = BrainLexer.tokenize("> < +")
 
 `Token["NAME"](value)` attaches a computed value. Bind the matched text with `@` and transform it:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case name @ "[A-Za-z]+" => Token["functionName"](name)
@@ -111,8 +112,8 @@ The type system tracks the value type: `BrainLexer.functionName` has type `Token
 
 `Token.Ignored` matches text but excludes it from the token stream. Use it for whitespace, comments, and anything syntactically irrelevant.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case "\\+" => Token["inc"]
@@ -127,8 +128,8 @@ val (_, lexemes) = BrainLexer.tokenize("+ hello +\n+")
 
 The `@` syntax binds the matched text to a variable, giving you a `String` to transform before passing to the token constructor.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val Lexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
@@ -151,8 +152,8 @@ Without `@`, you cannot access the matched text for transformation. `Token["inc"
 
 When several patterns share the same structure, use alternation with `variable.type` to create one token per alternative:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val Lexer = lexer:
   case keyword @ ("if" | "else" | "while") => Token[keyword.type]
@@ -173,7 +174,7 @@ Keywords like `if` always need backticks. `-` is a valid Scala identifier and do
 
 Call `tokenize()` on your lexer with an input string:
 
-```scala sc:nocompile
+```scala sc-compile-with:BrainLexer
 val (ctx, lexemes) = BrainLexer.tokenize("++[>+<-].")
 ```
 
@@ -188,8 +189,7 @@ If the input contains a character that matches no pattern, `tokenize` throws a `
 
 For large files, use `LazyReader` instead of loading the entire file into a `String`. It reads characters on demand from the underlying file:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:BrainLexer
 import halotukozak.alpaca.internal.lexer.LazyReader
 import java.nio.file.Path
 
@@ -224,8 +224,8 @@ Every non-ignored match produces a `Lexeme`. From the caller's perspective, a le
 
 Each lexeme also carries a snapshot of all context fields at match time. The snapshot is accessed via `Selectable` -- you write `lexeme.position` or `lexeme.line` and the compiler resolves the types:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val Lexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toInt)
@@ -254,8 +254,8 @@ The parser appends `Lexeme.EOF` (name `"$"`, value `""`, empty fields) internall
 
 The BrainFuck lexer introduced in [Getting Started](getting-started.md) tokenizes the eight BrainFuck commands. It uses `Token.Ignored` for everything else -- BrainFuck treats non-command characters as comments.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val BrainLexer = lexer:
   case ">" => Token["next"]

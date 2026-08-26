@@ -16,7 +16,7 @@ The `lexer` macro validates token definitions at compile time. Pattern shadowing
 A `ShadowException` occurs when one pattern can never match because an earlier pattern always matches first. If every string that pattern B can match is also matched by pattern A, and A appears before B, then B is unreachable:
 
 ```scala sc:fail
-import alpaca.*
+import halotukozak.alpaca.*
 
 // This does NOT compile -- ShadowException
 val Lexer = lexer:
@@ -34,8 +34,8 @@ Malformed Java regex patterns -- unmatched parentheses, invalid quantifiers, bad
 
 Pattern guards (`case "regex" if condition =>`) are not supported in lexer rules. The workaround is to move the condition into the rule body:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -60,8 +60,8 @@ Patterns are tried in the order they appear. The first match wins. The general r
 
 In the BrainFuck lexer, this matters for the print command vs the catch-all:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 // RIGHT -- literal dot before catch-all dot
 val BrainLexer = lexer:
@@ -73,8 +73,8 @@ If you reverse the order, `"."` shadows `"\\."` and you get a `ShadowException`.
 
 The same applies to keywords vs identifiers. Function names in the extended BrainFuck lexer must come after command tokens:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 // RIGHT -- single-char commands before the general name pattern
 val BrainLexer = lexer:
@@ -110,9 +110,9 @@ You can provide a custom `ErrorHandling` instance for your context type. Four st
 | `IgnoreToken` | Skip to the next successful match and continue |
 | `Stop` | Stop tokenization gracefully, returning lexemes collected so far |
 
-```scala sc:nocompile
-import alpaca.*
-import halotukozak.alpaca.internal.lexer.ErrorHandling
+```scala
+import halotukozak.alpaca.*
+import halotukozak.alpaca.internal.lexer.{ErrorHandling, PositionTracking, LineTracking}
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -121,24 +121,19 @@ case class BrainLexContext(
 ) extends LexerCtx with PositionTracking with LineTracking
 
 // Custom error handler: report position and throw
-given ErrorHandling
-[BrainLexContext
-] = ctx =>
+given ErrorHandling[BrainLexContext] = ctx =>
   ErrorHandling.Strategy.Throw:
-    RuntimeException
-(s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.text.charAt(0)}'")
+    RuntimeException(s"Unexpected character at line ${ctx.line}, position ${ctx.position}: '${ctx.remainingText.charAt(0)}'")
 ```
 
 To silently skip unknown characters (useful for BrainFuck where non-command characters are comments):
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Skip unrecognized characters instead of throwing
-given ErrorHandling
-[LexerCtx.Default
-] = _ =>
+given ErrorHandling[LexerCtx.Default] = _ =>
   ErrorHandling.Strategy.IgnoreChar
 ```
 
