@@ -101,25 +101,53 @@ The calculator grammar maps directly to an Alpaca `Parser` definition. Each prod
 `rule(...)` call; the right-hand side pattern matches the grammatical structure, and the right-hand side expression
 computes the result.
 
-```scala 3 sc:nocompile
-import alpaca.*
-import halotukozak.alpaca.internal.parser.Parser
-import halotukozak.alpaca.{rule, Rule}
+```scala sc-hidden sc-name:cfg-calc-lexer
+import halotukozak.alpaca.*
 
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "\\(" => Token["LPAREN"]
+  case "\\)" => Token["RPAREN"]
+  case "\\s+" => Token.Ignored
+```
+
+<!-- sc:nocompile: the grammar is genuinely ambiguous, so CalcParser's macro expansion requires the
+     given Resolutions[CalcParser.type] below to be in scope to avoid a ShiftReduceConflict -- but that
+     Resolutions instance needs the `production` selector, which is declared `protected` in
+     `halotukozak.alpaca` (src/halotukozak/alpaca/parser.scala:23) and so isn't resolvable from a doc
+     snippet (or from any real downstream consumer's code) compiled outside that package. Filed as
+     https://github.com/halotukozak-com/alpaca/issues/477. -->
+
+```scala sc:nocompile
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
-    { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
-    { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
-    { case (Expr(a), CalcLexer.TIMES(_), Expr(b)) => a * b },
-    { case (Expr(a), CalcLexer.DIVIDE(_), Expr(b)) => a / b },
+    "plus"  { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
+    "minus" { case (Expr(a), CalcLexer.MINUS(_), Expr(b)) => a - b },
+    "times" { case (Expr(a), CalcLexer.TIMES(_), Expr(b)) => a * b },
+    "div"   { case (Expr(a), CalcLexer.DIVIDE(_), Expr(b)) => a / b },
     { case (CalcLexer.LPAREN(_), Expr(e), CalcLexer.RPAREN(_)) => e },
     { case CalcLexer.NUMBER(n) => n.value },
   )
   val root: Rule[Double] = rule:
     case Expr(v) => v
+
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.minus.before(CalcLexer.PLUS, CalcLexer.MINUS),
+  production.minus.after(CalcLexer.TIMES, CalcLexer.DIVIDE),
+  production.times.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
+  production.div.before(CalcLexer.TIMES, CalcLexer.DIVIDE, CalcLexer.PLUS, CalcLexer.MINUS),
+)
 ```
 
-Each `case` clause corresponds to one production rule. `Expr(a)` matches a reduced `Expr` non-terminal with value `a`.
+The grammar is ambiguous as written (see above), so `Expr`'s productions are named and a `Resolutions` instance
+disambiguates them by precedence and associativity -- see [Conflict Resolution](../conflict-resolution.md) for the
+full `before`/`after` DSL. Each `case` clause corresponds to one production rule. `Expr(a)` matches a reduced `Expr` non-terminal with value `a`.
 `CalcLexer.PLUS(_)` matches the PLUS terminal (the `_` discards the lexeme binding).
 `CalcLexer.NUMBER(n)` matches a NUMBER terminal; `n.value` accesses the `Double` extracted by the lexer. The grammar's
 non-terminals (`Expr`, `root`) become `Rule[Double]` values; the type parameter is the result type of each reduction.
