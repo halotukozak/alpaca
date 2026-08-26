@@ -23,7 +23,46 @@ pipeline produces a typed Scala value, not machine code, but you can implement i
 
 With Alpaca, running the full pipeline takes two calls:
 
-```scala sc:nocompile
+```scala sc-hidden sc-name:pipeline-setup
+import halotukozak.alpaca.*
+
+val BrainLexer = lexer:
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case "\\." => Token["print"]
+  case "," => Token["read"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
+  case "." => Token.Ignored
+  case "\n" => Token.Ignored
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case While(ops: List[BrainAST])
+  case Next, Prev, Inc, Dec, Print, Read
+
+object BrainParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.next(_) => BrainAST.Next },
+    { case BrainLexer.prev(_) => BrainAST.Prev },
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case BrainLexer.print(_) => BrainAST.Print },
+    { case BrainLexer.read(_) => BrainAST.Read },
+    { case While(whl) => whl },
+  )
+```
+
+```scala sc-compile-with:pipeline-setup
 // Full pipeline: source text → typed result
 val (_, lexemes) = BrainLexer.tokenize("++[>+<-].")
 // lexemes: List[Lexeme] — inc, inc, jumpForward, next, inc, prev, dec, jumpBack, print
