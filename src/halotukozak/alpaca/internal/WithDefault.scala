@@ -12,7 +12,7 @@ package internal
  * @tparam Q the default type
  */
 //todo: better name
-infix private[alpaca] class withDefault[T, Q] extends compiletime.Erased
+infix private[alpaca] class withDefault[T, Q]
 
 private[alpaca] trait withDefaultLowImplicitPriority:
 

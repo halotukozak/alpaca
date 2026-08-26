@@ -60,7 +60,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
  * The exact implementation details of the underlying type are abstracted away by using `Any`.
  * Opaque types provide type safety without exposing the underlying representation.
  */
-class Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value] extends compiletime.Erased
+class Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]
 
 /**
  * Represents a specific type of token definition that denotes an ignored token during the lexing process.
