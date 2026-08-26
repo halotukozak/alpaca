@@ -20,7 +20,7 @@ def resolutions[P <: parser.Parser[?]](elements: (ResolutionCtx[P] ?=> ConflictR
   elements.map(_.apply(using ResolutionCtx.refl)).toSet
 
 @compileTimeOnly(ConflictResolutionOnly)
-transparent inline protected def production[P <: parser.Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
+transparent inline def production[P <: parser.Parser[?]](using ResolutionCtx[P]): ProductionSelector = ${
   productionImpl[P]
 }
 
