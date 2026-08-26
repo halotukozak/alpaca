@@ -4,8 +4,8 @@ The preceding theory pages have built up each component of the compiler pipeline
 
 CalcLexer tokenizes arithmetic expressions into the seven token classes introduced in [Tokens and Lexemes](tokens.md).
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:calc-lexer
+import halotukozak.alpaca.*
 
 val CalcLexer = lexer:
   case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
@@ -39,8 +39,8 @@ This grammar is ambiguous — the expression `1 + 2 * 3` can be parsed in two wa
 
 The bare CalcParser definition — grammar productions with semantic actions but no conflict resolution — triggers a compile error:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:calc-lexer sc:fail
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -71,8 +71,8 @@ The parser does not know whether `1 + 2 + 3` should reduce `1 + 2` first (left-a
 
 Adding a `given Resolutions[CalcParser.type]` declares which action wins in each conflict state. The full resolution set for the calculator encodes standard BODMAS precedence (`*` and `/` before `+` and `-`) and left-associativity for all four operators. The `given` is declared *after* the parser object, as a sibling declaration at the same scope -- see [Conflict Resolution](../conflict-resolution.md#where-resolutions-live) for why:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:full-example-parser sc-compile-with:calc-lexer
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -110,9 +110,7 @@ For the full conflict resolution DSL — including `Production(symbols*)` select
 
 With conflict resolution in place, the compiler builds the LR(1) parse table without errors. The parser is ready:
 
-```scala sc:nocompile
-import alpaca.*
-
+```scala sc-compile-with:full-example-parser
 val (_, lexemes) = CalcLexer.tokenize("1 + 2 * 3")
 val (_, result)  = CalcParser.parse(lexemes)
 // result: Double | Null = 7.0   (not 9.0 — * binds tighter than +)

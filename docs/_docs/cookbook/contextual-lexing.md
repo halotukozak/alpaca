@@ -8,8 +8,8 @@ This guide covers stateful tokenization: tracking nesting depth, maintaining cou
 
 The BrainFuck> lexer tracks bracket depth to catch mismatched brackets at lex time:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:BrainLexer
+import halotukozak.alpaca.*
 
 case class BrainLexContext(
   var brackets: Int = 0,
@@ -45,29 +45,43 @@ val BrainLexer = lexer[BrainLexContext]:
 
 After tokenization, check the final context:
 
-```scala sc:nocompile
-val (ctx, lexemes) = BrainLexer.tokenize(input)
-require(ctx.squareBrackets == 0 && ctx.brackets == 0, "Mismatched brackets")
+```scala sc-compile-with:BrainLexer
+val (finalCtx, lexemes) = BrainLexer.tokenize("foo(+++)foo!")
+require(finalCtx.squareBrackets == 0 && finalCtx.brackets == 0, "Mismatched brackets")
 ```
 
 ## Accessing Lexer Context in the Parser
 
 Every `Lexeme` carries a snapshot of the lexer context at match time. Inside parser rules, use the binding to access positional info:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:ctx-brainast sc-compile-with:BrainLexer
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case FunctionDef(name: String, ops: List[BrainAST])
+  case FunctionCall(name: String)
+```
 
-val FunctionCall: Rule[BrainAST] = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
-    // name.value: String -- the function name
-    // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
-    // name.line: Int -- line number (if lexer uses LineTracking)
-    BrainAST.FunctionCall(name.value)
+```scala sc-compile-with:ctx-brainast
+import halotukozak.alpaca.*
+
+object BrainParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case FunctionCall(fc) => fc
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      // name.value: String -- the function name
+      // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
+      // name.line: Int -- line number (if lexer uses LineTracking)
+      BrainAST.FunctionCall(name.value)
 ```
 
 To get position and line numbers, extend your context with the tracking traits:
 
-```scala sc:nocompile
+```scala
+import halotukozak.alpaca.*
+import halotukozak.alpaca.internal.lexer.{PositionTracking, LineTracking}
+
 case class BrainLexContext(
   var brackets: Int = 0,
   var squareBrackets: Int = 0,
@@ -80,14 +94,17 @@ case class BrainLexContext(
 
 `ParserCtx` is for state that evolves during parsing -- symbol tables, function registries, type environments. The BrainFuck> parser uses it to track defined functions:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:ctx-brainast
+import halotukozak.alpaca.*
 import scala.collection.mutable
 
 case class BrainParserCtx(
   functions: mutable.Set[String] = mutable.Set.empty,
 ) extends ParserCtx
 object BrainParser extends Parser[BrainParserCtx]:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
   val FunctionDef: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
           Operation.List(ops), BrainLexer.functionClose(_)) =>
@@ -99,7 +116,11 @@ object BrainParser extends Parser[BrainParserCtx]:
       require(ctx.functions.contains(name.value), s"Function ${name.value} is not defined")
       BrainAST.FunctionCall(name.value)
 
-  // ... other rules
+  val Operation: Rule[BrainAST] = rule(
+    { case FunctionDef(fdef) => fdef },
+    { case FunctionCall(call) => call },
+    // ... other alternatives
+  )
 ```
 
 `ctx` is shared across all reductions in a single `parse()` call. A function defined in `FunctionDef` is immediately visible in `FunctionCall`.
@@ -108,26 +129,18 @@ object BrainParser extends Parser[BrainParserCtx]:
 
 By default, the lexer throws on unmatched input. You can customize this with an `ErrorHandling` instance:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:BrainLexer
 import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Option A: skip unrecognized characters silently
-given ErrorHandling
-[BrainLexContext
-] = _ =>
-  ErrorHandling.Strategy.IgnoreChar
+given ErrorHandling[BrainLexContext] = _ => ErrorHandling.Strategy.IgnoreChar
 ```
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:BrainLexer
 import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Option B: stop gracefully, returning what was tokenized so far
-given ErrorHandling
-[BrainLexContext
-] = _ =>
-  ErrorHandling.Strategy.Stop
+given ErrorHandling[BrainLexContext] = _ => ErrorHandling.Strategy.Stop
 ```
 
 Four strategies are available:
@@ -141,10 +154,15 @@ Four strategies are available:
 
 An alternative to custom `ErrorHandling` is a catch-all pattern at the end of your lexer:
 
-```scala sc:nocompile
-case x @ "." =>
-  println(s"Unexpected character: $x")
-  Token.Ignored   // skip and continue
+```scala
+import halotukozak.alpaca.*
+
+val LenientLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case x @ "." =>
+    println(s"Unexpected character: $x")
+    Token.Ignored   // skip and continue
 ```
 
 This is simpler and often sufficient. The BrainFuck lexer uses this approach -- `"." => Token.Ignored` catches all non-command characters.

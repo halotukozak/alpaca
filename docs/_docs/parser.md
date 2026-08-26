@@ -20,8 +20,29 @@ At runtime, `parse()` executes the precomputed table. No grammar analysis happen
 
 Extend `Parser` for a stateless parser, or `Parser[Ctx]` to carry custom state through reductions. The required entry point is `val root: Rule[R]` -- the macro uses this as the start symbol.
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:brain-lexer-defs
+import halotukozak.alpaca.*
+
+val BrainLexer = lexer:
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case "\\." => Token["print"]
+  case "," => Token["read"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
+  case "." => Token.Ignored
+  case "\n" => Token.Ignored
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case While(ops: List[BrainAST])
+  case Next, Prev, Inc, Dec, Print, Read
+```
+
+```scala sc-name:brain-parser sc-compile-with:brain-lexer-defs
+import halotukozak.alpaca.*
 
 object BrainParser extends Parser:
   val root: Rule[BrainAST] = rule:
@@ -50,19 +71,31 @@ A `Rule[R]` is a named non-terminal that produces values of type `R`. Use `rule`
 
 **Single production** -- colon syntax:
 
-```scala sc:nocompile
-val root: Rule[BrainAST] = rule:
-  case Operation.List(stmts) => BrainAST.Root(stmts)
+```scala sc-compile-with:brain-lexer-defs
+object SingleProductionParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val Operation: Rule[BrainAST] = rule:
+    case BrainLexer.inc(_) => BrainAST.Inc
 ```
 
 **Multiple productions** -- argument list:
 
-```scala sc:nocompile
-val Operation: Rule[BrainAST] = rule(
-  { case BrainLexer.inc(_) => BrainAST.Inc },     // single-symbol: direct match
-  { case BrainLexer.dec(_) => BrainAST.Dec },
-  { case While(whl) => whl },                      // non-terminal reference
-)
+```scala sc-compile-with:brain-lexer-defs
+object MultipleProductionsParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },     // single-symbol: direct match
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case While(whl) => whl },                      // non-terminal reference
+  )
 ```
 
 Multi-symbol productions match a tuple; single-symbol productions match directly (no parentheses). Each `{ case ... }` block must contain exactly one alternative.
@@ -71,31 +104,80 @@ Multi-symbol productions match a tuple; single-symbol productions match directly
 
 Rule bodies can span multiple statements. Use intermediate variables and return the final value:
 
-```scala sc:nocompile
-val FunctionDef: Rule[BrainAST] = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
-        Operation.List(ops), BrainLexer.functionClose(_)) =>
-    val funcName = name.value
-    require(ctx.functions.add(funcName), s"Function $funcName already defined")
-    BrainAST.FunctionDef(funcName, ops)
+```scala sc-hidden sc-name:func-lexer-defs
+import halotukozak.alpaca.*
+import scala.collection.mutable
+
+val BrainLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" => Token["functionOpen"]
+  case "\\)" => Token["functionClose"]
+  case "!" => Token["functionCall"]
+  case "\\s+" => Token.Ignored
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case FunctionDef(name: String, ops: List[BrainAST])
+  case FunctionCall(name: String)
+  case Inc, Dec
+
+case class BrainParserCtx(
+  functions: mutable.Set[String] = mutable.Set.empty,
+) extends ParserCtx
+```
+
+```scala sc-compile-with:func-lexer-defs
+object FunctionDefParser extends Parser[BrainParserCtx]:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_),
+          Operation.List(ops), BrainLexer.functionClose(_)) =>
+      val funcName = name.value
+      require(ctx.functions.add(funcName), s"Function $funcName already defined")
+      BrainAST.FunctionDef(funcName, ops)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case FunctionDef(fdef) => fdef },
+  )
 ```
 
 ### Named Productions with Special Characters
 
 Production names can contain hyphens, dots, spaces, or any other character that is not a valid Scala identifier. Access them with backtick quoting in `resolutions`:
 
-```scala sc:nocompile
+```scala sc-hidden sc-name:named-prod-lexer
+import halotukozak.alpaca.*
+
+val Lexer = lexer:
+  case "\\+" => Token["PLUS"]
+  case "<<" => Token["SHL"]
+  case "if" => Token["IF"]
+  case "then" => Token["THEN"]
+  case x @ "[0-9]+" => Token["NUM"](x.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:named-prod-lexer
 object MyParser extends Parser:
+  val root: Rule[Int] = rule:
+    case Expr(e) => e
+
   val Expr: Rule[Int] = rule(
     "left-add" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
     "shift.left" { case (Expr(a), Lexer.SHL(_), Expr(b)) => a << b },
     "if then" { case (Lexer.IF(_), Expr(c), Lexer.THEN(_), Expr(t)) => if c != 0 then t else 0 },
+    { case Lexer.NUM(n) => n.value },
   )
 
 given Resolutions[MyParser.type] = resolutions(
-  production.`left-add`.before(Lexer.PLUS),
-  production.`shift.left`.before(Lexer.SHL),
-  production.`if then`.before(Lexer.THEN),
+  production.`left-add`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
+  production.`shift.left`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
+  production.`if then`.before(Lexer.PLUS, Lexer.SHL, Lexer.THEN),
 )
 ```
 
@@ -105,28 +187,50 @@ given Resolutions[MyParser.type] = resolutions(
 
 Use `MyLexer.TOKEN(binding)` to match a terminal. The binding is a `Lexeme` -- use `binding.value` for the extracted value:
 
-```scala sc:nocompile
-// Value-bearing: use binding.value
-{ case BrainLexer.functionName(name) => name.value }  // name.value: String
+```scala sc-hidden sc-name:terminal-lexer-defs
+import halotukozak.alpaca.*
 
-// Structural: discard the binding
-{ case BrainLexer.jumpForward(_) => ... }
+val BrainLexer = lexer:
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\[" => Token["jumpForward"]
 
-// Backtick quoting for special-character token names (e.g., if a lexer defines Token["\\+"])
-{ case MyLexer.`\\+`(_) => ... }
+val MyLexer = lexer:
+  case "\\+" => Token["\\+"]
+```
+
+```scala sc-compile-with:terminal-lexer-defs
+object TerminalMatchingParser extends Parser:
+  val root: Rule[Any] = rule(
+    // Value-bearing: use binding.value
+    { case BrainLexer.functionName(name) => name.value },  // name.value: String
+
+    // Structural: discard the binding
+    { case BrainLexer.jumpForward(_) => "loop start" },
+
+    // Backtick quoting for special-character token names (e.g., if a lexer defines Token["\\+"])
+    { case MyLexer.`\\+`(_) => "plus" },
+  )
 ```
 
 ### Non-Terminals
 
 Use the rule name in unapply position. The binding has exactly type `R` from `Rule[R]`:
 
-```scala sc:nocompile
-// While(whl) extracts the BrainAST produced by the While rule
-{ case While(whl) => whl }   // whl: BrainAST
+```scala sc-compile-with:brain-lexer-defs
+object NonTerminalMatchingParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
 
-// Recursive reference
-{ case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
-    BrainAST.While(stmts) }
+  val While: Rule[BrainAST] = rule:
+    // Recursive reference
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    // While(whl) extracts the BrainAST produced by the While rule
+    { case While(whl) => whl },   // whl: BrainAST
+  )
 ```
 
 ## EBNF Operators
@@ -135,26 +239,44 @@ Use the rule name in unapply position. The binding has exactly type `R` from `Ru
 
 **`.List`** produces `List[R]`. The BrainFuck parser uses this heavily -- the root rule matches zero or more operations:
 
-```scala sc:nocompile
-val root: Rule[BrainAST] = rule:
-  case Operation.List(stmts) => BrainAST.Root(stmts)
-  // stmts: List[BrainAST] -- zero or more operations
+```scala sc-compile-with:brain-lexer-defs
+object ListOperatorParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+    // stmts: List[BrainAST] -- zero or more operations
+
+  val Operation: Rule[BrainAST] = rule:
+    case BrainLexer.inc(_) => BrainAST.Inc
 ```
 
 **`.Option`** produces `Option[R]`:
 
-```scala sc:nocompile
-val root = rule:
-  case (BrainLexer.functionName(name), BrainLexer.functionCall(_).Option(call)) =>
-    (name.value, call)   // call: Option[Lexeme]
+```scala sc-compile-with:func-lexer-defs
+object OptionOperatorParser extends Parser:
+  val root = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall.Option(call)) =>
+      (name.value, call)   // call: Option[Lexeme]
 ```
 
 **`.SeparatedBy[Separator]`** produces `List[R | SepValue[Separator]]` for zero or more items interleaved with a separator, where `SepValue[Separator]` is the separator's runtime value type (`Lexeme` for token separators, the bound result type for rule separators). Pass a token (as a type) or a rule (as `.type`) for the separator:
 
-```scala sc:nocompile
-val root: Rule[List[Int | Lexeme[",", Unit]]] = rule:
-  case Num.SeparatedBy[MyLexer.`,`](items) => items
-  // for "1,2,3": List(1, <,>, 2, <,>, 3)
+```scala sc-hidden sc-name:sep-lexer-defs
+import halotukozak.alpaca.*
+
+val MyLexer = lexer:
+  case "\\s+" => Token.Ignored
+  case "," => Token[","]
+  case x @ "[0-9]+" => Token["NUM"](x.toInt)
+```
+
+```scala sc-compile-with:sep-lexer-defs
+object SeparatedByParser extends Parser:
+  val Num: Rule[Int] = rule:
+    case MyLexer.NUM(n) => n.value
+
+  val root: Rule[List[Any]] = rule:
+    case Num.SeparatedBy[MyLexer.`,`](items) => items
+    // for "1,2,3": List(1, <,>, 2, <,>, 3)
 ```
 
 All three operators work on terminals too, not only rules.
@@ -163,18 +285,36 @@ All three operators work on terminals too, not only rules.
 
 Call `parse(lexemes)` where `lexemes` comes from `tokenize()`:
 
-```scala sc:nocompile
+```scala sc-hidden sc-name:brain-eval-defs sc-compile-with:brain-parser
+class Memory(
+  val cells: Array[Int] = new Array(256),
+  var pointer: Int = 0,
+)
+
+extension (ast: BrainAST)
+  def eval(mem: Memory): Unit = ast match
+    case BrainAST.Root(ops)  => ops.foreach(_.eval(mem))
+    case BrainAST.Next       => mem.pointer = (mem.pointer + 1) & 0xff
+    case BrainAST.Prev       => mem.pointer = (mem.pointer - 1) & 0xff
+    case BrainAST.Inc        => mem.cells(mem.pointer) = (mem.cells(mem.pointer) + 1) & 0xff
+    case BrainAST.Dec        => mem.cells(mem.pointer) = (mem.cells(mem.pointer) - 1) & 0xff
+    case BrainAST.Print      => print(mem.cells(mem.pointer).toChar)
+    case BrainAST.Read       => mem.cells(mem.pointer) = scala.io.StdIn.readChar() & 0xff
+    case BrainAST.While(ops) => while mem.cells(mem.pointer) != 0 do ops.foreach(_.eval(mem))
+```
+
+```scala sc-name:brain-tokenize sc-compile-with:brain-eval-defs
 val (_, lexemes) = BrainLexer.tokenize("++[>+<-]")
-val (ctx, ast) = BrainParser.parse(lexemes)
-// ctx: ParserCtx.Empty
+val (finalCtx, ast) = BrainParser.parse(lexemes)
+// finalCtx: ParserCtx.Empty
 // ast: BrainAST | Null -- the parsed result, or null if the input was rejected
 ```
 
 The return type is a named tuple `(ctx: Ctx, result: T | Null)`. The result is `null` for invalid input -- not an exception. Always check for null:
 
-```scala sc:nocompile
-val (_, ast) = BrainParser.parse(lexemes)
-ast.nn.eval(Memory())  // .nn asserts non-null
+```scala sc-compile-with:brain-tokenize
+val (_, parsed) = BrainParser.parse(lexemes)
+parsed.nn.eval(Memory())  // .nn asserts non-null
 ```
 
 ## Conflict Resolution
@@ -183,9 +323,16 @@ Ambiguous grammars produce compile-time errors. The BrainFuck grammar has no con
 
 Quick example:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:calc-quick-lexer
+import halotukozak.alpaca.*
 
+val CalcLexer = lexer:
+  case "\\+" => Token["PLUS"]
+  case x @ "[0-9]+" => Token["NUMBER"](x.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:calc-quick-lexer
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
     "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },

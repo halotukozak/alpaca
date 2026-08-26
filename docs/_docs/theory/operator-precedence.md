@@ -32,8 +32,22 @@ This grammar is **unambiguous**. The structure forces `*` and `/` to bind tighte
 
 In Alpaca:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:op-calc-lexer
+import halotukozak.alpaca.*
+
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "\\(" => Token["LPAREN"]
+  case "\\)" => Token["RPAREN"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:op-calc-lexer
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -60,8 +74,8 @@ No `resolutions` needed — the grammar itself is unambiguous.
 
 Keep all operators at the same grammar level and use `before`/`after` to declare precedence:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:op-calc-lexer
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val Expr: Rule[Double] = rule(
@@ -105,8 +119,8 @@ Standard BrainFuck has no operator precedence — `+` always means "increment by
 
 The extended lexer adds arithmetic tokens:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 val ExtendedLexer = lexer:
   // Standard BrainFuck
@@ -129,8 +143,30 @@ val ExtendedLexer = lexer:
 
 The parser uses a flat grammar with conflict resolution for precedence:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:op-brain-ast
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case Add(n: Int)
+  case Sub(n: Int)
+  case Inc, Dec
+```
+
+```scala sc-hidden sc-name:op-brain-arith-lexer
+import halotukozak.alpaca.*
+
+val ExtendedLexer = lexer:
+  case "\\+" => Token["+"]
+  case "-" => Token["-"]
+  case "\\*" => Token["*"]
+  case "/" => Token["/"]
+  case "\\(" => Token["("]
+  case "\\)" => Token[")"]
+  case n @ "[0-9]+" => Token["NUM"](n.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:op-brain-ast,op-brain-arith-lexer
+import halotukozak.alpaca.*
 
 object ExtendedParser extends Parser:
   val root: Rule[BrainAST] = rule:

@@ -6,8 +6,8 @@ This guide builds a math expression evaluator supporting arithmetic (`+`, `-`, `
 
 ## The Lexer
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:calc-lexer
+import halotukozak.alpaca.*
 
 val CalcLexer = lexer:
   case "\\s+" => Token.Ignored
@@ -27,8 +27,8 @@ Note that `"\\*\\*"` (exponentiation) must appear before `"\\*"` (multiplication
 
 Named productions (`"plus"`, `"times"`, etc.) let us reference specific alternatives in conflict resolution:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:calc-lexer sc:fail
+import halotukozak.alpaca.*
 
 object CalcParser extends Parser:
   val root: Rule[Double] = rule:
@@ -57,7 +57,31 @@ Without conflict resolution, this grammar is ambiguous -- the compiler reports s
 
 ## Conflict Resolution
 
-```scala sc:nocompile
+`Resolutions` must be declared right after the full parser object, as a sibling declaration -- so resolving the grammar above means restating `CalcParser` together with its `given Resolutions[CalcParser.type]` in one block:
+
+```scala sc-name:calc-resolved sc-compile-with:calc-lexer
+object CalcParser extends Parser:
+  val root: Rule[Double] = rule:
+    case Expr(v) => v
+
+  val Expr: Rule[Double] = rule(
+    "plus"   { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
+    "minus"  { case (Expr(a), CalcLexer.`-`(_), Expr(b)) => a - b },
+    "times"  { case (Expr(a), CalcLexer.`\\*`(_), Expr(b)) => a * b },
+    "divide" { case (Expr(a), CalcLexer.`/`(_), Expr(b)) => a / b },
+    "exp"    { case (Expr(a), CalcLexer.`exp`(_), Expr(b)) => math.pow(a, b) },
+    "uminus" { case (CalcLexer.`-`(_), Expr(a)) => -a },
+    "pi"     { case CalcLexer.pi(_) => math.Pi },
+    "sin"    { case (CalcLexer.sin(_), CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => math.sin(a) },
+    "atan2"  {
+      case (CalcLexer.atan2(_), CalcLexer.`\\(`(_), Expr(y), CalcLexer.`,`(_), Expr(x), CalcLexer.`\\)`(_)) =>
+        math.atan2(y, x)
+    },
+    { case (CalcLexer.`\\(`(_), Expr(a), CalcLexer.`\\)`(_)) => a },
+    { case CalcLexer.float(x) => x.value },
+    { case CalcLexer.int(n) => n.value.toDouble },
+  )
+
 given Resolutions[CalcParser.type] = resolutions(
   // Exponentiation: right-associative, highest binary precedence
   CalcLexer.exp.before(production.uminus, production.exp, production.times, production.divide),
@@ -86,7 +110,7 @@ The precedence hierarchy from highest to lowest: `**` > unary `-` > `*` `/` > `+
 
 ## Running It
 
-```scala sc:nocompile
+```scala sc-compile-with:calc-resolved
 val input = "sin(pi / 2) + 2 ** 3 * 4"
 val (_, lexemes) = CalcLexer.tokenize(input)
 val (_, result) = CalcParser.parse(lexemes)

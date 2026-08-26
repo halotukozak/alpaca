@@ -6,8 +6,8 @@ This guide builds a JSON parser that handles objects, arrays, strings, numbers, 
 
 ## The Lexer
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:json-parser-lexer
+import halotukozak.alpaca.*
 
 val JsonLexer = lexer:
   case "\\s+" => Token.Ignored
@@ -29,8 +29,8 @@ Punctuation tokens (`{`, `}`, `[`, `]`, `:`, `,`) need backtick quoting when acc
 
 JSON is recursive: a `Value` can be an `Object` or `Array`, which contain more `Value`s.
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:json-parser-parser sc-compile-with:json-parser-lexer
+import halotukozak.alpaca.*
 
 object JsonParser extends Parser:
   val root: Rule[Any] = rule:
@@ -73,7 +73,7 @@ object JsonParser extends Parser:
 
 ## Running It
 
-```scala sc:nocompile
+```scala sc-compile-with:json-parser-parser
 val input = """{"name": "Alice", "age": 30, "tags": ["a", "b"]}"""
 val (_, lexemes) = JsonLexer.tokenize(input)
 val (_, result) = JsonParser.parse(lexemes)

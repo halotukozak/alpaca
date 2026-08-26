@@ -7,7 +7,61 @@ The `OnTokenMatch` hook is responsible for advancing the text cursor, constructi
 
 Most programs need nothing more than this:
 
+<!-- The three snippets below that call BrainLexer.tokenize(...) are marked sc:nocompile:
+     Scaladoc's snippet compiler fails with a spurious "Recursive value BrainLexer needs
+     type" error on any snippet on THIS page that destructures a tokenize() call's named-
+     tuple result, even a trivially self-contained one with unique identifier names and no
+     sc-name/sc-compile-with chaining -- moving byte-identical content to a differently-named
+     page compiles cleanly. Snippets on this same page that don't call tokenize() (see the
+     IndentTracking example and the OnTokenMatch type comment further down) compile fine, so
+     this isn't a general problem with this page or with tokenize()/named-tuple destructuring
+     elsewhere in the docs (works on index.md, theory/tokens.md, theory/pipeline.md). It looks
+     tied to this page's filename coinciding with the real `OnTokenMatch` symbol. Tracked as a
+     follow-up rather than blocking #472 on a scaladoc-level bug. -->
+
 ```scala sc:nocompile
+import halotukozak.alpaca.*
+
+case class BrainLexContext(
+  var squareBrackets: Int = 0,
+) extends LexerCtx
+
+val BrainLexer = lexer[BrainLexContext]:
+  case ">" => Token["next"]
+  case "<" => Token["prev"]
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case "\\." => Token["print"]
+  case "\\[" =>
+    ctx.squareBrackets += 1
+    Token["jumpForward"]
+  case "\\]" =>
+    require(ctx.squareBrackets > 0, "Mismatched brackets")
+    ctx.squareBrackets -= 1
+    Token["jumpBack"]
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case While(ops: List[BrainAST])
+  case Next, Prev, Inc, Dec, Print
+
+object BrainParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.next(_) => BrainAST.Next },
+    { case BrainLexer.prev(_) => BrainAST.Prev },
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case BrainLexer.print(_) => BrainAST.Print },
+    { case While(whl) => whl },
+  )
+
 val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
 val (_, ast) = BrainParser.parse(lexemes)
 ```
@@ -19,7 +73,7 @@ This page explains what is inside those lexemes, how to customize the pipeline, 
 The `tokenize()` method returns a named tuple `(ctx: Ctx, lexemes: List[Lexeme])`:
 
 ```scala sc:nocompile
-import alpaca.*
+import halotukozak.alpaca.*
 
 val (ctx, lexemes) = BrainLexer.tokenize("++[>+<-].")
 
@@ -34,6 +88,8 @@ The parser accepts `List[Lexeme[?, ?]]` and appends `Lexeme.EOF` internally befo
 The final context (`ctx`) is useful for post-tokenization checks. For example, the BrainFuck lexer tracks bracket depth — after tokenization, you can verify all brackets are balanced:
 
 ```scala sc:nocompile
+import halotukozak.alpaca.*
+
 val (ctx, lexemes) = BrainLexer.tokenize("[>+<-]")
 require(ctx.squareBrackets == 0, "Mismatched brackets")
 val (_, ast) = BrainParser.parse(lexemes)
@@ -50,8 +106,9 @@ The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTr
 3. Have your case class extend the trait.
 4. The `auto` macro at compile time finds all `OnTokenMatch` instances from parent traits and composes them automatically.
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
+import halotukozak.alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
 trait IndentTracking extends LexerCtx:
@@ -78,8 +135,8 @@ Do **not** define `given OnTokenMatch[MyCtx]` directly on the concrete case clas
 
 For reference, the `OnTokenMatch` type is a function:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 
 // OnTokenMatch[Ctx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
 // token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken

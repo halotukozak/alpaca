@@ -25,9 +25,16 @@ Both are detected at compile time. They do not manifest as runtime errors.
 
 Because the `given` refers to `MyParser.type`, it must be declared **after** the full parser object, as a sibling declaration at the same scope -- not as a member inside the object:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:cr-plus-lexer
+import halotukozak.alpaca.*
 
+val Lexer = lexer:
+  case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
+  case "\\+" => Token["PLUS"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:cr-plus-lexer
 object CalcParser extends Parser:              // object first, fully defined
   val Expr: Rule[Int] = rule(
     "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
@@ -64,14 +71,21 @@ production.plus.before(Lexer.PLUS)
 
 To reference a production in `resolutions`, name it with a string literal placed before the `{ case ... }` block:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:cr-plusminus-lexer
+import halotukozak.alpaca.*
 
+val Lexer = lexer:
+  case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:cr-plusminus-lexer
 object CalcParser extends Parser:
   val Expr: Rule[Int] = rule(
     "plus"  { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },
     "minus" { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
-    "times" { case (Expr(a), Lexer.TIMES(_), Expr(b)) => a * b },
     { case Lexer.NUMBER(n) => n.value },   // unnamed -- not referenced in resolutions
   )
   val root = rule:
@@ -79,6 +93,7 @@ object CalcParser extends Parser:
 
 given Resolutions[CalcParser.type] = resolutions(
   production.plus.before(Lexer.PLUS, Lexer.MINUS),
+  production.minus.before(Lexer.PLUS, Lexer.MINUS),
 )
 ```
 
@@ -95,8 +110,29 @@ Four resolution forms:
 
 Full example for a calculator:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:cr-full-lexer
+import halotukozak.alpaca.*
+
+val Lexer = lexer:
+  case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
+  case "\\+" => Token["PLUS"]
+  case "-" => Token["MINUS"]
+  case "\\*" => Token["TIMES"]
+  case "/" => Token["DIVIDE"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:cr-full-lexer
+object CalcParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "plus"  { case (Expr(a), Lexer.PLUS(_), Expr(b))  => a + b },
+    "minus" { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },
+    "times" { case (Expr(a), Lexer.TIMES(_), Expr(b)) => a * b },
+    "div"   { case (Expr(a), Lexer.DIVIDE(_), Expr(b)) => a / b },
+    { case Lexer.NUMBER(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
 
 given Resolutions[CalcParser.type] = resolutions(
   // + and - are left-associative and have equal precedence
@@ -105,6 +141,8 @@ given Resolutions[CalcParser.type] = resolutions(
   // * and / bind tighter than + and -
   production.plus.after(Lexer.TIMES, Lexer.DIVIDE),
   production.minus.after(Lexer.TIMES, Lexer.DIVIDE),
+  production.times.before(Lexer.TIMES, Lexer.DIVIDE, Lexer.PLUS, Lexer.MINUS),
+  production.div.before(Lexer.TIMES, Lexer.DIVIDE, Lexer.PLUS, Lexer.MINUS),
 )
 ```
 
@@ -118,12 +156,21 @@ Reading `production.plus.before(Lexer.PLUS, Lexer.MINUS)`: when the parser has r
 
 For unnamed productions, use `Production(symbols*)` to identify them by their right-hand side. Because `resolutions` is now declared *outside* the parser object (see [Where resolutions Live](#where-resolutions-live) below), non-terminals must be qualified with the parser object's name:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:cr-plusminus-lexer
 import halotukozak.alpaca.Production as P
 
+object CalcParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+    { case (Expr(a), Lexer.MINUS(_), Expr(b)) => a - b },   // unnamed -- referenced via P(...) below
+    { case Lexer.NUMBER(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
+
 given Resolutions[CalcParser.type] = resolutions(
-  P(CalcParser.Expr, Lexer.TIMES, CalcParser.Expr).before(Lexer.PLUS, Lexer.MINUS),
+  production.plus.before(Lexer.PLUS, Lexer.MINUS),
+  P(CalcParser.Expr, Lexer.MINUS, CalcParser.Expr).before(Lexer.PLUS, Lexer.MINUS),
 )
 ```
 
@@ -133,28 +180,72 @@ Both `production.name` and `Production(symbols*)` can coexist in one `resolution
 
 `before`/`after` can be called on a token directly:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:cr-unary-lexer
+import halotukozak.alpaca.*
 
-given Resolutions[CalcParser.type] = resolutions(
-  Lexer.exp.before(production.uplus, production.uminus),
+val UnaryLexer = lexer:
+  case "\\^" => Token["exp"]
+  case num @ "[0-9]+" => Token["num"](num.toInt)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:cr-unary-lexer
+object UnaryParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "pow" { case (Expr(a), UnaryLexer.exp(_), Expr(b)) => math.pow(a, b).toInt },
+    { case UnaryLexer.num(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
+
+given Resolutions[UnaryParser.type] = resolutions(
+  UnaryLexer.exp.before(production.pow),   // right-associative: 2^3^2 == 2^(3^2)
 )
 ```
 
-This is equivalent to `production.uplus.after(Lexer.exp)`. Use whichever reads more naturally.
+This is the token-side spelling of `production.pow.after(UnaryLexer.exp)`. Use whichever reads more naturally.
 
 ## Associativity
 
 **Left-associative** (`1 + 2 + 3 = (1 + 2) + 3`): prefer reducing before shifting the same operator.
 
-```scala sc:nocompile
-production.plus.before(Lexer.PLUS)   // reduce first -> left grouping
+```scala sc-compile-with:cr-plus-lexer
+object CalcParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "plus" { case (Expr(a), Lexer.PLUS(_), Expr(b)) => a + b },
+    { case Lexer.NUMBER(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
+
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(Lexer.PLUS)   // reduce first -> left grouping
+)
 ```
 
 **Right-associative** (`a = b = c` groups as `a = (b = c)`): prefer shifting before reducing.
 
-```scala sc:nocompile
-production.assign.after(Lexer.ASSIGN)  // shift first -> right grouping
+```scala sc-hidden sc-name:cr-assign-lexer
+import halotukozak.alpaca.*
+
+val AssignLexer = lexer:
+  case num @ "[0-9]+" => Token["NUMBER"](num.toInt)
+  case "=" => Token["ASSIGN"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:cr-assign-lexer
+object AssignParser extends Parser:
+  val Expr: Rule[Int] = rule(
+    "assign" { case (AssignLexer.NUMBER(a), AssignLexer.ASSIGN(_), Expr(b)) => b },
+    { case AssignLexer.NUMBER(n) => n.value },
+  )
+  val root = rule:
+    case Expr(e) => e
+
+given Resolutions[AssignParser.type] = resolutions(
+  production.assign.after(AssignLexer.ASSIGN)  // shift first -> right grouping
+)
 ```
 
 ## Conflict Cycle Detection

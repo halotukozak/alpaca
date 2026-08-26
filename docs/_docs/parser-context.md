@@ -13,8 +13,27 @@ When you define `Parser[Ctx]`, the Alpaca macro verifies that `Ctx` extends `Par
 
 When you extend `Parser` without a type parameter, the parser uses `ParserCtx.Empty`. No context definition is needed:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:brain-defs sc-hidden
+import halotukozak.alpaca.*
+
+val BrainLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" => Token["functionOpen"]
+  case "\\)" => Token["functionClose"]
+  case "!" => Token["functionCall"]
+  case "\\s+" => Token.Ignored
+
+enum BrainAST:
+  case Root(ops: List[BrainAST])
+  case FunctionDef(name: String, ops: List[BrainAST])
+  case FunctionCall(name: String)
+  case Inc, Dec
+```
+
+```scala sc-compile-with:brain-defs
+import halotukozak.alpaca.*
 
 object BrainParser extends Parser:    // uses ParserCtx.Empty
   val root: Rule[BrainAST] = rule:
@@ -31,8 +50,8 @@ object BrainParser extends Parser:    // uses ParserCtx.Empty
 
 The BrainFuck> extension adds function definitions and calls. To track which functions have been defined (so we can reject calls to undefined functions), we use a custom parser context:
 
-```scala sc:nocompile
-import alpaca.*
+```scala
+import halotukozak.alpaca.*
 import scala.collection.mutable
 
 case class BrainParserCtx(
@@ -50,8 +69,8 @@ Three rules apply:
 
 The `ctx` identifier is available inside every `rule { case ... }` body, typed as your specific `ParserCtx` subtype:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:brain-parser-ctx-example sc-compile-with:brain-defs
+import halotukozak.alpaca.*
 import scala.collection.mutable
 
 case class BrainParserCtx(
@@ -88,10 +107,13 @@ object BrainParser extends Parser[BrainParserCtx]:
 
 `ctx` is one object shared across all rule executions during a single `parse()` call. Mutations made in one rule body are visible to all subsequent reductions:
 
-```scala sc:nocompile
+```scala sc-compile-with:brain-parser-ctx-example
 // Parsing "foo(+++)foo!":
-// 1. FunctionDef reduces "foo(+++)": ctx.functions.add("foo")
-// 2. FunctionCall reduces "foo!": ctx.functions.contains("foo") => true
+val (_, lexemes) = BrainLexer.tokenize("foo(+++)foo!")
+val (finalCtx, _) = BrainParser.parse(lexemes)
+// 1. FunctionDef reduced "foo(+++)": ctx.functions.add("foo")
+// 2. FunctionCall reduced "foo!", observing the mutation from step 1:
+finalCtx.functions.contains("foo")  // true
 ```
 
 The initial context is created once per `parse()` call. There is no per-rule copy -- mutations accumulate.
@@ -100,13 +122,14 @@ The initial context is created once per `parse()` call. There is no per-rule cop
 
 `ParserCtx` and `LexerCtx` are independent. The parser context has no `text`, `position`, or `line` fields. To access positional information, use the `Lexeme` binding:
 
-```scala sc:nocompile
-{ case BrainLexer.functionName(name) =>
-    val funcName = name.value      // String -- the function name
-    val pos = name.position        // Int -- 1-based column within the line
-    val ln = name.line             // Int -- line number from lexer
-    // ...
-}
+```scala sc-compile-with:brain-defs
+object BrainParser extends Parser:
+  val root: Rule[(String, Int, Int)] = rule:
+    case BrainLexer.functionName(name) =>
+      val funcName = name.value      // String -- the function name
+      val pos = name.position        // Int -- 1-based column within the line
+      val ln = name.line             // Int -- line number from lexer
+      (funcName, pos, ln)
 ```
 
 The `position` and `line` fields come from the lexer context snapshot. They are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. See [Lexer Context](lexer-context.md) for details.

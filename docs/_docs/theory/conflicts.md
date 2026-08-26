@@ -66,18 +66,32 @@ Alpaca's `before`/`after` DSL lets you declare priorities directly in the parser
 
 Priorities are transitive via BFS: if reducing `times` beats shifting `PLUS`, and reducing `plus` beats shifting `MINUS`, then the precedence relationships propagate through the graph.
 
-A minimal example — declaring left-associativity and precedence for the `plus` production only:
+A minimal example — declaring left-associativity for the `plus` production:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-hidden sc-name:conflicts-plus-lexer
+import halotukozak.alpaca.*
+
+val CalcLexer = lexer:
+  case num @ "[0-9]+(\\.[0-9]+)?" => Token["NUMBER"](num.toDouble)
+  case "\\+" => Token["PLUS"]
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:conflicts-plus-lexer
+object CalcParser extends Parser:
+  val Expr: Rule[Double] = rule(
+    "plus" { case (Expr(a), CalcLexer.PLUS(_), Expr(b)) => a + b },
+    { case CalcLexer.NUMBER(n) => n.value },
+  )
+  val root: Rule[Double] = rule:
+    case Expr(v) => v
 
 given Resolutions[CalcParser.type] = resolutions(
-  production.plus.before(CalcLexer.PLUS, CalcLexer.MINUS),  // left-associative: reduce + before shifting + or -
-  production.plus.after(CalcLexer.TIMES, CalcLexer.DIVIDE), // lower precedence: shift * or / before reducing +
+  production.plus.before(CalcLexer.PLUS), // left-associative: reduce + before shifting another +
 )
 ```
 
-The complete CalcParser resolution set — including `minus`, `times`, and `div` — is shown on [Full Calculator Example](full-example.md). For the full DSL reference (Production(symbols*) selector, token-side resolution, cycle detection, ordering constraint), see [Conflict Resolution](../conflict-resolution.md).
+The complete CalcParser resolution set — including `minus`, `times`, and `div`, and the precedence relationships between them — is shown on [Full Calculator Example](full-example.md). For the full DSL reference (Production(symbols*) selector, token-side resolution, cycle detection, ordering constraint), see [Conflict Resolution](../conflict-resolution.md).
 
 ## Compile-Time Detection
 

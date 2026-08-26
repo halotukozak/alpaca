@@ -33,10 +33,27 @@ Both approaches use the same `rule` syntax. The difference is in what you return
 
 For simple languages, compute the result during parsing. The calculator from the [Expression Evaluator](../cookbook/expression-evaluator.md) does this:
 
-```scala sc:nocompile
-val Expr: Rule[Double] = rule(
-  "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
-  { case CalcLexer.float(x) => x.value },
+```scala sc-hidden sc-name:ac-calc-lexer
+import halotukozak.alpaca.*
+
+val CalcLexer = lexer:
+  case "\\+" => Token["\\+"]
+  case x @ """(\d+\.\d*|\.\d+)""" => Token["float"](x.toDouble)
+  case "\\s+" => Token.Ignored
+```
+
+```scala sc-compile-with:ac-calc-lexer
+object CalcParser extends Parser:
+  val root: Rule[Double] = rule:
+    case Expr(v) => v
+
+  val Expr: Rule[Double] = rule(
+    "plus" { case (Expr(a), CalcLexer.`\\+`(_), Expr(b)) => a + b },
+    { case CalcLexer.float(x) => x.value },
+  )
+
+given Resolutions[CalcParser.type] = resolutions(
+  production.plus.before(CalcLexer.`\\+`),
 )
 ```
 
@@ -51,7 +68,7 @@ This works when:
 
 For complex languages, build an AST and process it separately. The BrainFuck interpreter does this:
 
-```scala
+```scala sc-name:ac-brain-ast
 enum BrainAST:
   case Root(ops: List[BrainAST])
   case While(ops: List[BrainAST])
@@ -62,14 +79,43 @@ enum BrainAST:
 
 Each reduction produces an AST node instead of a computed value:
 
-```scala sc:nocompile
-val Operation: Rule[BrainAST] = rule(
-  { case BrainLexer.inc(_) => BrainAST.Inc },
-  { case BrainLexer.dec(_) => BrainAST.Dec },
-  { case While(whl) => whl },
-  { case FunctionDef(fdef) => fdef },
-  { case FunctionCall(call) => call },
-)
+```scala sc-name:ac-brain-operation sc-compile-with:ac-brain-ast
+import halotukozak.alpaca.*
+
+val BrainLexer = lexer:
+  case "\\+" => Token["inc"]
+  case "-" => Token["dec"]
+  case "\\[" => Token["jumpForward"]
+  case "\\]" => Token["jumpBack"]
+  case name @ "[A-Za-z]+" => Token["functionName"](name)
+  case "\\(" => Token["functionOpen"]
+  case "\\)" => Token["functionClose"]
+  case "!" => Token["functionCall"]
+  case "\\s+" => Token.Ignored
+
+object BrainParser extends Parser:
+  val root: Rule[BrainAST] = rule:
+    case Operation.List(stmts) => BrainAST.Root(stmts)
+
+  val While: Rule[BrainAST] = rule:
+    case (BrainLexer.jumpForward(_), Operation.List(stmts), BrainLexer.jumpBack(_)) =>
+      BrainAST.While(stmts)
+
+  val FunctionDef: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionOpen(_), Operation.List(stmts), BrainLexer.functionClose(_)) =>
+      BrainAST.FunctionDef(name.value, stmts)
+
+  val FunctionCall: Rule[BrainAST] = rule:
+    case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
+      BrainAST.FunctionCall(name.value)
+
+  val Operation: Rule[BrainAST] = rule(
+    { case BrainLexer.inc(_) => BrainAST.Inc },
+    { case BrainLexer.dec(_) => BrainAST.Dec },
+    { case While(whl) => whl },
+    { case FunctionDef(fdef) => fdef },
+    { case FunctionCall(call) => call },
+  )
 ```
 
 After parsing, the AST is a data structure you can traverse, transform, optimize, or interpret.
@@ -83,7 +129,15 @@ This works when:
 
 Once you have an AST, the most common traversal pattern is a recursive match:
 
-```scala sc:nocompile
+```scala sc-compile-with:ac-brain-ast
+import scala.collection.mutable
+
+class Memory(
+  val cells: Array[Int] = new Array(256),
+  var pointer: Int = 0,
+  val functions: mutable.Map[String, List[BrainAST]] = mutable.Map.empty,
+)
+
 extension (ast: BrainAST)
   def eval(mem: Memory): Unit = ast match
     case BrainAST.Root(ops)  => ops.foreach(_.eval(mem))

@@ -54,12 +54,12 @@ scalacOptions += "-Yretain-trees"
 
 Use Alpaca directly in your Scala CLI scripts:
 
-```scala sc:nocompile
+```scala
 //> using scala "3.8.3-RC1"
 //> using dep "com.halotukozak::alpaca:0.1.0"
 //> using option "-Yretain-trees"
 
-import alpaca.*
+import halotukozak.alpaca.*
 
 // Your code here
 ```
@@ -70,8 +70,8 @@ import alpaca.*
 
 Define a lexer using pattern matching with regex patterns:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:index-quickstart-lexer
+import halotukozak.alpaca.*
 
 val MyLexer = lexer:
   case num @ "[0-9]+" => Token["NUM"](num.toDouble)
@@ -88,8 +88,8 @@ val MyLexer = lexer:
 
 Define a parser by extending the `Parser` class and defining grammar rules:
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-name:index-quickstart-parser sc-compile-with:index-quickstart-lexer
+import halotukozak.alpaca.*
 
 object MyParser extends Parser:
   val root: Rule[Double] = rule { case Expr(e) => e }
@@ -114,8 +114,8 @@ object MyParser extends Parser:
 
 ### Parsing Input
 
-```scala sc:nocompile
-import alpaca.*
+```scala sc-compile-with:index-quickstart-parser
+import halotukozak.alpaca.*
 
 val input = "2 + 3 * 4"
 val (_, lexemes) = MyLexer.tokenize(input)
