@@ -101,16 +101,9 @@ Pattern order matters: `"\\."` (literal dot — the print command) must appear b
 
 Try it:
 
-<!-- sc:nocompile: this exact snippet (tokenize() + named-tuple destructuring, chained via
-     sc-compile-with) hits a reproducible, filename-tied Scaladoc bug on this page --
-     "Recursive value BrainLexer needs type" -- identical in class to the one filed as
-     halotukozak/alpaca#476 on docs/_docs/on-token-match.md. The identical code compiles fine
-     when chained the same way elsewhere in this file (see Step 5 below) and on other pages
-     (e.g. index.md, cookbook/json-parser.md), so this is a tooling quirk, not a content bug. -->
-
-```scala sc:nocompile
-val (ctx, lexemes) = BrainLexer.tokenize("foo(++)")
-require(ctx.brackets == 0 && ctx.squareBrackets == 0, "Mismatched brackets")
+```scala sc-compile-with:gs-lexer
+val (finalCtx, lexemes) = BrainLexer.tokenize("foo(++)")
+require(finalCtx.brackets == 0 && finalCtx.squareBrackets == 0, "Mismatched brackets")
 println(lexemes.map(_.name))
 // List(functionName, functionOpen, inc, inc, functionClose)
 ```
