@@ -8,6 +8,12 @@ import alpaca.internal.lexer.Token as LexerToken
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, publicInBinary}
 
+/** Public re-exports of lexer types users are expected to reference directly
+ *  (custom `given` instances, tracking traits, large-file tokenization) even
+ *  though they are implemented under `internal.lexer`.
+ */
+export alpaca.internal.lexer.{ErrorHandling, OnTokenMatch, PositionTracking, LineTracking, LazyReader}
+
 /**
  * Creates a lexer from a DSL-based definition.
  *

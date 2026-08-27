@@ -80,7 +80,6 @@ To get position and line numbers, extend your context with the tracking traits:
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.{PositionTracking, LineTracking}
 
 case class BrainLexContext(
   var brackets: Int = 0,
@@ -130,15 +129,11 @@ object BrainParser extends Parser[BrainParserCtx]:
 By default, the lexer throws on unmatched input. You can customize this with an `ErrorHandling` instance:
 
 ```scala sc-compile-with:BrainLexer
-import halotukozak.alpaca.internal.lexer.ErrorHandling
-
 // Option A: skip unrecognized characters silently
 given ErrorHandling[BrainLexContext] = _ => ErrorHandling.Strategy.IgnoreChar
 ```
 
 ```scala sc-compile-with:BrainLexer
-import halotukozak.alpaca.internal.lexer.ErrorHandling
-
 // Option B: stop gracefully, returning what was tokenized so far
 given ErrorHandling[BrainLexContext] = _ => ErrorHandling.Strategy.Stop
 ```

@@ -173,7 +173,6 @@ You can use these traits independently or together. `LexerCtx.Default` extends b
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.{PositionTracking, LineTracking}
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -205,7 +204,6 @@ Define the `given` in the **trait companion**, not the case class companion. Put
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
 trait IndentTracking extends LexerCtx:
