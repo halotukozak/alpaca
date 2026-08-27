@@ -190,7 +190,6 @@ If the input contains a character that matches no pattern, `tokenize` throws a `
 For large files, use `LazyReader` instead of loading the entire file into a `String`. It reads characters on demand from the underlying file:
 
 ```scala sc-compile-with:BrainLexer
-import halotukozak.alpaca.internal.lexer.LazyReader
 import java.nio.file.Path
 
 val reader = LazyReader.from(Path.of("program.bf"))

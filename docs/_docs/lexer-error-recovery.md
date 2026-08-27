@@ -112,7 +112,6 @@ You can provide a custom `ErrorHandling` instance for your context type. Four st
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.{ErrorHandling, PositionTracking, LineTracking}
 
 case class BrainLexContext(
   var squareBrackets: Int = 0,
@@ -130,7 +129,6 @@ To silently skip unknown characters (useful for BrainFuck where non-command char
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.ErrorHandling
 
 // Skip unrecognized characters instead of throwing
 given ErrorHandling[LexerCtx.Default] = _ =>

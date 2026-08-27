@@ -94,7 +94,6 @@ The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTr
 
 ```scala
 import halotukozak.alpaca.*
-import halotukozak.alpaca.internal.lexer.OnTokenMatch
 
 // Step 1: Trait extending LexerCtx
 trait IndentTracking extends LexerCtx:
