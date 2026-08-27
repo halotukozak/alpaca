@@ -54,5 +54,6 @@ debug/
 
 benchmarks/inputs/*.txt
 benchmarks/outputs/
+__pycache__/
 
 .planning/
