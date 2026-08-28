@@ -60,11 +60,11 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
 
     while !globalCtx.text.isEmpty do
       val (token, matched) = matcher.matchAt(globalCtx.text, 0) match
-        case Some((priority, end)) if end > 0 =>
-          val matchedStr = globalCtx.text.subSequence(0, end).toString
+        case m if m != null && m.end > 0 =>
+          val matchedStr = globalCtx.text.subSequence(0, m.end).toString
           globalCtx.lastRawMatched = matchedStr
-          val found = tokensArray(priority)
-          globalCtx.text = globalCtx.text.from(end)
+          val found = tokensArray(m.priority)
+          globalCtx.text = globalCtx.text.from(m.end)
           (found, matchedStr)
 
         case _ =>
