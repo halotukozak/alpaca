@@ -1,0 +1,93 @@
+name: Binary compatibility
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Report-only, mirrors the MiMa setup on halotukozak-com/commons (synced
+# from halotukozak-com/.github to the scala-cli repos) adapted for Mill.
+# Never fails the build — instead, on a PR, it manages a `needs-major` label
+# when there's a real *backward* binary incompatibility, and removes it
+# again once a later push is compatible.
+jobs:
+  mima:
+    name: MiMa (binary)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup coursier cache
+        uses: coursier/cache-action@v8.1
+      - uses: VirtusLab/scala-cli-setup@v1
+      - name: Check binary compatibility against the last release
+        id: mima
+        run: |
+          set -euo pipefail
+
+          base_tag=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          if [ -z "$base_tag" ]; then
+            echo "No release tag yet — nothing to compare against." >> "$GITHUB_STEP_SUMMARY"
+            echo "broken=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base_version=${base_tag#v}
+          # alpaca publishes under io.github.halotukozak, unlike the other
+          # libraries (com.halotukozak) — see the discovery in the PR.
+          org=io.github.halotukozak
+          name=alpaca
+          echo "Baseline: $org:${name}_3:$base_version"
+
+          new_jar=$(./mill --disable-ticker show jvm.jar | tail -1 | sed -E 's/^"[a-z]*ref:v[0-9]+:[0-9a-f]+://; s/"$//')
+
+          printf '' > "$RUNNER_TEMP/empty.scala"
+          old_cp=$(scala-cli --power compile "$RUNNER_TEMP/empty.scala" --dependency "$org::$name:$base_version" --print-class-path | tail -1)
+          old_jar=$(printf '%s' "$old_cp" | tr ':' '\n' | grep "/${name}_3/$base_version/")
+          mill_cp=$(./mill --disable-ticker show jvm.compileClasspath | jq -r '.[]' | sed -E 's/^[a-z]*ref:v[0-9]+:[0-9a-f]+://')
+          shared_cp="$old_cp:$mill_cp"
+
+          set +e
+          scala-cli run .mima/bin-compat-check.scala -- "$old_jar" "$new_jar" "$shared_cp" | tee "$RUNNER_TEMP/mima-out.txt"
+          status=$?
+          set -e
+
+          if [ $status -ne 0 ]; then
+            {
+              echo "### MiMa found binary incompatibilities vs \`$base_version\`"
+              echo '```'
+              cat "$RUNNER_TEMP/mima-out.txt"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Binary compatibility::MiMa found incompatibilities vs $base_version — see the job summary"
+            echo "broken=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Binary compatible with \`$base_version\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "broken=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Label needs-major on binary incompatibility
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.mima.outputs.broken }}" = "true" ]; then
+            gh label create needs-major --repo "${{ github.repository }}" \
+              --color B60205 --description "Binary-incompatible change — needs a major version bump" \
+              --force >/dev/null
+            gh pr edit "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" \
+              --add-label needs-major
+          else
+            gh pr edit "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" \
+              --remove-label needs-major || true
+          fi
