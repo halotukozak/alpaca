@@ -57,3 +57,5 @@ benchmarks/outputs/
 __pycache__/
 
 .planning/
+
+.scala-build/
