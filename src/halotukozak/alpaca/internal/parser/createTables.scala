@@ -41,9 +41,14 @@ private[alpaca] object Tables:
  * 3. Constructs the LR parse table
  * 4. Generates debug output if enabled
  *
- * Note: This implementation uses various collection types (List, Map, etc.).
- * Future optimizations may consider View, Iterator, or Vector to improve
- * compile-time performance and memory usage for large grammars.
+ * Note on collection choices (#466): `table`/`rules`/`productions` are deliberately
+ * materialized to `List` rather than kept lazy (`View`/`Iterator`) because each is traversed
+ * multiple times downstream (productions extraction, root lookup, parse/action table
+ * construction) -- a lazy view would just re-run the macro-tree-walking computation behind it
+ * on every one of those traversals instead of once, a pessimization rather than a speedup.
+ * The actual compile-time cost found here wasn't the collection *type* but a collection being
+ * rebuilt on every call: `findProduction`'s lookup maps were reconstructed from the full
+ * production list on every `.after`/`.before` reference instead of once -- see that function.
  *
  * @tparam Ctx the parser context type
  * @param quotes the Quotes instance
@@ -149,13 +154,18 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         .tap: table =>
           logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
 
-      def findProduction(call: Expr[Production]): Production =
-        val productionsByName = productions.iterator
-          .collect:
-            case p if p.name != null => (p.name, p)
-          .toMap
+      // Built once and reused by every findProduction call below, instead of once per call --
+      // findProduction runs once per `.after`/`.before` reference in the grammar's conflict
+      // resolutions, and rebuilding both maps from the full production list on every one of
+      // those calls is wasted work that scales with resolutions × productions for no reason.
+      val productionsByName = productions.iterator
+        .collect:
+          case p if p.name != null => (p.name, p)
+        .toMap
 
-        val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
+      val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
+
+      def findProduction(call: Expr[Production]): Production =
         call match
           case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
             val decodedName = NameTransformer.decode(name)
