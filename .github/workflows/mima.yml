@@ -42,9 +42,7 @@ jobs:
             exit 0
           fi
           base_version=${base_tag#v}
-          # alpaca publishes under io.github.halotukozak, unlike the other
-          # libraries (com.halotukozak) — see the discovery in the PR.
-          org=io.github.halotukozak
+          org=com.halotukozak
           name=alpaca
           echo "Baseline: $org:${name}_3:$base_version"
 
