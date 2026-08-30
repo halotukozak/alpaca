@@ -5,28 +5,23 @@ on:
   push:
     branches: [ main ]
 
+# Shared CI for the Mill-built libraries (regex, alpaca). Platform-agnostic
+# `./mill __.*` selectors, so the one file works whether or not a repo has a
+# Scala.js module. Job name `test` matches both repos' branch protection.
 jobs:
   test:
     permissions:
-      actions: read
       contents: read
-      packages: read
       pull-requests: write
-      checks: write
-      issues: write
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
       - name: Set up JDK
         uses: actions/setup-java@v6
         with:
           java-version: 21
           distribution: 'temurin'
-
       - name: Cache Mill dependencies
         uses: actions/cache@v6
         with:
@@ -38,42 +33,20 @@ jobs:
             ${{ runner.os }}-mill-
 
       - name: Compile
-        run: ./mill jvm.compile native.compile
-
+        run: ./mill __.compile
       - name: Compile tests
-        run: |
-          echo "Starting test compilation..."
-          START_TIME=$(date +%s)
-          ./mill jvm.test.compile native.test.compile
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-          echo "Test compilation completed in ${DURATION}s"
-          echo "TEST_COMPILE_TIME=${DURATION}" >> $GITHUB_ENV
-
+        run: ./mill __.test.compile
       - name: Run tests
-        run: ./mill jvm.test + native.test
-
+        run: ./mill __.test
       - name: Code coverage
         run: ./mill jvm.scoverage.xmlCoberturaReport
-
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: halotukozak-com/alpaca
+          slug: halotukozak-com/${{ github.event.repository.name }}
           fail_ci_if_error: false
-
-      - name: ScalaFmt
+      - name: Scalafmt
         run: ./mill mill.scalalib.scalafmt/checkFormatAll
-
-      - name: Generate Docs
+      - name: Generate docs
         run: ./mill jvm.docJar
-
-      - name: Report Test Compilation Time
-        if: always()
-        run: |
-          if [ -n "$TEST_COMPILE_TIME" ]; then
-            echo "### ⏱️ Test Compilation Time" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Test compilation took **${TEST_COMPILE_TIME}s**" >> $GITHUB_STEP_SUMMARY
-          fi
