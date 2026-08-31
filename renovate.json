@@ -22,6 +22,7 @@
       "managerFilePatterns": [
         "/(^|/)project\\.scala$/",
         "/(^|/)README\\.md$/",
+        "/(^|/)docs/_docs/index\\.md$/",
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
         "/\\.mill$/"
@@ -40,6 +41,7 @@
       "managerFilePatterns": [
         "/(^|/)project\\.scala$/",
         "/(^|/)README\\.md$/",
+        "/(^|/)docs/_docs/index\\.md$/",
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
         "/\\.mill$/"
@@ -54,17 +56,19 @@
     },
     {
       "customType": "regex",
-      "description": "Scala language version: scala-cli `using scala`, Mill `def scalaVersion`",
+      "description": "Scala language version: scala-cli `using scala`, Mill `def scalaVersion`, sbt `scalaVersion :=`",
       "managerFilePatterns": [
         "/(^|/)project\\.scala$/",
         "/(^|/)README\\.md$/",
+        "/(^|/)docs/_docs/index\\.md$/",
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
         "/\\.mill$/"
       ],
       "matchStrings": [
         "//> using scala \"?(?<currentValue>[\\w.-]+)\"?",
-        "def scalaVersion\\s*=\\s*\"(?<currentValue>[\\w.-]+)\""
+        "def scalaVersion\\s*=\\s*\"(?<currentValue>[\\w.-]+)\"",
+        "scalaVersion\\s*:=\\s*\"(?<currentValue>[\\w.-]+)\""
       ],
       "depNameTemplate": "scala3",
       "packageNameTemplate": "scala/scala3",
@@ -106,6 +110,7 @@
       "description": "Mill version (//| mill-version pragma)",
       "managerFilePatterns": [
         "/(^|/)README\\.md$/",
+        "/(^|/)docs/_docs/index\\.md$/",
         "/(^|/)build\\.sc$/",
         "/(^|/)build\\.mill$/",
         "/\\.mill$/"
