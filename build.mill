@@ -72,8 +72,8 @@ object `package` extends Module:
         "made with ❤️ and coffee",
         "-social-links:github::https://github.com/halotukozak/alpaca",
         "-snippet-compiler:compile",
-        s"-source-links:$moduleDir=github://halotukozak/alpaca/master",
-        "-revision:master",
+        s"-source-links:$moduleDir=github://halotukozak/alpaca/main",
+        "-revision:main",
       )
     }
 
