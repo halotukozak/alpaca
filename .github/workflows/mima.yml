@@ -43,7 +43,7 @@ jobs:
           fi
           base_version=${base_tag#v}
           org=com.halotukozak
-          name=alpaca
+          name=${{ github.event.repository.name }}
           echo "Baseline: $org:${name}_3:$base_version"
 
           new_jar=$(./mill --disable-ticker show jvm.jar | tail -1 | sed -E 's/^"[a-z]*ref:v[0-9]+:[0-9a-f]+://; s/"$//')
