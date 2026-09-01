@@ -14,27 +14,27 @@ import com.intellij.psi.tree.IFileElementType
  * the file. The chameleon [ASTNode] gives access to its own containing file.
  */
 object AlpacaFileElementType : IFileElementType(AlpacaLanguage) {
-  override fun parseContents(chameleon: ASTNode): ASTNode {
-    val psi = chameleon.psi ?: error("Bad chameleon: $chameleon has no PSI")
-    val project = psi.project
-    val virtualFile = psi.containingFile?.originalFile?.virtualFile
+    override fun parseContents(chameleon: ASTNode): ASTNode {
+        val psi = chameleon.psi ?: error("Bad chameleon: $chameleon has no PSI")
+        val project = psi.project
+        val virtualFile = psi.containingFile?.originalFile?.virtualFile
 
-    val resolved = virtualFile?.let { resolveGrammarForFile(project, it) }
-    val (lexerId, tokens, parserGrammar) =
-      resolved ?: ResolvedGrammar("<unresolved>", emptyList(), null)
+        val resolved = virtualFile?.let { resolveGrammarForFile(project, it) }
+        val (lexerId, tokens, parserGrammar) =
+            resolved ?: ResolvedGrammar("<unresolved>", emptyList(), null)
 
-    val lexer = AlpacaLexer(lexerId, tokens)
-    val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, AlpacaLanguage, chameleon.chars)
+        val lexer = AlpacaLexer(lexerId, tokens)
+        val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, AlpacaLanguage, chameleon.chars)
 
-    val rootMarker = builder.mark()
-    if (parserGrammar != null) {
-      AlpacaLrDriver.forTable(parserGrammar.table).parse(AlpacaPsiTreeBuilder(builder, lexerId, tokens))
+        val rootMarker = builder.mark()
+        if (parserGrammar != null) {
+            AlpacaLrDriver.forTable(parserGrammar.table).parse(AlpacaPsiTreeBuilder(builder, lexerId, tokens))
+        }
+        // Safety net: make sure the whole chameleon ends up under rootMarker either way, whether the
+        // driver ran to EOF or there was no parser grammar to drive at all.
+        while (!builder.eof()) builder.advanceLexer()
+        rootMarker.done(this)
+
+        return builder.treeBuilt.firstChildNode
     }
-    // Safety net: make sure the whole chameleon ends up under rootMarker either way, whether the
-    // driver ran to EOF or there was no parser grammar to drive at all.
-    while (!builder.eof()) builder.advanceLexer()
-    rootMarker.done(this)
-
-    return builder.treeBuilt.firstChildNode
-  }
 }

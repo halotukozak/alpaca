@@ -1,0 +1,40 @@
+name: IntelliJ Plugin
+
+on:
+  pull_request:
+    paths:
+      - 'ij-plugin/**'
+      - '.github/workflows/ij-plugin-test.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'ij-plugin/**'
+      - '.github/workflows/ij-plugin-test.yml'
+
+# CI for the Kotlin IntelliJ plugin under ij-plugin/, kept separate from the Mill-built Scala
+# library's own Test workflow since the two projects have nothing in common build-wise.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ij-plugin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          build-root-directory: ij-plugin
+
+      - name: ktlint
+        run: ./gradlew ktlintCheck
+      - name: Test
+        run: ./gradlew test
+      - name: Build plugin
+        run: ./gradlew buildPlugin

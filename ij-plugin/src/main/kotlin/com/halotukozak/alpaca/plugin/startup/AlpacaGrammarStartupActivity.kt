@@ -17,18 +17,18 @@ import java.nio.file.Path
  * it found.
  */
 class AlpacaGrammarStartupActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    val settings = AlpacaSettingsState.getInstance(project)
-    val dir = settings.resolvedExportDirectory() ?: return
+    override suspend fun execute(project: Project) {
+        val settings = AlpacaSettingsState.getInstance(project)
+        val dir = settings.resolvedExportDirectory() ?: return
 
-    writeAction {
-      settings.associations.forEach { AlpacaFileTypeRegistrar.ensureRegistered(it.extension, it.lexerGrammarId) }
+        writeAction {
+            settings.associations.forEach { AlpacaFileTypeRegistrar.ensureRegistered(it.extension, it.lexerGrammarId) }
+        }
+
+        val grammars = GrammarDirectory.scan(Path.of(dir))
+        thisLogger().info(
+            "Alpaca: found ${grammars.lexers.size} lexer(s) and ${grammars.parsers.size} parser(s) in $dir: " +
+                "lexers=${grammars.lexers.map { it.id }}, parsers=${grammars.parsers.map { it.id }}",
+        )
     }
-
-    val grammars = GrammarDirectory.scan(Path.of(dir))
-    thisLogger().info(
-      "Alpaca: found ${grammars.lexers.size} lexer(s) and ${grammars.parsers.size} parser(s) in $dir: " +
-        "lexers=${grammars.lexers.map { it.id }}, parsers=${grammars.parsers.map { it.id }}",
-    )
-  }
 }

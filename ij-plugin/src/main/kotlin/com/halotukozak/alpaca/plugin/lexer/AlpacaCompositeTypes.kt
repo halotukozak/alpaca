@@ -9,8 +9,11 @@ import com.intellij.psi.tree.IElementType
  * different grammars can both have a nonterminal named e.g. `Expr` without colliding.
  */
 object AlpacaCompositeTypes {
-  private val cache = HashMap<Pair<String, String>, IElementType>()
+    private val cache = HashMap<Pair<String, String>, IElementType>()
 
-  @Synchronized
-  fun forName(grammarId: String, name: String): IElementType = cache.getOrPut(grammarId to name) { IElementType(name, AlpacaLanguage) }
+    @Synchronized
+    fun forName(
+        grammarId: String,
+        name: String,
+    ): IElementType = cache.getOrPut(grammarId to name) { IElementType(name, AlpacaLanguage) }
 }

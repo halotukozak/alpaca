@@ -21,35 +21,40 @@ private val NODE_ICON: Icon = IconLoader.getIcon("/icons/alpacaNode.png", Alpaca
  * (the platform itself filters out leaf tokens).
  */
 class AlpacaStructureViewElement(
-  private val element: PsiElement,
-) : StructureViewTreeElement, SortableTreeElement {
-  override fun getValue(): Any = element
+    private val element: PsiElement,
+) : StructureViewTreeElement,
+    SortableTreeElement {
+    override fun getValue(): Any = element
 
-  override fun getAlphaSortKey(): String = presentableName()
+    override fun getAlphaSortKey(): String = presentableName()
 
-  override fun getPresentation(): ItemPresentation =
-    object : ItemPresentation {
-      override fun getPresentableText(): String = presentableName()
+    override fun getPresentation(): ItemPresentation =
+        object : ItemPresentation {
+            override fun getPresentableText(): String = presentableName()
 
-      override fun getIcon(unused: Boolean): Icon = NODE_ICON
+            override fun getIcon(unused: Boolean): Icon = NODE_ICON
+        }
+
+    override fun getChildren(): Array<TreeElement> = element.children.map { AlpacaStructureViewElement(it) }.toTypedArray()
+
+    override fun navigate(requestFocus: Boolean) = PsiNavigateUtil.navigate(element, requestFocus)
+
+    override fun canNavigate(): Boolean = element.isValid && element.containingFile?.virtualFile != null
+
+    override fun canNavigateToSource(): Boolean = canNavigate()
+
+    /** e.g. `Expr: 1 + 2 * 3`: the nonterminal's name plus a snippet of its own source text, so
+     *  nodes of the same grammar rule (there are often many, e.g. every wrapped sub-expression)
+     *  stay distinguishable in the tree. */
+    private fun presentableName(): String {
+        if (element is PsiFile) return element.name
+
+        val typeName = element.node.elementType.toString()
+        val snippet =
+            element.text
+                .replace('\n', ' ')
+                .trim()
+                .let { if (it.length > 40) it.take(40) + "…" else it }
+        return "$typeName: $snippet"
     }
-
-  override fun getChildren(): Array<TreeElement> = element.children.map { AlpacaStructureViewElement(it) }.toTypedArray()
-
-  override fun navigate(requestFocus: Boolean) = PsiNavigateUtil.navigate(element, requestFocus)
-
-  override fun canNavigate(): Boolean = element.isValid && element.containingFile?.virtualFile != null
-
-  override fun canNavigateToSource(): Boolean = canNavigate()
-
-  /** e.g. `Expr: 1 + 2 * 3`: the nonterminal's name plus a snippet of its own source text, so
-   *  nodes of the same grammar rule (there are often many, e.g. every wrapped sub-expression)
-   *  stay distinguishable in the tree. */
-  private fun presentableName(): String {
-    if (element is PsiFile) return element.name
-
-    val typeName = element.node.elementType.toString()
-    val snippet = element.text.replace('\n', ' ').trim().let { if (it.length > 40) it.take(40) + "…" else it }
-    return "$typeName: $snippet"
-  }
 }

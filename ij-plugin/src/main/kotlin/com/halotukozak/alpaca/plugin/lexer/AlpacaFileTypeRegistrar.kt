@@ -12,8 +12,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager
  * Callers must invoke [ensureRegistered] from inside a write action.
  */
 object AlpacaFileTypeRegistrar {
-  fun ensureRegistered(extension: String, grammarId: String) {
-    val fileType = AlpacaFileTypes.forGrammar(grammarId)
-    FileTypeManager.getInstance().associateExtension(fileType, extension)
-  }
+    fun ensureRegistered(
+        extension: String,
+        grammarId: String,
+    ) {
+        val fileType = AlpacaFileTypes.forGrammar(grammarId)
+        FileTypeManager.getInstance().associateExtension(fileType, extension)
+    }
 }

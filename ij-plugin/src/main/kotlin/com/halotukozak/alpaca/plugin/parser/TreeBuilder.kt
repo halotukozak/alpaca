@@ -15,26 +15,29 @@ const val EOF_TERMINAL_NAME = "$"
  * node" after the span has already been consumed.
  */
 interface TreeBuilder<M> {
-  /** The current lookahead token's terminal name, as it appears in the exported grammar, or [EOF_TERMINAL_NAME]. */
-  fun currentTerminal(): String
+    /** The current lookahead token's terminal name, as it appears in the exported grammar, or [EOF_TERMINAL_NAME]. */
+    fun currentTerminal(): String
 
-  /** The current lookahead token's raw source text, or `"<eof>"` at end of input. Distinct from
-   *  [currentTerminal] because that's often a token's *pattern* (e.g. `\)`), not user-facing text. */
-  fun currentTokenText(): String
+    /** The current lookahead token's raw source text, or `"<eof>"` at end of input. Distinct from
+     *  [currentTerminal] because that's often a token's *pattern* (e.g. `\)`), not user-facing text. */
+    fun currentTokenText(): String
 
-  fun advance()
+    fun advance()
 
-  /** Marks the current position, to later be resolved via [done]/[drop] or superseded via [precede]. */
-  fun mark(): M
+    /** Marks the current position, to later be resolved via [done]/[drop] or superseded via [precede]. */
+    fun mark(): M
 
-  /** Resolves [marker] as a composite node named [name], spanning from its start to the current position. */
-  fun done(marker: M, name: String)
+    /** Resolves [marker] as a composite node named [name], spanning from its start to the current position. */
+    fun done(
+        marker: M,
+        name: String,
+    )
 
-  /** Resolves [marker] without producing a node of its own. */
-  fun drop(marker: M)
+    /** Resolves [marker] without producing a node of its own. */
+    fun drop(marker: M)
 
-  /** Returns a new marker starting at [marker]'s own start and extending to the current position. */
-  fun precede(marker: M): M
+    /** Returns a new marker starting at [marker]'s own start and extending to the current position. */
+    fun precede(marker: M): M
 
-  fun error(message: String)
+    fun error(message: String)
 }

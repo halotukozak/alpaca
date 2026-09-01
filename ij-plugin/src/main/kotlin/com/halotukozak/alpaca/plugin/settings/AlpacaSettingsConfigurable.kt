@@ -13,92 +13,103 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import javax.swing.JComponent
 
-class AlpacaSettingsConfigurable(private val project: Project) : Configurable {
-  private val settings = AlpacaSettingsState.getInstance(project)
-  private val exportDirectoryField = JBTextField()
-  private val tableModel = ListTableModel<GrammarAssociation>(EXTENSION_COLUMN, LEXER_GRAMMAR_ID_COLUMN, PARSER_GRAMMAR_ID_COLUMN)
-  private val table = JBTable(tableModel)
+class AlpacaSettingsConfigurable(
+    private val project: Project,
+) : Configurable {
+    private val settings = AlpacaSettingsState.getInstance(project)
+    private val exportDirectoryField = JBTextField()
+    private val tableModel = ListTableModel<GrammarAssociation>(EXTENSION_COLUMN, LEXER_GRAMMAR_ID_COLUMN, PARSER_GRAMMAR_ID_COLUMN)
+    private val table = JBTable(tableModel)
 
-  override fun getDisplayName(): String = "Alpaca"
+    override fun getDisplayName(): String = "Alpaca"
 
-  override fun createComponent(): JComponent {
-    table.columnModel.getColumn(0).preferredWidth = 100
-    table.columnModel.getColumn(1).preferredWidth = 260
-    table.columnModel.getColumn(2).preferredWidth = 260
+    override fun createComponent(): JComponent {
+        table.columnModel.getColumn(0).preferredWidth = 100
+        table.columnModel.getColumn(1).preferredWidth = 260
+        table.columnModel.getColumn(2).preferredWidth = 260
 
-    val tablePanel =
-      ToolbarDecorator
-        .createDecorator(table)
-        .setAddAction { tableModel.addRow(GrammarAssociation()) }
-        .createPanel()
+        val tablePanel =
+            ToolbarDecorator
+                .createDecorator(table)
+                .setAddAction { tableModel.addRow(GrammarAssociation()) }
+                .createPanel()
 
-    return panel {
-      row("Grammar export directory:") {
-        cell(exportDirectoryField)
-          .comment(
-            "Directory Alpaca's compile-time macros write exported grammars to. " +
-              "Falls back to the ALPACA_GRAMMAR_EXPORT_DIR environment variable when left empty.",
-          )
-      }
-      row("Language mappings:") {
-        cell(tablePanel)
-          .align(Align.FILL)
-          .comment(
-            "Files with the given extension are highlighted using the lexer grammar's tokens. " +
-              "Leave the parser grammar id empty to skip real parsing and keep plain token highlighting.",
-          )
-      }.resizableRow()
+        return panel {
+            row("Grammar export directory:") {
+                cell(exportDirectoryField)
+                    .comment(
+                        "Directory Alpaca's compile-time macros write exported grammars to. " +
+                            "Falls back to the ALPACA_GRAMMAR_EXPORT_DIR environment variable when left empty.",
+                    )
+            }
+            row("Language mappings:") {
+                cell(tablePanel)
+                    .align(Align.FILL)
+                    .comment(
+                        "Files with the given extension are highlighted using the lexer grammar's tokens. " +
+                            "Leave the parser grammar id empty to skip real parsing and keep plain token highlighting.",
+                    )
+            }.resizableRow()
+        }
     }
-  }
 
-  override fun isModified(): Boolean = exportDirectoryField.text != settings.exportDirectory || tableModel.items != settings.associations
+    override fun isModified(): Boolean = exportDirectoryField.text != settings.exportDirectory || tableModel.items != settings.associations
 
-  override fun apply() {
-    settings.exportDirectory = exportDirectoryField.text
-    settings.associations = tableModel.items.filter { it.extension.isNotBlank() && it.lexerGrammarId.isNotBlank() }.toMutableList()
+    override fun apply() {
+        settings.exportDirectory = exportDirectoryField.text
+        settings.associations = tableModel.items.filter { it.extension.isNotBlank() && it.lexerGrammarId.isNotBlank() }.toMutableList()
 
-    runWriteAction {
-      settings.associations.forEach { AlpacaFileTypeRegistrar.ensureRegistered(it.extension, it.lexerGrammarId) }
+        runWriteAction {
+            settings.associations.forEach { AlpacaFileTypeRegistrar.ensureRegistered(it.extension, it.lexerGrammarId) }
+        }
     }
-  }
 
-  override fun reset() {
-    exportDirectoryField.text = settings.exportDirectory
-    tableModel.items = settings.associations.map { it.copy() }
-  }
+    override fun reset() {
+        exportDirectoryField.text = settings.exportDirectory
+        tableModel.items = settings.associations.map { it.copy() }
+    }
 
-  companion object {
-    private val EXTENSION_COLUMN =
-      object : ColumnInfo<GrammarAssociation, String>("Extension") {
-        override fun valueOf(item: GrammarAssociation): String = item.extension
+    companion object {
+        private val EXTENSION_COLUMN =
+            object : ColumnInfo<GrammarAssociation, String>("Extension") {
+                override fun valueOf(item: GrammarAssociation): String = item.extension
 
-        override fun setValue(item: GrammarAssociation, value: String) {
-          item.extension = value
-        }
+                override fun setValue(
+                    item: GrammarAssociation,
+                    value: String,
+                ) {
+                    item.extension = value
+                }
 
-        override fun isCellEditable(item: GrammarAssociation): Boolean = true
-      }
+                override fun isCellEditable(item: GrammarAssociation): Boolean = true
+            }
 
-    private val LEXER_GRAMMAR_ID_COLUMN =
-      object : ColumnInfo<GrammarAssociation, String>("Lexer grammar id") {
-        override fun valueOf(item: GrammarAssociation): String = item.lexerGrammarId
+        private val LEXER_GRAMMAR_ID_COLUMN =
+            object : ColumnInfo<GrammarAssociation, String>("Lexer grammar id") {
+                override fun valueOf(item: GrammarAssociation): String = item.lexerGrammarId
 
-        override fun setValue(item: GrammarAssociation, value: String) {
-          item.lexerGrammarId = value
-        }
+                override fun setValue(
+                    item: GrammarAssociation,
+                    value: String,
+                ) {
+                    item.lexerGrammarId = value
+                }
 
-        override fun isCellEditable(item: GrammarAssociation): Boolean = true
-      }
+                override fun isCellEditable(item: GrammarAssociation): Boolean = true
+            }
 
-    private val PARSER_GRAMMAR_ID_COLUMN =
-      object : ColumnInfo<GrammarAssociation, String>("Parser grammar id (optional)") {
-        override fun valueOf(item: GrammarAssociation): String = item.parserGrammarId
+        private val PARSER_GRAMMAR_ID_COLUMN =
+            object : ColumnInfo<GrammarAssociation, String>("Parser grammar id (optional)") {
+                override fun valueOf(item: GrammarAssociation): String = item.parserGrammarId
 
-        override fun setValue(item: GrammarAssociation, value: String) {
-          item.parserGrammarId = value
-        }
+                override fun setValue(
+                    item: GrammarAssociation,
+                    value: String,
+                ) {
+                    item.parserGrammarId = value
+                }
 
-        override fun isCellEditable(item: GrammarAssociation): Boolean = true
-      }
-  }
+                override fun isCellEditable(item: GrammarAssociation): Boolean = true
+            }
+    }
 }

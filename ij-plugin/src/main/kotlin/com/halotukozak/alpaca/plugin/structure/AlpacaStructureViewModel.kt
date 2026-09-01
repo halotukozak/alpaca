@@ -13,13 +13,13 @@ import com.intellij.psi.PsiFile
  * matters here since sibling nodes of the same nonterminal are otherwise indistinguishable.
  */
 class AlpacaStructureViewModel(
-  psiFile: PsiFile,
-  editor: Editor?,
+    psiFile: PsiFile,
+    editor: Editor?,
 ) : StructureViewModelBase(psiFile, editor, AlpacaStructureViewElement(psiFile)),
-  StructureViewModel.ElementInfoProvider {
-  override fun getSorters(): Array<Sorter> = arrayOf(Sorter.ALPHA_SORTER)
+    StructureViewModel.ElementInfoProvider {
+    override fun getSorters(): Array<Sorter> = arrayOf(Sorter.ALPHA_SORTER)
 
-  override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = false
+    override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = false
 
-  override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean = element.children.isEmpty()
+    override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean = element.children.isEmpty()
 }

@@ -16,32 +16,32 @@ private const val PARSER_ID = "MathTest.MathParser@L39"
  * extension point name, wrong caret/offset handling, or a prefix matcher that isn't filtering.
  */
 class AlpacaCompletionContributorTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
-    val settings = AlpacaSettingsState.getInstance(project)
-    settings.exportDirectory = "/tmp/alpaca-grammar-export"
-    settings.associations =
-      mutableListOf(GrammarAssociation(extension = "calc", lexerGrammarId = LEXER_ID, parserGrammarId = PARSER_ID))
-    runWriteAction { AlpacaFileTypeRegistrar.ensureRegistered("calc", LEXER_ID) }
-  }
+    override fun setUp() {
+        super.setUp()
+        val settings = AlpacaSettingsState.getInstance(project)
+        settings.exportDirectory = "/tmp/alpaca-grammar-export"
+        settings.associations =
+            mutableListOf(GrammarAssociation(extension = "calc", lexerGrammarId = LEXER_ID, parserGrammarId = PARSER_ID))
+        runWriteAction { AlpacaFileTypeRegistrar.ensureRegistered("calc", LEXER_ID) }
+    }
 
-  fun `test suggests literal terminals valid at the caret`() {
-    myFixture.configureByText("test.calc", "1 + <caret>")
-    myFixture.completeBasic()
+    fun `test suggests literal terminals valid at the caret`() {
+        myFixture.configureByText("test.calc", "1 + <caret>")
+        myFixture.completeBasic()
 
-    val suggestions = myFixture.lookupElementStrings!!
-    assertTrue("sin" in suggestions)
-    assertTrue("(" in suggestions)
-    assertTrue(")" !in suggestions)
-  }
+        val suggestions = myFixture.lookupElementStrings!!
+        assertTrue("sin" in suggestions)
+        assertTrue("(" in suggestions)
+        assertTrue(")" !in suggestions)
+    }
 
-  fun `test filters suggestions by the word already being typed`() {
-    myFixture.configureByText("test.calc", "1 + si<caret>")
-    myFixture.completeBasic()
+    fun `test filters suggestions by the word already being typed`() {
+        myFixture.configureByText("test.calc", "1 + si<caret>")
+        myFixture.completeBasic()
 
-    val suggestions = myFixture.lookupElementStrings!!
-    assertTrue("sin" in suggestions)
-    assertTrue("sinh" in suggestions)
-    assertTrue("cos" !in suggestions)
-  }
+        val suggestions = myFixture.lookupElementStrings!!
+        assertTrue("sin" in suggestions)
+        assertTrue("sinh" in suggestions)
+        assertTrue("cos" !in suggestions)
+    }
 }

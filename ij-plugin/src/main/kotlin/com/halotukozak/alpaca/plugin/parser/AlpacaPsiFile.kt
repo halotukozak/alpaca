@@ -12,9 +12,9 @@ import com.intellij.psi.FileViewProvider
  * [com.halotukozak.alpaca.plugin.lexer.AlpacaFileType], inherited from the view provider.
  */
 class AlpacaPsiFile(
-  viewProvider: FileViewProvider,
+    viewProvider: FileViewProvider,
 ) : PsiFileBase(viewProvider, AlpacaLanguage) {
-  override fun getFileType(): FileType = viewProvider.fileType
+    override fun getFileType(): FileType = viewProvider.fileType
 
-  override fun toString(): String = "Alpaca File"
+    override fun toString(): String = "Alpaca File"
 }
