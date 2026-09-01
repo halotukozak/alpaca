@@ -4,13 +4,15 @@ package internal
 package lexer
 
 import scala.annotation.implicitNotFound
-import scala.compiletime.{erasedValue, summonFrom}
+import scala.compiletime.{constValueTuple, erasedValue, summonFrom}
+import scala.annotation.publicInBinary
+import halotukozak.commons.{containsOnly, toArrayOf}
 
 /**
  * A per-token update for a single lexer-context field (a "fragment" such as
  * [[Line]] or [[Column]]).
  *
- * [[Tracking.derive]] applies one `Tracking` instance to each case field of
+ * [[Tracking.materialize]] applies one `Tracking` instance to each case field of
  * the context whose type provides a `given`, threading the result through a
  * functional `copy`; fields whose type has no `Tracking` given are left
  * untouched by the hook (they only change in rule bodies).
@@ -39,8 +41,12 @@ object Tracking:
    * tracks -- apply the rule body's context changes, advance the cursor,
    * record the lexeme (see [[advance]]).
    */
-  inline def derive[Ctx <: LexerCtx: Mirror.ProductOf as m]: (Token[?, Ctx, ?], String, Ctx) => Ctx =
-    Derived(fieldSteps[m.MirroredElemTypes](0))
+  @publicInBinary inline private[alpaca] def materialize[Ctx <: LexerCtx: Mirror.ProductOf as m]
+    : (Token[?, Ctx, ?], String, Ctx) => Ctx =
+    materializeImpl[Ctx](
+      fieldSteps[m.MirroredElemTypes](0),
+      constValueTuple[m.MirroredElemLabels].toArrayOf[String](using containsOnly.refl),
+    )
 
   /**
    * One `(index, update)` pair per case field that has a `given Tracking`;
@@ -48,38 +54,15 @@ object Tracking:
    * no-op, so that [[Derived.apply]] can tell -- without inspecting the
    * context -- whether there is any field update to do at all.
    */
-  inline private def fieldSteps[Elems <: Tuple](index: Int): List[(index: Int, update: (String, Any) => Any)] =
+  inline private def fieldSteps[Elems <: Tuple](index: Int): List[(index: Int, update: Tracking[?])] =
     inline erasedValue[Elems] match
       case _: EmptyTuple => Nil
       case _: (h *: t) =>
         val rest = fieldSteps[t](index + 1)
         summonFrom:
           case tracking: Tracking[`h`] =>
-            (index = index, update = (matched, v) => tracking(matched, v.asInstanceOf[h])) :: rest
+            (index = index, update = tracking) :: rest
           case _ => rest
-
-  private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
-
-  /**
-   * Applies the rule body's context changes, advances the cursor, and records
-   * the lexeme -- the one step every context needs, regardless of what it
-   * tracks.
-   */
-  private def advance(token: Token[?, LexerCtx, ?], raw: String, ctx: LexerCtx): LexerCtx = token match
-    case DefinedToken(info, modifyCtx, remapping) =>
-      val c = modifyCtx(ctx).carryEngineStateFrom(ctx)
-      val fieldNames = fieldNameCache.computeIfAbsent(c.getClass, _ => c.productElementNames.toArray)
-      c.lastLexeme = Lexeme(
-        name = info.name,
-        value = remapping(c),
-        text = raw,
-        fieldNames = fieldNames,
-        fieldValues = c.productIterator.toArray,
-      )
-      c
-
-    case IgnoredToken(_, modifyCtx) =>
-      modifyCtx(ctx).carryEngineStateFrom(ctx)
 
   /**
    * Named (not anonymous-per-inline-site) so [[derive]] stays cheap to inline.
@@ -95,16 +78,32 @@ object Tracking:
    * of how many fields are tracked, rather than one per field. Contexts with
    * no tracked fields (`steps.isEmpty`) skip the snapshot/rebuild entirely.
    */
-  final class Derived[Ctx <: LexerCtx: Mirror.ProductOf as m](
-    steps: List[(index: Int, update: (String, Any) => Any)],
-  ) extends ((Token[?, Ctx, ?], String, Ctx) => Ctx):
-    def apply(token: Token[?, Ctx, ?], raw: String, ctx: Ctx): Ctx =
-      val afterFields =
-        if steps.isEmpty then ctx
-        else
-          val values = ctx.productIterator.toArray
-          steps.foreach(step => values(step.index) = step.update(raw, values(step.index)))
-          val updated = m.fromProduct(Tuple.fromArray(values)).asInstanceOf[Ctx]
-          updated.asInstanceOf[LexerCtx].carryEngineStateFrom(ctx)
-          updated
-      advance(token, raw, afterFields).asInstanceOf[Ctx]
+  @publicInBinary private[Tracking] def materializeImpl[Ctx <: LexerCtx: Mirror.ProductOf as m](
+    steps: List[(index: Int, update: Tracking[?])],
+    fieldNames: Array[String],
+  ): ((Token[?, Ctx, ?], String, Ctx) => Ctx) = (token, raw, ctx) =>
+    val afterFields =
+      if steps.isEmpty then ctx
+      else
+        val values = ctx.productIterator.toArray
+        steps.foreach:
+          case (index, update: Tracking[Any] @unchecked) =>
+            values(index) = update(raw, values(index))
+        val updated = m.fromProduct(Tuple.fromArray(values))
+        updated.carryEngineStateFrom(ctx)
+
+    token match
+      case DefinedToken(info, modifyCtx, remapping) =>
+        modifyCtx(afterFields)
+          .carryEngineStateFrom(afterFields)
+          .tap: c =>
+            c.lastLexeme = Lexeme(
+              name = info.name,
+              value = remapping(c),
+              text = raw,
+              fieldNames = fieldNames,
+              fieldValues = c.productIterator.toArray,
+            )
+
+      case IgnoredToken(_, modifyCtx) =>
+        modifyCtx(afterFields).carryEngineStateFrom(afterFields)

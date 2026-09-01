@@ -61,8 +61,8 @@ private[lexer] final class RewriteCtxMutations[Q <: Quotes](using val quotes: Q)
     case Select(inner, "$asInstanceOf$") => inner
 
   private val SetterName: PartialFunction[String, String] = Function.unlift: encoded =>
-      val decoded = NameTransformer.decode(encoded)
-      Option.when(decoded.endsWith("_="))(decoded.stripSuffix("_="))
+    val decoded = NameTransformer.decode(encoded)
+    Option.when(decoded.endsWith("_="))(decoded.stripSuffix("_="))
 
   private val ApplyDynamicCall: PartialFunction[Term, (recv: Term, name: String, args: Term)] =
     case Apply(Apply(Select(recv, "applyDynamic"), List(Literal(StringConstant(name)))), List(args)) =>
@@ -88,22 +88,22 @@ private[lexer] final class RewriteCtxMutations[Q <: Quotes](using val quotes: Q)
 
     object rewriter extends TreeMap:
       override def transformTerm(tree: Term)(owner: Symbol): Term = tree match
-          case SetterCall(field, rhs) =>
-            Assign(ctxRef, carry(copyWith(ctxRef, field, transformTerm(rhs)(owner)), ctxRef))
-          case Cast(unwrap(inner)) if isCtxRef(inner) =>
-            inner
-          case Ident(_) if aliases(tree.symbol) =>
-            ctxRef
-          case Block(stats, expr) if stats.nonEmpty =>
-            val kept = stats.filter:
-              case vd @ ValDef(_, _, Some(rhs)) if isCtxRef(transformTerm(rhs)(owner)) =>
-                aliases += vd.symbol
-                false
-              case _ => true
-            val newStats = kept.map(transformStatement(_)(owner))
-            val newExpr = transformTerm(expr)(owner)
-            if newStats.isEmpty then newExpr else Block(newStats, newExpr)
-          case _ => super.transformTerm(tree)(owner)
+        case SetterCall(field, rhs) =>
+          Assign(ctxRef, carry(copyWith(ctxRef, field, transformTerm(rhs)(owner)), ctxRef))
+        case Cast(unwrap(inner)) if isCtxRef(inner) =>
+          inner
+        case Ident(_) if aliases(tree.symbol) =>
+          ctxRef
+        case Block(stats, expr) if stats.nonEmpty =>
+          val kept = stats.filter:
+            case vd @ ValDef(_, _, Some(rhs)) if isCtxRef(transformTerm(rhs)(owner)) =>
+              aliases += vd.symbol
+              false
+            case _ => true
+          val newStats = kept.map(transformStatement(_)(owner))
+          val newExpr = transformTerm(expr)(owner)
+          if newStats.isEmpty then newExpr else Block(newStats, newExpr)
+        case _ => super.transformTerm(tree)(owner)
 
     rewriter.transformTerm(body)(owner)
 

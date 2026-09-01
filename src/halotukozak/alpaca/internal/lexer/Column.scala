@@ -12,7 +12,7 @@ package lexer
  * case class MyCtx(position: Column = Column.Start) extends LexerCtx
  * }}}
  *
- * [[Tracking.derive]] finds the `given Tracking[Column]` below and applies
+ * [[Tracking.materialize]] finds the `given Tracking[Column]` below and applies
  * it to that field after every match, threading a functional `copy` -- so
  * `position` stays an immutable `val`. `Column <: Int`, so `ctx.position`
  * reads as a plain `Int` everywhere; assigning it inside a rule body

@@ -11,7 +11,7 @@ package lexer
  * case class MyCtx(line: Line = Line.Start) extends LexerCtx
  * }}}
  *
- * [[Tracking.derive]] finds the `given Tracking[Line]` below and applies it
+ * [[Tracking.materialize]] finds the `given Tracking[Line]` below and applies it
  * to that field after every match, threading a functional `copy` -- so `line`
  * stays an immutable `val`. `Line <: Int`, so `ctx.line` reads as a plain `Int`
  * everywhere; assigning it inside a rule body (`ctx.line = Line(...)`) is

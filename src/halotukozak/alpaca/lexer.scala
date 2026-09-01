@@ -47,7 +47,7 @@ transparent inline def lexer[Ctx <: LexerCtx](
   ${
     lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
       '{ rules },
-      '{ Tracking.derive[Ctx] },
+      '{ Tracking.materialize[Ctx] },
       '{ errorHandling },
       '{ empty },
     )
@@ -265,7 +265,7 @@ object LexerCtx:
    * for error reporting. The `text` field is inherited from [[LexerCtx]].
    *
    * `position` and `line` are immutable `val`s of a subtype of `Int`:
-   * [[Tracking.derive]] finds each fragment's `given Tracking` and threads a
+   * [[Tracking.materialize]] finds each fragment's `given Tracking` and threads a
    * fresh `copy` of this case class through the lexer rather than mutating a
    * field in place. Read them as plain `Int`s (`ctx.line`, `ctx.position`).
    *

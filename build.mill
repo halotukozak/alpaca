@@ -27,13 +27,13 @@ object `package` extends Module:
       "-new-syntax",
       "-unchecked",
       "-language:noAutoTupling",
-      "-Vprofile",
-      "-Xprint-inline",
+      // "-Vprofile",
+      // "-Xprint-inline",
       // "-Ycheck:all", // cannot be enabled when scoverage used :/
       "-Ycheck:macros",
       // "-Ydebug-error",
-      "-Ydebug-flags",
-      "-Ydebug-missing-refs",
+      // "-Ydebug-flags",
+      // "-Ydebug-missing-refs",
       "-Yexplain-lowlevel",
       "-Yexplicit-nulls",
       // "-Yprint-debug",
@@ -41,8 +41,8 @@ object `package` extends Module:
       // "-Xprint-suspension",
       // "-Vprint:typer",
       "-Wsafe-init",
-      "-Yshow-suppressed-errors",
-      "-Yshow-var-bounds",
+      // "-Yshow-suppressed-errors",
+      // "-Yshow-var-bounds",
       "-Werror",
       // Scala 3.9 generates larger trees for lexerImpl/createTablesImpl than 3.8 did, pushing
       // them past the compiler's hardcoded 3000-node coverage-instrumentation threshold

@@ -130,7 +130,6 @@ object NestDepth:
   opaque type Depth <: Int = Int
   object Depth:
     val Start: Depth = 0
-    given Tracking[Depth] = (matched, d) =>
-      if matched == "{" then d + 1 else if matched == "}" then d - 1 else d
+    given Tracking[Depth] = (matched, d) => if matched == "{" then d + 1 else if matched == "}" then d - 1 else d
 
   final case class Ctx(depth: Depth = Depth.Start) extends LexerCtx

@@ -90,26 +90,6 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
   /** Function to update the context when this token is matched. */
   private[lexer] val ctxManipulation: CtxManipulation[Ctx @uv]
 
-/**
- * A token that produces a value when matched.
- *
- * This is the main token type used in the lexer. It can extract a value
- * from the matched text using a remapping function.
- *
- * @tparam Name the token name type
- * @tparam Ctx the global context type
- * @tparam Value the value type to extract
- * @param info token information
- * @param ctxManipulation function to update context
- * @param remapping function to extract value from context
- */
-// Ctx must stay covariant (see #234): the `lexer` macro constructs each token as
-// `Token[Name, ctx.type, Value]` and then widens them all into a single
-// `List[Token[?, Ctx, ?]]` (see Lexer.scala). That widening only type-checks if Ctx is
-// covariant. The `@uv` annotations below are safe despite Ctx also appearing in argument
-// position (`ctxManipulation`, `remapping`): `ctx.type` is a compile-time-only device to
-// tag which lexer a token belongs to — at runtime there is exactly one Ctx instance per
-// lexer, so the variance escape hatch is never actually exercised unsoundly.
 private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   @publicInBinary private[alpaca] info: TokenInfo,
   private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
