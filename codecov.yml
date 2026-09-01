@@ -1,0 +1,22 @@
+coverage:
+  status:
+    patch:
+      default:
+        flags:
+          - scala
+      kotlin:
+        flags:
+          - kotlin
+        # Report-only, like the MiMa binary-compat check: the Kotlin side just started being
+        # measured, so its first patch-coverage numbers reflect ktlint's one-time reformat of
+        # the whole plugin, not this PR's actual logic changes.
+        informational: true
+
+flags:
+  scala:
+    paths:
+      - src/
+  kotlin:
+    paths:
+      - ij-plugin/
+    carryforward: true
