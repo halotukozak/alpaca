@@ -32,7 +32,7 @@ private[parser] final case class Item(
 
   /** The symbol immediately after the dot, or the lookahead if at the end. */
 
-  lazy val nextSymbol: Symbol = production match
+  def nextSymbol: Symbol = production match
     case Production.NonEmpty(_, rhs, name) => rhs(dotPosition)
     case _: Production.Empty => throw AlgorithmError(show"$this is the last item, has no next symbol")
 
@@ -41,7 +41,7 @@ private[parser] final case class Item(
    *
    * @throws AlgorithmError if this is already the last item
    */
-  lazy val nextItem: Item =
+  def nextItem: Item =
     if isLastItem then throw AlgorithmError(show"$this already is the last item, cannot create any next one")
     else Item(production, dotPosition + 1, lookAhead)
 
