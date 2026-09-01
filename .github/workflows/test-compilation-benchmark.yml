@@ -2,6 +2,9 @@ name: Test Compilation Benchmark
 
 on:
   pull_request:
+    paths:
+      - "src/**"
+      - "build.mill"
 
 jobs:
   benchmark:
@@ -43,6 +46,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y hyperfine
 
+      # `jvm.test.compile` alone routinely takes 9-15 minutes on this repo (macro-heavy
+      # grammars like ScalaParser under test/), so `--runs 5` (the previous setting) meant
+      # 2 variants x 5 runs x a full clean rebuild each = 2+ hours per PR, most of it
+      # re-measuring a workload dominated by macro expansion, not noise. On a dedicated,
+      # single-tenant GitHub Actions runner a single clean measurement is already far less
+      # noisy than that repeated sampling was buying us. Scoped to the `jvm` platform only
+      # (native.test.compile would double the cost for a build shape we're not tracking here).
       - name: Run Benchmarks
         id: benchmark
         run: |
@@ -54,9 +64,9 @@ jobs:
             (
               cd "$dir"
 
-              hyperfine --runs 5 \
-                --prepare "./mill clean && (./mill jvm.compile native.compile || ./mill compile)" \
-                "./mill jvm.test.compile native.test.compile || ./mill test.compile" \
+              hyperfine --runs 1 \
+                --prepare "./mill clean && ./mill jvm.compile" \
+                "./mill jvm.test.compile" \
                 --export-json "../${dir}.json"
             )
             echo "::endgroup::"

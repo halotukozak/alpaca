@@ -76,10 +76,10 @@ private[parser] object State:
     firstSet: FirstSet,
   )(using DebugSettings,
   ): State =
-    @tailrec def loop(state: State, worklist: List[Item]): State = worklist match
+    @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
       case item :: rest =>
-        if item.isLastItem then loop(state + item, rest)
+        if item.isLastItem then loop(state + item, pending, rest)
         else
           item.nextSymbol match
             case nt: NonTerminal =>
@@ -89,9 +89,9 @@ private[parser] object State:
                 .getOrElse(nt, Nil)
                 .iterator
                 .flatMap(production => lookAheads.iterator.map(production.toItem))
-                .filterNot(newState.contains)
+                .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
                 .toList
-              loop(newState, newItems ::: rest)
-            case _: Terminal => loop(state + item, rest)
+              loop(newState, pending ++ newItems, newItems ::: rest)
+            case _: Terminal => loop(state + item, pending, rest)
 
-    loop(state, item :: Nil)
+    loop(state, Set.empty, item :: Nil)
