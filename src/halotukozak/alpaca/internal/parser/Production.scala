@@ -4,6 +4,7 @@ package internal
 package parser
 
 import halotukozak.alpaca.internal.{DebugSettings, NEL, Showable, ValidName}
+import halotukozak.mcodec.MCodec
 
 import scala.quoted.ToExprFactory
 
@@ -64,3 +65,19 @@ private[alpaca] object Production:
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   given Ordering[Production] = Ordering.by(_.hashCode)
+
+  // $COVERAGE-OFF$
+  private given MCodec[String | Null] = MCodec[String].nullable
+
+  // NonEmpty/Empty share one flat shape rather than a tagged union; rhs.isEmpty distinguishes them.
+  given MCodec[Production] =
+    MCodec
+      .derived[(lhs: String, rhs: List[Symbol], name: String | Null)]
+      .transform(
+        onWrite = {
+          case NonEmpty(lhs, rhs, name) => (lhs = lhs.name, rhs = rhs.toList, name = name)
+          case Empty(lhs, name) => (lhs = lhs.name, rhs = Nil, name = name)
+        },
+        onRead = _ => throw UnsupportedOperationException("Production's export codec is write-only"),
+      )
+// $COVERAGE-ON$

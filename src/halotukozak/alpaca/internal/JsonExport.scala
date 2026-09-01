@@ -5,6 +5,8 @@ import java.nio.file.{Files, Path}
 
 import halotukozak.mcodec.{Json, MCodec}
 
+import scala.util.control.NonFatal
+
 /**
  * Writes a compile-time grammar export (lexer tokens, parser productions/table) to disk as JSON,
  * gated by [[GrammarExportSettings]].
@@ -26,5 +28,5 @@ private[internal] object JsonExport:
           if path.getParent != null then Files.createDirectories(path.getParent)
           Files.writeString(path, content)
       catch
-        case e: Exception => System.err.println(s"[alpaca] failed to write grammar export to $path: $e")
+        case NonFatal(e) => System.err.println(s"[alpaca] failed to write grammar export to $path: $e")
 // $COVERAGE-ON$

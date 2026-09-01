@@ -5,6 +5,7 @@ package lexer
 
 import halotukozak.alpaca.internal.{Default, RuleOnly, Showable, ValidName}
 import halotukozak.alpaca.{LexerCtx, SepValue}
+import halotukozak.mcodec.MCodec
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.unchecked.uncheckedVariance as uv
@@ -28,14 +29,16 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Ctx
 /**
  * Information about a token definition.
  *
- * Contains the token's name, pattern, and a unique group name for regex matching.
+ * Contains the token's name, pattern, a unique group name for regex matching, and whether
+ * matches are dropped from the lexeme stream.
  *
  * @param name the token name
  * @param regexGroupName a unique name for the regex capture group
  * @param pattern the regex pattern that matches this token
+ * @param ignored whether matches of this token are dropped from the lexeme stream
  */
-//todo: should it contain info about ignored? for perf? https://github.com/halotukozak/alpaca/issues/231
-private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String) derives ToExprFactory
+private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String, ignored: Boolean)
+  derives ToExprFactory
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -48,16 +51,17 @@ private[lexer] object TokenInfo:
    *
    * @param name the token name
    * @param pattern the regex pattern
+   * @param ignored whether matches of this token are dropped from the lexeme stream
    * @param quotes the Quotes instance
    * @return a TokenInfo expression
    */
 // $COVERAGE-OFF$
-  def apply(name: String, pattern: String)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
+  def apply(name: String, pattern: String, ignored: Boolean)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (
       ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
-      TokenInfo(name, nextRegexGroupName(), pattern),
+      TokenInfo(name, nextRegexGroupName(), pattern, ignored),
     )
 
   /**
@@ -67,9 +71,18 @@ private[lexer] object TokenInfo:
    */
   private def nextRegexGroupName(): String = s"token${counter.getAndIncrement()}"
 
-  given Default[TokenInfo] = () => TokenInfo("", "", "")
+  given Default[TokenInfo] = () => TokenInfo("", "", "", ignored = false)
 
   given Showable[TokenInfo] = Showable.fromToString
+
+  // Excludes regexGroupName, an internal-only detail with no meaning to the export's consumer.
+  given MCodec[TokenInfo] =
+    MCodec
+      .derived[(name: String, pattern: String, ignored: Boolean)]
+      .transform(
+        onWrite = { case TokenInfo(name, _, pattern, ignored) => (name = name, pattern = pattern, ignored = ignored) },
+        onRead = _ => throw UnsupportedOperationException("TokenInfo's export codec is write-only"),
+      )
 // $COVERAGE-ON$
 /**
  * Base trait for all token types.
@@ -124,4 +137,4 @@ private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCt
 ) extends Token[Name, Ctx, Nothing]
 
 private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
-  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), identity)
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched, ignored = true), identity)

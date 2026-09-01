@@ -154,7 +154,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         .map(_.production)
         .tap: table =>
           logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
-        .tap(GrammarExport.maybeWrite(exportName, _))
+        .tap(JsonExport.maybeWrite(exportName, "productions", _))
 
       // Built once and reused by every findProduction call below, instead of once per call --
       // findProduction runs once per `.after`/`.before` reference in the grammar's conflict
@@ -244,7 +244,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           conflictResolutionTable,
         ).tap: parseTable =>
           logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv)
-        .tap(TableExport.maybeWrite(exportName, _))
+        .tap(JsonExport.maybeWrite(exportName, "table", _))
 
       val actionTable = Expr.ofList:
         table.map:
