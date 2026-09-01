@@ -8,12 +8,12 @@ package alpaca.internal
  *
  * @param exportDirectory optional directory to write `<name>.tokens.json` files into
  */
+// $COVERAGE-OFF$
 private[internal] final case class GrammarExportSettings(exportDirectory: Option[String])
 
 private[internal] object GrammarExportSettings:
   private final val DirectoryEnvVar = "ALPACA_GRAMMAR_EXPORT_DIR"
 
-  // $COVERAGE-OFF$
   // Read from an env var for the same reason as DebugSettings: -Xmacro-settings/
   // CompilationInfo.XmacroSettings is @experimental, and being @experimental is
   // contagious to every caller of the lexer/parser macros.

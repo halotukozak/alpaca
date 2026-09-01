@@ -66,13 +66,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
     case '[type p <: Parser[Ctx]; p] =>
       val ctxSymbol = parserSymbol.methodMember("ctx").head
       val parserName = parserSymbol.name.stripSuffix("$")
-      // Qualified by source file and line, like the lexer's export: the same parser name can
-      // recur across files (or even within one, at different scopes), and would otherwise
-      // collide in a shared export directory.
-      val exportName =
-        val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
-        val line = Position.ofMacroExpansion.startLine + 1
-        s"$sourceFileName.$parserName@L$line"
+      val exportName = exportId(parserName)
       val replaceRefs = new ReplaceRefs[quotes.type]
       val createLambda = new CreateLambda[quotes.type]
       val parserExtractor = new ParserExtractors[quotes.type, Ctx]

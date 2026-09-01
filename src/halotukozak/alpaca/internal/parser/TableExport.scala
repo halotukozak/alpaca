@@ -4,6 +4,9 @@ package internal
 package parser
 
 import alpaca.internal.parser.ParseAction.*
+import halotukozak.made.annotation.name
+import halotukozak.mcodec.MCodec
+import halotukozak.mcodec.annotation.flatten
 
 /**
  * Writes a parser's resolved LR(1) parse table to disk as JSON during macro
@@ -18,25 +21,24 @@ import alpaca.internal.parser.ParseAction.*
 private[parser] object TableExport:
 
 // $COVERAGE-OFF$
+  @flatten("type")
+  private enum ActionExport derives MCodec:
+    @name("shift") case Shift(state: Int)
+    @name("reduce") case Reduce(production: GrammarExport.ProductionExport)
+
+  private case class RowEntryExport(symbol: GrammarExport.SymbolExport, action: ActionExport) derives MCodec
+
   def maybeWrite(
     parserName: String,
     table: ParseTable,
   )(using settings: GrammarExportSettings,
   ): Unit =
-    settings.exportDirectory.foreach: dir =>
-      JsonExport.maybeWrite(dir, s"$parserName.table.json", toJson(table))
+    JsonExport.maybeWrite(parserName, "table", table.rows.toList.map(toExport))
 
-  private def toJson(table: ParseTable): String =
-    table.rows.map(toJson).mkString("[", ",", "]")
+  private def toExport(row: Map[Symbol, ParseAction]): List[RowEntryExport] =
+    row.iterator.map((symbol, action) => RowEntryExport(GrammarExport.toExport(symbol), toExport(action))).toList
 
-  private def toJson(row: Map[Symbol, ParseAction]): String =
-    row.iterator.map(toJson).mkString("[", ",", "]")
-
-  private def toJson(entry: (Symbol, ParseAction)): String =
-    val (symbol, action) = entry
-    s"""{"symbol":${GrammarExport.toJson(symbol)},"action":${toJson(action)}}"""
-
-  private def toJson(action: ParseAction): String = action match
-    case Shift(state) => s"""{"type":"shift","state":$state}"""
-    case Reduction(production) => s"""{"type":"reduce","production":${GrammarExport.toJson(production)}}"""
+  private def toExport(action: ParseAction): ActionExport = action match
+    case Shift(state) => ActionExport.Shift(state)
+    case Reduction(production) => ActionExport.Reduce(GrammarExport.toExport(production))
 // $COVERAGE-ON$

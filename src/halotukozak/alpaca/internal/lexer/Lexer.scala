@@ -31,14 +31,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   if cases.isEmpty then report.errorAndAbort("Lexer definition must contain at least one case")
 
-  val (tokens, infos, ignoredFlags) = cases.foldLeft(
-    (
-      tokens = List.empty[(expr: Expr[lexer.Token[?, Ctx, ?] & TokenRefn], name: ValidName)],
-      infos = List.empty[TokenInfo],
-      ignored = List.empty[Boolean],
-    ),
-  ):
-    case ((accTokens, accInfos, accIgnored), CaseDef(tree, None, body)) =>
+  type TokenEntry = (expr: Expr[lexer.Token[?, Ctx, ?] & TokenRefn], name: ValidName, info: TokenInfo, ignored: Boolean)
+
+  val tokens = cases.foldLeft(List.empty[TokenEntry]):
+    case (acc, CaseDef(tree, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = replaceRefs(
         (find = oldCtx.symbol, replace = newCtx),
         (find = tree.symbol, replace = '{ ${ newCtx.asExprOf[Ctx] }.lastRawMatched }.asTerm),
@@ -121,22 +117,21 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             List[(info: TokenInfo, ignored: Boolean, expr: Expr[lexer.Token[?, Ctx, ?]])],
           ](body)
 
-      val infos = triples.map(_.info)
-      val ignoredFlags = triples.map(_.ignored)
-      val tokens = triples.map(_.expr)
-
-      (
-        tokens = accTokens ::: tokens.map:
-          case '{ type name <: ValidName; type tokenTpe <: lexer.Token[name, Ctx, ?]; $token: tokenTpe } =>
-            (expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] }, name = ValidName.from[name])
-        ,
-        infos = accInfos ::: infos,
-        ignored = accIgnored ::: ignoredFlags,
-      )
+      acc ::: triples.map:
+        case (info, ignored, expr) =>
+          expr match
+            case '{ type name <: ValidName; type tokenTpe <: lexer.Token[name, Ctx, ?]; $token: tokenTpe } =>
+              (
+                expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] },
+                name = ValidName.from[name],
+                info = info,
+                ignored = ignored,
+              )
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
 
-  infos
+  tokens
+    .map(_.info)
     .groupBy(_.name)
     .iterator
     .filter(_._2.sizeIs > 1)
@@ -145,34 +140,25 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
         show"Token name \"$name\" is defined ${duplicates.size.toString} times. Combine the patterns into a single case using alternatives, e.g.: case x @ (\"pattern1\" | \"pattern2\") => Token[x]",
       )
 
-  val parsedRegexes = infos.map: info =>
-    RegexParser.parse(info.pattern) match
+  val parsedRegexes = tokens.map: token =>
+    RegexParser.parse(token.info.pattern) match
       case Right(regex) => regex
       case Left(err) => report.errorAndAbort(err.toString)
 
   SubsetChecker.checkRegexes(
-    for (info, regex) <- infos.zip(parsedRegexes)
-    yield (info.pattern, Subset.of(regex).withAnySuffix),
+    for (token, regex) <- tokens.zip(parsedRegexes)
+    yield (token.info.pattern, Subset.of(regex).withAnySuffix),
   )
 
+  // Symbol.spliceOwner is a synthetic "macro" method dotty introduces to host the transparent
+  // inline def's expansion; the val this `lexer{...}` call is actually bound to is one owner hop
+  // further up.
   GrammarExport.maybeWrite(
-    // Symbol.spliceOwner is a synthetic "macro" method that dotty introduces to host the
-    // transparent inline def's expansion; the val this `lexer{...}` call is actually bound
-    // to (e.g. `val CalcLexer = lexer{...}`) is always one owner hop further up. The source
-    // file name and line are prefixed too: the same val name (e.g. `CalcLexer`) can recur
-    // across multiple test/example files, or even within one file at different scopes (one
-    // at class level, another inside a test block), and would otherwise collide in a shared
-    // export directory, silently overwriting each other.
-    {
-      val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
-      val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
-      val line = Position.ofMacroExpansion.startLine + 1
-      s"$sourceFileName.$lexerName@L$line"
-    },
-    infos.zip(ignoredFlags).map((info, ignored) => (name = info.name, pattern = info.pattern, ignored = ignored)),
+    exportId(Symbol.spliceOwner.owner.name.stripSuffix("$")),
+    tokens.map(t => (name = t.info.name, pattern = t.info.pattern, ignored = t.ignored)),
   )
 
-  val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
+  val fields = tokens.map(t => (t.name, t.expr.asTerm.tpe))
   val types = Refined(
     TypeTree.of[Any],
     fields.map: (name, tpe) =>
@@ -182,8 +168,8 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   def selectDynamicImpl(fieldName: Expr[String])(using Quotes) = Match(
     '{ $fieldName: @switch }.asTerm,
-    tokens.map: (expr, name) =>
-      CaseDef(Literal(StringConstant(NameTransformer.encode(name))), None, expr.asTerm),
+    tokens.map: t =>
+      CaseDef(Literal(StringConstant(NameTransformer.encode(t.name))), None, t.expr.asTerm),
   ).asExprOf[lexer.Token[?, Ctx, ?]]
 
   (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
