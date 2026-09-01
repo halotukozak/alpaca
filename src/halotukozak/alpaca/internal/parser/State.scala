@@ -73,15 +73,18 @@ private[parser] object State:
     @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
       case item :: rest =>
-        if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
-          val newState = state + item
-          val lookAheads = item.nextTerminals(firstSet)
-          val newItems = productions.iterator
-            .filter(_.lhs == item.nextSymbol)
-            .flatMap(production => lookAheads.iterator.map(production.toItem))
-            .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
-            .toList
-          loop(newState, pending ++ newItems, newItems ::: rest)
-        else loop(state + item, pending, rest)
+        if item.isLastItem then loop(state + item, pending, rest)
+        else
+          val next = item.nextSymbol
+          if next.isInstanceOf[Terminal] then loop(state + item, pending, rest)
+          else
+            val newState = state + item
+            val lookAheads = item.nextTerminals(firstSet)
+            val newItems = productions.iterator
+              .filter(_.lhs == next)
+              .flatMap(production => lookAheads.iterator.map(production.toItem))
+              .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
+              .toList
+            loop(newState, pending ++ newItems, newItems ::: rest)
 
     loop(state, Set.empty, item :: Nil)
