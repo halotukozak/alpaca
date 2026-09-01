@@ -1,0 +1,22 @@
+<idea-plugin>
+  <id>com.halotukozak.alpaca.plugin</id>
+  <name>Alpaca</name>
+  <vendor>halotukozak</vendor>
+  <description><![CDATA[
+    IDE support for languages defined with the <a href="https://github.com/halotukozak/alpaca">Alpaca</a> lexer/parser library.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.halotukozak.alpaca.plugin.startup.AlpacaGrammarStartupActivity"/>
+    <projectConfigurable
+        parentId="tools"
+        instance="com.halotukozak.alpaca.plugin.settings.AlpacaSettingsConfigurable"
+        id="com.halotukozak.alpaca.plugin.settings.AlpacaSettingsConfigurable"
+        displayName="Alpaca"/>
+    <lang.syntaxHighlighterFactory
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory"/>
+  </extensions>
+</idea-plugin>
