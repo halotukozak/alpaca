@@ -47,8 +47,11 @@ private[parser] object State:
      * @param firstSet         the FIRST sets for lookahead computation
      * @return the new state
      */
-    def nextState(step: Symbol, productionsByLhs: Map[NonTerminal, List[Production]], firstSet: FirstSet)(
-      using DebugSettings,
+    def nextState(
+      step: Symbol,
+      productionsByLhs: Map[NonTerminal, List[Production]],
+      firstSet: FirstSet,
+    )(using DebugSettings,
     ): State =
       state.iterator
         .filter(item => !item.isLastItem && item.nextSymbol == step)
@@ -71,7 +74,8 @@ private[parser] object State:
     item: Item,
     productionsByLhs: Map[NonTerminal, List[Production]],
     firstSet: FirstSet,
-  )(using DebugSettings): State =
+  )(using DebugSettings,
+  ): State =
     @tailrec def loop(state: State, worklist: List[Item]): State = worklist match
       case Nil => state
       case item :: rest =>
