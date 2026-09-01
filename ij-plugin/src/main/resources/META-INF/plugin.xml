@@ -21,5 +21,11 @@
     <lang.parserDefinition
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
+    <lang.psiStructureViewFactory
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.structure.AlpacaStructureViewFactory"/>
+    <lang.foldingBuilder
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.folding.AlpacaFoldingBuilder"/>
   </extensions>
 </idea-plugin>
