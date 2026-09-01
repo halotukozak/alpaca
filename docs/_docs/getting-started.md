@@ -55,8 +55,8 @@ BrainFuck> has the eight standard BrainFuck commands plus repeat counts, named c
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var brackets: Int = 0,
-  var squareBrackets: Int = 0,
+  brackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:

@@ -6,6 +6,8 @@ package lexer
 import scala.annotation.tailrec
 import scala.reflect.NameTransformer
 
+// $COVERAGE-OFF$
+
 /**
  * Rewrites structural field-mutation syntax on a lexer context back into
  * functional updates, so that a `case class` context with immutable (`val`)
@@ -128,3 +130,5 @@ private[lexer] final class RewriteCtxMutations[Q <: Quotes](using val quotes: Q)
       case Block(Nil, e) => unapply(e)
       case Cast(e) => unapply(e)
       case _ => Some(t)
+
+// $COVERAGE-ON$

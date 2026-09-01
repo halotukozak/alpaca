@@ -238,10 +238,12 @@ trait LexerCtx extends Product, Selectable:
    * structural access inside a rule before it is compiled, so in practice
    * this is only a safety net; it should never be hit at runtime.
    */
+  // $COVERAGE-OFF$
   def applyDynamic(name: String)(@unused args: Any*): Any =
     throw new UnsupportedOperationException(
       s"Mutating lexer context field '$name' outside a lexer rule is not supported: $productPrefix is immutable.",
     )
+  // $COVERAGE-ON$
 
 object LexerCtx:
 
