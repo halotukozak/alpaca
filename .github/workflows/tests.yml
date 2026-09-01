@@ -35,6 +35,30 @@ jobs:
       - name: Scalafmt
         run: ./mill mill.scalalib.scalafmt/checkFormatAll
 
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Cache Mill dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+      # Doc generation is only wired up for the jvm module.
+      - name: Generate docs
+        run: ./mill jvm.docJar
+
   discover:
     name: Discover platforms
     runs-on: ubuntu-latest
@@ -101,7 +125,7 @@ jobs:
         run: ./mill ${{ matrix.platform }}.test.compile
       - name: Run tests
         run: ./mill ${{ matrix.platform }}.test
-      # Coverage/docs are only instrumented on the jvm module (ScoverageModule).
+      # Coverage is only instrumented on the jvm module (ScoverageModule).
       - name: Code coverage
         if: matrix.platform == 'jvm'
         run: ./mill jvm.scoverage.xmlCoberturaReport
@@ -112,6 +136,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: halotukozak-com/${{ github.event.repository.name }}
           fail_ci_if_error: false
-      - name: Generate docs
-        if: matrix.platform == 'jvm'
-        run: ./mill jvm.docJar
