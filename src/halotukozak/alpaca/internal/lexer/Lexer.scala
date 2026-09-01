@@ -159,11 +159,10 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
     // Symbol.spliceOwner is a synthetic "macro" method that dotty introduces to host the
     // transparent inline def's expansion; the val this `lexer{...}` call is actually bound
     // to (e.g. `val CalcLexer = lexer{...}`) is always one owner hop further up. The source
-    // file name and line are prefixed too, since the same val name (e.g. `CalcLexer`) is
-    // reused across multiple test/example files -- and even within one file, when two
-    // `lexer{...}` calls bind to a same-named val in different scopes (e.g. one at class
-    // level, another inside a test block) -- and would otherwise collide in a shared export
-    // directory, silently overwriting each other.
+    // file name and line are prefixed too: the same val name (e.g. `CalcLexer`) can recur
+    // across multiple test/example files, or even within one file at different scopes (one
+    // at class level, another inside a test block), and would otherwise collide in a shared
+    // export directory, silently overwriting each other.
     {
       val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
       val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")

@@ -10,11 +10,10 @@ import alpaca.internal.parser.ParseAction.*
  * expansion, gated by [[GrammarExportSettings]] (`ALPACA_GRAMMAR_EXPORT_DIR`).
  * No-op unless that directory is configured.
  *
- * Unlike the raw productions written by [[GrammarExport]], this table is
- * already conflict-resolved -- shift/reduce and reduce/reduce conflicts have
- * been settled via the grammar's `resolutions` -- so a consumer can drive it
- * directly as a shift-reduce automaton without re-deriving precedence or
- * associativity from the bare grammar.
+ * Unlike the raw productions written by [[GrammarExport]], this table is already
+ * conflict-resolved: shift/reduce and reduce/reduce conflicts have been settled via the
+ * grammar's `resolutions`, so a consumer can drive it directly as a shift-reduce automaton
+ * without re-deriving precedence or associativity from the bare grammar.
  */
 private[parser] object TableExport:
 
