@@ -6,7 +6,6 @@ import halotukozak.commons.*
 import halotukozak.made.*
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.targetName
 
 /**
  * A type class for converting values to their string representation.
@@ -82,11 +81,6 @@ private[internal] object Showable:
     show"[${quotes.reflect.Printer.TypeReprShortCode.show(tpe)}](${quotes.reflect.Printer.TypeReprStructure.show(tpe)})"
 
   given [T] => (quotes: Quotes) => Showable[Type[T]] =
-    import quotes.reflect.*
-    summon[Showable[TypeRepr]].transform(TypeRepr.of(using _))
-
-  @targetName("given_Type_bounds")
-  given [T] => (quotes: Quotes) => Showable[Type[? <: T]] =
     import quotes.reflect.*
     summon[Showable[TypeRepr]].transform(TypeRepr.of(using _))
 
