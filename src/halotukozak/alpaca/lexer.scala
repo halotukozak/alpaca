@@ -241,7 +241,8 @@ trait LexerCtx extends Product, Selectable:
   // $COVERAGE-OFF$
   def applyDynamic(name: String)(@unused args: Any*): Any =
     throw new UnsupportedOperationException(
-      s"Mutating lexer context field '$name' outside a lexer rule is not supported: $productPrefix is immutable.",
+      s"Cannot mutate lexer context field '$name' on $productPrefix: either this assignment is outside a " +
+        "lexer rule, or the lexer macro failed to rewrite it into a functional update.",
     )
   // $COVERAGE-ON$
 

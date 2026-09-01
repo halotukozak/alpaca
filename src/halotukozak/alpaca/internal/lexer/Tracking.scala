@@ -35,11 +35,12 @@ trait Tracking[F]:
 object Tracking:
 
   /**
-   * Derives the engine hook run after every token match for a context type:
-   * one [[Tracking]] update per case field whose type provides a `given`,
+   * Derives the hook run after every token match for a context type: one
+   * [[Tracking]] update per case field whose type provides a `given`,
    * followed by the fixed step every context needs regardless of what it
-   * tracks -- apply the rule body's context changes, advance the cursor,
-   * record the lexeme (see [[advance]]).
+   * tracks -- apply the rule body's context changes and record the lexeme
+   * (see [[materializeImpl]]). Cursor advancement itself already happened
+   * earlier, in `Tokenization`, before this hook runs.
    */
   @publicInBinary inline private[alpaca] def materialize[Ctx <: LexerCtx: Mirror.ProductOf as m]
     : (Token[?, Ctx, ?], String, Ctx) => Ctx =
@@ -65,11 +66,12 @@ object Tracking:
           case _ => rest
 
   /**
-   * Named (not anonymous-per-inline-site) so [[derive]] stays cheap to inline.
-   * `derive` is itself `inline`, so this gets constructed from wherever `lexer`
-   * is ultimately called -- it can't be `private`/`private[alpaca]` (unlike a
-   * plain member, `@publicInBinary` isn't allowed on a class), so it's a
-   * plain, unqualified class instead; it's still effectively internal since
+   * Named (not anonymous-per-inline-site) so [[materialize]] stays cheap to
+   * inline. `materialize` is itself `inline`, so this gets constructed from
+   * wherever `lexer` is ultimately called -- it can't be `private`/
+   * `private[alpaca]` (unlike a plain member, `@publicInBinary` isn't allowed
+   * on a class), so it's a plain, unqualified class instead; it's still
+   * effectively internal since
    * `internal.lexer` is never exported wholesale, only specific symbols are.
    *
    * All tracked fields are folded into a single `productIterator` snapshot,
