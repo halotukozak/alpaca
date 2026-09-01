@@ -35,9 +35,6 @@ private[parser] object FirstSet:
       case ((acc, grewSoFar), production) =>
         val updated = addImports(acc, production)
         (updated, grewSoFar || (updated ne acc))
-    // A changed flag threaded through the round avoids a full structural Map == Map
-    // comparison every round (#509); addImports only ever grows a set or leaves it
-    // untouched, so reference inequality of the map is enough to detect growth.
     if grew then loop(productions, newFirstSet) else newFirstSet
 
   @tailrec
