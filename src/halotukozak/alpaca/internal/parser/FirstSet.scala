@@ -31,18 +31,24 @@ private[parser] object FirstSet:
 
   @tailrec
   private def loop(productions: List[Production], firstSet: FirstSet): FirstSet =
-    val newFirstSet = productions.foldLeft(firstSet)(addImports)
-    if firstSet == newFirstSet then newFirstSet
-    else loop(productions, newFirstSet)
+    val (newFirstSet, grew) = productions.foldLeft((firstSet, false)):
+      case ((acc, grewSoFar), production) =>
+        val updated = addImports(acc, production)
+        (updated, grewSoFar || (updated ne acc))
+    if grew then loop(productions, newFirstSet) else newFirstSet
 
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production): FirstSet =
     production.runtimeChecked match
       case Production.NonEmpty(lhs, NEL(head: Terminal, _), name) =>
-        firstSet.updated(lhs, firstSet(lhs) + head)
+        val current = firstSet(lhs)
+        if current.contains(head) then firstSet else firstSet.updated(lhs, current + head)
 
       case Production.NonEmpty(lhs, NEL(head: NonTerminal { type IsEmpty = false }, tail), name) =>
-        val newFirstSet = firstSet.updated(lhs, firstSet(lhs) ++ (firstSet(head) - Symbol.Empty))
+        val current = firstSet(lhs)
+        val imported = firstSet(head) - Symbol.Empty
+        val newFirstSet =
+          if imported.subsetOf(current) then firstSet else firstSet.updated(lhs, current ++ imported)
 
         val production = tail match
           case head +: next => Production.NonEmpty(lhs, NEL(head, next*))
@@ -53,7 +59,8 @@ private[parser] object FirstSet:
         else newFirstSet
 
       case Production.Empty(lhs, name) =>
-        firstSet.updated(lhs, firstSet(lhs) + Symbol.Empty)
+        val current = firstSet(lhs)
+        if current.contains(Symbol.Empty) then firstSet else firstSet.updated(lhs, current + Symbol.Empty)
 
   extension (firstSet: FirstSet)
 

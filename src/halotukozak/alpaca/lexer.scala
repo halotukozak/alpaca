@@ -2,18 +2,17 @@ package halotukozak
 package alpaca
 
 import alpaca.internal.*
-import alpaca.internal.lexer.{IgnoredToken as InternalIgnoredToken, Token as _, *}
-import alpaca.internal.lexer.Token as LexerToken
+import alpaca.internal.lexer.{IgnoredToken as _, Token as _, *}
 
 import scala.NamedTuple.NamedTuple
-import scala.annotation.{compileTimeOnly, publicInBinary}
+import scala.annotation.{compileTimeOnly, publicInBinary, unused}
 
 /**
  * Public re-exports of lexer types users are expected to reference directly
  *  (custom `given` instances, tracking traits, large-file tokenization) even
  *  though they are implemented under `internal.lexer`.
  */
-export alpaca.internal.lexer.{ErrorHandling, LazyReader, LineTracking, OnTokenMatch, PositionTracking}
+export alpaca.internal.lexer.{Column, ErrorHandling, LazyReader, Line, Tracking}
 
 /**
  * Creates a lexer from a DSL-based definition.
@@ -32,7 +31,6 @@ export alpaca.internal.lexer.{ErrorHandling, LazyReader, LineTracking, OnTokenMa
  *
  * @tparam Ctx the global context type, defaults to [[LexerCtx.Default]]
  * @param rules the lexer rules as a partial function
- * @param betweenStages implicit OnTokenMatch for context updates
  * @param errorHandling implicit ErrorHandling for custom error recovery
  * @param empty implicit Empty instance to create the initial context
  * @return a Tokenization instance that can tokenize input strings
@@ -42,15 +40,14 @@ transparent inline def lexer[Ctx <: LexerCtx](
 )(
   inline rules: Ctx ?=> LexerDefinition[Ctx],
 )(using
-  betweenStages: OnTokenMatch[Ctx],
-  m: Mirror.Of[Ctx],
+  m: Mirror.ProductOf[Ctx],
   errorHandling: ErrorHandling[Ctx],
   empty: Empty[Ctx],
 ): Tokenization[Ctx] { type LexemeFields = NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes] } =
   ${
     lexerImpl[Ctx, NamedTuple[m.MirroredElemLabels, m.MirroredElemTypes]](
       '{ rules },
-      '{ betweenStages },
+      '{ Tracking.materialize[Ctx] },
       '{ errorHandling },
       '{ empty },
     )
@@ -131,8 +128,54 @@ object Token:
   def apply[Name <: ValidName](value: Any)(using ctx: LexerCtx): Token[Name, ctx.type, value.type] =
     new Token[Name, ctx.type, value.type]
 
-/** Propagates the lexer context through the DSL so that token constructors can access it implicitly. */
-transparent inline def ctx(using c: LexerCtx): c.type = c
+/**
+ * Propagates the lexer context through the DSL so that token constructors and
+ * rule bodies can access it implicitly.
+ *
+ * The returned type is the concrete context type `C` refined with a getter
+ * and a setter for every case field that doesn't already have a real setter,
+ * e.g. for `case class Ctx(count: Int)`: `C { def count: Int; def count_=(v:
+ * Int): Unit }`. This is what lets `ctx.count += 1` type-check even when
+ * `count` is an immutable `val` — the real getter always wins over the
+ * structural one, but the structural setter is used since there is no real
+ * one. The `lexer` macro then rewrites every such structural assignment back
+ * into a `copy` (see [[RewriteCtxMutations]]) before the rule is compiled, so
+ * the structural setter is never actually invoked at runtime for a `case
+ * class` context: this type exists purely to make the mutation-looking
+ * syntax type-check. Contexts that still declare `var` fields are
+ * unaffected: the real `var` setter shadows the structural one and the
+ * assignment mutates in place, exactly as before, and in fact never gains a
+ * refinement member in the first place.
+ *
+ * `C` is inferred as a fresh, unbound type parameter from whatever context
+ * function currently binds `c` — deliberately *not* `c.type`: refining the
+ * singleton type of the specific enclosing lambda parameter, rather than the
+ * nominal class `C`, is what a `lexer` rule's own macro (which tears the
+ * rule apart and rebuilds its pieces as fresh lambdas — see `Lexer.scala`)
+ * empirically stumbles on downstream, even though the two only differ in
+ * which stable path they're attached to.
+ */
+transparent inline def ctx[C <: LexerCtx](using c: C): C = ${ ctxImpl[C]('c) }
+
+// $COVERAGE-OFF$
+private def ctxImpl[C <: LexerCtx: Type](c: Expr[C])(using quotes: Quotes): Expr[C] =
+  import quotes.reflect.*
+
+  val ctxTpe = TypeRepr.of[C].widen
+
+  val fields = ctxTpe.typeSymbol.caseFields.iterator
+    .filterNot(_.flags.is(Flags.Mutable))
+    .map(f => (f.name, ctxTpe.memberType(f)))
+
+  val refined = fields.foldLeft(TypeRepr.of[C]):
+    case (acc, (name, tpe)) =>
+      val withGetter = Refinement(acc, name, tpe)
+      Refinement(withGetter, s"${name}_=", MethodType(List("v"))(_ => List(tpe), _ => TypeRepr.of[Unit]))
+
+  refined.asType match
+    case '[type r <: C; r] => '{ $c.asInstanceOf[r] }
+
+// $COVERAGE-ON$
 
 /**
  * Trait for the global context used during tokenization.
@@ -141,7 +184,7 @@ transparent inline def ctx(using c: LexerCtx): c.type = c
  * position in the input, the last matched token, and the remaining text to process.
  * Users can extend this trait to add custom state tracking.
  */
-trait LexerCtx extends Product:
+trait LexerCtx extends Product, Selectable:
   /**
    * The last lexeme that was created.
    * @note This is for internal use only and should not be accessed directly.
@@ -172,42 +215,38 @@ trait LexerCtx extends Product:
    */
   final def remainingText: CharSequence = text
 
+  /**
+   * Propagates the engine-internal bookkeeping fields above from `prev` onto
+   * `this`, e.g. after a `copy()` produced a fresh instance for an immutable
+   * context field update. Used by macro-generated code (see `ctx` in
+   * `lexer.scala` and [[alpaca.internal.lexer.Tracking.Derived]]); user code
+   * never needs to call this.
+   *
+   * @note This is for internal use only and should not be called directly.
+   */
+  @publicInBinary
+  private[alpaca] def carryEngineStateFrom(prev: LexerCtx): this.type =
+    text = prev.text
+    lastRawMatched = prev.lastRawMatched
+    lastLexeme = prev.lastLexeme
+    this
+
+  /**
+   * Structural fallback for the getter/setter refinement that `ctx` (see
+   * below) types itself with, so that `ctx.field += 1` type-checks even when
+   * `field` is an immutable `val`. The `lexer` macro rewrites away every such
+   * structural access inside a rule before it is compiled, so in practice
+   * this is only a safety net; it should never be hit at runtime.
+   */
+  // $COVERAGE-OFF$
+  def applyDynamic(name: String)(@unused args: Any*): Any =
+    throw new UnsupportedOperationException(
+      s"Cannot mutate lexer context field '$name' on $productPrefix: either this assignment is outside a " +
+        "lexer rule, or the lexer macro failed to rewrite it into a functional update.",
+    )
+  // $COVERAGE-ON$
+
 object LexerCtx:
-
-  /**
-   * Automatic Copyable instance for any GlobalCtx that is a Product (case class).
-   *
-   * @tparam Ctx the context type
-   */
-  given [Ctx <: LexerCtx & Product: Mirror.ProductOf] => Copyable[Ctx] =
-    Copyable.derived
-
-  /**
-   * Default OnTokenMatch implementation that updates the context after each match.
-   *
-   * This implementation:
-   * - Updates lastRawMatched with the matched text
-   * - Creates a new Lexeme for defined tokens
-   * - Advances the text position
-   * - Applies any context modifications
-   */
-  given OnTokenMatch[LexerCtx]:
-    private val fieldNameCache = new java.util.concurrent.ConcurrentHashMap[Class[?], Array[String]]
-
-    override def apply(token: LexerToken[?, LexerCtx, ?], raw: String, ctx: LexerCtx): Unit = token match
-      case DefinedToken(info, modifyCtx, remapping) =>
-        modifyCtx(ctx)
-        val fieldNames = fieldNameCache.computeIfAbsent(ctx.getClass, _ => ctx.productElementNames.toArray)
-        ctx.lastLexeme = Lexeme(
-          name = info.name,
-          value = remapping(ctx),
-          text = raw,
-          fieldNames = fieldNames,
-          fieldValues = ctx.productIterator.toArray,
-        )
-
-      case InternalIgnoredToken(_, modifyCtx) =>
-        modifyCtx(ctx)
 
   /** Default error handler for any [[LexerCtx]] that throws on the first unrecognised character. */
   given ErrorHandling[LexerCtx] = ctx =>
@@ -222,24 +261,24 @@ object LexerCtx:
   final case class Empty() extends LexerCtx
 
   /**
-   * The default lexer context with position and line tracking.
-   *
-   * This context tracks:
-   * - The current column position within the line (1-based, resets on newlines)
-   * - The current line number (1-based)
+   * The default lexer context, composed of the [[Column]] and [[Line]]
+   * tracking fragments.
    *
    * This is the most commonly used context and provides useful information
    * for error reporting. The `text` field is inherited from [[LexerCtx]].
+   *
+   * `position` and `line` are immutable `val`s of a subtype of `Int`:
+   * [[Tracking.materialize]] finds each fragment's `given Tracking` and threads a
+   * fresh `copy` of this case class through the lexer rather than mutating a
+   * field in place. Read them as plain `Int`s (`ctx.line`, `ctx.position`).
    *
    * @param position the current column position within the line (1-based)
    * @param line     the current line number (1-based)
    */
   final case class Default(
-    var position: Int = 1,
-    var line: Int = 1,
-  ) extends LexerCtx,
-      PositionTracking,
-      LineTracking
+    position: Column = Column.Start,
+    line: Line = Line.Start,
+  ) extends LexerCtx
 
   object Default:
     /** Default error handler for [[Default]] that includes line and position information in the error message. */

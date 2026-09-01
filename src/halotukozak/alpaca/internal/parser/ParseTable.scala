@@ -79,12 +79,13 @@ private[parser] object ParseTable:
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
     : ParseTable =
     val firstSet = FirstSet(productions)
+    val productionsByLhs = productions.groupBy(_.lhs)
     var currStateId = 0
     val initialState = State.fromItem(
-      State.empty,
-      productions.find(_.lhs == parser.Symbol.Start).get.toItem(),
-      productions,
-      firstSet,
+      state = State.empty,
+      item = productionsByLhs(parser.Symbol.Start).head.toItem(),
+      productionsByLhs = productionsByLhs,
+      firstSet = firstSet,
     )
     val states = mutable.ArrayBuffer(initialState)
     val stateIndex = mutable.HashMap(initialState -> 0)
@@ -125,7 +126,7 @@ private[parser] object ParseTable:
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
       for (stepSymbol, items) <- currState.itemsByNextSymbol do
-        val newState = State.nextState(items, productions, firstSet)
+        val newState = State.nextState(items, productionsByLhs, firstSet)
 
         val stateId = stateIndex.getOrElseUpdate(
           newState, {

@@ -25,6 +25,14 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   val name: ValidName | Null
 
   /**
+   * Caches the case-class-derived hash instead of recomputing it on every call. Used by
+   * [[State]]'s item `Ordering` as a tie-breaker (see #507) -- unlike a per-instance counter,
+   * it stays consistent with `equals` even if two `Production` instances with identical fields
+   * are constructed separately.
+   */
+  override val hashCode: Int = (lhs, rhs, name).hashCode()
+
+  /**
    * Converts this production to an LR(0) item with a given lookahead.
    *
    * @param lookAhead the lookahead terminal (defaults to EOF)
@@ -51,3 +59,5 @@ private[alpaca] object Production:
     case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
+
+  given Ordering[Production] = Ordering.by(_.hashCode)

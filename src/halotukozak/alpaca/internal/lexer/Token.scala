@@ -15,10 +15,15 @@ import scala.quoted.{Quotes, ToExprFactory}
  * Type alias for context manipulation functions.
  *
  * These functions are used to update the lexer context as tokens are matched.
+ * The updated context is returned rather than mutated in place, so that user
+ * contexts can be immutable `case class`es: the `lexer` macro rewrites every
+ * `ctx.field = ...` / `ctx.field += ...` inside a rule into a `copy` and threads
+ * the result through here. Contexts that still declare `var` fields keep working
+ * unchanged (the assignment mutates in place and the same instance is returned).
  *
  * @tparam Ctx the global context type
  */
-private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
+private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Ctx
 
 /**
  * Information about a token definition.
@@ -85,26 +90,6 @@ sealed trait Token[+Name <: ValidName, +Ctx <: LexerCtx, +Value]:
   /** Function to update the context when this token is matched. */
   private[lexer] val ctxManipulation: CtxManipulation[Ctx @uv]
 
-/**
- * A token that produces a value when matched.
- *
- * This is the main token type used in the lexer. It can extract a value
- * from the matched text using a remapping function.
- *
- * @tparam Name the token name type
- * @tparam Ctx the global context type
- * @tparam Value the value type to extract
- * @param info token information
- * @param ctxManipulation function to update context
- * @param remapping function to extract value from context
- */
-// Ctx must stay covariant (see #234): the `lexer` macro constructs each token as
-// `Token[Name, ctx.type, Value]` and then widens them all into a single
-// `List[Token[?, Ctx, ?]]` (see Lexer.scala). That widening only type-checks if Ctx is
-// covariant. The `@uv` annotations below are safe despite Ctx also appearing in argument
-// position (`ctxManipulation`, `remapping`): `ctx.type` is a compile-time-only device to
-// tag which lexer a token belongs to — at runtime there is exactly one Ctx instance per
-// lexer, so the variance escape hatch is never actually exercised unsoundly.
 private[alpaca] final case class DefinedToken[Name <: ValidName, +Ctx <: LexerCtx, +Value](
   @publicInBinary private[alpaca] info: TokenInfo,
   private[lexer] ctxManipulation: CtxManipulation[Ctx @uv],
@@ -139,4 +124,4 @@ private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCt
 ) extends Token[Name, Ctx, Nothing]
 
 private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
-  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), identity)
