@@ -12,8 +12,10 @@ package parser
 private[parser] object GrammarExport:
 
 // $COVERAGE-OFF$
-  def maybeWrite(parserName: String, productions: List[Production])(
-    using settings: GrammarExportSettings,
+  def maybeWrite(
+    parserName: String,
+    productions: List[Production],
+  )(using settings: GrammarExportSettings,
   ): Unit =
     settings.exportDirectory.foreach: dir =>
       JsonExport.maybeWrite(dir, s"$parserName.productions.json", toJson(productions))

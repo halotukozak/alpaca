@@ -18,8 +18,10 @@ import alpaca.internal.parser.ParseAction.*
 private[parser] object TableExport:
 
 // $COVERAGE-OFF$
-  def maybeWrite(parserName: String, table: ParseTable)(
-    using settings: GrammarExportSettings,
+  def maybeWrite(
+    parserName: String,
+    table: ParseTable,
+  )(using settings: GrammarExportSettings,
   ): Unit =
     settings.exportDirectory.foreach: dir =>
       JsonExport.maybeWrite(dir, s"$parserName.table.json", toJson(table))
