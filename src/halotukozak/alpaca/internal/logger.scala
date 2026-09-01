@@ -6,8 +6,7 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 
 private[internal] object logger:
-  // noinspection AccessorLikeMethodIsUnit
-  inline def toFile(path: String, replace: Boolean)(content: Shown)(using debugSettings: DebugSettings): Unit =
+  inline def toFile(path: String, replace: Boolean)(content: => Shown)(using debugSettings: DebugSettings): Unit =
     debugSettings.debugDirectory.foreach: dir =>
       val file = Path.of(dir).resolve(path)
       if replace then this.replace(file)(content) else this.append(file)(content)
