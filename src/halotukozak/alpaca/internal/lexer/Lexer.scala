@@ -13,7 +13,7 @@ import scala.reflect.NameTransformer
 // $COVERAGE-OFF$
 def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   rules: Expr[Ctx ?=> LexerDefinition[Ctx]],
-  betweenStages: Expr[OnTokenMatch[Ctx]],
+  onTokenMatch: Expr[(Token[?, Ctx, ?], String, Ctx) => Ctx],
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
@@ -25,6 +25,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   val compileNameAndPattern = new CompileNameAndPattern[quotes.type]
   val createLambda = new CreateLambda[quotes.type]
   val replaceRefs = new ReplaceRefs[quotes.type]
+  val rewriteCtxMutations = new RewriteCtxMutations[quotes.type]
 
   val Lambda(oldCtx :: Nil, Lambda(_, Match(_, cases: List[CaseDef]))) = rules.asTerm.underlying.runtimeChecked
 
@@ -39,7 +40,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
     case ((accTokens, accInfos), CaseDef(tree, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = replaceRefs(
         (find = oldCtx.symbol, replace = newCtx),
-        (find = tree.symbol, replace = Select.unique(newCtx, "lastRawMatched")),
+        (find = tree.symbol, replace = '{ ${ newCtx.asExprOf[Ctx] }.lastRawMatched }.asTerm),
       )
 
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
@@ -73,21 +74,25 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                 case '[result] =>
                   val remapping = createLambda[Ctx => result]:
                     case (methSym, (newCtx: Term) :: Nil) =>
-                      replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
+                      val withNewCtx = replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
+                      rewriteCtxMutations(newCtx.symbol)(withNewCtx)(methSym)
                   (tokenInfo, '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) })
             case (_, tokenInfo) =>
               raiseShouldNeverBeCalled[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])](tokenInfo)
 
-      val (infos, tokens) = extractSimple('{ _ => () })
+      val (infos, tokens) = extractSimple('{ (c: Ctx) => c })
         .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
           body match
             case Block(statements, expr) =>
               val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
                 case (methSym, (newCtx: Term) :: Nil) =>
-                  replaceWithNewCtx(newCtx).transformTerm(
+                  val ctxVar = Symbol.newVal(methSym, "$ctx", TypeRepr.of[Ctx], Flags.Mutable, Symbol.noSymbol)
+                  val withNewCtx = replaceWithNewCtx(Ref(ctxVar)).transformTerm(
                     Block(statements.map(_.changeOwner(methSym)), Literal(UnitConstant())),
                   )(methSym)
+                  val rewritten = rewriteCtxMutations(ctxVar)(withNewCtx)(methSym)
+                  Block(List(ValDef(ctxVar, Some(newCtx))), Block(List(rewritten), Ref(ctxVar)))
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])]](body))
@@ -143,7 +148,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
       '{
         {
-          new Tokenization[Ctx](using $betweenStages, $errorHandling, $empty):
+          new Tokenization[Ctx]($onTokenMatch)(using $errorHandling, $empty):
             @publicInBinary
             override private[alpaca] val tokens: List[lexer.Token[?, Ctx, ?]] = $tokensExpr
 

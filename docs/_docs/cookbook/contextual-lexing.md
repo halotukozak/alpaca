@@ -2,7 +2,7 @@
 
 This guide covers stateful tokenization: tracking nesting depth, maintaining counters, passing information from the lexer to the parser, and handling errors gracefully.
 
-**What you'll learn:** custom `LexerCtx`, `ParserCtx`, the `OnTokenMatch` hook, `ErrorHandling` strategies, and how lexer context flows into parser rules.
+**What you'll learn:** custom `LexerCtx`, `ParserCtx`, tracking fragments, `ErrorHandling` strategies, and how lexer context flows into parser rules.
 
 ## Tracking State During Lexing
 
@@ -12,8 +12,8 @@ The BrainFuck> lexer tracks bracket depth to catch mismatched brackets at lex ti
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var brackets: Int = 0,
-  var squareBrackets: Int = 0,
+  brackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -71,22 +71,22 @@ object BrainParser extends Parser:
   val FunctionCall: Rule[BrainAST] = rule:
     case (BrainLexer.functionName(name), BrainLexer.functionCall(_)) =>
       // name.value: String -- the function name
-      // name.position: Int -- 1-based column within the current line (if lexer uses PositionTracking)
-      // name.line: Int -- line number (if lexer uses LineTracking)
+      // name.position: Int -- 1-based column within the current line (if the context has a Column field)
+      // name.line: Int -- line number (if the context has a Line field)
       BrainAST.FunctionCall(name.value)
 ```
 
-To get position and line numbers, extend your context with the tracking traits:
+To get position and line numbers, add `Column` and `Line` fields to your context:
 
 ```scala
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var brackets: Int = 0,
-  var squareBrackets: Int = 0,
-  var position: Int = 1,
-  var line: Int = 1,
-) extends LexerCtx with PositionTracking with LineTracking
+  brackets: Int = 0,
+  squareBrackets: Int = 0,
+  position: Column = Column.Start,
+  line: Line = Line.Start,
+) extends LexerCtx
 ```
 
 ## Parser-Level Context
@@ -165,7 +165,7 @@ This is simpler and often sufficient. The BrainFuck lexer uses this approach -- 
 ## Data Flow Summary
 
 1. **Input** flows into the lexer
-2. **`OnTokenMatch`** updates the `LexerCtx` after every match
+2. **The post-match update** advances tracking fields and applies rule-body changes to the `LexerCtx` after every match
 3. **`Lexeme`s** are produced, each carrying a context snapshot
 4. **`List[Lexeme]`** flows into the parser
 5. **`ParserCtx`** is initialized and updated as rules are reduced

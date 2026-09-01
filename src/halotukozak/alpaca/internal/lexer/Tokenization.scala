@@ -3,7 +3,7 @@ package alpaca
 package internal
 package lexer
 
-import alpaca.internal.lexer.ErrorHandling.Strategy
+import halotukozak.alpaca.internal.lexer.ErrorHandling.Strategy
 import halotukozak.regex.TokenMatcher
 
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
@@ -19,10 +19,8 @@ import scala.collection.mutable
  *
  * @tparam Ctx the global context type
  */
-transparent abstract class Tokenization[Ctx <: LexerCtx](
-  using betweenStages: OnTokenMatch[Ctx],
-  errorHandling: ErrorHandling[Ctx],
-  empty: Empty[Ctx],
+transparent abstract class Tokenization[Ctx <: LexerCtx: {ErrorHandling as errorHandling, Empty as empty}](
+  onTokenMatch: (Token[?, Ctx, ?], String, Ctx) => Ctx,
 ) extends Selectable:
   type Fields <: AnyNamedTuple
   type LexemeFields <: AnyNamedTuple
@@ -53,7 +51,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
    * @return a tuple of (ctx, lexemes) where ctx is the final lexer context and lexemes is the list of matched tokens
    */
   final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
-    val globalCtx = empty()
+    var globalCtx = empty()
     globalCtx.text = OffsetCharSequence(input)
 
     val acc = mutable.ListBuffer.empty[Lexeme]
@@ -98,7 +96,7 @@ transparent abstract class Tokenization[Ctx <: LexerCtx](
               (null, null)
 
       if token != null && matched != null then
-        betweenStages(token, matched, globalCtx)
+        globalCtx = onTokenMatch(token, matched, globalCtx)
         if token.isInstanceOf[DefinedToken[?, Ctx, ?]] then acc.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
 
     (globalCtx, acc.toList)

@@ -38,7 +38,7 @@ Pattern guards (`case "regex" if condition =>`) are not supported in lexer rules
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var squareBrackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -97,7 +97,7 @@ The default strategy throws a `RuntimeException`:
 Unexpected character at line 1, position 5: '@'
 ```
 
-With `LexerCtx.Default`, the error message includes line and position. With `LexerCtx.Empty` or a custom context without tracking, it shows only the character.
+With `LexerCtx.Default`, the error message includes line and position. With `LexerCtx.Empty` or a custom context without `Column`/`Line` fields, it shows only the character.
 
 ### Error Handling Strategies
 
@@ -114,10 +114,10 @@ You can provide a custom `ErrorHandling` instance for your context type. Four st
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var squareBrackets: Int = 0,
-  var position: Int = 1,
-  var line: Int = 1,
-) extends LexerCtx with PositionTracking with LineTracking
+  squareBrackets: Int = 0,
+  position: Column = Column.Start,
+  line: Line = Line.Start,
+) extends LexerCtx
 
 // Custom error handler: report position and throw
 given ErrorHandling[BrainLexContext] = ctx =>
@@ -141,4 +141,4 @@ Note that the BrainFuck lexer from [Getting Started](getting-started.md) already
 
 - **No skip-and-continue by default.** The default strategy aborts on the first unmatched character. Use a custom `ErrorHandling` or a catch-all pattern for resilience.
 - **Guards are not supported.** Pattern guards in lexer rules are a compile-time error. Move conditions into rule bodies.
-- **Error position is only available with tracking traits.** Without `PositionTracking` or `LineTracking`, the error message shows only the character, not its location.
+- **Error position is only available with tracking fields.** Without a `Column` or `Line` field (both present in `LexerCtx.Default`), the error message shows only the character, not its location.

@@ -1,7 +1,6 @@
 package halotukozak
 package alpaca
 
-import halotukozak.alpaca.internal.Copyable
 import halotukozak.alpaca.internal.parser.Parser
 import halotukozak.alpaca.{ctx, lexer, resolutions, rule, ParserCtx, Production, Resolutions, Rule, Token}
 import org.scalatest.funsuite.AnyFunSuite
@@ -27,13 +26,13 @@ final class ParserApiTest extends AnyFunSuite with Matchers:
     case number @ "\\d+" => Token["NUMBER"](number.toInt)
     case "#.*" => Token.Ignored
     case newline @ "\n+" =>
-      ctx.line += newline.count(_ == '\n')
+      ctx.line = Line(ctx.line + newline.count(_ == '\n'))
       Token.Ignored
 
   case class CalcContext(
     names: mutable.Map[String, Int] = mutable.Map.empty,
     errors: mutable.ListBuffer[(tpe: String, value: Any, line: Int)] = mutable.ListBuffer.empty,
-  ) extends ParserCtx derives Copyable
+  ) extends ParserCtx
 
   object CalcApiParser extends Parser[CalcContext]:
     val Expr: Rule[Int] = rule(

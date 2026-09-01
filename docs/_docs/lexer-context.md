@@ -5,18 +5,29 @@ Every Alpaca lexer carries a **context** object that evolves as the input is pro
 By default, the lexer uses `LexerCtx.Default`, which gives you position and line tracking with no extra setup.
 
 <details>
-<summary>Under the hood: OnTokenMatch composition</summary>
+<summary>Under the hood: how tracking fields update</summary>
 
-When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s type hierarchy at compile time. It discovers all `OnTokenMatch` instances from parent traits (e.g., `PositionTracking`, `LineTracking`) and composes them into a single hook via `OnTokenMatch.auto`. The resulting hook is wired into the generated tokenizer -- at runtime, context field updates happen automatically after each token match.
+When you write `lexer[MyCtx]:`, the Alpaca macro inspects `MyCtx`'s case fields at compile time. For every field whose type provides a `given Tracking`, it wires the corresponding per-token update into the generated tokenizer. After each match the engine threads a single functional `copy` of the context through those updates -- so tracked fields stay immutable `val`s and still advance automatically.
 
 </details>
 
 ## Default Context
 
-When you write a `lexer:` block without a type parameter, the lexer uses `LexerCtx.Default`. It tracks two fields:
+When you write a `lexer:` block without a type parameter, the lexer uses `LexerCtx.Default`. It is a case class with two tracking fields:
+
+```scala
+import halotukozak.alpaca.*
+
+final case class Default(
+  position: Column = Column.Start,
+  line: Line = Line.Start,
+) extends LexerCtx
+```
 
 - `position` -- 1-based column within the current line, incremented by the matched length and reset to 1 on newlines
 - `line` -- 1-based line number, incremented on each newline character
+
+`Column` and `Line` are opaque subtypes of `Int`, so `ctx.position` and `ctx.line` read as plain `Int`s everywhere. Each carries a `given Tracking` that the lexer macro finds and applies after every match.
 
 ```scala
 import halotukozak.alpaca.*
@@ -47,7 +58,7 @@ Position advances by the matched length after each token. The snapshot captures 
 
 > **Warning:** Do not declare `var text`, `var lastLexeme`, or `var lastRawMatched` in your case class. These fields are provided by the `LexerCtx` trait and managed internally by the lexer. Redeclaring them shadows the internal fields and breaks tokenization.
 
-Mutable state fields must be `var`, not `val` -- the lexer assigns to them directly. Exception: a field of a mutable collection type (e.g., `scala.collection.mutable.Stack`) can be `val` because you mutate the collection itself, not the reference.
+State fields are ordinary immutable `val` case-class parameters. Writing `ctx.count += 1` in a rule body still type-checks and does the expected thing -- the `lexer` macro rewrites every such assignment into a functional `copy` before the rule is compiled. A field of a mutable collection type (e.g., `scala.collection.mutable.Stack`) works too: you mutate the collection in place and never reassign the field.
 
 ## Custom Context
 
@@ -57,8 +68,8 @@ The BrainFuck lexer from [Getting Started](getting-started.md) does not validate
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var brackets: Int = 0,
-  var squareBrackets: Int = 0,
+  brackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -97,7 +108,7 @@ val (finalCtx, lexemes) = BrainLexer.tokenize("[>+<-]")
 
 ## Accessing Context in Patterns
 
-Inside a `lexer[Ctx]:` block, the name `ctx` is implicitly available and refers to the current context object. You can read and write any `var` field on it:
+Inside a `lexer[Ctx]:` block, the name `ctx` is implicitly available and refers to the current context object. You can read any field and assign to it -- the assignment is rewritten to a `copy`:
 
 ```scala sc-compile-with:lc-brainlex
 val ExampleLexer = lexer[BrainLexContext]:
@@ -142,7 +153,7 @@ For custom contexts, all case class fields appear in the snapshot:
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var squareBrackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -161,72 +172,68 @@ val (_, lexemes) = BrainLexer.tokenize("[+[+]]")
 // lexemes(4).squareBrackets == 1  -- after first ]
 ```
 
-## Built-in Tracking Traits
+## Built-in Tracking Fragments
 
-Alpaca provides two stackable traits for common tracking needs:
+Alpaca ships two ready-made tracking fields, both re-exported from `halotukozak.alpaca`:
 
-**`PositionTracking`** adds a `var position: Int` field and increments it by the matched length after each token. On a newline match, position resets to 1 (start of next line).
+**`Column`** -- an opaque `Int` that advances by the matched length after each token and resets to 1 on a newline.
 
-**`LineTracking`** adds a `var line: Int` field and increments it when the matched token is a newline.
+**`Line`** -- an opaque `Int` that increments when the matched token is a newline.
 
-You can use these traits independently or together. `LexerCtx.Default` extends both. To add them to a custom context:
+Each is a plain case-class field with a `given Tracking` in its companion. Use either one, both, or neither. `LexerCtx.Default` uses both. To add them to a custom context:
 
 ```scala
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var squareBrackets: Int = 0,
-  var position: Int = 1,
-  var line: Int = 1,
-) extends LexerCtx with PositionTracking with LineTracking
+  squareBrackets: Int = 0,
+  position: Column = Column.Start,
+  line: Line = Line.Start,
+) extends LexerCtx
 ```
 
-With this context, every lexeme carries `squareBrackets`, `position`, and `line` -- all updated automatically.
+With this context, every lexeme carries `squareBrackets`, `position`, and `line`. `squareBrackets` changes only where a rule body assigns it; `position` and `line` advance automatically after every match.
 
-## The OnTokenMatch Hook
+## The Post-Match Update
 
-After every successful token match, Alpaca runs the **OnTokenMatch** hook for the context type. This hook updates tracking fields and captures the lexeme snapshot.
+After every successful token match, the lexer:
 
-For custom context types, the hook is auto-derived. The macro inspects all parent traits, summons their `OnTokenMatch` instances, and composes them. For a context extending `PositionTracking` and `LineTracking`:
+1. applies each tracked field's `Tracking` update (`position`, `line`, and any custom fragments),
+2. applies the rule body's own context changes,
+3. advances the text cursor and records the lexeme snapshot.
 
-1. `OnTokenMatch[LexerCtx]` -- advances the text cursor, records the lexeme
-2. `OnTokenMatch[PositionTracking]` -- updates the `position` field
-3. `OnTokenMatch[LineTracking]` -- updates the `line` field
-
-All three run automatically after every token match.
+Steps 1 and 3 are derived by the `lexer` macro from the context's case fields -- there is nothing to wire up by hand.
 
 <details>
-<summary>Under the hood: custom OnTokenMatch traits</summary>
+<summary>Under the hood: custom tracking fragments</summary>
 
-If you define your own trait extending `LexerCtx` and provide a `given OnTokenMatch[MyTrait]`, the auto macro will compose it into any context that extends `MyTrait`. This pattern mirrors how `PositionTracking` and `LineTracking` work internally.
-
-Define the `given` in the **trait companion**, not the case class companion. Putting it on the case class bypasses auto-composition: the lexer uses your hook but skips the default hook that advances the text cursor, and tokenization loops indefinitely.
+A tracking fragment is any field type that provides a `given Tracking[F]`. `Tracking[F]` is a single-method function `(matched: String, field: F) => F`: given the raw text just matched and the field's current value, return its next value. The `lexer` macro finds one for each case field and threads a functional `copy` through them after every match.
 
 ```scala
 import halotukozak.alpaca.*
 
-// Step 1: Trait extending LexerCtx
-trait IndentTracking extends LexerCtx:
-  var indentLevel: Int
+// Step 1: a distinct type for what you track
+opaque type Indent <: Int = Int
+object Indent:
+  val Start: Indent = 0
 
-// Step 2: given in TRAIT COMPANION
-object IndentTracking:
-  given OnTokenMatch[IndentTracking] =
-    case (_, "\t", ctx) => ctx.indentLevel += 1
-    case (_, "\n", ctx) => ctx.indentLevel = 0
-    case _ => ()
+  // Step 2: a given Tracking in its companion
+  given Tracking[Indent] =
+    case ("\t", n) => n + 1
+    case ("\n", _) => 0
+    case (_, n)    => n
 
-// Step 3: Case class extends the trait
-case class MyCtx(
-  var indentLevel: Int = 0,
-) extends LexerCtx with IndentTracking
+// Step 3: use it as a context field
+case class MyCtx(indent: Indent = Indent.Start) extends LexerCtx
 
-// Step 4: Auto composition happens at compile time
+// Step 4: the lexer macro applies the update automatically
 val Lexer = lexer[MyCtx]:
   case "\t" => Token.Ignored
   case "\n" => Token.Ignored
   case id @ "[a-z]+" => Token["ID"](id)
 ```
+
+No inheritance, no trait companion, no composition macro: a fragment is just a field type plus its `given`.
 
 </details>
 
