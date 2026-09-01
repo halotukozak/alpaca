@@ -27,6 +27,20 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
+      - name: Cache Mill dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+      # The plugin's tests drive real grammars exported by the Alpaca repo's own test suite
+      # (see MathTest.scala), not fixtures checked into ij-plugin/ itself.
+      - name: Export the Alpaca test suite's grammars for the plugin's tests to drive
+        working-directory: .
+        run: ALPACA_GRAMMAR_EXPORT_DIR=/tmp/alpaca-grammar-export ./mill jvm.test.compile
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
@@ -36,5 +50,15 @@ jobs:
         run: ./gradlew ktlintCheck
       - name: Test
         run: ./gradlew test
+      - name: Kotlin coverage
+        run: ./gradlew koverXmlReport
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: halotukozak-com/${{ github.event.repository.name }}
+          files: ij-plugin/build/reports/kover/report.xml
+          flags: kotlin
+          fail_ci_if_error: false
       - name: Build plugin
         run: ./gradlew buildPlugin
