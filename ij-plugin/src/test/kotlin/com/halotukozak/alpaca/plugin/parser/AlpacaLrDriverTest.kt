@@ -13,7 +13,7 @@ import java.nio.file.Path
 /**
  * Drives [AlpacaLrDriver] with [FakeTreeBuilder] against the real `MathParser` grammar exported by
  * `/tmp/alpaca-grammar-export` (see the Alpaca repo's own test suite), tokenized with the real
- * [AlpacaLexer] -- exercising the whole Kotlin-side pipeline (lex -> table-driven parse -> tree)
+ * [AlpacaLexer], exercising the whole Kotlin-side pipeline (lex -> table-driven parse -> tree)
  * without needing a full IntelliJ platform test fixture.
  */
 class AlpacaLrDriverTest {
@@ -22,7 +22,7 @@ class AlpacaLrDriverTest {
     private const val LEXER_ID = "MathTest.CalcLexer@L11"
   }
 
-  /** Tokenizes [text] with the real lexer, dropping ignored tokens (whitespace/comments) -- matching
+  /** Tokenizes [text] with the real lexer, dropping ignored tokens (whitespace/comments), matching
    *  what a real PsiBuilder presents to a parser once ignored tokens are registered as whitespace. */
   private fun tokenize(specs: List<TokenSpec>, text: String): List<Pair<String, String>> {
     val specByType = specs.associateBy { AlpacaTokenTypes.forName(GRAMMAR_ID, it.name) }
@@ -182,7 +182,7 @@ class AlpacaLrDriverTest {
 
   @Test
   fun `leaves no unresolved markers for incomplete input, so the tree still builds`() {
-    // Every one of these is missing something a full expression needs -- exactly what happens
+    // Every one of these is missing something a full expression needs, exactly what happens
     // on every keystroke while a user is still typing. The driver must still leave PsiBuilder
     // with a fully balanced tree (real symptom before the fix: "Unbalanced tree" from
     // PsiBuilderImpl.assertMarkersBalanced, corrupting the file on every edit).

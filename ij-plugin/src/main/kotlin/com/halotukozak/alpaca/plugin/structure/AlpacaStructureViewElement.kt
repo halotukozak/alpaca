@@ -10,15 +10,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.PsiNavigateUtil
 import javax.swing.Icon
 
-/** The Alpaca logo (see `docs/_assets/images/logo.png`), used for every node since the tree is
- *  grammar-agnostic -- there is no per-nonterminal semantic to pick a more specific icon from. */
+/** The Alpaca logo (see `docs/_assets/images/logo.png`), used for every node: the tree is
+ *  grammar-agnostic, so there's no per-nonterminal semantic to pick a more specific icon from. */
 private val NODE_ICON: Icon = IconLoader.getIcon("/icons/alpacaNode.png", AlpacaStructureViewElement::class.java.classLoader)
 
 /**
  * One node in the structure view, wrapping a composite [PsiElement] (the file itself, at the
- * root). Entirely grammar-agnostic: every non-leaf node the parser produced -- named after its
- * own nonterminal -- is shown, since [PsiElement.getChildren] already only returns composite
- * children (leaf tokens are filtered out by the platform itself).
+ * root). Entirely grammar-agnostic: every non-leaf node the parser produced, named after its own
+ * nonterminal, is shown, since [PsiElement.getChildren] already only returns composite children
+ * (the platform itself filters out leaf tokens).
  */
 class AlpacaStructureViewElement(
   private val element: PsiElement,
@@ -42,7 +42,7 @@ class AlpacaStructureViewElement(
 
   override fun canNavigateToSource(): Boolean = canNavigate()
 
-  /** e.g. `Expr: 1 + 2 * 3` -- the nonterminal's name plus a snippet of its own source text, so
+  /** e.g. `Expr: 1 + 2 * 3`: the nonterminal's name plus a snippet of its own source text, so
    *  nodes of the same grammar rule (there are often many, e.g. every wrapped sub-expression)
    *  stay distinguishable in the tree. */
   private fun presentableName(): String {

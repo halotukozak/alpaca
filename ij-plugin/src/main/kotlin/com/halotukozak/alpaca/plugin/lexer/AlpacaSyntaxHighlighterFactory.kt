@@ -10,10 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
 /**
- * Resolves which exported grammar applies to a given file (by its extension,
- * via the mappings in Settings) and builds a highlighter for it. Registered
- * once for the shared [AlpacaLanguage] in plugin.xml and reused for every
- * grammar -- see that class's doc comment for why there's only one.
+ * Resolves which exported grammar applies to a given file, by its extension and the mappings in
+ * Settings, and builds a highlighter for it. Registered once for the shared [AlpacaLanguage].
  */
 class AlpacaSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
   override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter {

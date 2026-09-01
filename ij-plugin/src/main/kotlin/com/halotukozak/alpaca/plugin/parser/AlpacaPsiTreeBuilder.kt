@@ -11,14 +11,13 @@ import com.intellij.psi.tree.TokenSet
  * Adapts a real [PsiBuilder] to [TreeBuilder], resolving terminal names against the same
  * [TokenSpec] list the grammar's [com.halotukozak.alpaca.plugin.lexer.AlpacaLexer] was built from.
  *
- * Hides `ignored` tokens (whitespace, comments) from the builder via [PsiBuilder.enforceCommentTokens]
- * rather than relying on [com.intellij.lang.ParserDefinition.getWhitespaceTokens] -- which grammars'
- * rules are "ignored" is only known dynamically per grammar id, not at the single, shared
- * [ParserDefinition]'s construction time. Using the builder's own mechanism (instead of manually
- * skipping via [PsiBuilder.advanceLexer]) matters, not just style: manually skipping trailing
- * whitespace *before* a reduction's [PsiBuilder.Marker.done] call would pull that whitespace inside
- * the just-closed node's text range; [PsiBuilder.enforceCommentTokens] defers that attachment to the
- * platform's own (correct) whitespace-binding logic at tree-build time instead.
+ * Hides `ignored` tokens (whitespace, comments) via [PsiBuilder.enforceCommentTokens] instead of
+ * [com.intellij.lang.ParserDefinition.getWhitespaceTokens]: which rules count as "ignored" is only
+ * known dynamically per grammar id, not at the shared [ParserDefinition]'s construction time.
+ * Manually skipping via [PsiBuilder.advanceLexer] would also be wrong, not just inconvenient:
+ * skipping trailing whitespace before a reduction's [PsiBuilder.Marker.done] call pulls that
+ * whitespace inside the just-closed node's range. [PsiBuilder.enforceCommentTokens] leaves the
+ * attachment to the platform's own whitespace-binding logic at tree-build time instead.
  */
 class AlpacaPsiTreeBuilder(
   private val builder: PsiBuilder,

@@ -12,22 +12,22 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 
-/** The run of characters immediately before the caret that could be the word still being typed --
- *  the actual completion prefix; excluded from what's replayed through the grammar's parse table
- *  (see [AlpacaCompletionEngine]'s doc comment for why: it isn't a complete token yet). */
+/** The run of characters immediately before the caret that could be the word still being typed:
+ *  the actual completion prefix, excluded from what's replayed through the grammar's parse table
+ *  since it isn't a complete token yet. */
 private val PARTIAL_WORD = Regex("[A-Za-z0-9_]*$")
 
 /** Offers every literal-text terminal ([AlpacaCompletionEngine]) valid at the caret, for whichever
  *  grammar the current file resolves to in Settings | Tools | Alpaca. Registered once for the
- *  shared [AlpacaLanguage], same as every other Alpaca extension. */
+ *  shared [AlpacaLanguage]. */
 class AlpacaCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().withLanguage(AlpacaLanguage), AlpacaCompletionProvider())
   }
 
-  // The platform's default dummy identifier ("IntellijIdeaRulezzz") would otherwise get inserted
-  // at the caret and appear in [CompletionParameters.getEditor]'s document -- corrupting both the
-  // partial-word prefix we extract and the text we replay through the grammar's parse table.
+  // The platform's default dummy identifier ("IntellijIdeaRulezzz") would otherwise land at the
+  // caret in [CompletionParameters.getEditor]'s document, corrupting both the partial-word prefix
+  // and the text replayed through the grammar's parse table.
   override fun beforeCompletion(context: CompletionInitializationContext) {
     context.dummyIdentifier = ""
   }

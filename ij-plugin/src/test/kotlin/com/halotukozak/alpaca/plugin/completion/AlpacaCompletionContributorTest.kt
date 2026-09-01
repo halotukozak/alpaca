@@ -10,10 +10,10 @@ private const val LEXER_ID = "MathTest.CalcLexer@L11"
 private const val PARSER_ID = "MathTest.MathParser@L39"
 
 /**
- * Exercises the actual registered [AlpacaCompletionContributor] end to end (real editor, real
- * caret, real completion invocation) -- [AlpacaCompletionEngineTest] already covers the suggestion
- * logic itself in isolation; this instead catches wiring mistakes that wouldn't (a typo'd extension
- * point name, wrong caret/offset handling, the prefix matcher not actually filtering).
+ * Exercises the actual registered [AlpacaCompletionContributor] end to end: real editor, real
+ * caret, real completion invocation. [AlpacaCompletionEngineTest] already covers the suggestion
+ * logic in isolation; this instead catches wiring mistakes that wouldn't, such as a typo'd
+ * extension point name, wrong caret/offset handling, or a prefix matcher that isn't filtering.
  */
 class AlpacaCompletionContributorTest : BasePlatformTestCase() {
   override fun setUp() {

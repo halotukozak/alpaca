@@ -11,22 +11,21 @@ import com.halotukozak.alpaca.plugin.lexer.AlpacaTokenTypes
 
 private const val AUGMENTED_START_NAME = "S'"
 
-/** Bounds the reduce chain a single hypothetical lookahead can trigger -- generous relative to any
- *  real grammar's production count, just guarding against a malformed table looping forever. */
+/** Bounds the reduce chain a single hypothetical lookahead can trigger. Generous relative to any
+ *  real grammar's production count; just guards against a malformed table looping forever. */
 private const val MAX_REDUCE_CHAIN = 10_000
 
 /**
  * Suggests which literal-text terminals are syntactically valid immediately after [prefixText],
- * using the same exported LR table [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriver] drives:
- * replay [prefixText]'s own tokens through it to find the current parser state, then test every
- * literal-pattern terminal in the grammar as a hypothetical next token -- if shifting it (after
- * whatever reductions its lookahead would trigger) doesn't hit an error, it's offered. Regex-class
+ * using the same exported LR table [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriver] drives.
+ * Replays [prefixText]'s own tokens through it to find the current parser state, then tests every
+ * literal-pattern terminal in the grammar as a hypothetical next token: if shifting it, after
+ * whatever reductions its lookahead would trigger, doesn't hit an error, it's offered. Regex-class
  * terminals (numbers, identifiers, ...) have no fixed spelling to offer, so only terminals whose
  * pattern denotes exactly one literal string (see [literalTextOf]) are ever candidates.
  *
- * Doesn't attempt the general "which token is still being typed" problem: callers are expected to
- * pass [prefixText] with any partially-typed trailing word already stripped (see
- * [AlpacaCompletionContributor]), so every token this lexes is treated as complete.
+ * Callers are expected to pass [prefixText] with any partially-typed trailing word already
+ * stripped, so every token this lexes is treated as complete.
  */
 class AlpacaCompletionEngine(rows: List<List<TableEntry>>) {
   private val table: List<Map<SymbolSpec, ActionSpec>> = rows.map { row -> row.associate { it.symbol to it.action } }
@@ -43,7 +42,7 @@ class AlpacaCompletionEngine(rows: List<List<TableEntry>>) {
   }
 
   /** Lexes [prefixText] with the grammar's own lexer and replays every non-ignored token through
-   *  [table], returning the resulting state stack -- or null if [prefixText] itself doesn't lex or
+   *  [table], returning the resulting state stack. Null if [prefixText] itself doesn't lex or
    *  parse cleanly, in which case there's nothing meaningful to suggest. */
   private fun replayStates(
     lexerId: String,

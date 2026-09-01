@@ -14,11 +14,11 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 
 /**
- * Registered once for the shared [com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage] (see that
- * class's doc comment for why there's only one). [createLexer] and [createParser] are effectively
- * unused stubs: real parsing happens in [AlpacaFileElementType.parseContents], which -- unlike
- * these two, given only a [Project] -- can see the file being parsed and so knows which grammar
- * applies. They stay harmless no-ops for any platform code that might invoke them directly.
+ * Registered once for the shared [com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage].
+ * [createLexer] and [createParser] are effectively unused stubs: real parsing happens in
+ * [AlpacaFileElementType.parseContents], which can see the file being parsed and so knows which
+ * grammar applies. `createLexer`/`createParser` only get a [Project]. They stay harmless no-ops
+ * for any platform code that might invoke them directly.
  */
 class AlpacaParserDefinition : ParserDefinition {
   override fun createLexer(project: Project?): Lexer = EmptyLexer()

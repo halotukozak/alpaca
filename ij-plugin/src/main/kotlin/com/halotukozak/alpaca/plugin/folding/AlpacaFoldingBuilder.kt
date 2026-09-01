@@ -10,10 +10,9 @@ import com.intellij.psi.PsiElement
 private const val PLACEHOLDER_TEXT = "..."
 
 /**
- * Folds every composite (nonterminal) PSI node whose own text spans more than one line --
- * entirely grammar-agnostic, since it only looks at where a node starts/ends in the document,
- * never at what kind of node it is (mirrors [com.halotukozak.alpaca.plugin.structure], which
- * builds its tree from the same composite nodes).
+ * Folds every composite (nonterminal) PSI node whose own text spans more than one line. Entirely
+ * grammar-agnostic: it only looks at where a node starts/ends in the document, never at what kind
+ * of node it is.
  */
 class AlpacaFoldingBuilder : FoldingBuilderEx() {
   override fun buildFoldRegions(

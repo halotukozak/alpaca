@@ -4,12 +4,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import javax.swing.Icon
 
 /**
- * One [LanguageFileType] per exported grammar, all wrapping the single
- * shared [AlpacaLanguage] (`Language` itself only allows one instance per
- * class -- see that class's doc comment -- but `FileType` has no such
- * restriction). Registered with the platform dynamically at runtime by
- * [AlpacaFileTypeRegistrar], since the set of grammars is only known from
- * Settings, not compile time. Obtain via [AlpacaFileTypes.forGrammar].
+ * One [LanguageFileType] per exported grammar, all wrapping the single shared [AlpacaLanguage]:
+ * `FileType`, unlike `Language`, allows more than one instance. Registered dynamically at runtime
+ * by [AlpacaFileTypeRegistrar], since the set of grammars is only known from Settings.
  */
 class AlpacaFileType(grammarId: String) : LanguageFileType(AlpacaLanguage) {
   private val name = "Alpaca:$grammarId"

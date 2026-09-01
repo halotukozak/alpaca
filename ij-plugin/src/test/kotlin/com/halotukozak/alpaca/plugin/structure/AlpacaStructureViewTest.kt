@@ -14,7 +14,7 @@ private const val PARSER_ID = "MathTest.MathParser@L39"
  * Exercises [AlpacaStructureViewFactory]/[AlpacaStructureViewModel]/[AlpacaStructureViewElement]
  * against a real PSI tree, built by the real [com.halotukozak.alpaca.plugin.parser.AlpacaFileElementType]
  * from the same exported `MathParser` grammar [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriverTest]
- * uses -- this is what a full platform test fixture buys over that lighter-weight test: an actual
+ * uses, this is what a full platform test fixture buys over that lighter-weight test: an actual
  * [com.intellij.psi.PsiFile] with real composite [com.intellij.psi.PsiElement]s to build a structure
  * view model from.
  */

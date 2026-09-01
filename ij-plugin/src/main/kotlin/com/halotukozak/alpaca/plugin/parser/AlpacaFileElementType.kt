@@ -7,11 +7,11 @@ import com.intellij.lang.PsiBuilderFactory
 import com.intellij.psi.tree.IFileElementType
 
 /**
- * The single, shared root node type for every Alpaca-defined language's file (see [AlpacaLanguage]'s
- * doc comment for why there is only one). Overrides [parseContents] directly instead of the usual
- * [com.intellij.lang.ParserDefinition.createLexer]/`createParser` pair, because those are only ever
- * given a [com.intellij.openapi.project.Project] -- no file -- and resolving which grammar applies
- * needs the file. Here, the chameleon [ASTNode] gives access to its own containing file.
+ * The single, shared root node type for every Alpaca-defined language's file. Overrides
+ * [parseContents] directly instead of the usual
+ * [com.intellij.lang.ParserDefinition.createLexer]/`createParser` pair, because those only get a
+ * [com.intellij.openapi.project.Project], not a file, and resolving which grammar applies needs
+ * the file. The chameleon [ASTNode] gives access to its own containing file.
  */
 object AlpacaFileElementType : IFileElementType(AlpacaLanguage) {
   override fun parseContents(chameleon: ASTNode): ASTNode {
@@ -30,9 +30,8 @@ object AlpacaFileElementType : IFileElementType(AlpacaLanguage) {
     if (parserGrammar != null) {
       AlpacaLrDriver.forTable(parserGrammar.table).parse(AlpacaPsiTreeBuilder(builder, lexerId, tokens))
     }
-    // Safety net: the driver always consumes up to EOF on both its exit paths (accept or an
-    // error right at EOF), and there's nothing to drive at all when no parser grammar is
-    // configured -- either way, make sure the whole chameleon ends up under rootMarker.
+    // Safety net: make sure the whole chameleon ends up under rootMarker either way, whether the
+    // driver ran to EOF or there was no parser grammar to drive at all.
     while (!builder.eof()) builder.advanceLexer()
     rootMarker.done(this)
 

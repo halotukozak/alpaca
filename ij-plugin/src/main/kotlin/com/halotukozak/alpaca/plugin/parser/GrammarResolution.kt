@@ -9,8 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
 /** The grammar a given file resolves to: always a lexer, and (if the Settings association names
- *  one) a parser -- see [AlpacaFileElementType] and [com.halotukozak.alpaca.plugin.completion.AlpacaCompletionEngine],
- *  the two places that need this to actually drive the file's grammar. */
+ *  one) a parser. */
 data class ResolvedGrammar(
   val lexerId: String,
   val tokens: List<TokenSpec>,

@@ -10,17 +10,16 @@ private const val AUGMENTED_START_NAME = "S'"
 
 /**
  * A generic, grammar-agnostic LR(1) parser: drives a [TreeBuilder] using [table], Alpaca's already
- * conflict-resolved parse table (see `TableExport` on the Scala side), producing one composite node
- * per reduced nonterminal. Nothing here is specific to any one grammar -- the table alone decides
- * every shift/reduce/goto choice, including precedence and associativity, since those were already
- * settled when the table was built.
+ * conflict-resolved parse table (see `TableExport` on the Scala side), producing one composite
+ * node per reduced nonterminal. The table alone decides every shift/reduce/goto choice, including
+ * precedence and associativity, since those were already settled when the table was built.
  *
  * Building a top-down PSI tree from a bottom-up parse needs a marker per still-unreduced stack
- * symbol, not just one per production: a reduction's first RHS symbol is often itself a plain
- * terminal (e.g. `sin` in `Expr -> sin ( Expr )`), so there is no earlier nonterminal marker to
- * piggyback on the way a hand-written recursive-descent parser gets for free from left recursion.
- * [TreeBuilder.precede] is what makes marking every shift affordable: an unresolved marker costs
- * nothing until it is actually turned into a node (or dropped without one).
+ * symbol, not just one per production. A reduction's first RHS symbol is often a plain terminal
+ * (`sin` in `Expr -> sin ( Expr )`), so there's no earlier nonterminal marker to piggyback on the
+ * way a recursive-descent parser gets for free from left recursion. [TreeBuilder.precede] makes
+ * marking every shift affordable: an unresolved marker costs nothing until it's actually turned
+ * into a node, or dropped without one.
  */
 class AlpacaLrDriver(
     private val table: List<Map<SymbolSpec, ActionSpec>>,
@@ -43,9 +42,9 @@ class AlpacaLrDriver(
             if (action == null) {
                 builder.error("Unexpected token '${builder.currentTokenText()}'")
                 if (terminal == EOF_TERMINAL_NAME) {
-                    // Incomplete input (e.g. still typing, or a genuine syntax error): whatever's left on
-                    // the stack -- bare shifted terminals that never got reduced into anything -- would
-                    // otherwise stay unresolved forever, which PsiBuilder rejects as an unbalanced tree.
+                    // Incomplete input (still typing, or a genuine syntax error): whatever's left on the
+                    // stack (bare shifted terminals that never got reduced) would otherwise stay
+                    // unresolved forever, which PsiBuilder rejects as an unbalanced tree.
                     drainUnresolvedMarkers(builder, markerStack)
                     return
                 }

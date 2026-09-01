@@ -11,21 +11,14 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.tree.IElementType
 
 /**
- * Colors one grammar's tokens. Alpaca's grammar export has no per-token
- * semantic category (keyword vs string vs number), so this infers a rough
- * one from each rule's regex *pattern* shape instead: a single escaped
- * punctuation character is an operator or bracket, a digit class (`0-9`/`\d`)
- * is a number, a pattern containing a quote character is a string, a bare
- * run of letters is a keyword. A pattern the shape doesn't clearly indicate
- * (e.g. an identifier class like `[a-z]+`) is left in the default text
- * color, same as real identifiers in any language -- it's not colored
- * arbitrarily just to look busy. Rules marked `ignored` (typically
- * whitespace/comments) always get the muted comment-like color regardless
- * of pattern shape.
+ * Colors one grammar's tokens. Alpaca's export has no per-token semantic category, so this infers
+ * one from each rule's regex pattern shape: a single punctuation character is an operator or
+ * bracket, a digit class (`0-9`/`\d`) is a number, a pattern with a quote is a string, a bare run
+ * of letters is a keyword. A pattern the shape doesn't clearly indicate (an identifier class like
+ * `[a-z]+`) stays the default text color. `ignored` rules always get the comment color.
  *
- * Registered once for the shared [AlpacaLanguage] (see plugin.xml) and
- * reused for every grammar; [grammarId] only keys the token type cache (see
- * [AlpacaTokenTypes]) so different grammars' same-named rules don't collide.
+ * Registered once for the shared [AlpacaLanguage] and reused for every grammar; [grammarId] keys
+ * the token type cache ([AlpacaTokenTypes]) so different grammars' same-named rules don't collide.
  */
 class AlpacaSyntaxHighlighter(private val grammarId: String, private val specs: List<TokenSpec>) : SyntaxHighlighterBase() {
   private val keysByType: Map<IElementType, Array<TextAttributesKey>> =

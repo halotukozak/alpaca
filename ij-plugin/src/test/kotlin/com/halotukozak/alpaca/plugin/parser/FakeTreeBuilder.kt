@@ -13,8 +13,8 @@ sealed interface FakeNode {
  *
  * Mirrors the real implementation's actual model (verified against `PsiBuilderImpl`/
  * `MarkerProduction` in JetBrains/intellij-community): markers are entries in one flat,
- * order-sensitive list -- [mark] appends, [precede] inserts immediately before its target,
- * exactly like the real `addMarker`/`addBefore` -- rather than a naive "current open parent"
+ * order-sensitive list, [mark] appends, [precede] inserts immediately before its target,
+ * exactly like the real `addMarker`/`addBefore`, rather than a naive "current open parent"
  * stack, which does not correctly model [drop] (dropping does not bound where a marker's
  * *children* end; only [done] does, at the current position). The final tree is reconstructed
  * from these (start, end) ranges by interval nesting, once parsing is done.

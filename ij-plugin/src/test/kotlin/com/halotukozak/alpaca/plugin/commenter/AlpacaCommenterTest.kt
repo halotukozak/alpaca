@@ -11,7 +11,7 @@ private const val PARSER_ID = "MathTest.MathParser@L39"
 
 /**
  * Exercises the real "Comment with Line Comment" editor action (Ctrl+/) against [AlpacaCommenter],
- * registered for the real `MathParser` grammar -- whose only `ignored` rule shaped like a line
+ * registered for the real `MathParser` grammar, whose only `ignored` rule shaped like a line
  * comment is `#.*` (see the exported `MathTest.CalcLexer@L11.tokens.json`).
  */
 class AlpacaCommenterTest : BasePlatformTestCase() {

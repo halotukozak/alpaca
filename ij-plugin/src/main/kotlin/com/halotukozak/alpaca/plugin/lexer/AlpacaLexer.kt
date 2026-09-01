@@ -7,15 +7,12 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
- * Tokenizes text against the [TokenSpec] rules exported by one grammar's
- * Alpaca `lexer{...}` macro: at every position, each rule's pattern is tried
- * and the longest match wins, ties broken by the rule's position in [specs]
- * -- the same priority + longest-match strategy the rules were declared with.
+ * Tokenizes text against the [TokenSpec] rules exported by one grammar's Alpaca `lexer{...}`
+ * macro: at every position, each rule's pattern is tried and the longest match wins, ties broken
+ * by the rule's position in [specs], matching the priority Alpaca's own lexer uses.
  *
- * A zero-length match never wins (it would leave [advance] unable to make
- * progress); a position no rule matches at produces a single-character
- * [ALPACA_BAD_CHARACTER] token instead, as IntelliJ's other hand-written
- * lexers do.
+ * A zero-length match never wins, since it would leave [advance] unable to make progress. A
+ * position no rule matches produces a single-character [ALPACA_BAD_CHARACTER] token instead.
  */
 class AlpacaLexer(private val grammarId: String, specs: List<TokenSpec>) : LexerBase() {
   private val patterns: List<Pair<TokenSpec, Pattern>> = specs.map { it to Pattern.compile(it.pattern) }

@@ -9,10 +9,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
 /**
- * One extension-to-grammar mapping: files with [extension] are highlighted using the lexer exported
- * as [lexerGrammarId], and (if set) parsed using the parser exported as [parserGrammarId] -- a
- * separate id since Alpaca exports each `lexer{...}`/parser call site under its own name, with
- * nothing on the export side linking a parser back to "its" lexer.
+ * One extension-to-grammar mapping: files with [extension] are highlighted using the lexer
+ * exported as [lexerGrammarId], and (if set) parsed using the parser exported as [parserGrammarId].
+ * The ids are separate because Alpaca exports each `lexer{...}`/parser call site under its own
+ * name, with nothing on the export side linking a parser back to its lexer.
  */
 data class GrammarAssociation
   @JvmOverloads

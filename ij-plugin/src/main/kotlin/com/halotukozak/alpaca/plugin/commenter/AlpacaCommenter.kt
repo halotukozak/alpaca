@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 
 /** Carries the resolved line-comment prefix (or null, if this file's grammar has none recognizable
- *  as one -- see [lineCommentPrefixOf]) for the duration of one comment/uncomment operation. */
+ *  as one; see [lineCommentPrefixOf]) for the duration of one comment/uncomment operation. */
 class AlpacaCommentState(
   val linePrefix: String?,
 ) : CommenterDataHolder()
@@ -19,19 +19,19 @@ class AlpacaCommentState(
  * Toggles line comments (Ctrl+/) for whichever grammar the current file resolves to, inferring the
  * comment prefix the same way [com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighter] infers
  * highlighting: from an `ignored` rule's regex *shape* (`#.*`, `//.*`, ...), since Alpaca's export
- * has no explicit "this rule is a line comment" flag. Block comments aren't supported -- there's no
+ * has no explicit "this rule is a line comment" flag. Block comments aren't supported: there's no
  * comparably reliable shape to recognize a block-comment pair from a single regex.
  *
- * Implements [SelfManagingCommenter] (not just the plain [Commenter]) because the plain interface's
- * methods take no parameters, so a fixed prefix would have to be picked once for the whole shared
- * [com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage] -- [SelfManagingCommenter] instead resolves
- * it fresh per [PsiFile] via [createLineCommentingState].
+ * Implements [SelfManagingCommenter], not just the plain [Commenter], because the plain
+ * interface's methods take no parameters. A fixed prefix would have to be picked once for the
+ * whole shared [com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage]; [SelfManagingCommenter]
+ * instead resolves it fresh per [PsiFile] via [createLineCommentingState].
  */
 class AlpacaCommenter : Commenter, SelfManagingCommenter<AlpacaCommentState> {
-  // CommentByLineCommentHandler gates the whole action on this being non-null *before* it ever
-  // consults SelfManagingCommenter -- verified directly, since a null here silently disabled Ctrl+/
-  // even though createLineCommentingState/commentLine below did correctly resolve and use the real
-  // per-file prefix once unlocked. The value itself is never shown or used; only its nullness matters.
+  // CommentByLineCommentHandler gates the whole action on this being non-null before it ever
+  // consults SelfManagingCommenter, confirmed by direct testing: a null here silently disabled
+  // Ctrl+/ even though createLineCommentingState/commentLine below correctly resolved and used
+  // the real per-file prefix once unlocked. The value itself is never shown; only its nullness matters.
   override fun getLineCommentPrefix(): String = "#"
 
   override fun getBlockCommentPrefix(): String? = null

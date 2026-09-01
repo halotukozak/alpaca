@@ -40,8 +40,8 @@ class AlpacaFoldingBuilderTest : BasePlatformTestCase() {
   fun `test folds a composite node whose text spans multiple lines`() {
     val regions = foldRegionsFor("sin(\n1\n)")
 
-    // Both the `root` wrapper and its `Expr` child span the whole (multi-line) input verbatim,
-    // so they're a unit-production chain over the same range -- only the outer one gets a region.
+    // Both the `root` wrapper and its `Expr` child span the whole (multi-line) input verbatim:
+    // a unit-production chain over the same range. Only the outer one gets a region.
     assertEquals(listOf("sin(\n1\n)" to "..."), regions)
   }
 

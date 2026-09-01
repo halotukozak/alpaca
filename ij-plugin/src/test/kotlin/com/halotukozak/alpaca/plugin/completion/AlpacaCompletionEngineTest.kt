@@ -8,7 +8,7 @@ import java.nio.file.Path
 /**
  * Drives [AlpacaCompletionEngine] against the real, already conflict-resolved `MathParser` table
  * exported by the Alpaca repo's own test suite (see [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriverTest]
- * for the same real-grammar setup) -- checking that the suggestions it offers at a few real
+ * for the same real-grammar setup), checking that the suggestions it offers at a few real
  * positions match what's actually syntactically valid there, not the full grammar's exact literal
  * set (which would make this test as fragile as the grammar itself).
  */
