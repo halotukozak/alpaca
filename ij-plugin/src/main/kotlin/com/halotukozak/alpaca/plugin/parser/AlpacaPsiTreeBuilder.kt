@@ -1,0 +1,54 @@
+package com.halotukozak.alpaca.plugin.parser
+
+import com.halotukozak.alpaca.plugin.grammar.TokenSpec
+import com.halotukozak.alpaca.plugin.lexer.AlpacaCompositeTypes
+import com.halotukozak.alpaca.plugin.lexer.AlpacaTokenTypes
+import com.intellij.lang.PsiBuilder
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
+
+/**
+ * Adapts a real [PsiBuilder] to [TreeBuilder], resolving terminal names against the same
+ * [TokenSpec] list the grammar's [com.halotukozak.alpaca.plugin.lexer.AlpacaLexer] was built from.
+ *
+ * Hides `ignored` tokens (whitespace, comments) from the builder via [PsiBuilder.enforceCommentTokens]
+ * rather than relying on [com.intellij.lang.ParserDefinition.getWhitespaceTokens] -- which grammars'
+ * rules are "ignored" is only known dynamically per grammar id, not at the single, shared
+ * [ParserDefinition]'s construction time. Using the builder's own mechanism (instead of manually
+ * skipping via [PsiBuilder.advanceLexer]) matters, not just style: manually skipping trailing
+ * whitespace *before* a reduction's [PsiBuilder.Marker.done] call would pull that whitespace inside
+ * the just-closed node's text range; [PsiBuilder.enforceCommentTokens] defers that attachment to the
+ * platform's own (correct) whitespace-binding logic at tree-build time instead.
+ */
+class AlpacaPsiTreeBuilder(
+  private val builder: PsiBuilder,
+  private val grammarId: String,
+  tokenSpecs: List<TokenSpec>,
+) : TreeBuilder<PsiBuilder.Marker> {
+  private val terminalNameByType: Map<IElementType, String> =
+    tokenSpecs.associate { AlpacaTokenTypes.forName(grammarId, it.name) to it.name }
+
+  init {
+    val ignoredTypes = tokenSpecs.filter { it.ignored }.map { AlpacaTokenTypes.forName(grammarId, it.name) }
+    builder.enforceCommentTokens(TokenSet.create(*ignoredTypes.toTypedArray()))
+  }
+
+  override fun currentTerminal(): String {
+    val type = builder.tokenType ?: return EOF_TERMINAL_NAME
+    return terminalNameByType[type] ?: type.toString()
+  }
+
+  override fun currentTokenText(): String = builder.tokenText ?: "<eof>"
+
+  override fun advance() = builder.advanceLexer()
+
+  override fun mark(): PsiBuilder.Marker = builder.mark()
+
+  override fun done(marker: PsiBuilder.Marker, name: String) = marker.done(AlpacaCompositeTypes.forName(grammarId, name))
+
+  override fun drop(marker: PsiBuilder.Marker) = marker.drop()
+
+  override fun precede(marker: PsiBuilder.Marker): PsiBuilder.Marker = marker.precede()
+
+  override fun error(message: String) = builder.error(message)
+}

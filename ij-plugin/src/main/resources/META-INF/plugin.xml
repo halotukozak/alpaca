@@ -18,5 +18,8 @@
     <lang.syntaxHighlighterFactory
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory"/>
+    <lang.parserDefinition
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
   </extensions>
 </idea-plugin>
