@@ -30,5 +30,8 @@
     <completion.contributor
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.completion.AlpacaCompletionContributor"/>
+    <lang.commenter
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.commenter.AlpacaCommenter"/>
   </extensions>
 </idea-plugin>
