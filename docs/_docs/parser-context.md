@@ -132,6 +132,6 @@ object BrainParser extends Parser:
       (funcName, pos, ln)
 ```
 
-The `position` and `line` fields come from the lexer context snapshot. They are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. See [Lexer Context](lexer-context.md) for details.
+The `position` and `line` fields come from the lexer context snapshot. They are available when the lexer uses `LexerCtx.Default` or a custom context with `Column`/`Line` fields. See [Lexer Context](lexer-context.md) for details.
 
 See [Extractors](extractors.md) for the full `Lexeme` field reference. See [Parser](parser.md) for grammar rules and EBNF operators.

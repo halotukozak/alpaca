@@ -264,7 +264,7 @@ val (_, lexemes) = MiniLang.tokenize("42 + 13")
 
 Available fields depend on the `LexerCtx` used to build the lexer:
 - `LexerCtx.Default` provides `text`, `position`, and `line`.
-- Adding `LineTracking` (already included in `LexerCtx.Default`) provides `line`.
+- A `Line` field (already included in `LexerCtx.Default`) provides `line`; a `Column` field provides `position`.
 - Custom context fields appear if the lexer context declares them.
 
 See [Between Stages](on-token-match.md) for the full Lexeme structure, context snapshot lifecycle, and how positional values are computed.
@@ -292,7 +292,7 @@ object FieldAccessParser extends Parser[ErrorTrackingCtx]:
       pos
 ```
 
-Field access is type-safe via the `Selectable` refinement on `Lexeme`. The `position` and `line` fields are available when the lexer uses `LexerCtx.Default` or a custom context with `PositionTracking`/`LineTracking`. Custom context fields (e.g., `name.squareBrackets`) are accessible if the lexer context declares them.
+Field access is type-safe via the `Selectable` refinement on `Lexeme`. The `position` and `line` fields are available when the lexer uses `LexerCtx.Default` or a custom context with `Column`/`Line` fields. Custom context fields (e.g., `name.squareBrackets`) are accessible if the lexer context declares them.
 
 **Pitfall:** `position` records the post-match cursor position (after advancing by the token length), not the start position.
 For a token `"42"` starting at column 1, `position` is 3. See [Between Stages](on-token-match.md) for the exact semantics.

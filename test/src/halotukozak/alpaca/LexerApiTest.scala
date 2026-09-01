@@ -92,7 +92,7 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
   }
 
   test("Lexer manipulates context") {
-    case class StateCtx(var count: Int = 0) extends LexerCtx
+    case class StateCtx(count: Int = 0) extends LexerCtx
 
     val Lexer = lexer[StateCtx]:
       case "inc" =>
@@ -105,4 +105,31 @@ final class LexerApiTest extends AnyFunSuite with Matchers {
     val (_, lexemes) = Lexer.tokenize("inc check inc inc check")
     lexemes.map(_.value) shouldBe List(1, 1, 2, 3, 3)
   }
+
+  test("custom Tracking fragment composes without inheritance") {
+    val Lexer = lexer[NestDepth.Ctx]:
+      case brace @ ("\\{" | "\\}") => Token[brace.type]
+      case x @ "[a-z]+" => Token["word"](x)
+
+    val (finalCtx, _) = Lexer.tokenize("a{b{c}{d")
+    finalCtx.depth shouldBe 2
+  }
+
+  test("Line and Column track independently when both are tracked on the same context") {
+    val Lexer = lexer[LexerCtx.Default]:
+      case "\n" => Token.Ignored
+      case x @ "[a-z]+" => Token["word"](x)
+
+    val (finalCtx, _) = Lexer.tokenize("ab\ncde")
+    finalCtx.line shouldBe 2
+    finalCtx.position shouldBe 4
+  }
 }
+
+object NestDepth:
+  opaque type Depth <: Int = Int
+  object Depth:
+    val Start: Depth = 0
+    given Tracking[Depth] = (matched, d) => if matched == "{" then d + 1 else if matched == "}" then d - 1 else d
+
+  final case class Ctx(depth: Depth = Depth.Start) extends LexerCtx

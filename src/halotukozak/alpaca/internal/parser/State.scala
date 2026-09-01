@@ -22,8 +22,7 @@ private[parser] object State:
   val empty: State = SortedSet.empty[Item](
     using Ordering
       .by[Item, String](_.production.lhs.name)
-      .orElseBy(_.production.ordinal)
-      .orElseBy(_.production.rhs.hashCode)
+      .orElseBy(_.production)
       .orElseBy(_.dotPosition)
       .orElseBy(_.lookAhead.name),
   )
@@ -43,15 +42,20 @@ private[parser] object State:
      * This advances the dot in all items that have the given symbol next,
      * then closes the set by adding all items derivable from non-terminals.
      *
-     * @param step        the symbol to shift
-     * @param productions all grammar productions
-     * @param firstSet    the FIRST sets for lookahead computation
+     * @param step             the symbol to shift
+     * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
+     * @param firstSet         the FIRST sets for lookahead computation
      * @return the new state
      */
-    def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet)(using DebugSettings): State =
+    def nextState(
+      step: Symbol,
+      productionsByLhs: Map[NonTerminal, List[Production]],
+      firstSet: FirstSet,
+    )(using DebugSettings,
+    ): State =
       state.iterator
         .filter(item => !item.isLastItem && item.nextSymbol == step)
-        .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
+        .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productionsByLhs, firstSet))
 
   /**
    * Constructs a state closure from a single item.
@@ -61,24 +65,32 @@ private[parser] object State:
    *
    * @param state the current state to add to
    * @param item the item to close
-   * @param productions all grammar productions
+   * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
    * @param firstSet the FIRST sets for lookahead computation
    * @return the closed state
    */
-  def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet)(using DebugSettings)
-    : State =
+  def fromItem(
+    state: State,
+    item: Item,
+    productionsByLhs: Map[NonTerminal, List[Production]],
+    firstSet: FirstSet,
+  )(using DebugSettings,
+  ): State =
     @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
+      case item :: rest if item.isLastItem => loop(state + item, pending, rest)
       case item :: rest =>
-        if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
-          val newState = state + item
-          val lookAheads = item.nextTerminals(firstSet)
-          val newItems = productions.iterator
-            .filter(_.lhs == item.nextSymbol)
-            .flatMap(production => lookAheads.iterator.map(production.toItem))
-            .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
-            .toList
-          loop(newState, pending ++ newItems, newItems ::: rest)
-        else loop(state + item, pending, rest)
+        item.nextSymbol match
+          case nt: NonTerminal =>
+            val newState = state + item
+            val lookAheads = item.nextTerminals(firstSet)
+            val newItems = productionsByLhs
+              .getOrElse(nt, Nil)
+              .iterator
+              .flatMap(production => lookAheads.iterator.map(production.toItem))
+              .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
+              .toList
+            loop(newState, pending ++ newItems, newItems ::: rest)
+          case _: Terminal => loop(state + item, pending, rest)
 
     loop(state, Set.empty, item :: Nil)

@@ -29,7 +29,9 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
    * `Vector`-backed sequence, so the default (non-cached) hashCode would rehash it from scratch
    * every time; this only ever computes it once. Used by [[Item]]'s cached `hashCode` (see #506),
    * which in turn speeds up every `State` (a `SortedSet[Item]`) used as a `stateIndex` map key
-   * during LR construction.
+   * during LR construction -- and by [[State]]'s item `Ordering` as a tie-breaker (see #507),
+   * where unlike a per-instance counter it stays consistent with `equals` even if two
+   * `Production` instances with identical fields are constructed separately.
    */
   override val hashCode: Int = (lhs, rhs, name).hashCode()
 
@@ -60,3 +62,5 @@ private[alpaca] object Production:
     case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
+
+  given Ordering[Production] = Ordering.by(_.hashCode)

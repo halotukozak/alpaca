@@ -4,7 +4,7 @@ package integration.brainfuck
 
 import halotukozak.alpaca.{ctx, lexer, LexerCtx, Token}
 
-case class BrainLexContext(var brackets: Int = 0, var squareBrackets: Int = 0) extends LexerCtx
+case class BrainLexContext(brackets: Int = 0, squareBrackets: Int = 0) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
   case ">" => Token["next"]
