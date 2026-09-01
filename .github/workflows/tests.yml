@@ -5,14 +5,15 @@ on:
   push:
     branches: [ main ]
 
-# Shared CI for the Mill-built libraries (regex, alpaca). Platform-agnostic
-# `./mill __.*` selectors, so the one file works whether or not a repo has a
-# Scala.js module. Job name `test` matches both repos' branch protection.
+# Shared CI for the Mill-built libraries (currently just alpaca). Platform-
+# agnostic: the `discover` job asks Mill itself which platforms have a
+# `.test` module (jvm, native, and js if a repo ever adds one), so the
+# `test` matrix needs no per-repo templating. Job names (Scalafmt,
+# Test (jvm), Test (native), ...) must be kept in sync with the consuming
+# repo's required branch-protection status checks.
 jobs:
-  test:
-    permissions:
-      contents: read
-      pull-requests: write
+  lint:
+    name: Scalafmt
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,22 +32,86 @@ jobs:
           key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
           restore-keys: |
             ${{ runner.os }}-mill-
+      - name: Scalafmt
+        run: ./mill mill.scalalib.scalafmt/checkFormatAll
+
+  discover:
+    name: Discover platforms
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.platforms.outputs.platforms }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Cache Mill dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-
+      # Top-level modules with a `.test` submodule are the platforms to test,
+      # e.g. `jvm.test` / `native.test` -> ["jvm", "native"].
+      - name: List platforms with a test module
+        id: platforms
+        run: |
+          platforms=$(./mill resolve __.test 2>/dev/null | grep -E '^[A-Za-z0-9_-]+\.test$' | sed 's/\.test$//' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test (${{ matrix.platform }})
+    needs: discover
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJson(needs.discover.outputs.platforms) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Cache Mill dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.cache/mill
+          key: ${{ runner.os }}-mill-${{ matrix.platform }}-${{ hashFiles('build.mill') }}
+          restore-keys: |
+            ${{ runner.os }}-mill-${{ matrix.platform }}-
+            ${{ runner.os }}-mill-
 
       - name: Compile
-        run: ./mill __.compile
+        run: ./mill ${{ matrix.platform }}.compile
       - name: Compile tests
-        run: ./mill __.test.compile
+        run: ./mill ${{ matrix.platform }}.test.compile
       - name: Run tests
-        run: ./mill __.test
+        run: ./mill ${{ matrix.platform }}.test
+      # Coverage/docs are only instrumented on the jvm module (ScoverageModule).
       - name: Code coverage
+        if: matrix.platform == 'jvm'
         run: ./mill jvm.scoverage.xmlCoberturaReport
       - name: Upload coverage to Codecov
+        if: matrix.platform == 'jvm'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: halotukozak-com/${{ github.event.repository.name }}
           fail_ci_if_error: false
-      - name: Scalafmt
-        run: ./mill mill.scalalib.scalafmt/checkFormatAll
       - name: Generate docs
+        if: matrix.platform == 'jvm'
         run: ./mill jvm.docJar
