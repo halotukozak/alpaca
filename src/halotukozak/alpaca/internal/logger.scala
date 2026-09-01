@@ -6,10 +6,6 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 
 private[internal] object logger:
-  // `content` is by-name so the (potentially expensive) Showable rendering at the call site is
-  // only ever forced inside the `foreach` below, i.e. when `ALPACA_DEBUG_DIR` is actually set --
-  // otherwise it would run unconditionally on every macro expansion, debug directory or not.
-  // noinspection AccessorLikeMethodIsUnit
   inline def toFile(path: String, replace: Boolean)(content: => Shown)(using debugSettings: DebugSettings): Unit =
     debugSettings.debugDirectory.foreach: dir =>
       val file = Path.of(dir).resolve(path)
