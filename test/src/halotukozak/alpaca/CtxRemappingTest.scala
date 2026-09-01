@@ -27,7 +27,7 @@ final class CtxRemappingTest extends AnyFunSuite with Matchers:
     val L = lexer:
       case "a" => Token["a"]
       case "!" =>
-        ctx.position += 5
+        ctx.position = Column(ctx.position + 5)
         Token.Ignored
 
     val exception = intercept[CustomException] {

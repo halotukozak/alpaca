@@ -15,10 +15,15 @@ import scala.quoted.{Quotes, ToExprFactory}
  * Type alias for context manipulation functions.
  *
  * These functions are used to update the lexer context as tokens are matched.
+ * The updated context is returned rather than mutated in place, so that user
+ * contexts can be immutable `case class`es: the `lexer` macro rewrites every
+ * `ctx.field = ...` / `ctx.field += ...` inside a rule into a `copy` and threads
+ * the result through here. Contexts that still declare `var` fields keep working
+ * unchanged (the assignment mutates in place and the same instance is returned).
  *
  * @tparam Ctx the global context type
  */
-private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Unit
+private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Ctx
 
 /**
  * Information about a token definition.
@@ -139,4 +144,4 @@ private[alpaca] final case class IgnoredToken[Name <: ValidName, +Ctx <: LexerCt
 ) extends Token[Name, Ctx, Nothing]
 
 private[alpaca] def RecoveredToken[Ctx <: LexerCtx](matched: String): IgnoredToken[matched.type, Ctx] =
-  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), _ => ())
+  IgnoredToken(TokenInfo(matched, s"<unrecognized \"$matched\">", matched), identity)
