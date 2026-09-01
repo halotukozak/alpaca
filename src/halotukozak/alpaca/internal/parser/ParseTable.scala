@@ -40,6 +40,9 @@ private[parser] object ParseTable:
     private def allSymbols: List[Symbol] =
       table.iterator.flatMap(_.keysIterator).distinct.toList
 
+    /** The table's rows, one per state (dense, consecutive, starting at 0), each a symbol -> action map. */
+    private[parser] def rows: Array[Map[Symbol, ParseAction]] = table
+
     /**
      * Converts the parse table to CSV format for debugging.
      *

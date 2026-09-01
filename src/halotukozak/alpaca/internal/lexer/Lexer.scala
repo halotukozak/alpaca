@@ -31,38 +31,53 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
 
   if cases.isEmpty then report.errorAndAbort("Lexer definition must contain at least one case")
 
-  val (tokens, infos) = cases.foldLeft(
+  val (tokens, infos, ignoredFlags) = cases.foldLeft(
     (
       tokens = List.empty[(expr: Expr[lexer.Token[?, Ctx, ?] & TokenRefn], name: ValidName)],
       infos = List.empty[TokenInfo],
+      ignored = List.empty[Boolean],
     ),
   ):
-    case ((accTokens, accInfos), CaseDef(tree, None, body)) =>
+    case ((accTokens, accInfos, accIgnored), CaseDef(tree, None, body)) =>
       def replaceWithNewCtx(newCtx: Term) = replaceRefs(
         (find = oldCtx.symbol, replace = newCtx),
         (find = tree.symbol, replace = '{ ${ newCtx.asExprOf[Ctx] }.lastRawMatched }.asTerm),
       )
 
-      def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]])
-        : PartialFunction[Expr[TokenDef[ValidName, Ctx, Any]], List[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])]] =
+      def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]]): PartialFunction[
+        Expr[TokenDef[ValidName, Ctx, Any]],
+        List[(info: TokenInfo, ignored: Boolean, expr: Expr[lexer.Token[?, Ctx, ?]])],
+      ] =
         case '{ Token.Ignored(using $_) } =>
           compileNameAndPattern[Nothing](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
-              (tokenInfo, '{ IgnoredToken[name, Ctx](${ Expr(tokenInfo) }, $ctxManipulation) })
+              (
+                info = tokenInfo,
+                ignored = true,
+                expr = '{ IgnoredToken[name, Ctx](${ Expr(tokenInfo) }, $ctxManipulation) },
+              )
             case other =>
               raiseShouldNeverBeCalled(other)
 
         case '{ type name <: ValidName; Token[name](using $_) } =>
           compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
-              (tokenInfo, '{ DefinedToken[name, Ctx, Unit](${ Expr(tokenInfo) }, $ctxManipulation, _ => ()) })
+              (
+                info = tokenInfo,
+                ignored = false,
+                expr = '{ DefinedToken[name, Ctx, Unit](${ Expr(tokenInfo) }, $ctxManipulation, _ => ()) },
+              )
             case other =>
               raiseShouldNeverBeCalled(other)
 
         case '{ type name <: ValidName; Token[name]($value: String)(using $_) } if value.asTerm.symbol == tree.symbol =>
           compileNameAndPattern[name](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
-              (tokenInfo, '{ DefinedToken[name, Ctx, String](${ Expr(tokenInfo) }, $ctxManipulation, _.lastRawMatched) })
+              (
+                info = tokenInfo,
+                ignored = false,
+                expr = '{ DefinedToken[name, Ctx, String](${ Expr(tokenInfo) }, $ctxManipulation, _.lastRawMatched) },
+              )
             case other =>
               raiseShouldNeverBeCalled(other)
 
@@ -76,11 +91,17 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                     case (methSym, (newCtx: Term) :: Nil) =>
                       val withNewCtx = replaceWithNewCtx(newCtx).transformTerm(value.asTerm)(methSym)
                       rewriteCtxMutations(newCtx.symbol)(withNewCtx)(methSym)
-                  (tokenInfo, '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) })
+                  (
+                    info = tokenInfo,
+                    ignored = false,
+                    expr = '{ DefinedToken[name, Ctx, result](${ Expr(tokenInfo) }, $ctxManipulation, $remapping) },
+                  )
             case (_, tokenInfo) =>
-              raiseShouldNeverBeCalled[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])](tokenInfo)
+              raiseShouldNeverBeCalled[(info: TokenInfo, ignored: Boolean, expr: Expr[lexer.Token[?, Ctx, ?]])](
+                tokenInfo,
+              )
 
-      val (infos, tokens) = extractSimple('{ (c: Ctx) => c })
+      val triples = extractSimple('{ (c: Ctx) => c })
         .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
           body match
@@ -95,8 +116,14 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                   Block(List(ValDef(ctxVar, Some(newCtx))), Block(List(rewritten), Ref(ctxVar)))
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDef[ValidName, Ctx, Any]])
-        .getOrElse(raiseShouldNeverBeCalled[List[(TokenInfo, Expr[lexer.Token[?, Ctx, ?]])]](body))
-        .unzip
+        .getOrElse:
+          raiseShouldNeverBeCalled[
+            List[(info: TokenInfo, ignored: Boolean, expr: Expr[lexer.Token[?, Ctx, ?]])],
+          ](body)
+
+      val infos = triples.map(_.info)
+      val ignoredFlags = triples.map(_.ignored)
+      val tokens = triples.map(_.expr)
 
       (
         tokens = accTokens ::: tokens.map:
@@ -104,6 +131,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             (expr = '{ $token.asInstanceOf[tokenTpe & TokenRefn] }, name = ValidName.from[name])
         ,
         infos = accInfos ::: infos,
+        ignored = accIgnored ::: ignoredFlags,
       )
 
     case (_, CaseDef(_, Some(_), body)) => report.errorAndAbort("Guards are not supported yet")
@@ -125,6 +153,24 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   SubsetChecker.checkRegexes(
     for (info, regex) <- infos.zip(parsedRegexes)
     yield (info.pattern, Subset.of(regex).withAnySuffix),
+  )
+
+  GrammarExport.maybeWrite(
+    // Symbol.spliceOwner is a synthetic "macro" method that dotty introduces to host the
+    // transparent inline def's expansion; the val this `lexer{...}` call is actually bound
+    // to (e.g. `val CalcLexer = lexer{...}`) is always one owner hop further up. The source
+    // file name and line are prefixed too, since the same val name (e.g. `CalcLexer`) is
+    // reused across multiple test/example files -- and even within one file, when two
+    // `lexer{...}` calls bind to a same-named val in different scopes (e.g. one at class
+    // level, another inside a test block) -- and would otherwise collide in a shared export
+    // directory, silently overwriting each other.
+    {
+      val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
+      val lexerName = Symbol.spliceOwner.owner.name.stripSuffix("$")
+      val line = Position.ofMacroExpansion.startLine + 1
+      s"$sourceFileName.$lexerName@L$line"
+    },
+    infos.zip(ignoredFlags).map((info, ignored) => (name = info.name, pattern = info.pattern, ignored = ignored)),
   )
 
   val fields = tokens.map((expr, name) => (name, expr.asTerm.tpe))
