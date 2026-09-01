@@ -106,3 +106,17 @@ jobs:
           name: compilation-benchmark-result
           path: benchmark-result.json
           retention-days: 1
+
+      - name: Fail on Significant Regression
+        env:
+          BASE_MEAN: ${{ steps.extract.outputs.base_mean }}
+          CURR_MEAN: ${{ steps.extract.outputs.curr_mean }}
+        run: |
+          awk -v base="$BASE_MEAN" -v curr="$CURR_MEAN" 'BEGIN {
+            pct = (curr - base) / base * 100
+            printf "Base: %.3fs, Current: %.3fs, Delta: %.2f%%\n", base, curr, pct
+            if (pct > 15) {
+              printf "::error::Compilation time regressed by %.2f%% (> 15%% threshold)\n", pct
+              exit 1
+            }
+          }'
