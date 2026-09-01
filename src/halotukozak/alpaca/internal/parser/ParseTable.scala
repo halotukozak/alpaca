@@ -79,8 +79,6 @@ private[parser] object ParseTable:
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
     : ParseTable =
     val firstSet = FirstSet(productions)
-    // Built once and reused by every closure computation below (State.fromItem/nextState),
-    // instead of each of them linearly scanning the full production list per item/state (#505).
     val productionsByLhs = productions.groupBy(_.lhs)
     var currStateId = 0
     val initialState = State.fromItem(
