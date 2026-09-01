@@ -5,12 +5,12 @@ on:
   push:
     branches: [ main ]
 
-# Shared CI for the Mill-built libraries (currently just alpaca). Platform-
-# agnostic: the `discover` job asks Mill itself which platforms have a
-# `.test` module (jvm, native, and js if a repo ever adds one), so the
-# `test` matrix needs no per-repo templating. Job names (Scalafmt,
-# Test (jvm), Test (native), ...) must be kept in sync with the consuming
-# repo's required branch-protection status checks.
+# Shared CI for the Mill-built libraries (regex, alpaca). Platform-agnostic:
+# the `discover` job asks Mill itself which platforms have a `.test` module
+# (jvm, native, js — whatever a given repo's build.mill defines), so the
+# `test` matrix needs no per-repo templating. Job names (Scalafmt, Docs,
+# Test (jvm), Test (native), Test (js), ...) must be kept in sync with each
+# consuming repo's required branch-protection status checks.
 jobs:
   lint:
     name: Scalafmt

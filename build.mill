@@ -10,6 +10,7 @@ package build
 import mill.*
 import mill.scalalib.*
 import mill.scalalib.publish.*
+import mill.scalajslib.*
 import mill.scalanativelib.*
 import mill.contrib.scoverage.ScoverageModule
 import mill.contrib.jmh.JmhModule
@@ -19,6 +20,12 @@ object `package` extends Module:
 
   trait Shared extends ScalaModule with PlatformScalaModule with SonatypeCentralPublishModule:
     def scalaVersion = "3.9.0"
+
+    // Task.env (not sys.env) is required here: Mill's persistent daemon captures its own
+    // process environment once at startup, so a plain `sys.env` read inside a cached Task
+    // never sees a `CI` value set after the daemon first launched. Task.Input re-reads and
+    // re-tracks it on every invocation, correctly invalidating scalacOptions when it changes.
+    def isCI: T[Boolean] = Task.Input { Task.env.contains("CI") }
 
     // Diagnostic/checking flags cost real compile time and only earn their keep in CI, where
     // that cost is paid once instead of on every local build.
@@ -33,6 +40,13 @@ object `package` extends Module:
         "-Vprofile",
         "-Werror",
         "-Yexplicit-nulls",
+        // Not purely diagnostic: productionImpl (Parser.scala) walks a parser subclass's
+        // declarations via reflection to build the `production` selector, and without this
+        // flag that walk sees a different member order/shape, tripping "Define resolutions
+        // as the last field of the parser" on parsers that are otherwise valid. Confirmed by
+        // bisecting the dev/CI scalacOptions split (#518) after it broke `jvm.test.compile`
+        // locally -- keep this in `common` even though every other check here is CI-only.
+        "-Wsafe-init",
         // Scala 3.9 generates larger trees for lexerImpl/createTablesImpl than 3.8 did, pushing
         // them past the compiler's hardcoded 3000-node coverage-instrumentation threshold
         // (dotty.tools.dotc.transform.InstrumentCoverage.MaxInstrumentableTreeNodes - not
@@ -59,12 +73,11 @@ object `package` extends Module:
         // "-Xprint:postInlining",
         // "-Xprint-suspension",
         // "-Vprint:typer",
-        "-Wsafe-init",
         "-Yshow-suppressed-errors",
         "-Yshow-var-bounds",
         "-Wunused:all",
       )
-      if sys.env.contains("CI") then common ++ ciOnly else common
+      if isCI() then common ++ ciOnly else common
     }
 
     override def scalaDocOptions = Task {
@@ -116,6 +129,12 @@ object `package` extends Module:
       // that depends on it lives in `test/src-jvm` (picked up automatically,
       // unlike `test/src` which both platforms compile) instead of `test/src`.
       override def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scalameta::scalameta:4.17.3")
+
+  object js extends Shared with ScalaJSModule:
+    def scalaJSVersion = "1.22.0"
+
+    object test extends ScalaTests with TestModule.ScalaTest with ScalaJSTests:
+      def scalaTestVersion = "3.2.20"
 
   object native extends Shared with ScalaNativeModule:
     def scalaNativeVersion = "0.5.12"
