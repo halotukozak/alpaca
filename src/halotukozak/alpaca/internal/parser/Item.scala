@@ -30,6 +30,8 @@ private[parser] final case class Item(
     case _: Production.Empty =>
       if dotPosition != 0 then throw AlgorithmError(show"dotPosition for empty production must be 0, got $dotPosition")
 
+  override val hashCode: Int = (production.hashCode, dotPosition, lookAhead).hashCode()
+
   /** The symbol immediately after the dot, or the lookahead if at the end. */
 
   lazy val nextSymbol: Symbol = production match

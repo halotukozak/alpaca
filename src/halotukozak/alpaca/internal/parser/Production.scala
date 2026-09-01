@@ -25,10 +25,13 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   val name: ValidName | Null
 
   /**
-   * Caches the case-class-derived hash instead of recomputing it on every call. Used by
-   * [[State]]'s item `Ordering` as a tie-breaker (see #507) -- unlike a per-instance counter,
-   * it stays consistent with `equals` even if two `Production` instances with identical fields
-   * are constructed separately.
+   * Caches the case-class-derived hash instead of recomputing it on every call. `rhs` is a
+   * `Vector`-backed sequence, so the default (non-cached) hashCode would rehash it from scratch
+   * every time; this only ever computes it once. Used by [[Item]]'s cached `hashCode` (see #506),
+   * which in turn speeds up every `State` (a `SortedSet[Item]`) used as a `stateIndex` map key
+   * during LR construction -- and by [[State]]'s item `Ordering` as a tie-breaker (see #507),
+   * where unlike a per-instance counter it stays consistent with `equals` even if two
+   * `Production` instances with identical fields are constructed separately.
    */
   override val hashCode: Int = (lhs, rhs, name).hashCode()
 
