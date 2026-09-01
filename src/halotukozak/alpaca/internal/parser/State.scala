@@ -41,24 +41,24 @@ private[parser] object State:
     def itemsByNextSymbol: Map[Symbol, List[Item]] =
       state.iterator.filterNot(_.isLastItem).toList.groupBy(_.nextSymbol) - Symbol.Empty
 
-    /**
-     * Computes the state reached after shifting a symbol.
-     *
-     * This advances the dot in all given items, then closes the set by adding all items
-     * derivable from non-terminals.
-     *
-     * @param items            the items that shift on the symbol being stepped to (see [[itemsByNextSymbol]])
-     * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
-     * @param firstSet         the FIRST sets for lookahead computation
-     * @return the new state
-     */
-    def nextState(
-      items: List[Item],
-      productionsByLhs: Map[NonTerminal, List[Production]],
-      firstSet: FirstSet,
-    )(using DebugSettings,
-    ): State =
-      items.foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productionsByLhs, firstSet))
+  /**
+   * Computes the state reached after shifting a symbol.
+   *
+   * This advances the dot in all given items, then closes the set by adding all items
+   * derivable from non-terminals.
+   *
+   * @param items            the items that shift on the symbol being stepped to (see [[itemsByNextSymbol]])
+   * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
+   * @param firstSet         the FIRST sets for lookahead computation
+   * @return the new state
+   */
+  def nextState(
+    items: List[Item],
+    productionsByLhs: Map[NonTerminal, List[Production]],
+    firstSet: FirstSet,
+  )(using DebugSettings,
+  ): State =
+    items.foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productionsByLhs, firstSet))
 
   /**
    * Constructs a state closure from a single item.
