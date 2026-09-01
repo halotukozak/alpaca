@@ -27,39 +27,6 @@ private[parser] object State:
       .orElseBy(_.lookAhead.name),
   )
 
-  extension (state: State)
-
-    /**
-     * Groups this state's non-final items by the symbol they can shift on next.
-     *
-     * Computed once per state and reused for every step symbol, instead of each step
-     * re-scanning the whole state to find its items (`nextSymbol` was otherwise called once
-     * per item per step symbol -- proportional to state fan-out, not state size).
-     *
-     * @return a map from each possible step symbol to the items that shift on it
-     */
-    def itemsByNextSymbol: Map[Symbol, List[Item]] =
-      state.iterator.filterNot(_.isLastItem).toList.groupBy(_.nextSymbol) - Symbol.Empty
-
-  /**
-   * Computes the state reached after shifting a symbol.
-   *
-   * This advances the dot in all given items, then closes the set by adding all items
-   * derivable from non-terminals.
-   *
-   * @param items            the items that shift on the symbol being stepped to (see [[itemsByNextSymbol]])
-   * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
-   * @param firstSet         the FIRST sets for lookahead computation
-   * @return the new state
-   */
-  def nextState(
-    items: List[Item],
-    productionsByLhs: Map[NonTerminal, List[Production]],
-    firstSet: FirstSet,
-  )(using DebugSettings,
-  ): State =
-    items.foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productionsByLhs, firstSet))
-
   /**
    * Constructs a state closure from a single item.
    *

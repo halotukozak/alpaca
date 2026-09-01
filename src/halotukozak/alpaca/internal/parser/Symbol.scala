@@ -89,6 +89,16 @@ private[parser] object Symbol:
   /** The empty terminal symbol (epsilon). */
   val Empty: Terminal { type IsEmpty = true } = Terminal("ε").asInstanceOf[Terminal { type IsEmpty = true }]
 
+  /**
+   * Placeholder lookahead used only while propagating LALR(1) lookaheads (#504, see
+   * [[Lookaheads]]). Never appears in a real reduce action or parse table entry -- within a
+   * per-kernel-item closure seeded with this symbol, any item that still carries it means "this
+   * item's real lookahead is whatever the seed's turns out to be" (propagation), while any other
+   * terminal it closure-generates is a lookahead the target state gets regardless of the seed
+   * (spontaneous generation).
+   */
+  val Dummy: Terminal { type IsEmpty = false } = Terminal("#")
+
   given Showable[Symbol] = symbol =>
     if symbol.name.contains(SyntheticInfix) then show"<synthetic from ${symbol.name.takeWhile(_ != '$')}>"
     else

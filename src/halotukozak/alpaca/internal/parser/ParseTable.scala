@@ -62,44 +62,36 @@ private[parser] object ParseTable:
       Csv(headers, rows)
 
   /**
-   * Constructs the LR(1) parse table from a list of productions.
+   * Constructs the LALR(1) parse table from a list of productions (#504).
    *
-   * This implements the LR(1) parser construction algorithm. It builds
-   * states by computing closures of item sets and constructs the parse
-   * table that maps (state, symbol) pairs to actions (shift or reduce).
+   * This builds the (much smaller than canonical-LR(1)) LR(0) automaton first
+   * ([[LR0Automaton]]), determines each state's lookaheads by propagation over it
+   * ([[Lookaheads]]), then closes each state once more with its real lookaheads (reusing
+   * [[State.fromItem]]) to read off reduce actions; shift actions come straight from the
+   * automaton's already-computed goto transitions.
    *
    * @param productions the grammar productions
    * @return the constructed parse table
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
-  // Deliberately sequential (see #31): states are discovered incrementally as a side
-  // effect of processing earlier ones, so parallelizing safely would need a frontier-based
-  // BFS rewrite with concurrent state dedup -- not worth the correctness risk without a
-  // measured compile-time bottleneck on a real grammar.
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
     : ParseTable =
     val firstSet = FirstSet(productions)
     val productionsByLhs = productions.groupBy(_.lhs)
-    var currStateId = 0
-    val initialState = State.fromItem(
-      state = State.empty,
-      item = productionsByLhs(parser.Symbol.Start).head.toItem(),
-      productionsByLhs = productionsByLhs,
-      firstSet = firstSet,
-    )
-    val states = mutable.ArrayBuffer(initialState)
-    val stateIndex = mutable.HashMap(initialState -> 0)
-    val tableRows = mutable.ArrayBuffer(mutable.HashMap.empty[Symbol, ParseAction])
+    val automaton = LR0Automaton(productionsByLhs)
+    val lookaheads = Lookaheads(automaton, productionsByLhs, firstSet)
 
-    def addToTable(symbol: Symbol, action: ParseAction): Unit =
-      val row = tableRows(currStateId)
+    val tableRows = mutable.ArrayBuffer.fill(automaton.states.length)(mutable.HashMap.empty[Symbol, ParseAction])
+
+    def addToTable(stateId: Int, symbol: Symbol, action: ParseAction): Unit =
+      val row = tableRows(stateId)
       row.get(symbol) match
         case None => row.update(symbol, action)
         case Some(existingAction) =>
           conflictResolutionTable.get(existingAction, action)(symbol) match
             case Some(action) => row.update(symbol, action)
             case None =>
-              val path = toPath(currStateId, List(symbol))
+              val path = toPath(stateId, List(symbol))
               (existingAction, action) match
                 case (red1: Reduction, red2: Reduction) => throw ReduceReduceConflict(red1, red2, path)
                 case (Shift(_), red: Reduction) => throw ShiftReduceConflict(symbol, red, path)
@@ -120,25 +112,18 @@ private[parser] object ParseTable:
         if sourceStateId == stateId then symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
 
-    while states.sizeIs > currStateId do
-      val currState = states(currStateId)
+    for stateId <- automaton.states.indices do
+      val kernelItems = for
+        kernelCore <- automaton.kernels(stateId)
+        la <- lookaheads(stateId)(kernelCore)
+      yield Item(kernelCore.production, kernelCore.dotPosition, la)
 
-      for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
+      val currState =
+        kernelItems.foldLeft(State.empty)((acc, item) => State.fromItem(acc, item, productionsByLhs, firstSet))
 
-      for (stepSymbol, items) <- currState.itemsByNextSymbol do
-        val newState = State.nextState(items, productionsByLhs, firstSet)
+      for item <- currState if item.isLastItem do addToTable(stateId, item.lookAhead, Reduction(item.production))
 
-        val stateId = stateIndex.getOrElseUpdate(
-          newState, {
-            val newId = states.length
-            states += newState
-            tableRows += mutable.HashMap.empty
-            newId
-          },
-        )
-        addToTable(stepSymbol, Shift(stateId))
-
-      currStateId += 1
+      for (stepSymbol, targetStateId) <- automaton.goto(stateId) do addToTable(stateId, stepSymbol, Shift(targetStateId))
 
     Array.better.tabulate(tableRows.length)(tableRows(_).toMap)
 
