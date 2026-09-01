@@ -10,6 +10,7 @@ A type-safe lexer and parser library for Scala 3, featuring compile-time validat
 - **Macro-based code generation** — Scala 3 macros generate efficient tokenizers and parse tables
 - **Context-aware** — lexical and parsing contexts with type-safe state management
 - **LR(1) parsing** — automatic parse table generation with conflict detection
+- **Cross-platform** — runs on the JVM, Scala.js, and Scala Native
 
 ## Installation
 
@@ -30,7 +31,7 @@ object myproject extends ScalaModule {
   def scalacOptions = Seq("-Yretain-trees", "-experimental")
 
   def mvnDeps = Seq(
-    mvn"com.halotukozak::alpaca:0.2.0"
+    mvn"com.halotukozak::alpaca::0.2.0"
   )
 }
 ```
@@ -159,25 +160,28 @@ Runtime benchmarks are **not** run automatically in CI on push or pull requests.
 
 ### Build Commands
 
+The build defines separate `jvm`, `js`, and `native` modules; commands below target `jvm` (swap in
+`js`/`native` to build for those platforms):
+
 ```bash
 # Compile the project
-./mill compile
+./mill jvm.compile
 
 # Run tests
-./mill test
+./mill jvm.test
 
 # Generate documentation
-./mill docJar
+./mill jvm.docJar
 
 # Run test coverage
-./mill test.scoverage.htmlReport
+./mill jvm.scoverage.htmlReport
 ```
 
 ## Thesis
 
 This project was developed as a Bachelor's Thesis. The full text is available in
-the [thesis.pdf](https://github.com/halotukozak/alpaca/blob/master/thesis.pdf) file. The LaTeX source files are on
-the `thesis` [branch](https://github.com/halotukozak/alpaca/tree/thesis). The thesis is written in Polish
+the [thesis.pdf](https://github.com/halotukozak-com/alpaca/blob/main/thesis.pdf) file. The LaTeX source files are on
+the `thesis` [branch](https://github.com/halotukozak-com/alpaca/tree/thesis). The thesis is written in Polish
 and does not represent the current state of the project.
 
 ## Contributing
