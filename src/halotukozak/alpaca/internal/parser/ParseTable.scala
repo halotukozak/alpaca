@@ -124,8 +124,8 @@ private[parser] object ParseTable:
 
       for item <- currState if item.isLastItem do addToTable(item.lookAhead, Reduction(item.production))
 
-      for stepSymbol <- currState.possibleSteps do
-        val newState = currState.nextState(stepSymbol, productions, firstSet)
+      for (stepSymbol, items) <- currState.itemsByNextSymbol do
+        val newState = State.nextState(items, productions, firstSet)
 
         val stateId = stateIndex.getOrElseUpdate(
           newState, {

@@ -31,27 +31,30 @@ private[parser] object State:
   extension (state: State)
 
     /**
-     * Gets the set of symbols that can be shifted from this state.
+     * Groups this state's non-final items by the symbol they can shift on next.
      *
-     * @return the set of symbols that appear after the dot in non-final items
+     * Computed once per state and reused for every step symbol, instead of each step
+     * re-scanning the whole state to find its items (`nextSymbol` was otherwise called once
+     * per item per step symbol -- proportional to state fan-out, not state size).
+     *
+     * @return a map from each possible step symbol to the items that shift on it
      */
-    def possibleSteps: Set[Symbol] = state.iterator.filterNot(_.isLastItem).map(_.nextSymbol).toSet.excl(Symbol.Empty)
+    def itemsByNextSymbol: Map[Symbol, List[Item]] =
+      state.iterator.filterNot(_.isLastItem).toList.groupBy(_.nextSymbol) - Symbol.Empty
 
-    /**
-     * Computes the next state after shifting a symbol.
-     *
-     * This advances the dot in all items that have the given symbol next,
-     * then closes the set by adding all items derivable from non-terminals.
-     *
-     * @param step        the symbol to shift
-     * @param productions all grammar productions
-     * @param firstSet    the FIRST sets for lookahead computation
-     * @return the new state
-     */
-    def nextState(step: Symbol, productions: List[Production], firstSet: FirstSet)(using DebugSettings): State =
-      state.iterator
-        .filter(item => !item.isLastItem && item.nextSymbol == step)
-        .foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
+  /**
+   * Computes the state reached after shifting a symbol.
+   *
+   * This advances the dot in all given items, then closes the set by adding all items
+   * derivable from non-terminals.
+   *
+   * @param items       the items that shift on the symbol being stepped to (see [[itemsByNextSymbol]])
+   * @param productions all grammar productions
+   * @param firstSet    the FIRST sets for lookahead computation
+   * @return the new state
+   */
+  def nextState(items: List[Item], productions: List[Production], firstSet: FirstSet)(using DebugSettings): State =
+    items.foldLeft(State.empty)((acc, item) => State.fromItem(acc, item.nextItem, productions, firstSet))
 
   /**
    * Constructs a state closure from a single item.

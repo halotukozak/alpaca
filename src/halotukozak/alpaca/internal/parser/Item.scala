@@ -30,8 +30,12 @@ private[parser] final case class Item(
     case _: Production.Empty =>
       if dotPosition != 0 then throw AlgorithmError(show"dotPosition for empty production must be 0, got $dotPosition")
 
-  /** The symbol immediately after the dot, or the lookahead if at the end. */
-
+  /**
+   * The symbol immediately after the dot.
+   *
+   * Callers must guard with `!isLastItem`; on the last item this throws (the exact exception
+   * depends on the production kind, not part of this method's contract).
+   */
   def nextSymbol: Symbol = production match
     case Production.NonEmpty(_, rhs, name) => rhs(dotPosition)
     case _: Production.Empty => throw AlgorithmError(show"$this is the last item, has no next symbol")
