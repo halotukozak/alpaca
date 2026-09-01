@@ -67,7 +67,7 @@ private[parser] object State:
    */
   def fromItem(state: State, item: Item, productions: List[Production], firstSet: FirstSet)(using DebugSettings)
     : State =
-    @tailrec def loop(state: State, worklist: List[Item]): State = worklist match
+    @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
       case item :: rest =>
         if !item.isLastItem && !item.nextSymbol.isInstanceOf[Terminal] then
@@ -76,9 +76,9 @@ private[parser] object State:
           val newItems = productions.iterator
             .filter(_.lhs == item.nextSymbol)
             .flatMap(production => lookAheads.iterator.map(production.toItem))
-            .filterNot(newState.contains)
+            .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
             .toList
-          loop(newState, newItems ::: rest)
-        else loop(state + item, rest)
+          loop(newState, pending ++ newItems, newItems ::: rest)
+        else loop(state + item, pending, rest)
 
-    loop(state, item :: Nil)
+    loop(state, Set.empty, item :: Nil)
