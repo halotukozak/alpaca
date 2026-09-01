@@ -25,13 +25,13 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   val name: ValidName | Null
 
   /**
-   * A cached hash of this production's `(lhs, rhs, name)`, computed once instead of on every
-   * use. `rhs` is a `Vector`-backed sequence, so the default case-class hashCode would rehash
-   * it from scratch on every call; this only ever computes it once. Used by [[Item]]'s cached
-   * `hashCode` (see #506), which in turn speeds up every `State` (a `SortedSet[Item]`) used as
-   * a `stateIndex` map key during LR construction.
+   * Caches the case-class-derived hash instead of recomputing it on every call. `rhs` is a
+   * `Vector`-backed sequence, so the default (non-cached) hashCode would rehash it from scratch
+   * every time; this only ever computes it once. Used by [[Item]]'s cached `hashCode` (see #506),
+   * which in turn speeds up every `State` (a `SortedSet[Item]`) used as a `stateIndex` map key
+   * during LR construction.
    */
-  private[parser] lazy val structuralHash: Int = (lhs, rhs, name).hashCode()
+  override val hashCode: Int = (lhs, rhs, name).hashCode()
 
   /**
    * Converts this production to an LR(0) item with a given lookahead.

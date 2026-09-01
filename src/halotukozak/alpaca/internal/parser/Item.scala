@@ -30,10 +30,7 @@ private[parser] final case class Item(
     case _: Production.Empty =>
       if dotPosition != 0 then throw AlgorithmError(show"dotPosition for empty production must be 0, got $dotPosition")
 
-  // Cached because States (SortedSet[Item]) are hashed on every stateIndex lookup during LR
-  // construction (#506); the default case-class hashCode would rehash `production` -- and
-  // transitively its Vector-backed `rhs` -- on every one of those hashes.
-  override val hashCode: Int = (production.structuralHash, dotPosition, lookAhead).hashCode()
+  override val hashCode: Int = (production.hashCode, dotPosition, lookAhead).hashCode()
 
   /** The symbol immediately after the dot, or the lookahead if at the end. */
 
