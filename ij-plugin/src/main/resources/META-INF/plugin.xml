@@ -27,5 +27,8 @@
     <lang.foldingBuilder
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.folding.AlpacaFoldingBuilder"/>
+    <completion.contributor
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.completion.AlpacaCompletionContributor"/>
   </extensions>
 </idea-plugin>
