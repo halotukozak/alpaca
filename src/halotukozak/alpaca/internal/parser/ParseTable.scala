@@ -82,10 +82,10 @@ private[parser] object ParseTable:
     val productionsByLhs = productions.groupBy(_.lhs)
     var currStateId = 0
     val initialState = State.fromItem(
-      State.empty,
-      productionsByLhs(parser.Symbol.Start).head.toItem(),
-      productionsByLhs,
-      firstSet,
+      state = State.empty,
+      item = productionsByLhs(parser.Symbol.Start).head.toItem(),
+      productionsByLhs = productionsByLhs,
+      firstSet = firstSet,
     )
     val states = mutable.ArrayBuffer(initialState)
     val stateIndex = mutable.HashMap(initialState -> 0)

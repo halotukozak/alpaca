@@ -22,7 +22,7 @@ private[parser] object State:
   val empty: State = SortedSet.empty[Item](
     using Ordering
       .by[Item, String](_.production.lhs.name)
-      .orElseBy(_.production.orderingKey)
+      .orElseBy(_.production)
       .orElseBy(_.dotPosition)
       .orElseBy(_.lookAhead.name),
   )
@@ -78,20 +78,19 @@ private[parser] object State:
   ): State =
     @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
+      case item :: rest if item.isLastItem => loop(state + item, pending, rest)
       case item :: rest =>
-        if item.isLastItem then loop(state + item, pending, rest)
-        else
-          item.nextSymbol match
-            case nt: NonTerminal =>
-              val newState = state + item
-              val lookAheads = item.nextTerminals(firstSet)
-              val newItems = productionsByLhs
-                .getOrElse(nt, Nil)
-                .iterator
-                .flatMap(production => lookAheads.iterator.map(production.toItem))
-                .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
-                .toList
-              loop(newState, pending ++ newItems, newItems ::: rest)
-            case _: Terminal => loop(state + item, pending, rest)
+        item.nextSymbol match
+          case nt: NonTerminal =>
+            val newState = state + item
+            val lookAheads = item.nextTerminals(firstSet)
+            val newItems = productionsByLhs
+              .getOrElse(nt, Nil)
+              .iterator
+              .flatMap(production => lookAheads.iterator.map(production.toItem))
+              .filterNot(candidate => newState.contains(candidate) || pending.contains(candidate))
+              .toList
+            loop(newState, pending ++ newItems, newItems ::: rest)
+          case _: Terminal => loop(state + item, pending, rest)
 
     loop(state, Set.empty, item :: Nil)

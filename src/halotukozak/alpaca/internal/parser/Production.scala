@@ -30,7 +30,7 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
    * per-instance counter, it stays consistent with `equals` even if two `Production` instances
    * with identical fields are constructed separately.
    */
-  private[parser] lazy val orderingKey: Int = (lhs, rhs, name).hashCode()
+  private lazy val orderingKey: Int = (lhs, rhs, name).hashCode()
 
   /**
    * Converts this production to an LR(0) item with a given lookahead.
@@ -59,3 +59,5 @@ private[alpaca] object Production:
     case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
     case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
     case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
+
+  given Ordering[Production] = Ordering.by(_.orderingKey)
