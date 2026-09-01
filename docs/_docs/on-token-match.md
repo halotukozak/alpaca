@@ -1,9 +1,9 @@
-# OnTokenMatch
+# Between Stages
 
 The Alpaca lexer and parser are two independent compilation stages connected by a single data contract: the `Lexeme`.
-When you call `tokenize()`, the lexer matches tokens against the input, runs the `OnTokenMatch` hook after each match, and collects the results into a `List[Lexeme]`.
+When you call `tokenize()`, the lexer matches tokens against the input, runs its post-match update after each match, and collects the results into a `List[Lexeme]`.
 When you call `parse()`, the parser consumes that list.
-The `OnTokenMatch` hook is responsible for advancing the text cursor, constructing each lexeme with its context snapshot, and applying any custom side effects you configure.
+The post-match update is responsible for advancing the text cursor, applying tracking-field and rule-body context changes, and constructing each lexeme with its context snapshot.
 
 Most programs need nothing more than this:
 
@@ -11,7 +11,7 @@ Most programs need nothing more than this:
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var squareBrackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -56,7 +56,7 @@ val (finalCtx, lexemes) = BrainLexer.tokenize("[>+<-]")
 val (_, ast) = BrainParser.parse(lexemes)
 ```
 
-This page explains what is inside those lexemes, how to customize the pipeline, and how the data flows between stages.
+This page explains what is inside those lexemes, how the pipeline advances the context, and how the data flows between stages.
 
 ## Connecting Lexer Output to Parser Input
 
@@ -81,68 +81,39 @@ require(finalCtx.squareBrackets == 0, "Mismatched brackets")
 val (_, ast) = BrainParser.parse(lexemes)
 ```
 
-## Custom OnTokenMatch
+## The Post-Match Update
 
-The default `OnTokenMatch[LexerCtx]` handles cursor advancement, snapshot construction, and context updates for all standard use cases. Customize it only when you need per-token side effects beyond what context fields can express -- for example, writing to an external log, emitting metrics, or computing aggregate statistics that must update outside the context object.
+The `lexer` macro derives the per-token update from the context's case fields. There is no hook to override; instead you compose behaviour from smaller pieces:
 
-The correct pattern mirrors how Alpaca's built-in `PositionTracking` and `LineTracking` traits work. It requires a trait (not a case class) so that the auto-composition macro can discover your hook by inspecting the context's linearized parent types at compile time.
+- **Tracking fragments** — a field whose type provides a `given Tracking[F]` advances automatically after every match. `Column` and `Line` are built in; you can define your own (see [Lexer Context](lexer-context.md#the-post-match-update)).
+- **Rule bodies** — assignments like `ctx.squareBrackets += 1` are rewritten into a functional `copy`, so a field with no `Tracking` changes only where a rule says so.
+- **Post-tokenization checks** — read the final `ctx` returned by `tokenize()` for anything that only makes sense once the whole input is consumed.
 
-1. Define a custom **trait** extending `LexerCtx`.
-2. Provide `given OnTokenMatch[YourTrait]` in that trait's **companion object**.
-3. Have your case class extend the trait.
-4. The `auto` macro at compile time finds all `OnTokenMatch` instances from parent traits and composes them automatically.
+For per-token side effects that live outside the context entirely — writing to an external log, emitting metrics — put the effect in the rule body itself. It runs once per match, in match order.
 
-```scala
-import halotukozak.alpaca.*
-
-// Step 1: Trait extending LexerCtx
-trait IndentTracking extends LexerCtx:
-  this: Product =>
-  var indentLevel: Int
-
-// Step 2: given in TRAIT COMPANION (not case class companion)
-object IndentTracking:
-  given OnTokenMatch[IndentTracking] = (token, matched, ctx) =>
-    if matched == "\n" then ctx.indentLevel = 0
-
-// Step 3: Case class extends both
-case class MyCtx(
-  var indentLevel: Int = 0,
-) extends LexerCtx with IndentTracking
-
-// Step 4: Pass MyCtx to lexer -- auto composition happens at compile time
-val Lexer = lexer[MyCtx]:
-  case "\\n" => Token.Ignored
-  case id @ "[a-z]+" => Token["ID"](id)
+```scala sc-compile-with:otm-brainfuck
+val LoggingLexer = lexer[BrainLexContext]:
+  case "\\[" =>
+    ctx.squareBrackets += 1
+    println(s"open at depth ${ctx.squareBrackets}")
+    Token["jumpForward"]
+  case "\\]" =>
+    ctx.squareBrackets -= 1
+    Token["jumpBack"]
 ```
-
-Do **not** define `given OnTokenMatch[MyCtx]` directly on the concrete case class. Doing so bypasses the auto-composition mechanism: the lexer will use your hook but skip the default hook that advances the text cursor, and tokenization will loop indefinitely. Always put the `given` in a **trait companion**, not a case class companion.
-
-For reference, the `OnTokenMatch` type is a function:
-
-```scala
-import halotukozak.alpaca.*
-
-// OnTokenMatch[Ctx] extends ((Token[?, Ctx, ?], String, Ctx) => Unit)
-// token:   Token[?, Ctx, ?]  -- either DefinedToken or IgnoredToken
-// matched: String             -- the matched text
-// ctx:     Ctx                -- the current context (mutable, updated in place)
-```
-
-See the [Lexer Context](lexer-context.md) page for the full reference on `OnTokenMatch` composition and the built-in `PositionTracking` and `LineTracking` traits.
 
 ## Data Flow Summary
 
 Each call to `tokenize()` follows this sequence:
 
-1. The lexer attempts to match the remaining input against each rule pattern in order. The first match wins. If no pattern matches, a `RuntimeException` is thrown with the unexpected character.
-2. `Tokenization.tokenize` advances the text cursor (`ctx.text`) past the matched string and records the matched text in `ctx.lastRawMatched`.
-3. `OnTokenMatch` runs. The default `OnTokenMatch[LexerCtx]` applies any rule-body context changes (`modifyCtx`), derives a snapshot from the context's `Product` elements (case class fields), overrides the snapshot's `text` field with the matched string, and — for `DefinedToken`s — builds a `Lexeme` from the token name, value, and snapshot.
-4. If the matched token is `Token.Ignored` (or a recovery token), `OnTokenMatch` still runs the context modifications and tracking updates but does not emit a `Lexeme`. The token is invisible to the parser.
-5. Tracking hooks (`PositionTracking`, `LineTracking`, custom traits) run as part of the composed `OnTokenMatch`, updating `position`, `line`, etc.
+1. The lexer attempts to match the remaining input against each rule pattern in order. The first match wins. If no pattern matches, the context's `ErrorHandling` strategy decides what happens (by default, a `RuntimeException` with the unexpected character).
+2. Each tracked field's `Tracking` update runs, producing a fresh context via one functional `copy`.
+3. The rule body's context changes (`ctx.field = ...`) are applied, again as a `copy`.
+4. The text cursor (`ctx.text`) advances past the matched string and the matched text is recorded in `ctx.lastRawMatched`.
+5. For a `DefinedToken`, a `Lexeme` is built from the token name, value, and a snapshot of the context's case fields, with `text` set to the matched string. `Token.Ignored` (and recovery tokens) still run steps 2–4 but emit no `Lexeme` — they are invisible to the parser.
 6. This repeats until the entire input is consumed. `tokenize()` then returns the named tuple `(ctx, lexemes)` -- the final context state and the complete lexeme list.
 7. `parse(lexemes)` receives the list, appends `Lexeme.EOF` internally, and runs the parser grammar against the sequence.
 
 The `Lexeme` list is immutable after `tokenize()` returns. The parser does not alter the lexeme data.
 
-See [Lexer](lexer.md) for lexer definition, [Lexer Context](lexer-context.md) for custom contexts and tracking traits, and [Parser](parser.md) for grammar rules.
+See [Lexer](lexer.md) for lexer definition, [Lexer Context](lexer-context.md) for custom contexts and tracking fragments, and [Parser](parser.md) for grammar rules.

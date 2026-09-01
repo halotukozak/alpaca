@@ -48,8 +48,8 @@ The lexer tracks bracket depth in a custom context to catch mismatches at lex ti
 import halotukozak.alpaca.*
 
 case class BrainLexContext(
-  var brackets: Int = 0,
-  var squareBrackets: Int = 0,
+  brackets: Int = 0,
+  squareBrackets: Int = 0,
 ) extends LexerCtx
 
 val BrainLexer = lexer[BrainLexContext]:
@@ -237,5 +237,5 @@ assert(mem2.cells(0) == 0)  // cell cleared by loop
 Ideas for extending the interpreter further:
 
 - **Error recovery** -- use `ErrorHandling.Strategy.IgnoreChar` instead of a catch-all pattern
-- **Source positions** -- add `PositionTracking` and `LineTracking` to the lexer context for better error messages
+- **Source positions** -- add `Column` and `Line` fields to the lexer context for better error messages
 - **String literals** -- add a `"..."` token for inline string output

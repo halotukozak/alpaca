@@ -6,7 +6,6 @@ import halotukozak.alpaca.internal.lexer.{Lexeme, Token}
 import halotukozak.alpaca.internal.parser.*
 
 import scala.annotation.{compileTimeOnly, unused}
-import scala.deriving.Mirror
 
 type Parser[Ctx <: ParserCtx] = parser.Parser[Ctx]
 
@@ -233,14 +232,6 @@ object Production:
   inline def apply(@unused symbols: (Rule[?] | Token[?, ?, ?])*): Production = null.asInstanceOf[Production]
 
 object ParserCtx:
-
-  /**
-   * Automatic Copyable instance for any GlobalCtx that is a Product (case class).
-   *
-   * @tparam Ctx the context type
-   */
-  given [Ctx <: ParserCtx & Product: Mirror.ProductOf]: Copyable[Ctx] =
-    Copyable.derived
 
   /**
    * An empty parser context with no state.
