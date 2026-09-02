@@ -62,25 +62,23 @@ class AlpacaLexer(private val grammarId: String, specs: List<TokenSpec>) : Lexer
       return
     }
 
-    var bestSpec: TokenSpec? = null
-    var bestLength = 0
-    for ((spec, matcher) in matchers) {
-      matcher.region(tokenStart, bufferEnd)
-      if (matcher.lookingAt()) {
-        val length = matcher.end() - matcher.start()
-        if (length > bestLength) {
-          bestSpec = spec
-          bestLength = length
-        }
-      }
-    }
+    val best =
+      matchers
+        .asSequence()
+        .mapNotNull { (spec, matcher) ->
+          matcher.region(tokenStart, bufferEnd)
+          if (!matcher.lookingAt()) return@mapNotNull null
+          val length = matcher.end() - matcher.start()
+          if (length == 0) null else spec to length
+        }.maxByOrNull { (_, length) -> length }
 
-    if (bestSpec == null) {
+    if (best == null) {
       currentTokenType = ALPACA_BAD_CHARACTER
       tokenEnd = tokenStart + 1
     } else {
-      currentTokenType = AlpacaTokenTypes.forName(grammarId, bestSpec.name)
-      tokenEnd = tokenStart + bestLength
+      val (spec, length) = best
+      currentTokenType = AlpacaTokenTypes.forName(grammarId, spec.name)
+      tokenEnd = tokenStart + length
     }
   }
 }

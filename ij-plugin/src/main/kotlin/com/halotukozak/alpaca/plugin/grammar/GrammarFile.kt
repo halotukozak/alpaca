@@ -1,5 +1,6 @@
 package com.halotukozak.alpaca.plugin.grammar
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
@@ -57,41 +58,27 @@ object ParserGrammarFile {
     fun read(path: Path): List<ProductionSpec> = Json.decodeFromString(Files.readString(path))
 }
 
-/** A shift-or-reduce action for one (state, symbol) cell of an exported LR(1) parse table. */
+/**
+ * A shift-or-reduce action for one (state, symbol) cell of an exported LR(1) parse table.
+ * The `@SerialName`s match the `"type"` discriminator Alpaca's export writes.
+ */
+@Serializable
 sealed interface ActionSpec {
+    @Serializable
+    @SerialName("shift")
     data class Shift(val state: Int) : ActionSpec
 
+    @Serializable
+    @SerialName("reduce")
     data class Reduce(val production: ProductionSpec) : ActionSpec
 }
 
-/** Mirrors the `{"type":"shift"|"reduce",...}` JSON shape; converted to the typed [ActionSpec] after decoding. */
-@Serializable
-private data class ActionSpecDto(
-    val type: String,
-    val state: Int? = null,
-    val production: ProductionSpec? = null,
-) {
-    fun toActionSpec(): ActionSpec =
-        when (type) {
-            "shift" -> ActionSpec.Shift(state ?: error("shift action missing 'state'"))
-            "reduce" -> ActionSpec.Reduce(production ?: error("reduce action missing 'production'"))
-            else -> error("unknown parse action type: '$type'")
-        }
-}
-
 /** One (symbol, action) cell in an exported LR(1) table state's row. */
+@Serializable
 data class TableEntry(
     val symbol: SymbolSpec,
     val action: ActionSpec,
 )
-
-@Serializable
-private data class TableEntryDto(
-    val symbol: SymbolSpec,
-    val action: ActionSpecDto,
-) {
-    fun toTableEntry(): TableEntry = TableEntry(symbol, action.toActionSpec())
-}
 
 /**
  * Reads a `<parser>.table.json` file written by Alpaca's compile-time grammar export: the
@@ -101,10 +88,7 @@ private data class TableEntryDto(
 object ParserTableFile {
     const val SUFFIX = ".table.json"
 
-    fun read(path: Path): List<List<TableEntry>> =
-        Json
-            .decodeFromString<List<List<TableEntryDto>>>(Files.readString(path))
-            .map { row -> row.map { it.toTableEntry() } }
+    fun read(path: Path): List<List<TableEntry>> = Json.decodeFromString(Files.readString(path))
 }
 
 /**

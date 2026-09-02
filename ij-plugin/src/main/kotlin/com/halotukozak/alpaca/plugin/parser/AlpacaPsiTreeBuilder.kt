@@ -28,8 +28,8 @@ class AlpacaPsiTreeBuilder(
     tokenSpecs.associate { AlpacaTokenTypes.forName(grammarId, it.name) to it.name }
 
   init {
-    val ignoredTypes = tokenSpecs.filter { it.ignored }.map { AlpacaTokenTypes.forName(grammarId, it.name) }
-    builder.enforceCommentTokens(TokenSet.create(*ignoredTypes.toTypedArray()))
+    val ignoredTypes = tokenSpecs.asSequence().filter { it.ignored }.map { AlpacaTokenTypes.forName(grammarId, it.name) }
+    builder.enforceCommentTokens(TokenSet.create(*ignoredTypes.toList().toTypedArray()))
   }
 
   override fun currentTerminal(): String {

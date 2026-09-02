@@ -10,20 +10,19 @@ private val REGEX_SPECIAL = "\\.^$|?*+()[]{}".toSet()
  */
 fun literalTextOf(pattern: String): String? {
   val text = StringBuilder()
-  var i = 0
-  while (i < pattern.length) {
-    val c = pattern[i]
+  var escaped = false
+  for ((i, c) in pattern.withIndex()) {
     when {
+      escaped -> {
+        text.append(c)
+        escaped = false
+      }
       c == '\\' -> {
-        if (i + 1 >= pattern.length) return null
-        text.append(pattern[i + 1])
-        i += 2
+        if (i == pattern.lastIndex) return null
+        escaped = true
       }
       c in REGEX_SPECIAL -> return null
-      else -> {
-        text.append(c)
-        i += 1
-      }
+      else -> text.append(c)
     }
   }
   return text.toString()
@@ -34,7 +33,6 @@ fun literalTextOf(pattern: String): String? {
  * ...), the shape Alpaca grammars typically use for line comments among their `ignored` rules.
  * Returns null for anything else.
  */
-fun lineCommentPrefixOf(pattern: String): String? {
-  if (!pattern.endsWith(".*")) return null
-  return literalTextOf(pattern.dropLast(2))?.takeIf { it.isNotEmpty() }
-}
+fun lineCommentPrefixOf(pattern: String): String? =
+  if (!pattern.endsWith(".*")) null
+  else literalTextOf(pattern.dropLast(2))?.takeIf { it.isNotEmpty() }

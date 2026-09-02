@@ -50,7 +50,7 @@ class AlpacaCommenter : Commenter, SelfManagingCommenter<AlpacaCommentState> {
   ): AlpacaCommentState {
     val virtualFile = file.virtualFile ?: return AlpacaCommentState(null)
     val tokens = resolveGrammarForFile(file.project, virtualFile)?.tokens ?: return AlpacaCommentState(null)
-    val prefix = tokens.filter { it.ignored }.firstNotNullOfOrNull { lineCommentPrefixOf(it.pattern) }
+    val prefix = tokens.asSequence().filter { it.ignored }.firstNotNullOfOrNull { lineCommentPrefixOf(it.pattern) }
     return AlpacaCommentState(prefix)
   }
 
