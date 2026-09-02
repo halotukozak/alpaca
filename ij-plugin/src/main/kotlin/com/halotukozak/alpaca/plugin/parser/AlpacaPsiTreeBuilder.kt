@@ -20,34 +20,37 @@ import com.intellij.psi.tree.TokenSet
  * attachment to the platform's own whitespace-binding logic at tree-build time instead.
  */
 class AlpacaPsiTreeBuilder(
-  private val builder: PsiBuilder,
-  private val grammarId: String,
-  tokenSpecs: List<TokenSpec>,
+    private val builder: PsiBuilder,
+    private val grammarId: String,
+    tokenSpecs: List<TokenSpec>,
 ) : TreeBuilder<PsiBuilder.Marker> {
-  private val terminalNameByType: Map<IElementType, String> =
-    tokenSpecs.associate { AlpacaTokenTypes.forName(grammarId, it.name) to it.name }
+    private val terminalNameByType: Map<IElementType, String> =
+        tokenSpecs.associate { AlpacaTokenTypes.forName(grammarId, it.name) to it.name }
 
-  init {
-    val ignoredTypes = tokenSpecs.asSequence().filter { it.ignored }.map { AlpacaTokenTypes.forName(grammarId, it.name) }
-    builder.enforceCommentTokens(TokenSet.create(*ignoredTypes.toList().toTypedArray()))
-  }
+    init {
+        val ignoredTypes = tokenSpecs.asSequence().filter { it.ignored }.map { AlpacaTokenTypes.forName(grammarId, it.name) }
+        builder.enforceCommentTokens(TokenSet.create(*ignoredTypes.toList().toTypedArray()))
+    }
 
-  override fun currentTerminal(): String {
-    val type = builder.tokenType ?: return EOF_TERMINAL_NAME
-    return terminalNameByType[type] ?: type.toString()
-  }
+    override fun currentTerminal(): String {
+        val type = builder.tokenType ?: return EOF_TERMINAL_NAME
+        return terminalNameByType[type] ?: type.toString()
+    }
 
-  override fun currentTokenText(): String = builder.tokenText ?: "<eof>"
+    override fun currentTokenText(): String = builder.tokenText ?: "<eof>"
 
-  override fun advance() = builder.advanceLexer()
+    override fun advance() = builder.advanceLexer()
 
-  override fun mark(): PsiBuilder.Marker = builder.mark()
+    override fun mark(): PsiBuilder.Marker = builder.mark()
 
-  override fun done(marker: PsiBuilder.Marker, name: String) = marker.done(AlpacaCompositeTypes.forName(grammarId, name))
+    override fun done(
+        marker: PsiBuilder.Marker,
+        name: String,
+    ) = marker.done(AlpacaCompositeTypes.forName(grammarId, name))
 
-  override fun drop(marker: PsiBuilder.Marker) = marker.drop()
+    override fun drop(marker: PsiBuilder.Marker) = marker.drop()
 
-  override fun precede(marker: PsiBuilder.Marker): PsiBuilder.Marker = marker.precede()
+    override fun precede(marker: PsiBuilder.Marker): PsiBuilder.Marker = marker.precede()
 
-  override fun error(message: String) = builder.error(message)
+    override fun error(message: String) = builder.error(message)
 }

@@ -27,78 +27,80 @@ private const val MAX_REDUCE_CHAIN = 10_000
  * Callers are expected to pass [prefixText] with any partially-typed trailing word already
  * stripped, so every token this lexes is treated as complete.
  */
-class AlpacaCompletionEngine(rows: List<List<TableEntry>>) {
-  private val table: List<Map<SymbolSpec, ActionSpec>> = rows.map { row -> row.associate { it.symbol to it.action } }
+class AlpacaCompletionEngine(
+    rows: List<List<TableEntry>>,
+) {
+    private val table: List<Map<SymbolSpec, ActionSpec>> = rows.map { row -> row.associate { it.symbol to it.action } }
 
-  fun suggestNextLiterals(
-    lexerId: String,
-    tokenSpecs: List<TokenSpec>,
-    prefixText: String,
-  ): List<String> {
-    val stack = replayStates(lexerId, tokenSpecs, prefixText) ?: return emptyList()
-    return tokenSpecs
-      .asSequence()
-      .mapNotNull { spec -> literalTextOf(spec.pattern)?.takeIf { canEventuallyShift(spec.name, stack) } }
-      .distinct()
-      .toList()
-  }
-
-  /** Lexes [prefixText] with the grammar's own lexer and replays every non-ignored token through
-   *  [table], returning the resulting state stack. Null if [prefixText] itself doesn't lex or
-   *  parse cleanly, in which case there's nothing meaningful to suggest. */
-  private fun replayStates(
-    lexerId: String,
-    tokenSpecs: List<TokenSpec>,
-    prefixText: String,
-  ): List<Int>? {
-    val specByType = tokenSpecs.associateBy { AlpacaTokenTypes.forName(lexerId, it.name) }
-    val lexer = AlpacaLexer(lexerId, tokenSpecs)
-    lexer.start(prefixText, 0, prefixText.length, 0)
-
-    tailrec fun loop(stack: List<Int>): List<Int>? {
-      val type = lexer.tokenType ?: return stack
-      if (type == ALPACA_BAD_CHARACTER) return null
-      val spec = specByType.getValue(type)
-      val nextStack = if (spec.ignored) stack else stackAfterShifting(spec.name, stack) ?: return null
-      lexer.advance()
-      return loop(nextStack)
+    fun suggestNextLiterals(
+        lexerId: String,
+        tokenSpecs: List<TokenSpec>,
+        prefixText: String,
+    ): List<String> {
+        val stack = replayStates(lexerId, tokenSpecs, prefixText) ?: return emptyList()
+        return tokenSpecs
+            .asSequence()
+            .mapNotNull { spec -> literalTextOf(spec.pattern)?.takeIf { canEventuallyShift(spec.name, stack) } }
+            .distinct()
+            .toList()
     }
-    return loop(listOf(0))
-  }
 
-  private fun canEventuallyShift(
-    terminalName: String,
-    stack: List<Int>,
-  ): Boolean = stackAfterShifting(terminalName, stack) != null
-
-  /** Applies whatever chain of reductions [table] demands for [terminalName] as lookahead from
-   *  [stack], then shifts it. Returns the resulting stack, or null if [terminalName] triggers an
-   *  error (or the augmented accept production, which expects nothing more) from [stack]. */
-  private fun stackAfterShifting(
-    terminalName: String,
-    stack: List<Int>,
-  ): List<Int>? {
-    val terminalSymbol = SymbolSpec("terminal", terminalName)
-
-    tailrec fun loop(
-      s: List<Int>,
-      chainLength: Int,
+    /** Lexes [prefixText] with the grammar's own lexer and replays every non-ignored token through
+     *  [table], returning the resulting state stack. Null if [prefixText] itself doesn't lex or
+     *  parse cleanly, in which case there's nothing meaningful to suggest. */
+    private fun replayStates(
+        lexerId: String,
+        tokenSpecs: List<TokenSpec>,
+        prefixText: String,
     ): List<Int>? {
-      if (chainLength >= MAX_REDUCE_CHAIN) return null
-      return when (val action = table[s.last()][terminalSymbol]) {
-        is ActionSpec.Shift -> s + action.state
-        is ActionSpec.Reduce -> {
-          val production = action.production
-          if (production.lhs == AUGMENTED_START_NAME) return null
-          val reduced = if (production.rhs.isEmpty()) s else s.dropLast(production.rhs.size)
-          val gotoState =
-            (table[reduced.last()][SymbolSpec("nonterminal", production.lhs)] as? ActionSpec.Shift)?.state
-              ?: return null
-          loop(reduced + gotoState, chainLength + 1)
+        val specByType = tokenSpecs.associateBy { AlpacaTokenTypes.forName(lexerId, it.name) }
+        val lexer = AlpacaLexer(lexerId, tokenSpecs)
+        lexer.start(prefixText, 0, prefixText.length, 0)
+
+        tailrec fun loop(stack: List<Int>): List<Int>? {
+            val type = lexer.tokenType ?: return stack
+            if (type == ALPACA_BAD_CHARACTER) return null
+            val spec = specByType.getValue(type)
+            val nextStack = if (spec.ignored) stack else stackAfterShifting(spec.name, stack) ?: return null
+            lexer.advance()
+            return loop(nextStack)
         }
-        null -> null
-      }
+        return loop(listOf(0))
     }
-    return loop(stack, 0)
-  }
+
+    private fun canEventuallyShift(
+        terminalName: String,
+        stack: List<Int>,
+    ): Boolean = stackAfterShifting(terminalName, stack) != null
+
+    /** Applies whatever chain of reductions [table] demands for [terminalName] as lookahead from
+     *  [stack], then shifts it. Returns the resulting stack, or null if [terminalName] triggers an
+     *  error (or the augmented accept production, which expects nothing more) from [stack]. */
+    private fun stackAfterShifting(
+        terminalName: String,
+        stack: List<Int>,
+    ): List<Int>? {
+        val terminalSymbol = SymbolSpec("terminal", terminalName)
+
+        tailrec fun loop(
+            s: List<Int>,
+            chainLength: Int,
+        ): List<Int>? {
+            if (chainLength >= MAX_REDUCE_CHAIN) return null
+            return when (val action = table[s.last()][terminalSymbol]) {
+                is ActionSpec.Shift -> s + action.state
+                is ActionSpec.Reduce -> {
+                    val production = action.production
+                    if (production.lhs == AUGMENTED_START_NAME) return null
+                    val reduced = if (production.rhs.isEmpty()) s else s.dropLast(production.rhs.size)
+                    val gotoState =
+                        (table[reduced.last()][SymbolSpec("nonterminal", production.lhs)] as? ActionSpec.Shift)?.state
+                            ?: return null
+                    loop(reduced + gotoState, chainLength + 1)
+                }
+                null -> null
+            }
+        }
+        return loop(stack, 0)
+    }
 }

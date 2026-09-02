@@ -66,11 +66,15 @@ object ParserGrammarFile {
 sealed interface ActionSpec {
     @Serializable
     @SerialName("shift")
-    data class Shift(val state: Int) : ActionSpec
+    data class Shift(
+        val state: Int,
+    ) : ActionSpec
 
     @Serializable
     @SerialName("reduce")
-    data class Reduce(val production: ProductionSpec) : ActionSpec
+    data class Reduce(
+        val production: ProductionSpec,
+    ) : ActionSpec
 }
 
 /** One (symbol, action) cell in an exported LALR(1) table state's row. */
@@ -131,12 +135,14 @@ object GrammarDirectory {
             }
 
         val tablesById =
-            Files.list(dir).use { entries ->
-                entries
-                    .filter { it.fileName.toString().endsWith(ParserTableFile.SUFFIX) }
-                    .map { path -> path.fileName.toString().removeSuffix(ParserTableFile.SUFFIX) to ParserTableFile.read(path) }
-                    .toList()
-            }.toMap()
+            Files
+                .list(dir)
+                .use { entries ->
+                    entries
+                        .filter { it.fileName.toString().endsWith(ParserTableFile.SUFFIX) }
+                        .map { path -> path.fileName.toString().removeSuffix(ParserTableFile.SUFFIX) to ParserTableFile.read(path) }
+                        .toList()
+                }.toMap()
 
         val parsers =
             Files.list(dir).use { entries ->
