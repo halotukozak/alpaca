@@ -64,7 +64,7 @@ jobs:
             (
               cd "$dir"
 
-              hyperfine --runs 5 \
+              hyperfine --runs 5 --show-output \
                 --prepare "./mill clean && ./mill jvm.compile" \
                 "./mill jvm.test.compile" \
                 --export-json "../${dir}.json"
