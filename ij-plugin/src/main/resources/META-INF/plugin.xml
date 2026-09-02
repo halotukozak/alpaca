@@ -1,9 +1,31 @@
 <idea-plugin>
   <id>com.halotukozak.alpaca.plugin</id>
   <name>Alpaca</name>
-  <vendor>halotukozak</vendor>
+  <vendor url="https://github.com/halotukozak-com/alpaca">halotukozak</vendor>
   <description><![CDATA[
-    IDE support for languages defined with the <a href="https://github.com/halotukozak/alpaca">Alpaca</a> lexer/parser library.
+    <p>
+      IDE support for custom languages defined with the
+      <a href="https://github.com/halotukozak-com/alpaca">Alpaca</a> lexer/parser library for Scala.
+    </p>
+    <p>
+      An Alpaca-defined language is just Scala code, with no separate grammar file to point an IDE at.
+      This plugin reads the grammar data your <code>lexer{...}</code>/<code>parser</code> macros already
+      compute, exported to disk at compile time, and turns it into a working custom language in the IDE
+      for any language you define, without writing any plugin code yourself.
+    </p>
+    <ul>
+      <li><b>Syntax highlighting</b> inferred from each token's regex shape.</li>
+      <li><b>A real parser</b> that drives your grammar's exact, conflict-resolved LR table and reports
+        syntax errors as ordinary red squiggles.</li>
+      <li><b>Structure View</b> and <b>code folding</b> that mirror the parsed tree.</li>
+      <li><b>Autocompletion</b> of the fixed-spelling terminals valid at the caret.</li>
+      <li><b>Line comment toggling</b> for grammars with a <code>prefix.*</code>-shaped ignored rule.</li>
+    </ul>
+    <p>
+      Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
+      to grammars. See the <a href="https://halotukozak-com.github.io/alpaca/docs/ide-plugin.html">documentation</a>
+      for details.
+    </p>
   ]]></description>
 
   <depends>com.intellij.modules.platform</depends>
