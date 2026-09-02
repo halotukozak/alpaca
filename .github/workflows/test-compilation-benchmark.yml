@@ -64,7 +64,12 @@ jobs:
             (
               cd "$dir"
 
-              hyperfine --runs 5 \
+              # --show-output: without it, hyperfine buffers the benchmarked command's own
+              # output and only prints its summary once ALL 5 runs finish -- on a job that
+              # routinely takes 10+ minutes per run, that's a long silent wait with nothing in
+              # the log to show it's alive. With it, Mill's own per-run compile progress streams
+              # through as each run happens.
+              hyperfine --runs 5 --show-output \
                 --prepare "./mill clean && ./mill jvm.compile" \
                 "./mill jvm.test.compile" \
                 --export-json "../${dir}.json"
