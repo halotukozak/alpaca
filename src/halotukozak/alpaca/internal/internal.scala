@@ -227,6 +227,10 @@ private[alpaca] def exportId(name: String)(using quotes: Quotes): String =
   val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
   val line = Position.ofMacroExpansion.startLine + 1
   s"$sourceFileName.$name@L$line"
+
+/** A symbol's own declared name, without the `$` suffix modules (e.g. `object Foo`) compile to. */
+private[alpaca] def declaredName(using quotes: Quotes)(symbol: quotes.reflect.Symbol): String =
+  symbol.name.stripSuffix("$")
 // $COVERAGE-ON$
 
 extension [T](t: T)

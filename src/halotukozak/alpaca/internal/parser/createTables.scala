@@ -65,7 +65,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   parserTpe.asType match
     case '[type p <: Parser[Ctx]; p] =>
       val ctxSymbol = parserSymbol.methodMember("ctx").head
-      val parserName = parserSymbol.name.stripSuffix("$")
+      val parserName = declaredName(parserSymbol)
       val exportName = exportId(parserName)
       val replaceRefs = new ReplaceRefs[quotes.type]
       val createLambda = new CreateLambda[quotes.type]

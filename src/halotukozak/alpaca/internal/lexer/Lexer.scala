@@ -137,7 +137,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   // Symbol.spliceOwner is a synthetic "macro" method dotty introduces to host the transparent
   // inline def's expansion; the val this `lexer{...}` call is actually bound to is one owner hop
   // further up.
-  JsonExport.maybeWrite(exportId(Symbol.spliceOwner.owner.name.stripSuffix("$")), "tokens", tokens.map(_.info))
+  JsonExport.maybeWrite(exportId(declaredName(Symbol.spliceOwner.owner)), "tokens", tokens.map(_.info))
 
   val fields = tokens.map(t => (t.info.name, t.expr.asTerm.tpe))
   val types = Refined(
