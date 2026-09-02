@@ -71,7 +71,12 @@ intellijPlatform {
         // Version suffix -> release channel: `0.1.0` publishes to the stable channel,
         // `0.2.0-eap.1` / `0.2.0-beta` publish to a matching pre-release channel that
         // users must opt into by adding a custom plugin repository URL.
-        val channel = project.version.toString().substringAfter('-', "").substringBefore('.').ifEmpty { "default" }
+        val channel =
+            project.version
+                .toString()
+                .substringAfter('-', "")
+                .substringBefore('.')
+                .ifEmpty { "default" }
         channels = listOf(channel)
     }
 
