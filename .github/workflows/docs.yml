@@ -44,6 +44,18 @@ jobs:
 
       - name: Generate docs
         run: ./mill jvm.docJar
+
+      # Scaladoc's bundled ux.js still calls jQuery's `$.get` for its SPA-style same-page
+      # navigation (sidebar/TOC link clicks), but scaladoc no longer ships jQuery itself.
+      # That throws "ReferenceError: Can't find variable: $" on every in-page link click,
+      # and since the handler already called preventDefault(), navigation just silently
+      # breaks. Fixed upstream (scala/scala3#22014) but not yet in the scaladoc version
+      # this project builds with -- swap the jQuery call for a native fetch() until then.
+      - name: Patch scaladoc jQuery navigation bug
+        run: |
+          sed -i 's/\$\.get(href, function (data) {/fetch(href).then((r) => r.text()).then(function (data) {/' \
+            out/jvm/docJar.dest/docs/scripts/ux.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact
