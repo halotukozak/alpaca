@@ -44,7 +44,11 @@ This env var is independent from `ALPACA_DEBUG_DIR` (see [Debug Settings](debug-
 
 ## Installing the plugin
 
-The plugin isn't published to the JetBrains Marketplace yet, so build it from source:
+Install **Alpaca** from the JetBrains Marketplace: in your IDE, open **Settings | Plugins | Marketplace**, search for "Alpaca", and click **Install**. It targets IDE builds 2025.2 and newer.
+
+### From source
+
+To build the current `main` yourself:
 
 ```bash
 cd ij-plugin
@@ -54,6 +58,8 @@ cd ij-plugin
 This produces a zip under `ij-plugin/build/distributions/`. Install it via **Settings | Plugins | ⚙️ | Install Plugin from Disk...** in your IDE.
 
 To try it out without installing anything permanently, run `./gradlew runIde` instead: it launches a disposable sandbox instance with the plugin already loaded.
+
+Maintainers: see [`ij-plugin/RELEASING.md`](https://github.com/halotukozak-com/alpaca/blob/main/ij-plugin/RELEASING.md) for the publishing workflow.
 
 ## Configuring
 

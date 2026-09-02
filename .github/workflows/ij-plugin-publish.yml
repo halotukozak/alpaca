@@ -1,0 +1,71 @@
+name: Publish IntelliJ Plugin
+
+# Manual-only: the repo's `v*` tags already drive the Scala library's Sonatype publish
+# and any tag drives the docs deploy, so the plugin gets its own explicitly-triggered
+# workflow instead of a tag pattern. Release flow:
+#   1. bump `version` in ij-plugin/gradle.properties
+#   2. run `./gradlew patchChangelog` in ij-plugin/ (moves [Unreleased] -> [x.y.z])
+#   3. commit + merge to main
+#   4. run this workflow from the Actions tab
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build, sign and verify but do NOT upload to the Marketplace'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ij-plugin-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Point this at a GitHub Environment holding the four secrets below if you want
+    # required-reviewer protection on publishes. The secrets can also live at repo level.
+    # environment: marketplace
+    defaults:
+      run:
+        working-directory: ij-plugin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          build-root-directory: ij-plugin
+          cache-read-only: true
+
+      - name: Verify plugin
+        run: ./gradlew verifyPlugin
+
+      - name: Build and sign plugin
+        env:
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+        run: ./gradlew buildPlugin signPlugin
+
+      - name: Upload signed plugin artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: alpaca-plugin-distribution
+          path: ij-plugin/build/distributions/*.zip
+
+      - name: Publish to JetBrains Marketplace
+        if: ${{ !inputs.dry_run }}
+        env:
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+        run: ./gradlew publishPlugin

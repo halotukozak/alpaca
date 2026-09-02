@@ -62,3 +62,33 @@ jobs:
           fail_ci_if_error: false
       - name: Build plugin
         run: ./gradlew buildPlugin
+
+  # Structural validation of plugin.xml / the plugin archive, plus the IntelliJ Plugin
+  # Verifier against the IDEs the platform recommends. Separate job: it downloads full
+  # IDE distributions and has nothing to do with the grammar-export test setup above.
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ij-plugin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          build-root-directory: ij-plugin
+          cache-read-only: true
+      - name: Verify plugin
+        run: ./gradlew verifyPlugin
+      - name: Upload verifier report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-verifier-report
+          path: ij-plugin/build/reports/pluginVerifier
