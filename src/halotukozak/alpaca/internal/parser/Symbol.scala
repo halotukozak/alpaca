@@ -5,6 +5,7 @@ package parser
 
 import Symbol.SyntheticInfix
 import halotukozak.alpaca.internal.Showable
+import halotukozak.mcodec.MCodec
 
 import scala.reflect.NameTransformer
 import scala.util.Random
@@ -112,4 +113,15 @@ private[parser] object Symbol:
         case x: NonTerminal => '{ NonTerminal(${ Expr(x.name) }) }
         case x: Terminal => '{ Terminal(${ Expr(x.name) }) }
       .asInstanceOf[Expr[S]]
+
+  given MCodec[Symbol] =
+    MCodec
+      .derived[(kind: String, name: String)]
+      .transform(
+        onWrite = {
+          case s: NonTerminal => (kind = "nonterminal", name = s.name)
+          case s: Terminal => (kind = "terminal", name = s.name)
+        },
+        onRead = _ => throw UnsupportedOperationException("Symbol's export codec is write-only"),
+      )
 // $COVERAGE-ON$

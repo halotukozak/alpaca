@@ -65,7 +65,8 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
   parserTpe.asType match
     case '[type p <: Parser[Ctx]; p] =>
       val ctxSymbol = parserSymbol.methodMember("ctx").head
-      val parserName = parserSymbol.name.stripSuffix("$")
+      val parserName = declaredName(parserSymbol)
+      val exportName = exportId(parserName)
       val replaceRefs = new ReplaceRefs[quotes.type]
       val createLambda = new CreateLambda[quotes.type]
       val parserExtractor = new ParserExtractors[quotes.type, Ctx]
@@ -153,6 +154,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         .map(_.production)
         .tap: table =>
           logger.toFile(show"$parserName/productions.dbg", true)(table.mkShow("\n"))
+        .tap(JsonExport.maybeWrite(exportName, "productions", _))
 
       // Built once and reused by every findProduction call below, instead of once per call --
       // findProduction runs once per `.after`/`.before` reference in the grammar's conflict
@@ -242,6 +244,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
           conflictResolutionTable,
         ).tap: parseTable =>
           logger.toFile(s"$parserName/parseTable.dbg.csv", true)(parseTable.toCsv)
+        .tap(JsonExport.maybeWrite(exportName, "table", _))
 
       val actionTable = Expr.ofList:
         table.map:

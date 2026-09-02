@@ -4,6 +4,9 @@ package internal
 package parser
 
 import halotukozak.alpaca.internal.Showable
+import halotukozak.made.annotation.name
+import halotukozak.mcodec.MCodec
+import halotukozak.mcodec.annotation.flatten
 
 /**
  * Represents a parse action in the LR parse table.
@@ -35,4 +38,21 @@ private[parser] object ParseAction:
     def apply(x: ParseAction)(using Quotes): Expr[ParseAction] = x match
       case Shift(state) => '{ ParseAction.Shift(${ Expr(state) }) }
       case Reduction(production) => '{ ParseAction.Reduction(${ Expr(production) }) }
+
+  // Local tagging enum instead of `derives MCodec` on ParseAction itself, which stays AnyVal.
+  @flatten("type")
+  private enum ActionExport derives MCodec:
+    @name("shift") case Shift(state: Int)
+    @name("reduce") case Reduce(production: Production)
+
+  given MCodec[ParseAction] = MCodec[ActionExport].transform(
+    onWrite = {
+      case Shift(state) => ActionExport.Shift(state)
+      case Reduction(production) => ActionExport.Reduce(production)
+    },
+    onRead = {
+      case ActionExport.Shift(state) => Shift(state)
+      case ActionExport.Reduce(production) => Reduction(production)
+    },
+  )
 // $COVERAGE-ON$

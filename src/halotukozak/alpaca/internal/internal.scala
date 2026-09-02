@@ -215,6 +215,22 @@ private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[
           .toList
         Block(additions, '{ $builder.result() }.asTerm)
       .asExprOf[To]
+
+/**
+ * Qualifies `name` by source file and line, for use as a grammar export's id (see
+ * `ALPACA_GRAMMAR_EXPORT_DIR`): the same declaration name (e.g. a reused `val Lexer = lexer{...}`)
+ * can recur across files, or even within one at different scopes, and would otherwise collide in
+ * a shared export directory.
+ */
+private[alpaca] def exportId(name: String)(using quotes: Quotes): String =
+  import quotes.reflect.*
+  val sourceFileName = Position.ofMacroExpansion.sourceFile.path.split("[/\\\\]").last.stripSuffix(".scala")
+  val line = Position.ofMacroExpansion.startLine + 1
+  s"$sourceFileName.$name@L$line"
+
+/** A symbol's own declared name, without the `$` suffix modules (e.g. `object Foo`) compile to. */
+private[alpaca] def declaredName(using quotes: Quotes)(symbol: quotes.reflect.Symbol): String =
+  symbol.name.stripSuffix("$")
 // $COVERAGE-ON$
 
 extension [T](t: T)

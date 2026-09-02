@@ -4,6 +4,7 @@ package internal
 package parser
 
 import alpaca.internal.parser.ParseAction.*
+import halotukozak.mcodec.MCodec
 
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedSet
@@ -39,6 +40,11 @@ private[parser] object ParseTable:
 
     private def allSymbols: List[Symbol] =
       table.iterator.flatMap(_.keysIterator).distinct.toList
+
+    // $COVERAGE-OFF$
+    /** The table's rows, one per state (dense, consecutive, starting at 0), each a symbol -> action map. */
+    private[parser] def rows: Array[Map[Symbol, ParseAction]] = table
+    // $COVERAGE-ON$
 
     /**
      * Converts the parse table to CSV format for debugging.
@@ -173,4 +179,13 @@ private[parser] object ParseTable:
         elements = entries.map(rowExpr),
         empty = '{ Array.empty[Row] },
       )
+
+  // No constructor for a raw ParseTable outside the algorithm above, hence write-only below.
+  given MCodec[ParseTable] =
+    given MCodec[(symbol: Symbol, action: ParseAction)] = MCodec.derived
+    MCodec[List[List[(symbol: Symbol, action: ParseAction)]]].transform(
+      onWrite =
+        table => table.rows.toList.map(_.iterator.map((symbol, action) => (symbol = symbol, action = action)).toList),
+      onRead = _ => throw UnsupportedOperationException("ParseTable's export codec is write-only"),
+    )
 // $COVERAGE-ON$
