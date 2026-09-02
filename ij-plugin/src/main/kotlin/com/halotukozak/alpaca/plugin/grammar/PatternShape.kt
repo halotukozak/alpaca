@@ -9,23 +9,23 @@ private val REGEX_SPECIAL = "\\.^$|?*+()[]{}".toSet()
  * those have no single fixed spelling.
  */
 fun literalTextOf(pattern: String): String? {
-  val text = StringBuilder()
-  var escaped = false
-  for ((i, c) in pattern.withIndex()) {
-    when {
-      escaped -> {
-        text.append(c)
-        escaped = false
-      }
-      c == '\\' -> {
-        if (i == pattern.lastIndex) return null
-        escaped = true
-      }
-      c in REGEX_SPECIAL -> return null
-      else -> text.append(c)
+    val text = StringBuilder()
+    var escaped = false
+    for ((i, c) in pattern.withIndex()) {
+        when {
+            escaped -> {
+                text.append(c)
+                escaped = false
+            }
+            c == '\\' -> {
+                if (i == pattern.lastIndex) return null
+                escaped = true
+            }
+            c in REGEX_SPECIAL -> return null
+            else -> text.append(c)
+        }
     }
-  }
-  return text.toString()
+    return text.toString()
 }
 
 /**
@@ -34,5 +34,8 @@ fun literalTextOf(pattern: String): String? {
  * Returns null for anything else.
  */
 fun lineCommentPrefixOf(pattern: String): String? =
-  if (!pattern.endsWith(".*")) null
-  else literalTextOf(pattern.dropLast(2))?.takeIf { it.isNotEmpty() }
+    if (!pattern.endsWith(".*")) {
+        null
+    } else {
+        literalTextOf(pattern.dropLast(2))?.takeIf { it.isNotEmpty() }
+    }

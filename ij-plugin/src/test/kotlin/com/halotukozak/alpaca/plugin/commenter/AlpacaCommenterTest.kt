@@ -15,36 +15,36 @@ private const val PARSER_ID = "MathTest.MathParser@L39"
  * comment is `#.*` (see the exported `MathTest.CalcLexer@L11.tokens.json`).
  */
 class AlpacaCommenterTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
-    val settings = AlpacaSettingsState.getInstance(project)
-    settings.exportDirectory = "/tmp/alpaca-grammar-export"
-    settings.associations =
-      mutableListOf(GrammarAssociation(extension = "calc", lexerGrammarId = LEXER_ID, parserGrammarId = PARSER_ID))
-    runWriteAction { AlpacaFileTypeRegistrar.ensureRegistered("calc", LEXER_ID) }
-  }
+    override fun setUp() {
+        super.setUp()
+        val settings = AlpacaSettingsState.getInstance(project)
+        settings.exportDirectory = "/tmp/alpaca-grammar-export"
+        settings.associations =
+            mutableListOf(GrammarAssociation(extension = "calc", lexerGrammarId = LEXER_ID, parserGrammarId = PARSER_ID))
+        runWriteAction { AlpacaFileTypeRegistrar.ensureRegistered("calc", LEXER_ID) }
+    }
 
-  private fun toggleLineComment() = myFixture.performEditorAction("CommentByLineComment")
+    private fun toggleLineComment() = myFixture.performEditorAction("CommentByLineComment")
 
-  fun `test comments an uncommented line`() {
-    myFixture.configureByText("test.calc", "1 + 2<caret>")
-    toggleLineComment()
+    fun `test comments an uncommented line`() {
+        myFixture.configureByText("test.calc", "1 + 2<caret>")
+        toggleLineComment()
 
-    myFixture.checkResult("# 1 + 2")
-  }
+        myFixture.checkResult("# 1 + 2")
+    }
 
-  fun `test uncomments an already-commented line`() {
-    myFixture.configureByText("test.calc", "# 1 + 2<caret>")
-    toggleLineComment()
+    fun `test uncomments an already-commented line`() {
+        myFixture.configureByText("test.calc", "# 1 + 2<caret>")
+        toggleLineComment()
 
-    myFixture.checkResult("1 + 2")
-  }
+        myFixture.checkResult("1 + 2")
+    }
 
-  fun `test round-trips back to the original text`() {
-    myFixture.configureByText("test.calc", "1 + 2<caret>")
-    toggleLineComment()
-    toggleLineComment()
+    fun `test round-trips back to the original text`() {
+        myFixture.configureByText("test.calc", "1 + 2<caret>")
+        toggleLineComment()
+        toggleLineComment()
 
-    myFixture.checkResult("1 + 2")
-  }
+        myFixture.checkResult("1 + 2")
+    }
 }

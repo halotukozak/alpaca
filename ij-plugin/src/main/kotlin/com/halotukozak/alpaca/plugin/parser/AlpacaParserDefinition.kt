@@ -21,25 +21,25 @@ import com.intellij.psi.tree.TokenSet
  * for any platform code that might invoke them directly.
  */
 class AlpacaParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project?): Lexer = EmptyLexer()
+    override fun createLexer(project: Project?): Lexer = EmptyLexer()
 
-  override fun createParser(project: Project?): PsiParser =
-    PsiParser { root, builder ->
-      val fileMarker = builder.mark()
-      while (!builder.eof()) builder.advanceLexer()
-      fileMarker.done(root)
-      builder.treeBuilt
-    }
+    override fun createParser(project: Project?): PsiParser =
+        PsiParser { root, builder ->
+            val fileMarker = builder.mark()
+            while (!builder.eof()) builder.advanceLexer()
+            fileMarker.done(root)
+            builder.treeBuilt
+        }
 
-  override fun getFileNodeType(): IFileElementType = AlpacaFileElementType
+    override fun getFileNodeType(): IFileElementType = AlpacaFileElementType
 
-  // Alpaca's export doesn't distinguish "comment"/"string literal" rules from any other ignored
-  // or ordinary token, so there is nothing meaningful to report here yet.
-  override fun getCommentTokens(): TokenSet = TokenSet.EMPTY
+    // Alpaca's export doesn't distinguish "comment"/"string literal" rules from any other ignored
+    // or ordinary token, so there is nothing meaningful to report here yet.
+    override fun getCommentTokens(): TokenSet = TokenSet.EMPTY
 
-  override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
+    override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
 
-  override fun createElement(node: ASTNode): PsiElement = ASTWrapperPsiElement(node)
+    override fun createElement(node: ASTNode): PsiElement = ASTWrapperPsiElement(node)
 
-  override fun createFile(viewProvider: FileViewProvider): PsiFile = AlpacaPsiFile(viewProvider)
+    override fun createFile(viewProvider: FileViewProvider): PsiFile = AlpacaPsiFile(viewProvider)
 }

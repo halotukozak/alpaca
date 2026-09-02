@@ -1,0 +1,7 @@
+root = true
+
+# BasePlatformTestCase discovers tests by a bare `testXxx` method name prefix, not an
+# annotation, so ktlint's usual @Test-based exemption for backtick descriptive names doesn't
+# apply. This exception is scoped to test sources on purpose, not disabled project-wide.
+[src/test/**/*.kt]
+ktlint_standard_function-naming = disabled

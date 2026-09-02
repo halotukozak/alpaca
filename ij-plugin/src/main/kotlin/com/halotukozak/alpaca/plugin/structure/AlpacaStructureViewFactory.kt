@@ -9,8 +9,8 @@ import com.intellij.psi.PsiFile
 /** Registered once for the shared [com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage]; the model
  *  it builds reads whichever grammar the file actually resolves to, so nothing here is per-grammar. */
 class AlpacaStructureViewFactory : PsiStructureViewFactory {
-  override fun getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder =
-    object : TreeBasedStructureViewBuilder() {
-      override fun createStructureViewModel(editor: Editor?) = AlpacaStructureViewModel(psiFile, editor)
-    }
+    override fun getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder =
+        object : TreeBasedStructureViewBuilder() {
+            override fun createStructureViewModel(editor: Editor?) = AlpacaStructureViewModel(psiFile, editor)
+        }
 }

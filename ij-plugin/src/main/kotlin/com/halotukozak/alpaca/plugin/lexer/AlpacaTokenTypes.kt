@@ -12,8 +12,11 @@ val ALPACA_BAD_CHARACTER: IElementType = IElementType("ALPACA_BAD_CHARACTER", La
  * singleton, so two different grammars can both have a rule named e.g. `NUM` without colliding.
  */
 object AlpacaTokenTypes {
-  private val cache = HashMap<Pair<String, String>, IElementType>()
+    private val cache = HashMap<Pair<String, String>, IElementType>()
 
-  @Synchronized
-  fun forName(grammarId: String, name: String): IElementType = cache.getOrPut(grammarId to name) { IElementType(name, AlpacaLanguage) }
+    @Synchronized
+    fun forName(
+        grammarId: String,
+        name: String,
+    ): IElementType = cache.getOrPut(grammarId to name) { IElementType(name, AlpacaLanguage) }
 }
