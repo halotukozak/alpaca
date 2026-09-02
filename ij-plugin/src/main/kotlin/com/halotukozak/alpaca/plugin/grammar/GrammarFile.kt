@@ -59,7 +59,7 @@ object ParserGrammarFile {
 }
 
 /**
- * A shift-or-reduce action for one (state, symbol) cell of an exported LR(1) parse table.
+ * A shift-or-reduce action for one (state, symbol) cell of an exported LALR(1) parse table.
  * The `@SerialName`s match the `"type"` discriminator Alpaca's export writes.
  */
 @Serializable
@@ -73,7 +73,7 @@ sealed interface ActionSpec {
     data class Reduce(val production: ProductionSpec) : ActionSpec
 }
 
-/** One (symbol, action) cell in an exported LR(1) table state's row. */
+/** One (symbol, action) cell in an exported LALR(1) table state's row. */
 @Serializable
 data class TableEntry(
     val symbol: SymbolSpec,
@@ -82,7 +82,7 @@ data class TableEntry(
 
 /**
  * Reads a `<parser>.table.json` file written by Alpaca's compile-time grammar export: the
- * parser's already conflict-resolved LR(1) table, one row of (symbol, action) entries per state
+ * parser's already conflict-resolved LALR(1) table, one row of (symbol, action) entries per state
  * (dense, consecutive state ids starting at 0, matching the row's index in the returned list).
  */
 object ParserTableFile {

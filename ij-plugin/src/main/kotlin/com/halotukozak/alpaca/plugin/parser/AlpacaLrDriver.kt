@@ -9,10 +9,11 @@ import com.halotukozak.alpaca.plugin.grammar.TableEntry
 private const val AUGMENTED_START_NAME = "S'"
 
 /**
- * A generic, grammar-agnostic LR(1) parser: drives a [TreeBuilder] using [table], Alpaca's already
- * conflict-resolved parse table (see `TableExport` on the Scala side), producing one composite
- * node per reduced nonterminal. The table alone decides every shift/reduce/goto choice, including
- * precedence and associativity, since those were already settled when the table was built.
+ * A generic, grammar-agnostic LR parser: drives a [TreeBuilder] using [table], Alpaca's already
+ * conflict-resolved parse table (currently LALR(1); see `ParseTable` on the Scala side), producing
+ * one composite node per reduced nonterminal. The table alone decides every shift/reduce/goto
+ * choice, including precedence and associativity, since those were already settled when the table
+ * was built. This driver only replays the table, so it's unaffected by which LR variant produced it.
  *
  * Building a top-down PSI tree from a bottom-up parse needs a marker per still-unreduced stack
  * symbol, not just one per production. A reduction's first RHS symbol is often a plain terminal
