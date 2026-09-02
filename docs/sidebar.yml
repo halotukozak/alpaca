@@ -21,7 +21,10 @@ subsection:
       - title: Conflict Resolution
         page: conflict-resolution.md
   - title: Tooling
-    page: debug-settings.md
+    index: debug-settings.md
+    subsection:
+      - title: IntelliJ Plugin
+        page: ide-plugin.md
   - title: Cookbook
     index: cookbook/expression-evaluator.md
     subsection:
