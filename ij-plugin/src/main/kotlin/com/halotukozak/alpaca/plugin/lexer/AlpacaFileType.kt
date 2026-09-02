@@ -1,0 +1,30 @@
+package com.halotukozak.alpaca.plugin.lexer
+
+import com.intellij.openapi.fileTypes.LanguageFileType
+import javax.swing.Icon
+
+/**
+ * One [LanguageFileType] per exported grammar, all wrapping the single shared [AlpacaLanguage]:
+ * `FileType`, unlike `Language`, allows more than one instance. Registered dynamically at runtime
+ * by [AlpacaFileTypeRegistrar], since the set of grammars is only known from Settings.
+ */
+class AlpacaFileType(grammarId: String) : LanguageFileType(AlpacaLanguage) {
+  private val name = "Alpaca:$grammarId"
+  private val description = "Language defined with Alpaca ($grammarId)"
+
+  override fun getName(): String = name
+
+  override fun getDescription(): String = description
+
+  override fun getDefaultExtension(): String = ""
+
+  override fun getIcon(): Icon? = null
+}
+
+/** Caches one [AlpacaFileType] per grammar id. */
+object AlpacaFileTypes {
+  private val byGrammarId = HashMap<String, AlpacaFileType>()
+
+  @Synchronized
+  fun forGrammar(grammarId: String): AlpacaFileType = byGrammarId.getOrPut(grammarId) { AlpacaFileType(grammarId) }
+}

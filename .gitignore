@@ -59,3 +59,8 @@ __pycache__/
 .planning/
 
 .scala-build/
+
+### Gradle (ij-plugin/) ###
+.gradle/
+.intellijPlatform/
+
