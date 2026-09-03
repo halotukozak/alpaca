@@ -135,5 +135,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: halotukozak-com/${{ github.event.repository.name }}
-          flags: scala
           fail_ci_if_error: false

@@ -71,6 +71,8 @@ jobs:
             shared_cp="$old_cp:$mill_cp"
           fi
 
+          echo "baseline=$baseline_label" >> "$GITHUB_OUTPUT"
+
           set +e
           scala-cli run .mima/bin-compat-check.scala -- "$old_jar" "$new_jar" "$shared_cp" | tee "$RUNNER_TEMP/mima-out.txt"
           status=$?
@@ -105,4 +107,50 @@ jobs:
           else
             gh pr edit "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" \
               --remove-label needs-major || true
+          fi
+
+      - name: Post sticky comment with binary compatibility report
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          marker='<!-- mima-report -->'
+          baseline='${{ steps.mima.outputs.baseline }}'
+          repo='${{ github.repository }}'
+          pr=${{ github.event.pull_request.number }}
+
+          comment_id=$(gh api "repos/$repo/issues/$pr/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | tail -1)
+
+          if [ "${{ steps.mima.outputs.broken }}" = "true" ]; then
+            {
+              echo "$marker"
+              echo "### ⚠️ MiMa: binary incompatibility vs \`$baseline\`"
+              echo
+              echo "This PR breaks binary compatibility — it will need a major version bump."
+              echo
+              echo '<details><summary>Details</summary>'
+              echo
+              echo '```'
+              cat "$RUNNER_TEMP/mima-out.txt"
+              echo '```'
+              echo
+              echo '</details>'
+            } > "$RUNNER_TEMP/mima-comment.md"
+
+            if [ -n "$comment_id" ]; then
+              gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+            else
+              gh api --method POST "repos/$repo/issues/$pr/comments" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+            fi
+          elif [ -n "$comment_id" ]; then
+            {
+              echo "$marker"
+              echo "### ✅ MiMa: binary compatible with \`$baseline\`"
+              echo
+              echo "A later push resolved the binary incompatibility flagged above."
+            } > "$RUNNER_TEMP/mima-comment.md"
+            gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
           fi
