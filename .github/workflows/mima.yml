@@ -141,9 +141,9 @@ jobs:
             } > "$RUNNER_TEMP/mima-comment.md"
 
             if [ -n "$comment_id" ]; then
-              gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+              gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
             else
-              gh api --method POST "repos/$repo/issues/$pr/comments" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+              gh api --method POST "repos/$repo/issues/$pr/comments" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
             fi
           elif [ -n "$comment_id" ]; then
             {
@@ -152,5 +152,5 @@ jobs:
               echo
               echo "A later push resolved the binary incompatibility flagged above."
             } > "$RUNNER_TEMP/mima-comment.md"
-            gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+            gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
           fi
