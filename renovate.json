@@ -3,7 +3,13 @@
   "extends": [
     "config:recommended"
   ],
+  "platformAutomerge": true,
   "packageRules": [
+    {
+      "description": "Automerge patch updates",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
     {
       "description": "Toolchain deps: only final X.Y.Z releases (no RC/M/nightly/-bin-)",
       "matchDepNames": [
