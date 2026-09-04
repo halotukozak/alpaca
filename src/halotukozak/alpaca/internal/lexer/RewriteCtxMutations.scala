@@ -59,9 +59,15 @@ import scala.reflect.NameTransformer
  * @param body the rule statements to rewrite
  * @param owner the owner to use when transforming the body
  */
-private[lexer] def rewriteCtxMutations(using quotes: Quotes)(ctxVar: quotes.reflect.Symbol)(
+private[lexer] def rewriteCtxMutations(
+  using quotes: Quotes,
+)(
+  ctxVar: quotes.reflect.Symbol,
+)(
   body: quotes.reflect.Term,
-)(owner: quotes.reflect.Symbol): quotes.reflect.Term =
+)(
+  owner: quotes.reflect.Symbol,
+): quotes.reflect.Term =
   import quotes.reflect.*
 
   val Cast: PartialFunction[Term, Term] =

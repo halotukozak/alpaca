@@ -16,7 +16,9 @@ import scala.collection.mutable
  * @param queries pairs of (symbol to find, replacement term)
  * @return a TreeMap that performs the replacements
  */
-private[internal] def replaceRefs(using quotes: Quotes)(
+private[internal] def replaceRefs(
+  using quotes: Quotes,
+)(
   queries: (find: quotes.reflect.Symbol, replace: quotes.reflect.Term)*,
 ): quotes.reflect.TreeMap =
   import quotes.reflect.*
@@ -43,7 +45,9 @@ private[internal] def replaceRefs(using quotes: Quotes)(
  * @param rhsFn a function that builds the body tree given the method symbol and argument trees
  * @return an expression of type F
  */
-private[internal] def createLambda[F: Type](using quotes: Quotes)(
+private[internal] def createLambda[F: Type](
+  using quotes: Quotes,
+)(
   rhsFn: PartialFunction[(quotes.reflect.Symbol, List[quotes.reflect.Tree]), quotes.reflect.Tree],
 ): Expr[F] =
   import quotes.reflect.*
