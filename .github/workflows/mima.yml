@@ -51,8 +51,15 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base_sha=$(git rev-parse HEAD^1)
             baseline_label="main@${base_sha:0:7}"
-            echo "Baseline: $baseline_label (does this PR itself introduce a new binary incompatibility?)"
             git worktree add --detach --quiet "$RUNNER_TEMP/old-src" "$base_sha"
+            if [ ! -x "$RUNNER_TEMP/old-src/mill" ]; then
+              # Bootstrapping a scala-cli -> Mill migration: the parent commit predates
+              # ./mill, so there's no Mill-built baseline jar to compare against yet.
+              echo "Baseline $baseline_label predates the Mill build (no ./mill) — nothing to compare against." >> "$GITHUB_STEP_SUMMARY"
+              echo "broken=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Baseline: $baseline_label (does this PR itself introduce a new binary incompatibility?)"
             old_jar=$(cd "$RUNNER_TEMP/old-src" && ./mill --disable-ticker show jvm.jar | tail -1 | sed -E 's/^"[a-z]*ref:v[0-9]+:[0-9a-f]+://; s/"$//')
             shared_cp="$mill_cp"
           else
@@ -141,9 +148,9 @@ jobs:
             } > "$RUNNER_TEMP/mima-comment.md"
 
             if [ -n "$comment_id" ]; then
-              gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+              gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
             else
-              gh api --method POST "repos/$repo/issues/$pr/comments" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+              gh api --method POST "repos/$repo/issues/$pr/comments" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
             fi
           elif [ -n "$comment_id" ]; then
             {
@@ -152,5 +159,5 @@ jobs:
               echo
               echo "A later push resolved the binary incompatibility flagged above."
             } > "$RUNNER_TEMP/mima-comment.md"
-            gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -f body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
+            gh api --method PATCH "repos/$repo/issues/comments/$comment_id" -F body=@"$RUNNER_TEMP/mima-comment.md" >/dev/null
           fi
