@@ -264,4 +264,4 @@ This BrainFuck interpreter uses the simplest form of every Alpaca feature. The r
 - [Parser Context](parser-context.md) — shared state during parsing (we add a function registry)
 - [Extractors](extractors.md) — pattern matching on terminals and non-terminals
 - [Conflict Resolution](conflict-resolution.md) — resolving shift/reduce and reduce/reduce conflicts
-- [Theory](theory/pipeline.md) — formal foundations behind everything above
+- [Theory](theory/index.md) — formal foundations behind everything above

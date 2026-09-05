@@ -7,11 +7,14 @@ When you define a `Parser`, Alpaca can dump the generated grammar tables to disk
 Set the `ALPACA_DEBUG_DIR` environment variable to an absolute directory path before compiling. If it's unset (the default), nothing is written.
 
 ```bash
-ALPACA_DEBUG_DIR=/absolute/path/to/debug ./mill jvm.compile
-```
+# Mill
+ALPACA_DEBUG_DIR=$(pwd)/debug ./mill jvm.compile
 
-```bash
+# sbt
 ALPACA_DEBUG_DIR=$(pwd)/debug sbt compile
+
+# Scala CLI
+ALPACA_DEBUG_DIR=$(pwd)/debug scala-cli compile .
 ```
 
 The directory is created automatically if it doesn't exist.
@@ -19,7 +22,7 @@ The directory is created automatically if it doesn't exist.
 <details>
 <summary>Under the hood</summary>
 
-The directory is read via `sys.env` at macro-expansion time, inside the `parser` macro's implementation. Mill and sbt both run compilation in a JVM that inherits the environment of the process that launched it -- but if you're using a persistent build-tool daemon (e.g. Mill's), the daemon captured its environment when *it* started, not when you last ran a build command. If setting the variable doesn't seem to take effect, restart the daemon (`mill --no-daemon ...` for one-off invocations, or kill the running daemon process) and retry.
+The directory is read via `sys.env` at macro-expansion time, inside the `parser` macro's implementation. Mill, sbt, and Scala CLI all run compilation in a JVM that inherits the environment of the process that launched it -- but if you're using a persistent build-tool daemon (e.g. Mill's, or an interactive `sbt` shell), the daemon captured its environment when *it* started, not when you last ran a build command. If setting the variable doesn't seem to take effect, restart the daemon (`mill --no-daemon ...` for one-off invocations, or kill the running daemon process) and retry.
 
 </details>
 

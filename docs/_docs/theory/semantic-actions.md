@@ -1,3 +1,5 @@
+# Semantic Actions
+
 A parser recognizes whether an input string belongs to a grammar — it accepts or rejects. But most programs need to *compute* something from the input, not just verify it. Semantic actions bridge structure and computation: they attach a computation to each production rule, so that the parser produces a typed value as a direct outcome of parsing, rather than a parse tree.
 
 ## Syntax-Directed Translation
