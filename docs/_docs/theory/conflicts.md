@@ -1,3 +1,5 @@
+# Conflicts and Disambiguation
+
 A grammar is ambiguous if a string can be parsed in more than one way. In LR parsing, ambiguity manifests as a conflict: the parse table has two valid entries for the same (state, symbol) pair, and the parser cannot proceed deterministically.
 
 ## What is a Parse Table Conflict?
@@ -30,7 +32,6 @@ Expr PLUS ($plus) Expr PLUS ($plus) ...
 Consider marking production Expr -> Expr PLUS ($plus) Expr to be before or after "PLUS ($plus)"
 ```
 
-
 ## Reduce/Reduce Conflicts
 
 A reduce/reduce conflict occurs when two different productions can reduce the same token sequence with the same lookahead. The parser has two Reduce entries for the same (state, t) pair and cannot decide which to apply.
@@ -43,7 +44,6 @@ In situation like:
 Number ...
 Consider marking one of the productions to be before or after the other
 ```
-
 
 Reduce/reduce conflicts are less common than shift/reduce conflicts. They typically indicate a grammar design issue — two rules competing for the same token sequence. The usual fix is to restructure the grammar so the two competing productions have distinct right-hand sides, or to use a different non-terminal.
 
