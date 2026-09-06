@@ -28,6 +28,28 @@ fun literalTextOf(pattern: String): String? {
     return text.toString()
 }
 
+/** One of the three bracket shapes a single-character token can denote. */
+enum class BracketKind { PARENTHESIS, BRACKET, BRACE }
+
+/** A bracket token's [kind] and whether it is the opening (`(` `[` `{`) or closing (`)` `]` `}`) side. */
+data class BracketRole(
+    val kind: BracketKind,
+    val opening: Boolean,
+)
+
+/** The [BracketRole] [pattern] denotes if it matches exactly one of `( ) [ ] { }` (bare or
+ *  escaped), or null for anything else. */
+fun bracketRoleOf(pattern: String): BracketRole? =
+    when (literalTextOf(pattern)?.singleOrNull()) {
+        '(' -> BracketRole(BracketKind.PARENTHESIS, opening = true)
+        ')' -> BracketRole(BracketKind.PARENTHESIS, opening = false)
+        '[' -> BracketRole(BracketKind.BRACKET, opening = true)
+        ']' -> BracketRole(BracketKind.BRACKET, opening = false)
+        '{' -> BracketRole(BracketKind.BRACE, opening = true)
+        '}' -> BracketRole(BracketKind.BRACE, opening = false)
+        else -> null
+    }
+
 /**
  * The fixed prefix [pattern] denotes for "prefix, then anything to end of line" (`#.*`, `//.*`,
  * ...), the shape Alpaca grammars typically use for line comments among their `ignored` rules.

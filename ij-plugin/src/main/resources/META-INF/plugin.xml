@@ -41,6 +41,7 @@
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory"/>
     <colorSettingsPage implementation="com.halotukozak.alpaca.plugin.lexer.AlpacaColorSettingsPage"/>
+    <heavyBracesHighlighter implementation="com.halotukozak.alpaca.plugin.editing.AlpacaBraceHighlighter"/>
     <lang.parserDefinition
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
