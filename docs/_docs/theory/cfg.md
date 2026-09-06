@@ -1,3 +1,5 @@
+# Context-Free Grammars
+
 Context-free grammars are the backbone of syntactic analysis. A grammar defines a language by specifying how symbols can
 be combined and rewritten — "context-free" means each rule applies regardless of surrounding context. If the lexer is
 the vocabulary of a language, the grammar is its syntax.

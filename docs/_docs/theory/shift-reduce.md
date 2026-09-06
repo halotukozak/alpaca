@@ -1,3 +1,5 @@
+# The Shift-Reduce Loop
+
 The shift-reduce loop is the heart of LR parsing. Every LR parser — regardless of whether it uses LR(0), LALR(1), or full LR(1) lookahead — executes the same fundamental loop: shift the next token onto a stack, or reduce the top of the stack to a non-terminal. This page traces that loop step by step for a concrete input.
 
 ## The Parse Stack
