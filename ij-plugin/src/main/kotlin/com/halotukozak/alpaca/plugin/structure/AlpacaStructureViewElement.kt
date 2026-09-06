@@ -1,18 +1,14 @@
 package com.halotukozak.alpaca.plugin.structure
 
+import com.halotukozak.alpaca.plugin.icons.AlpacaIcons
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.PsiNavigateUtil
 import javax.swing.Icon
-
-/** The Alpaca logo (see `docs/_assets/images/logo.png`), used for every node: the tree is
- *  grammar-agnostic, so there's no per-nonterminal semantic to pick a more specific icon from. */
-private val NODE_ICON: Icon = IconLoader.getIcon("/icons/alpacaNode.png", AlpacaStructureViewElement::class.java.classLoader)
 
 /**
  * One node in the structure view, wrapping a composite [PsiElement] (the file itself, at the
@@ -32,7 +28,7 @@ class AlpacaStructureViewElement(
         object : ItemPresentation {
             override fun getPresentableText(): String = presentableName()
 
-            override fun getIcon(unused: Boolean): Icon = NODE_ICON
+            override fun getIcon(unused: Boolean): Icon = AlpacaIcons.FILE
         }
 
     override fun getChildren(): Array<TreeElement> = element.children.map { AlpacaStructureViewElement(it) }.toTypedArray()

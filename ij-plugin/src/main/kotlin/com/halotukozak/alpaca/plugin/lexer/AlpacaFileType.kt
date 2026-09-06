@@ -1,5 +1,6 @@
 package com.halotukozak.alpaca.plugin.lexer
 
+import com.halotukozak.alpaca.plugin.icons.AlpacaIcons
 import com.intellij.openapi.fileTypes.LanguageFileType
 import javax.swing.Icon
 
@@ -20,7 +21,7 @@ class AlpacaFileType(
 
     override fun getDefaultExtension(): String = ""
 
-    override fun getIcon(): Icon? = null
+    override fun getIcon(): Icon = AlpacaIcons.FILE
 }
 
 /** Caches one [AlpacaFileType] per grammar id. */

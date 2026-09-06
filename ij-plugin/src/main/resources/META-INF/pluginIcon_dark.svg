@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 -1.5 40 40">
+  <defs>
+    <linearGradient id="alpaca" gradientUnits="userSpaceOnUse" x1="4" y1="2" x2="34" y2="34">
+      <stop offset="0" stop-color="#FF5A4A"/>
+      <stop offset="0.55" stop-color="#E23A2A"/>
+      <stop offset="1" stop-color="#9E1616"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#alpaca)" stroke-linecap="round" fill="none">
+    <!-- legs -->
+    <path d="M9 26 L9 34"   stroke-width="2.6"/>
+    <path d="M14 27 L14 34" stroke-width="2.6"/>
+    <path d="M21 27 L21 34" stroke-width="2.6"/>
+    <path d="M25 26 L25 34" stroke-width="2.6"/>
+    <!-- body stripes -->
+    <path d="M7 15.5 L25 15"  stroke-width="3.1"/>
+    <path d="M6.5 19 L26 18.7" stroke-width="3.1"/>
+    <path d="M7 22.5 L25.5 22.5" stroke-width="3.1"/>
+    <path d="M8 25.8 L24 25.8" stroke-width="3.1"/>
+    <!-- neck stripes -->
+    <path d="M22 12.5 L28 11"  stroke-width="2.9"/>
+    <path d="M21.5 15.7 L27 14.8" stroke-width="2.9"/>
+    <!-- ears -->
+    <path d="M27.5 6.5 L26.6 2.5" stroke-width="2.2"/>
+    <path d="M30.8 6.5 L32.6 3"   stroke-width="2.2"/>
+  </g>
+  <!-- head / muzzle -->
+  <rect x="25" y="5.5" width="8.6" height="6.4" rx="3.2" transform="rotate(-8 29.3 8.7)" fill="url(#alpaca)"/>
+  <circle cx="29" cy="8.2" r="0.9" fill="#fff"/>
+</svg>
