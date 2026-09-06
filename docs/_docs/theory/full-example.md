@@ -1,3 +1,5 @@
+# Full Calculator Example
+
 The preceding theory pages have built up each component of the compiler pipeline: tokens and lexical analysis, context-free grammars, LR parsing mechanics, conflict resolution, and semantic actions. This page assembles all the pieces into a working arithmetic calculator — the same grammar used throughout the tutorial, now fully resolved and evaluating. Follow the steps below from grammar definition to the evaluated result `7.0`.
 
 ## Step 1: The Lexer

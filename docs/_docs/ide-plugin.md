@@ -27,8 +27,17 @@ The parser is a hand-written shift-reduce driver that follows the exported table
 Set the `ALPACA_GRAMMAR_EXPORT_DIR` environment variable to an absolute directory path before compiling. If it's unset (the default), nothing is written, and there is no runtime cost or effect on the compiled artifact either way.
 
 ```bash
-ALPACA_GRAMMAR_EXPORT_DIR=/absolute/path/to/export ./mill jvm.compile
+# Mill
+ALPACA_GRAMMAR_EXPORT_DIR=$(pwd)/export ./mill jvm.compile
+
+# sbt
+ALPACA_GRAMMAR_EXPORT_DIR=$(pwd)/export sbt compile
+
+# Scala CLI
+ALPACA_GRAMMAR_EXPORT_DIR=$(pwd)/export scala-cli compile .
 ```
+
+The variable is read from the environment (`sys.env`) at macro-expansion time, so any tool that shells out to the Scala 3 compiler behaves the same way. If you use a persistent build daemon — Mill's, or an interactive `sbt` shell — it captured its environment when it started: set the variable before launching the daemon, or restart it (`mill --no-daemon ...`, a fresh `sbt` session) after setting it.
 
 For every `lexer{...}`/`object MyParser extends Parser`, Alpaca writes:
 

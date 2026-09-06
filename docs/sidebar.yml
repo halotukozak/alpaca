@@ -21,13 +21,17 @@ subsection:
       - title: Conflict Resolution
         page: conflict-resolution.md
   - title: Tooling
-    index: debug-settings.md
+    index: tooling.md
     subsection:
+      - title: Debug Settings
+        page: debug-settings.md
       - title: IntelliJ Plugin
         page: ide-plugin.md
   - title: Cookbook
-    index: cookbook/expression-evaluator.md
+    index: cookbook/index.md
     subsection:
+      - title: Expression Evaluator
+        page: cookbook/expression-evaluator.md
       - title: JSON Parser
         page: cookbook/json-parser.md
       - title: Contextual Lexing
@@ -35,8 +39,10 @@ subsection:
       - title: BrainFuck Interpreter
         page: cookbook/brainfuck-interpreter.md
   - title: Theory
-    index: theory/pipeline.md
+    index: theory/index.md
     subsection:
+      - title: The Compilation Pipeline
+        page: theory/pipeline.md
       - title: Tokens and Lexemes
         page: theory/tokens.md
       - title: "The Lexer: Regex to Finite Automata"

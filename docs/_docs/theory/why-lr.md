@@ -1,3 +1,5 @@
+# Why LR Parsing
+
 Not every parsing strategy handles every grammar. Top-down parsers are intuitive but stumble on the natural structure of
 arithmetic expressions. LR parsing was developed specifically to handle the grammars that arise in practice — including
 left-recursive grammars like the one that drives CalcParser.
