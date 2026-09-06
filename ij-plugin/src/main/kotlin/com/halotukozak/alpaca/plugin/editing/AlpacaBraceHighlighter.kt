@@ -22,15 +22,24 @@ class AlpacaBraceHighlighter : HeavyBraceHighlighter() {
         offset: Int,
     ): Boolean = psiFile.language == AlpacaLanguage
 
-    override fun matchBrace(
+    // Widened from the superclass's `protected` so AlpacaBraceHighlighterTest can call it directly
+    // instead of going through the platform's background-highlighting machinery.
+    public override fun matchBrace(
         psiFile: PsiFile,
         offset: Int,
     ): Pair<TextRange, TextRange>? {
         val virtualFile = psiFile.virtualFile ?: psiFile.originalFile.virtualFile ?: return null
         val resolved = GrammarService.getInstance(psiFile.project).resolveForFile(virtualFile) ?: return null
 
+        // Match against the editor document's text, not psiFile.text: the caller highlights the
+        // returned ranges against the document, and while an edit is uncommitted the PSI can still
+        // hold the pre-edit (longer) text, which would put our offsets past the document's end.
+        val text = psiFile.viewProvider.document?.immutableCharSequence ?: return null
+        if (offset > text.length) return null
+
         val (open, close) =
-            AlpacaBraceScanner.matchAt(psiFile.text, resolved.lexerId, resolved.tokens, offset) ?: return null
+            AlpacaBraceScanner.matchAt(text, resolved.lexerId, resolved.tokens, offset) ?: return null
+        if (open.endOffset > text.length || close.endOffset > text.length) return null
         return Pair.create(open, close)
     }
 }
