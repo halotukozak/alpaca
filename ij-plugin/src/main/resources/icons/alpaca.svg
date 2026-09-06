@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="17 6 75 87">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-7.68 -7.68 80.34 92.20">
   <defs>
     <linearGradient id="alpacaGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#FF3A2D"/>
-<stop offset="0.55" stop-color="#D31E1E"/>
-<stop offset="1" stop-color="#7A0D0D"/>
+      <stop offset="0.55" stop-color="#D31E1E"/>
+      <stop offset="1" stop-color="#7A0D0D"/>
     </linearGradient>
   </defs>
   <g transform="translate(-22.000000,99.096725) scale(0.100000,-0.100000)"
@@ -32,7 +32,5 @@ fill="url(#alpacaGrad)" stroke="none">
 -9 16 8 14 70 9 70 -5z m90 -10 c0 -12 -40 -19 -61 -11 -9 3 -12 11 -9 16 8
 14 70 9 70 -5z m-172 -62 c9 -9 -23 -44 -34 -37 -5 3 -4 14 1 25 11 20 22 24
 33 12z"/>
-<path d="M220 521 c0 -6 5 -13 10 -16 6 -3 10 1 10 9 0 9 -4 16 -10 16 -5 0
--10 -4 -10 -9z"/>
 </g>
 </svg>
