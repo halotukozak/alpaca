@@ -40,6 +40,7 @@
     <lang.syntaxHighlighterFactory
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory"/>
+    <colorSettingsPage implementation="com.halotukozak.alpaca.plugin.lexer.AlpacaColorSettingsPage"/>
     <lang.parserDefinition
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
