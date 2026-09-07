@@ -33,7 +33,7 @@ private[parser] def extractEBNFAndAction[Ctx <: ParserCtx: Type](using quotes: Q
     bind: Option[quotes.reflect.Bind],
     others: List[(production: Production, action: Expr[Action[Ctx]])],
   ),
-] =
+] = {
   import quotes.reflect.*
 
   def symbolFromType(tpe: TypeRepr): parser.Symbol.NonEmpty = tpe.dealias.widen.asType match
@@ -146,6 +146,7 @@ private[parser] def extractEBNFAndAction[Ctx <: ParserCtx: Type](using quotes: Q
         ),
       )
   }
+}
 
 // $COVERAGE-ON$
 

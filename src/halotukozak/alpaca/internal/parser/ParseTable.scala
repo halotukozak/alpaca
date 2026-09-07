@@ -23,7 +23,8 @@ import boundary.break
 opaque private[parser] type ParseTable = Array[Map[Symbol, ParseAction]]
 
 private[parser] object ParseTable:
-  extension (table: ParseTable)
+  extension (table: ParseTable) {
+
     /**
      * Gets the parse action for a given state and symbol.
      *
@@ -55,7 +56,7 @@ private[parser] object ParseTable:
      * @return a Csv representation of the parse table
      */
     // it shouldn't be eager
-    def toCsv: Csv =
+    def toCsv: Csv = {
       val symbols = table.allSymbols
 
       val headers = show"State" :: symbols.map(s => show"${s.name}")
@@ -66,6 +67,8 @@ private[parser] object ParseTable:
         .toList
 
       Csv(headers, rows)
+    }
+  }
 
   /**
    * Constructs the LALR(1) parse table from a list of productions (#504).
@@ -81,7 +84,7 @@ private[parser] object ParseTable:
    * @throws ConflictException if the grammar has shift/reduce or reduce/reduce conflicts
    */
   def apply(productions: List[Production], conflictResolutionTable: ConflictResolutionTable)(using DebugSettings)
-    : ParseTable =
+    : ParseTable = {
     val firstSet = FirstSet(productions)
     val productionsByLhs = productions.groupBy(_.lhs)
     val automaton = LR0Automaton(productionsByLhs)
@@ -107,7 +110,7 @@ private[parser] object ParseTable:
     // noinspection ScalaUnreachableCode
     @tailrec def toPath(stateId: Int, acc: List[Symbol]): List[Symbol] =
       if stateId == 0 then acc
-      else
+      else {
         val (sourceStateId, symbol) = boundary[(Int, Symbol)]:
           for srcId <- tableRows.indices do
             tableRows(srcId).foreach:
@@ -117,8 +120,9 @@ private[parser] object ParseTable:
 
         if sourceStateId == stateId then symbol :: acc
         else toPath(sourceStateId, symbol :: acc)
+      }
 
-    for stateId <- automaton.states.indices do
+    for stateId <- automaton.states.indices do {
       val kernelItems = for
         kernelCore <- automaton.kernels(stateId)
         la <- lookaheads(stateId)(kernelCore)
@@ -130,10 +134,12 @@ private[parser] object ParseTable:
       for item <- currState if item.isLastItem do addToTable(stateId, item.lookAhead, Reduction(item.production))
 
       for (stepSymbol, targetStateId) <- automaton.goto(stateId) do addToTable(stateId, stepSymbol, Shift(targetStateId))
+    }
 
     Array.better.tabulate(tableRows.length)(tableRows(_).toMap)
+  }
 
-  given Showable[ParseTable] = table =>
+  given Showable[ParseTable] = table => {
     val symbols = table.allSymbols
 
     def centerText(text: String, width: Int = 10): String =
@@ -161,10 +167,11 @@ private[parser] object ParseTable:
         result.append("|")
     result.append('\n')
     result.result()
+  }
 
   // $COVERAGE-OFF$
   given ToExpr[ParseTable]:
-    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] =
+    def apply(entries: ParseTable)(using quotes: Quotes): Expr[ParseTable] = {
       type Row = Map[Symbol, ParseAction]
       type RowBuilder = mutable.Builder[(Symbol, ParseAction), Row]
 
@@ -180,6 +187,7 @@ private[parser] object ParseTable:
         empty = '{ Array.empty[Row] },
       )
       '{ $arrayExpr.asInstanceOf[ParseTable] }
+    }
 
   // No constructor for a raw ParseTable outside the algorithm above, hence write-only below.
   given MCodec[ParseTable] =

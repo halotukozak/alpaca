@@ -67,7 +67,7 @@ private[lexer] def rewriteCtxMutations(
   body: quotes.reflect.Term,
 )(
   owner: quotes.reflect.Symbol,
-): quotes.reflect.Term =
+): quotes.reflect.Term = {
   import quotes.reflect.*
 
   val Cast: PartialFunction[Term, Term] =
@@ -140,5 +140,6 @@ private[lexer] def rewriteCtxMutations(
       case _ => super.transformTerm(tree)(owner)
 
   rewriter.transformTerm(body)(owner)
+}
 
 // $COVERAGE-ON$

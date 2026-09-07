@@ -25,7 +25,7 @@ private[lexer] def compileNameAndPattern[T: Type](
   using quotes: Quotes,
 )(
   pattern: quotes.reflect.Tree,
-): List[(Type[? <: ValidName], TokenInfo)] =
+): List[(Type[? <: ValidName], TokenInfo)] = {
   import quotes.reflect.*
   // T is Nothing exactly when compiling a `Token.Ignored` case (see the two Nothing-guarded
   // branches below); every other call site passes the token's own name as T.
@@ -70,4 +70,5 @@ private[lexer] def compileNameAndPattern[T: Type](
       case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
   loop(TypeRepr.of[T], pattern)
+}
 // $COVERAGE-ON$

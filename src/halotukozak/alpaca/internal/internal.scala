@@ -20,7 +20,7 @@ private[internal] def replaceRefs(
   using quotes: Quotes,
 )(
   queries: (find: quotes.reflect.Symbol, replace: quotes.reflect.Term)*,
-): quotes.reflect.TreeMap =
+): quotes.reflect.TreeMap = {
   import quotes.reflect.*
   new TreeMap:
     // skip NoSymbol
@@ -36,6 +36,7 @@ private[internal] def replaceRefs(
             case block: Block => block.changeOwner(owner)
             case other => other
           super.transformTerm(term)(owner)
+}
 
 /**
  * Creates a lambda expression during macro expansion, given a way to build the
@@ -49,7 +50,7 @@ private[internal] def createLambda[F: Type](
   using quotes: Quotes,
 )(
   rhsFn: PartialFunction[(quotes.reflect.Symbol, List[quotes.reflect.Tree]), quotes.reflect.Tree],
-): Expr[F] =
+): Expr[F] = {
   import quotes.reflect.*
   require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
 
@@ -62,6 +63,7 @@ private[internal] def createLambda[F: Type](
       if !rhsFn.isDefinedAt((sym, args)) then raiseShouldNeverBeCalled[(Symbol, List[Tree])]((sym, args))
       rhsFn.apply((sym, args)),
   ).asExprOf[F]
+}
 
 /**
  * ToExpr instance for NamedTuple.
@@ -132,7 +134,7 @@ private[internal] def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: 
  * @return a NamedTuple TypeRepr
  */
 private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
-  : quotes.reflect.TypeRepr =
+  : quotes.reflect.TypeRepr = {
   import quotes.reflect.*
 
   TypeRepr
@@ -147,6 +149,7 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
             )
         .toList,
     )
+}
 
 private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[A, To]: Type](
   builder: Expr[B],
