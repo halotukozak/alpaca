@@ -12,11 +12,13 @@ private const val LEXER_ID = "MathTest.CalcLexer@L11"
 private const val PARSER_ID = "MathTest.MathParser@L39"
 
 /**
- * MathParser's grammar has exactly two nonterminals, `Expr` and `root`, and every `Expr`
- * alternative reduces to the same `Expr` element type (see [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriver],
- * which names composites after the production's LHS, not its per-alternative label) -- so the
- * crumb chain below is entirely about which nodes [AlpacaBreadcrumbsProvider.acceptElement] keeps
- * or drops, not about telling different rules apart.
+ * Every `Expr` alternative in MathParser's grammar reduces to the same `Expr` element type (see
+ * [com.halotukozak.alpaca.plugin.parser.AlpacaLrDriver], which names composites after the
+ * production's LHS, not its per-alternative label) -- so a crumb chain naming just the nonterminal
+ * would repeat "Expr" at every level. [AlpacaBreadcrumbsProvider.getElementInfo] instead labels
+ * each crumb with the *production alternative* that built it (`plus`, `sin`), recovered via
+ * [com.halotukozak.alpaca.plugin.grammar.matchedAlternativeName]; the nonterminal is only the
+ * fallback for an alternative with no name (`Expr -> int` is unnamed).
  */
 class AlpacaBreadcrumbsProviderTest : BasePlatformTestCase() {
     private val provider = AlpacaBreadcrumbsProvider()
@@ -46,20 +48,32 @@ class AlpacaBreadcrumbsProviderTest : BasePlatformTestCase() {
         // root -> Expr is a unit production (same text range as its Expr child): filtered. The
         // literal-wrapping Expr around a single "int" token is not a unit production of another
         // composite (the terminal is a leaf, invisible to PsiElement#getChildren), so it stays.
+        // Expr -> int is unnamed, so the crumb falls back to the nonterminal.
         assertEquals(listOf("Expr"), crumbs("<caret>42"))
     }
 
-    fun `test keeps every level that adds its own tokens`() {
+    fun `test labels each crumb with its production alternative, innermost first`() {
         val result = crumbs("sin(<caret>1 + 2)")
 
-        // Every level here is an Expr (see the class doc), so this is really asserting the depth:
-        // the literal, the "1 + 2" sum, and the outer sin(...) call each get their own crumb.
-        assertEquals(listOf("Expr", "Expr", "Expr"), result)
+        // The literal falls back to "Expr" (Expr -> int is unnamed); the sum and the call each
+        // have a named alternative, so they're distinguishable from one another and from the
+        // literal -- unlike before, when every level here was indistinguishably "Expr".
+        assertEquals(listOf("Expr", "plus", "sin"), result)
     }
 
-    fun `test a crumb is just the nonterminal name, no source snippet`() {
+    fun `test a crumb is just the label, no source snippet`() {
         val result = crumbs("sin(<caret>1 + 222222222222222222)")
 
-        assertEquals(listOf("Expr", "Expr", "Expr"), result)
+        assertEquals(listOf("Expr", "plus", "sin"), result)
+    }
+
+    fun `test no crumbs when the file's grammar has no parser association`() {
+        AlpacaSettingsState.getInstance(project).associations =
+            mutableListOf(GrammarAssociation(extension = "calc", lexerGrammarId = LEXER_ID, parserGrammarId = ""))
+
+        // With no parser configured, AlpacaFileElementType never runs the LR driver: there's no
+        // Expr wrapper at all, just the bare token directly under the file -- nothing for
+        // acceptElement to keep.
+        assertEquals(emptyList<String>(), crumbs("<caret>1"))
     }
 }
