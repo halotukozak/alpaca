@@ -2,19 +2,46 @@ name: IntelliJ Plugin
 
 on:
   pull_request:
-    paths:
-      - 'ij-plugin/**'
-      - '.github/workflows/ij-plugin-test.yml'
   push:
     branches: [ main ]
-    paths:
-      - 'ij-plugin/**'
-      - '.github/workflows/ij-plugin-test.yml'
 
 # CI for the Kotlin IntelliJ plugin under ij-plugin/, kept separate from the Mill-built Scala
 # library's own Test workflow since the two projects have nothing in common build-wise.
+#
+# The workflow itself has no path filter: `plugin-ci` is a required status check on `main`, and
+# a required check whose workflow is filtered out never reports, which blocks every unrelated PR
+# forever. Instead the `changes` job decides per-PR whether `test`/`verify` need to run, and
+# `plugin-ci` always runs to report the verdict -- so a docs-only PR spends ~30s here, not ~15m.
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      plugin: ${{ steps.filter.outputs.plugin }}
+    steps:
+      - name: Detect whether this change touches the plugin
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Anything that isn't a PR (a push to main, a manual run) always gets the full build.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "plugin=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '.[].filename')
+          if grep -qE '^(ij-plugin/|\.github/workflows/ij-plugin-test\.yml$)' <<< "$changed"; then
+            echo "plugin=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "plugin=false" >> "$GITHUB_OUTPUT"
+          fi
+
   test:
+    needs: changes
+    if: ${{ needs.changes.outputs.plugin == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,6 +94,8 @@ jobs:
   # Verifier against the IDEs the platform recommends. Separate job: it downloads full
   # IDE distributions and has nothing to do with the grammar-export test setup above.
   verify:
+    needs: changes
+    if: ${{ needs.changes.outputs.plugin == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -92,3 +121,24 @@ jobs:
         with:
           name: plugin-verifier-report
           path: ij-plugin/build/reports/pluginVerifier
+
+  # The one required status check for the plugin. Always runs, so a PR that skips the jobs
+  # above still reports a result; fails only when a job that did run did not succeed.
+  plugin-ci:
+    name: Plugin CI
+    needs: [ changes, test, verify ]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check plugin job results
+        run: |
+          echo "changes=${{ needs.changes.result }} test=${{ needs.test.result }} verify=${{ needs.verify.result }}"
+          for result in \
+            "${{ needs.changes.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.verify.result }}"; do
+            case "$result" in
+              success | skipped) ;;
+              *) echo "::error::a plugin CI job did not pass (got '$result')"; exit 1 ;;
+            esac
+          done
