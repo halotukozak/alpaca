@@ -28,6 +28,8 @@
       <li><b>Quick Documentation</b> (hover / Ctrl+Q) showing a token's pattern or a nonterminal's
         full set of production alternatives.</li>
       <li><b>Pair-quote insertion</b> for grammars whose strings are delimited by <code>"</code> or <code>'</code>.</li>
+      <li>An <b>Alpaca Grammar</b> tool window browsing the current file's whole grammar --
+        every token and every production alternative -- in one place.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -79,6 +81,10 @@
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
     <notificationGroup id="Alpaca" displayType="BALLOON"/>
+    <toolWindow
+        id="Alpaca Grammar"
+        anchor="right"
+        factoryClass="com.halotukozak.alpaca.plugin.toolwindow.AlpacaGrammarToolWindowFactory"/>
   </extensions>
 
   <projectListeners>
