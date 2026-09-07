@@ -8,19 +8,21 @@ import java.nio.file.Files
 class GrammarFileTest {
     @Test
     fun `reads a tokens json file written by Alpaca's compile-time export`() {
-        val json = """[{"name":"\\s+","pattern":"\\s+","ignored":true},{"name":"int","pattern":"[0-9]+","ignored":false}]"""
+        val json = versionedJson("""[{"name":"\\s+","pattern":"\\s+","ignored":true},{"name":"int","pattern":"[0-9]+","ignored":false}]""")
         val path = Files.createTempFile("grammar-file-test", ".tokens.json")
         try {
             Files.writeString(path, json)
 
-            val specs = LexerGrammarFile.read(path)
+            val result = LexerGrammarFile.read(path)
 
             assertEquals(
-                listOf(
-                    TokenSpec(name = "\\s+", pattern = "\\s+", ignored = true),
-                    TokenSpec(name = "int", pattern = "[0-9]+", ignored = false),
+                VersionedExport.Compatible(
+                    listOf(
+                        TokenSpec(name = "\\s+", pattern = "\\s+", ignored = true),
+                        TokenSpec(name = "int", pattern = "[0-9]+", ignored = false),
+                    ),
                 ),
-                specs,
+                result,
             )
         } finally {
             Files.deleteIfExists(path)
@@ -30,24 +32,28 @@ class GrammarFileTest {
     @Test
     fun `reads a productions json file written by Alpaca's compile-time export`() {
         val json =
-            """[{"lhs":"root","rhs":[{"kind":"terminal","name":"T"}],"name":null},""" +
-                """{"lhs":"Expr","rhs":[{"kind":"nonterminal","name":"Expr"},{"kind":"terminal","name":"+"}],"name":"plus"}]"""
+            versionedJson(
+                """[{"lhs":"root","rhs":[{"kind":"terminal","name":"T"}],"name":null},""" +
+                    """{"lhs":"Expr","rhs":[{"kind":"nonterminal","name":"Expr"},{"kind":"terminal","name":"+"}],"name":"plus"}]""",
+            )
         val path = Files.createTempFile("grammar-file-test", ".productions.json")
         try {
             Files.writeString(path, json)
 
-            val specs = ParserGrammarFile.read(path)
+            val result = ParserGrammarFile.read(path)
 
             assertEquals(
-                listOf(
-                    ProductionSpec(lhs = "root", rhs = listOf(SymbolSpec("terminal", "T")), name = null),
-                    ProductionSpec(
-                        lhs = "Expr",
-                        rhs = listOf(SymbolSpec("nonterminal", "Expr"), SymbolSpec("terminal", "+")),
-                        name = "plus",
+                VersionedExport.Compatible(
+                    listOf(
+                        ProductionSpec(lhs = "root", rhs = listOf(SymbolSpec("terminal", "T")), name = null),
+                        ProductionSpec(
+                            lhs = "Expr",
+                            rhs = listOf(SymbolSpec("nonterminal", "Expr"), SymbolSpec("terminal", "+")),
+                            name = "plus",
+                        ),
                     ),
                 ),
-                specs,
+                result,
             )
         } finally {
             Files.deleteIfExists(path)
@@ -57,29 +63,58 @@ class GrammarFileTest {
     @Test
     fun `reads a table json file written by Alpaca's compile-time export`() {
         val json =
-            """[""" +
-                """[{"symbol":{"kind":"terminal","name":"int"},"action":{"type":"shift","state":1}}],""" +
-                """[{"symbol":{"kind":"terminal","name":"$"},""" +
-                """"action":{"type":"reduce","production":{"lhs":"root","rhs":[],"name":null}}}]""" +
-                """]"""
+            versionedJson(
+                """[""" +
+                    """[{"symbol":{"kind":"terminal","name":"int"},"action":{"type":"shift","state":1}}],""" +
+                    """[{"symbol":{"kind":"terminal","name":"$"},""" +
+                    """"action":{"type":"reduce","production":{"lhs":"root","rhs":[],"name":null}}}]""" +
+                    """]""",
+            )
         val path = Files.createTempFile("grammar-file-test", ".table.json")
         try {
             Files.writeString(path, json)
 
-            val rows = ParserTableFile.read(path)
+            val result = ParserTableFile.read(path)
 
             assertEquals(
-                listOf(
-                    listOf(TableEntry(SymbolSpec("terminal", "int"), ActionSpec.Shift(1))),
+                VersionedExport.Compatible(
                     listOf(
-                        TableEntry(
-                            SymbolSpec("terminal", "$"),
-                            ActionSpec.Reduce(ProductionSpec("root", emptyList(), null)),
+                        listOf(TableEntry(SymbolSpec("terminal", "int"), ActionSpec.Shift(1))),
+                        listOf(
+                            TableEntry(
+                                SymbolSpec("terminal", "$"),
+                                ActionSpec.Reduce(ProductionSpec("root", emptyList(), null)),
+                            ),
                         ),
                     ),
                 ),
-                rows,
+                result,
             )
+        } finally {
+            Files.deleteIfExists(path)
+        }
+    }
+
+    @Test
+    fun `reports the found version for a mismatched version number`() {
+        val path = Files.createTempFile("grammar-file-test", ".tokens.json")
+        try {
+            Files.writeString(path, versionedJson("""[]""", version = 99))
+
+            assertEquals(VersionedExport.Incompatible(99), LexerGrammarFile.read(path))
+        } finally {
+            Files.deleteIfExists(path)
+        }
+    }
+
+    @Test
+    fun `treats a pre-envelope file with no version key at all as version 0`() {
+        val path = Files.createTempFile("grammar-file-test", ".tokens.json")
+        try {
+            // The exact shape written before this envelope existed: a bare JSON array.
+            Files.writeString(path, """[{"name":"kw","pattern":"let","ignored":false}]""")
+
+            assertEquals(VersionedExport.Incompatible(0), LexerGrammarFile.read(path))
         } finally {
             Files.deleteIfExists(path)
         }

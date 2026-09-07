@@ -1,6 +1,8 @@
 package com.halotukozak.alpaca.plugin.grammar
 
 import com.halotukozak.alpaca.plugin.settings.AlpacaSettingsState
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -53,7 +55,23 @@ class GrammarService(
 
         val scanned = GrammarDirectory.scan(Path.of(directory))
         cache.set(Snapshot(directory, scanned))
+        if (scanned.incompatible.isNotEmpty()) notifyIncompatible(scanned.incompatible)
         return scanned
+    }
+
+    /** One balloon per fresh (non-cached) scan that found a version it doesn't understand -- the
+     *  cache means this can't fire more often than an actual on-disk change or Settings edit. */
+    private fun notifyIncompatible(incompatible: List<IncompatibleExport>) {
+        val details =
+            incompatible.joinToString("\n") { "${it.fileName}: found version ${it.foundVersion}" }
+        val group = NotificationGroupManager.getInstance().getNotificationGroup("Alpaca")
+        group
+            .createNotification(
+                "Alpaca grammar export format mismatch",
+                "This plugin understands export format version $CURRENT_EXPORT_FORMAT_VERSION:\n$details\n" +
+                    "Rebuild the project to regenerate the export, or update the Alpaca plugin.",
+                NotificationType.WARNING,
+            ).notify(project)
     }
 
     /** The grammar [virtualFile] resolves to via the Settings extension-to-grammar mappings: always
