@@ -23,6 +23,7 @@
       <li><b>Reformat Code</b> that spaces and indents around your grammar's brackets, commas, semicolons,
         and dots, however they're spelled.</li>
       <li><b>Highlight occurrences</b> of the identifier under the caret, everywhere it appears in the file.</li>
+      <li><b>TODO markers</b> in comments feed the TODO tool window and the commit check.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -62,6 +63,7 @@
     <lang.commenter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.commenter.AlpacaCommenter"/>
+    <indexPatternBuilder implementation="com.halotukozak.alpaca.plugin.todo.AlpacaIndexPatternBuilder"/>
     <lang.formatter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
