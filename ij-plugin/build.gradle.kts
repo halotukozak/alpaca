@@ -1,8 +1,8 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.4.10"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.4.10"
+    id("org.jetbrains.kotlin.jvm") version "2.4.20"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.4.20"
     id("org.jetbrains.intellij.platform")
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
