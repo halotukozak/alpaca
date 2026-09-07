@@ -85,7 +85,7 @@ final class JsonTest extends AnyFunSuite:
         "scores": [95.5, 88.0, 76.5],
         "nullValue": null
       }
-      """): input =>
+      """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonE2EParser.parse(lexemes)
 
@@ -104,6 +104,7 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
+    }
 
     withLazyReader("""
       [
@@ -120,7 +121,7 @@ final class JsonTest extends AnyFunSuite:
           "name": "Charlie"
         }
       ]
-      """): input =>
+      """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonE2EParser.parse(lexemes)
 
@@ -131,6 +132,7 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
+    }
 
     withLazyReader("""
       {
@@ -146,7 +148,7 @@ final class JsonTest extends AnyFunSuite:
           }
         }
       }
-      """): input =>
+      """) { input =>
       val (_, lexemes) = JsonLexer.tokenize(input)
       val (_, result) = JsonE2EParser.parse(lexemes)
 
@@ -165,4 +167,5 @@ final class JsonTest extends AnyFunSuite:
       )
 
       assert(result == expected)
+    }
   }

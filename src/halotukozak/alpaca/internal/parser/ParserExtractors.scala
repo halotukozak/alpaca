@@ -80,7 +80,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
       bind: Option[Bind],
       others: List[(production: Production, action: Expr[Action[Ctx]])],
     ),
-  ] =
+  ] = {
     case skipTypedOrTest(
           Unapply(Select(Extractor.SeparatedBy(_, name, separator), Names.Unapply), Nil, List(Extractor.Bind(bind))),
         ) =>
@@ -142,6 +142,7 @@ private[parser] final class ParserExtractors[Q <: Quotes, Ctx <: ParserCtx: Type
           ),
         ),
       )
+  }
 
 // $COVERAGE-ON$
 

@@ -149,7 +149,7 @@ final class LexerTest extends AnyFunSuite with Matchers:
       case "\\)" => Token["RPAREN"]
       case "\\s+" => Token.Ignored
 
-    withLazyReader("(x + 42) * y - 1"): reader =>
+    withLazyReader("(x + 42) * y - 1") { reader =>
       val (_, lexemes) = Lexer.tokenize(reader)
 
       assert(
@@ -165,4 +165,5 @@ final class LexerTest extends AnyFunSuite with Matchers:
           ("NUMBER", "1", Map("text" -> "1", "position" -> 17, "line" -> 1)),
         ),
       )
+    }
   }

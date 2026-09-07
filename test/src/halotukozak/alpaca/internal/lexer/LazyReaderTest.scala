@@ -20,11 +20,12 @@ final class LazyReaderTest extends AnyFunSuite:
 
   test("charAt should throw IndexOutOfBoundsException for position beyond end") {
     val reader = new StringReader("hello")
-    Using(new LazyReader(reader, 5)): lazyReader =>
+    Using(new LazyReader(reader, 5)) { lazyReader =>
       val exception = intercept[IndexOutOfBoundsException]:
         lazyReader.charAt(10)
 
       assert(exception.getMessage.contains("Position 10 is out of bounds"))
+    }
   }
 
   test("length should return correct value") {
@@ -50,12 +51,13 @@ final class LazyReaderTest extends AnyFunSuite:
 
   test("from should remove characters from beginning and update length") {
     val reader = new StringReader("hello world")
-    Using(new LazyReader(reader, 11)): lazyReader =>
+    Using(new LazyReader(reader, 11)) { lazyReader =>
       lazyReader.from(6)
 
       assert(lazyReader.length == 5)
       assert(lazyReader.charAt(0) == 'w')
       assert(lazyReader.charAt(4) == 'd')
+    }
   }
 
   test("LazyReader.from should create LazyReader from file path") {
@@ -69,7 +71,7 @@ final class LazyReaderTest extends AnyFunSuite:
 
   test("empty string should work correctly") {
     val reader = new StringReader("")
-    Using(new LazyReader(reader, 0)): lazyReader =>
+    Using(new LazyReader(reader, 0)) { lazyReader =>
       assert(lazyReader.length == 0)
       assert(lazyReader.subSequence(0, 0) == "")
 
@@ -77,11 +79,12 @@ final class LazyReaderTest extends AnyFunSuite:
         lazyReader.charAt(0)
 
       assert(exception.getMessage.contains("Position 0 is out of bounds"))
+    }
   }
 
   test("from called multiple times should accumulate offset correctly") {
     val reader = new StringReader("abcdefghij")
-    Using(new LazyReader(reader, 10)): lazyReader =>
+    Using(new LazyReader(reader, 10)) { lazyReader =>
       lazyReader.from(3)
       assert(lazyReader.charAt(0) == 'd')
       assert(lazyReader.length == 7)
@@ -89,6 +92,7 @@ final class LazyReaderTest extends AnyFunSuite:
       lazyReader.from(4)
       assert(lazyReader.charAt(0) == 'h')
       assert(lazyReader.length == 3)
+    }
   }
 
   test("subSequence after from should return offset-adjusted content") {

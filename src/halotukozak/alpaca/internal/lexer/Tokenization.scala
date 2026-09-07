@@ -50,14 +50,14 @@ transparent abstract class Tokenization[Ctx <: LexerCtx: {ErrorHandling as error
    * @param input the input to tokenize
    * @return a tuple of (ctx, lexemes) where ctx is the final lexer context and lexemes is the list of matched tokens
    */
-  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) =
+  final def tokenize(input: CharSequence): (ctx: Ctx, lexemes: List[Lexeme]) = {
     var globalCtx = empty()
     globalCtx.text = OffsetCharSequence(input)
 
     val acc = mutable.ListBuffer.empty[Lexeme]
 
-    while !globalCtx.text.isEmpty do
-      val (token, matched) = matcher.matchAt(globalCtx.text, 0) match
+    while !globalCtx.text.isEmpty do {
+      val (token, matched) = matcher.matchAt(globalCtx.text, 0) match {
         case m if m != null && m.end > 0 =>
           val matchedStr = globalCtx.text.subSequence(0, m.end).toString
           globalCtx.lastRawMatched = matchedStr
@@ -94,12 +94,15 @@ transparent abstract class Tokenization[Ctx <: LexerCtx: {ErrorHandling as error
             case Strategy.Stop =>
               globalCtx.text = ""
               (null, null)
+      }
 
       if token != null && matched != null then
         globalCtx = onTokenMatch(token, matched, globalCtx)
         if token.isInstanceOf[DefinedToken[?, Ctx, ?]] then acc.addOne(globalCtx.lastLexeme.nn.asInstanceOf[Lexeme])
+    }
 
     (globalCtx, acc.toList)
+  }
 
   /** Compiled token-matcher; built at macro time. */
   protected def matcher: TokenMatcher

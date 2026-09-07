@@ -88,7 +88,7 @@ class ParserProfilingBenchmark:
   private var input: String = uninitialized
 
   @Setup(Level.Trial)
-  def setup(): Unit =
+  def setup(): Unit = {
     // Walk up from working directory to find benchmarks/inputs/
     var dir = Paths.get(System.getProperty("user.dir"))
     while dir != null && !Files.exists(dir.resolve("benchmarks/inputs")) do dir = dir.getParent
@@ -102,6 +102,7 @@ class ParserProfilingBenchmark:
     // Pre-tokenize: this happens once in setup, not during measurement
     val (_, toks) = ProfilingJsonLexer.tokenize(input)
     tokens = toks
+  }
 
   /** Pure parse benchmark -- measures only parser.parse() on pre-tokenized input. */
   @Benchmark

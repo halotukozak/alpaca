@@ -45,7 +45,7 @@ class AlpacaBenchmark:
   private var preTokenizedParseFn: () => Any = uninitialized
 
   @Setup(Level.Trial)
-  def setup(): Unit =
+  def setup(): Unit = {
     val n = size.toInt
 
     scenario match
@@ -74,7 +74,7 @@ class AlpacaBenchmark:
             sys.error(s"Input file not found for $scenario/$size. CWD=$cwd, tried: ${candidates.mkString(", ")}")
         input = new String(Files.readAllBytes(inputPath))
 
-    scenario match
+    scenario match {
       case s if s.contains("math") =>
         lexFn = (in: String) => MathLexer.tokenize(in)
         parseFn = (in: String) =>
@@ -129,6 +129,8 @@ class AlpacaBenchmark:
           DeepNestedParser.parse(tokens)
         val (_, preTokenized) = DeepNestedLexer.tokenize(input)
         preTokenizedParseFn = () => DeepNestedParser.parse(preTokenized)
+    }
+  }
 
   @Benchmark
   def lex(bh: Blackhole): Unit =

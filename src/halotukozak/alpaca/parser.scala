@@ -182,7 +182,8 @@ trait ParserCtx
  * and tokens.
  */
 type ConflictResolution
-extension (first: Production | Token[?, ?, ?])
+extension (first: Production | Token[?, ?, ?]) {
+
   /**
    * Specifies that this production/token should have higher precedence than others.
    *
@@ -216,6 +217,7 @@ extension (first: Production | Token[?, ?, ?])
   @compileTimeOnly(RuleOnly)
   inline infix def before(@unused second: (Production | Token[?, ?, ?])*): ConflictResolution =
     null.asInstanceOf[ConflictResolution]
+}
 
 object Production:
 
@@ -242,7 +244,7 @@ object ParserCtx:
   final case class Empty(
   ) extends ParserCtx
 
-extension [Ctx <: ParserCtx](parser: Parser[Ctx])
+extension [Ctx <: ParserCtx](parser: Parser[Ctx]) {
 
   /**
    * Parses a list of lexemes using the defined grammar.
@@ -258,3 +260,4 @@ extension [Ctx <: ParserCtx](parser: Parser[Ctx])
       case Rule[t] => t
     ) | Null,
   ) = parser.unsafeParse(lexems)
+}

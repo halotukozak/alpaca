@@ -62,7 +62,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q):
    * @param rhsFn a function that builds the body tree given the method symbol and argument trees
    * @return an expression of type F
    */
-  def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] =
+  def apply[F: Type](rhsFn: PartialFunction[(Symbol, List[Tree]), Tree]): Expr[F] = {
     require(TypeRepr.of[F].isFunctionType, show"Expected a function type, but got: ${TypeRepr.of[F]}")
 
     val params :+ r = TypeRepr.of[F].typeArgs.runtimeChecked
@@ -74,6 +74,7 @@ private[internal] final class CreateLambda[Q <: Quotes](using val quotes: Q):
         if !rhsFn.isDefinedAt((sym, args)) then raiseShouldNeverBeCalled[(Symbol, List[Tree])]((sym, args))
         rhsFn.apply((sym, args)),
     ).asExprOf[F]
+  }
 
 /**
  * ToExpr instance for NamedTuple.
@@ -130,7 +131,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
    * @param body the code to execute with the overriding symbol
    * @return the result of executing body
    */
-  def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T =
+  def apply[T](parent: Symbol)(symbol: Symbol => Symbol)(body: Quotes ?=> Symbol => T): T = {
     val baseSymbol = symbol(parent)
     val owner = baseSymbol.overridingSymbol(parent) match
       case owner if owner.isNoSymbol =>
@@ -139,6 +140,7 @@ private[internal] final class WithOverridingSymbol[Q <: Quotes](using val quotes
         owner
 
     body(using owner.asQuotes)(owner)
+  }
 // $COVERAGE-ON$
 
 /**
@@ -178,7 +180,7 @@ private[internal] def refinementTpeFrom(using quotes: Quotes)(refn: Seq[(label: 
  * @return a NamedTuple TypeRepr
  */
 private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: String, tpe: quotes.reflect.TypeRepr)])
-  : quotes.reflect.TypeRepr =
+  : quotes.reflect.TypeRepr = {
   import quotes.reflect.*
 
   TypeRepr
@@ -193,6 +195,7 @@ private[internal] def fieldsTpeFrom(using quotes: Quotes)(refn: Seq[(label: Stri
             )
         .toList,
     )
+}
 
 private[alpaca] def avoidTooLargeMethod[A: Type, To: Type, B <: mutable.Builder[A, To]: Type](
   builder: Expr[B],

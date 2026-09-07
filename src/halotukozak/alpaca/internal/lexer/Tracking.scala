@@ -83,7 +83,7 @@ object Tracking:
   @publicInBinary private[Tracking] def materializeImpl[Ctx <: LexerCtx: Mirror.ProductOf as m](
     steps: List[(index: Int, update: Tracking[?])],
     fieldNames: Array[String],
-  ): ((Token[?, Ctx, ?], String, Ctx) => Ctx) = (token, raw, ctx) =>
+  ): (Token[?, Ctx, ?], String, Ctx) => Ctx = (token, raw, ctx) => {
     val afterFields =
       if steps.isEmpty then ctx
       else
@@ -94,7 +94,7 @@ object Tracking:
         val updated = m.fromProduct(Tuple.fromArray(values))
         updated.carryEngineStateFrom(ctx)
 
-    token match
+    token match {
       case DefinedToken(info, modifyCtx, remapping) =>
         modifyCtx(afterFields)
           .carryEngineStateFrom(afterFields)
@@ -109,3 +109,5 @@ object Tracking:
 
       case IgnoredToken(_, modifyCtx) =>
         modifyCtx(afterFields).carryEngineStateFrom(afterFields)
+    }
+  }

@@ -29,7 +29,7 @@ private[parser] object Lookaheads:
     productionsByLhs: Map[NonTerminal, List[Production]],
     firstSet: FirstSet,
   )(using DebugSettings,
-  ): IndexedSeq[Map[Core, Set[Terminal]]] =
+  ): IndexedSeq[Map[Core, Set[Terminal]]] = {
     val lookaheads =
       automaton.kernels.map(kernel => mutable.Map.from(kernel.iterator.map(_ -> mutable.Set.empty[Terminal])))
     val propagatesTo =
@@ -45,16 +45,17 @@ private[parser] object Lookaheads:
     for
       stateId <- automaton.states.indices
       kernelCore <- automaton.kernels(stateId)
-    do
-      val seed = Item(kernelCore.production, kernelCore.dotPosition, Symbol.Dummy)
-      val dummyClosure = State.fromItem(State.empty, seed, productionsByLhs, firstSet)
-
-      for item <- dummyClosure if !item.isLastItem do
+      seed = Item(kernelCore.production, kernelCore.dotPosition, Symbol.Dummy)
+      dummyClosure = State.fromItem(State.empty, seed, productionsByLhs, firstSet)
+    do {
+      for item <- dummyClosure if !item.isLastItem do {
         val targetState = automaton.goto(stateId)(item.nextSymbol)
         val targetCore = Core(item.production, item.dotPosition + 1)
 
         if item.lookAhead == Symbol.Dummy then propagatesTo(stateId)(kernelCore) ::= (targetState, targetCore)
         else if lookaheads(targetState)(targetCore).add(item.lookAhead) then worklist.append((targetState, targetCore))
+      }
+    }
 
     while worklist.nonEmpty do
       val (stateId, kernelCore) = worklist.removeHead()
@@ -65,3 +66,4 @@ private[parser] object Lookaheads:
           worklist.append((targetState, targetCore))
 
     lookaheads.map(_.view.mapValues(_.toSet).toMap)
+  }
