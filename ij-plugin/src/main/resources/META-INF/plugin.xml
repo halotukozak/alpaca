@@ -25,6 +25,8 @@
       <li><b>Highlight occurrences</b> of the identifier under the caret, everywhere it appears in the file.</li>
       <li><b>TODO markers</b> in comments feed the TODO tool window and the commit check.</li>
       <li><b>Breadcrumbs</b> showing the caret's nesting path through the parsed tree.</li>
+      <li><b>Quick Documentation</b> (hover / Ctrl+Q) showing a token's pattern or a nonterminal's
+        full set of production alternatives.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -66,6 +68,9 @@
         implementationClass="com.halotukozak.alpaca.plugin.commenter.AlpacaCommenter"/>
     <indexPatternBuilder implementation="com.halotukozak.alpaca.plugin.todo.AlpacaIndexPatternBuilder"/>
     <breadcrumbsInfoProvider implementation="com.halotukozak.alpaca.plugin.editing.AlpacaBreadcrumbsProvider"/>
+    <lang.documentationProvider
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.documentation.AlpacaDocumentationProvider"/>
     <lang.formatter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
