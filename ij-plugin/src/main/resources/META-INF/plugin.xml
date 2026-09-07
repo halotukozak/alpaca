@@ -69,6 +69,7 @@
     <lang.formatter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
+    <notificationGroup id="Alpaca" displayType="BALLOON"/>
   </extensions>
 
   <projectListeners>

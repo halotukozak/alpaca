@@ -1,6 +1,7 @@
 package com.halotukozak.alpaca.plugin.settings
 
 import com.halotukozak.alpaca.plugin.grammar.GrammarService
+import com.halotukozak.alpaca.plugin.grammar.versionedJson
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.nio.file.Files
@@ -35,7 +36,7 @@ class AlpacaSettingsConfigurableTest : BasePlatformTestCase() {
 
         Files.writeString(
             exportDir.resolve("CfgTest.L@L1.tokens.json"),
-            """[{"name":"kw","pattern":"let","ignored":false}]""",
+            versionedJson("""[{"name":"kw","pattern":"let","ignored":false}]"""),
         )
         settings.associations = mutableListOf(GrammarAssociation(extension = "cfgtest-ext", lexerGrammarId = "CfgTest.L@L1"))
 

@@ -11,19 +11,19 @@ class GrammarDirectoryTest {
         try {
             Files.writeString(
                 dir.resolve("BrainLexer.BrainLexer@L9.tokens.json"),
-                """[{"name":"+","pattern":"\\+","ignored":false}]""",
+                versionedJson("""[{"name":"+","pattern":"\\+","ignored":false}]"""),
             )
             Files.writeString(
                 dir.resolve("CalcLexer.CalcLexer@L15.tokens.json"),
-                """[{"name":"Num","pattern":"[0-9]+","ignored":false}]""",
+                versionedJson("""[{"name":"Num","pattern":"[0-9]+","ignored":false}]"""),
             )
             Files.writeString(
                 dir.resolve("BrainParser.BrainParser@L12.productions.json"),
-                """[{"lhs":"root","rhs":[],"name":null}]""",
+                versionedJson("""[{"lhs":"root","rhs":[],"name":null}]"""),
             )
             Files.writeString(
                 dir.resolve("BrainParser.BrainParser@L12.table.json"),
-                """[[{"symbol":{"kind":"terminal","name":"+"},"action":{"type":"shift","state":1}}]]""",
+                versionedJson("""[[{"symbol":{"kind":"terminal","name":"+"},"action":{"type":"shift","state":1}}]]"""),
             )
             Files.writeString(dir.resolve("README.md"), "not a grammar export")
 
@@ -46,6 +46,7 @@ class GrammarDirectoryTest {
                 ),
                 grammars.parsers,
             )
+            assertEquals(emptyList<IncompatibleExport>(), grammars.incompatible)
         } finally {
             Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(Files::delete)
         }
@@ -59,5 +60,27 @@ class GrammarDirectoryTest {
 
         assertEquals(emptyList<LexerGrammar>(), grammars.lexers)
         assertEquals(emptyList<ParserGrammar>(), grammars.parsers)
+    }
+
+    @Test
+    fun `excludes a version-incompatible export and reports it instead`() {
+        val dir = Files.createTempDirectory("grammar-directory-test")
+        try {
+            Files.writeString(
+                dir.resolve("Old.L@L1.tokens.json"),
+                """[{"name":"kw","pattern":"let","ignored":false}]""", // pre-envelope shape, no version key
+            )
+            Files.writeString(
+                dir.resolve("Current.L@L2.tokens.json"),
+                versionedJson("""[{"name":"kw","pattern":"let","ignored":false}]"""),
+            )
+
+            val grammars = GrammarDirectory.scan(dir)
+
+            assertEquals(listOf("Current.L@L2"), grammars.lexers.map { it.id })
+            assertEquals(listOf(IncompatibleExport("Old.L@L1.tokens.json", foundVersion = 0)), grammars.incompatible)
+        } finally {
+            Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(Files::delete)
+        }
     }
 }
