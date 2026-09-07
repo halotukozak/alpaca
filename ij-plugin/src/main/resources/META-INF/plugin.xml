@@ -20,6 +20,8 @@
       <li><b>Structure View</b> and <b>code folding</b> that mirror the parsed tree.</li>
       <li><b>Autocompletion</b> of the fixed-spelling terminals valid at the caret.</li>
       <li><b>Line comment toggling</b> for grammars with a <code>prefix.*</code>-shaped ignored rule.</li>
+      <li><b>Reformat Code</b> that spaces and indents around your grammar's brackets, commas, semicolons,
+        and dots, however they're spelled.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -57,6 +59,9 @@
     <lang.commenter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.commenter.AlpacaCommenter"/>
+    <lang.formatter
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
   </extensions>
 
   <projectListeners>
