@@ -122,7 +122,7 @@ private[internal] object Showable:
         val shown = showables(index).show(t)
         show"$name($shown)"
 
-extension [C[X] <: Iterable[X], T: Showable](c: C[T])
+extension [C[X] <: Iterable[X], T: Showable](c: C[T]) {
 
   /**
    * Creates a string representation with custom start, separator, and end strings.
@@ -149,6 +149,7 @@ extension [C[X] <: Iterable[X], T: Showable](c: C[T])
    * @return the concatenated string
    */
   private[internal] def mkShow: Shown = mkShow("")
+}
 
 extension [T: Showable](it: Iterator[T])
   private[internal] def mkShow(start: String, sep: String, end: String): Shown = it.map(_.show).mkString(start, sep, end)

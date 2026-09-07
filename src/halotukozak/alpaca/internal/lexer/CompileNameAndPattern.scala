@@ -33,7 +33,7 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
    * @param pattern the pattern tree to compile
    * @return a list of TokenInfo expressions
    */
-  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] =
+  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] = {
     // T is Nothing exactly when compiling a `Token.Ignored` case (see the two Nothing-guarded
     // branches below); every other call site passes the token's own name as T.
     val ignored = TypeRepr.of[T] =:= TypeRepr.of[Nothing]
@@ -77,4 +77,5 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
     loop(TypeRepr.of[T], pattern)
+  }
 // $COVERAGE-ON$

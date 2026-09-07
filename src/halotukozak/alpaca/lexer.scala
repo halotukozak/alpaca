@@ -158,7 +158,7 @@ object Token:
 transparent inline def ctx[C <: LexerCtx](using c: C): C = ${ ctxImpl[C]('c) }
 
 // $COVERAGE-OFF$
-private def ctxImpl[C <: LexerCtx: Type](c: Expr[C])(using quotes: Quotes): Expr[C] =
+private def ctxImpl[C <: LexerCtx: Type](c: Expr[C])(using quotes: Quotes): Expr[C] = {
   import quotes.reflect.*
 
   val ctxTpe = TypeRepr.of[C].widen
@@ -174,6 +174,7 @@ private def ctxImpl[C <: LexerCtx: Type](c: Expr[C])(using quotes: Quotes): Expr
 
   refined.asType match
     case '[type r <: C; r] => '{ $c.asInstanceOf[r] }
+}
 
 // $COVERAGE-ON$
 

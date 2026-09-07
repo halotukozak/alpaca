@@ -57,12 +57,12 @@ private[alpaca] object Tables:
 // $COVERAGE-OFF$
 private def createTablesImpl[Ctx <: ParserCtx: Type](
   using quotes: Quotes,
-): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] =
+): Expr[(parseTable: ParseTable, actionTable: ActionTable[Ctx])] = {
   import quotes.reflect.*
   val parserSymbol = Symbol.spliceOwner.owner.owner
   val parserTpe = parserSymbol.typeRef
 
-  parserTpe.asType match
+  parserTpe.asType match {
     case '[type p <: Parser[Ctx]; p] =>
       val ctxSymbol = parserSymbol.methodMember("ctx").head
       val parserName = declaredName(parserSymbol)
@@ -73,7 +73,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
       import parserExtractor.*
 
       def extractEBNF(ruleName: String)
-        : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] =
+        : PartialFunction[Expr[Rule[?]], Seq[(production: Production, action: Expr[Action[Ctx]])]] = {
         case '{ rule(${ Varargs(cases) }*) } =>
           def createAction(binds: Seq[Option[Bind]], rhs: Term) = createLambda[Action[Ctx]]:
             case (methSym, (ctx: Term) :: (param: Term) :: Nil) =>
@@ -132,6 +132,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 ) :: others.flatten
               case other => raiseShouldNeverBeCalled(other)
             .toList
+      }
 
       val rules = parserTpe.typeSymbol.declarations.iterator.collect:
         case decl if decl.typeRef <:< TypeRepr.of[Rule[?]] => decl.tree // todo: can we avoid .tree?
@@ -167,28 +168,28 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
       val productionsByRhs = productions.iterator.map(p => (p.rhs, p)).toMap
 
-      def findProduction(call: Expr[Production]): Production =
-        call match
-          case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
-            val decodedName = NameTransformer.decode(name)
-            productionsByName.getOrElse(
-              decodedName,
-              report.errorAndAbort(show"Production with name '$decodedName' not found", call),
-            )
+      def findProduction(call: Expr[Production]): Production = call match {
+        case '{ ($_ : ProductionSelector).selectDynamic(${ Expr(name) }).$asInstanceOf$[i] } =>
+          val decodedName = NameTransformer.decode(name)
+          productionsByName.getOrElse(
+            decodedName,
+            report.errorAndAbort(show"Production with name '$decodedName' not found", call),
+          )
 
-          case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
-            val args = rhs
-              .map[parser.Symbol.NonEmpty]:
-                case '{ type ruleType <: Rule[?]; $_ : ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
-                case '{ type name <: ValidName; $_ : Token[name, ?, ?] } => Terminal(ValidName.from[name])
-              .toList
+        case '{ alpaca.Production(${ Varargs(rhs) }*) } =>
+          val args = rhs
+            .map[parser.Symbol.NonEmpty]:
+              case '{ type ruleType <: Rule[?]; $_ : ruleType } => NonTerminal(TypeRepr.of[ruleType].termSymbol.name)
+              case '{ type name <: ValidName; $_ : Token[name, ?, ?] } => Terminal(ValidName.from[name])
+            .toList
 
-            productionsByRhs.getOrElse(
-              NEL.unsafe(args),
-              report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found", call),
-            )
+          productionsByRhs.getOrElse(
+            NEL.unsafe(args),
+            report.errorAndAbort(show"Production with RHS '${args.mkShow(" ")}' not found", call),
+          )
 
-          case definition => raiseShouldNeverBeCalled(definition)
+        case definition => raiseShouldNeverBeCalled(definition)
+      }
 
       var givenResolutions: Expr[Resolutions[p] | Null] = '{ null }
 
@@ -258,4 +259,6 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
         lazy val _ = $givenResolutions
         ($parseTable: ParseTable, ActionTable($actionTable.toMap))
       }
+  }
+}
 // $COVERAGE-ON$

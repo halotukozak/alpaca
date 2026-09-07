@@ -20,7 +20,7 @@ private[parser] object LR0State:
 
   val empty: LR0State = SortedSet.empty[Core]
 
-  extension (state: LR0State)
+  extension (state: LR0State) {
 
     /**
      * Groups this state's non-final items by the symbol they can shift on next.
@@ -29,6 +29,7 @@ private[parser] object LR0State:
      */
     def itemsByNextSymbol: Map[Symbol, List[Core]] =
       state.iterator.filterNot(_.isLastItem).toList.groupBy(_.nextSymbol) - Symbol.Empty
+  }
 
   /**
    * Computes the state reached after shifting a symbol.
@@ -48,7 +49,7 @@ private[parser] object LR0State:
    * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
    * @return the closed state
    */
-  def fromCore(state: LR0State, core: Core, productionsByLhs: Map[NonTerminal, List[Production]]): LR0State =
+  def fromCore(state: LR0State, core: Core, productionsByLhs: Map[NonTerminal, List[Production]]): LR0State = {
     @tailrec def loop(state: LR0State, pending: Set[Core], worklist: List[Core]): LR0State = worklist match
       case Nil => state
       case core :: rest if core.isLastItem => loop(state + core, pending, rest)
@@ -66,3 +67,4 @@ private[parser] object LR0State:
           case _: Terminal => loop(state + core, pending, rest)
 
     loop(state, Set.empty, core :: Nil)
+  }

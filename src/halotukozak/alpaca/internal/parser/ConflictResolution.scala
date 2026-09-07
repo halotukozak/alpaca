@@ -42,7 +42,8 @@ private[parser] object ConflictResolutionTable:
    */
   def apply(resolutions: Map[ConflictKey, Set[ConflictKey]]): ConflictResolutionTable = resolutions
 
-  extension (table: ConflictResolutionTable)
+  extension (table: ConflictResolutionTable) {
+
     /**
      * Resolves a conflict between two parse actions.
      *
@@ -54,13 +55,13 @@ private[parser] object ConflictResolutionTable:
      * @param symbol the symbol causing the conflict
      * @return Some(action) if one action has precedence, None otherwise
      */
-    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] =
+    def get(first: ParseAction, second: ParseAction)(symbol: Symbol): Option[ParseAction] = {
       extension (action: ParseAction)
         def toConflictKey: ConflictKey = action match
           case ParseAction.Reduction(prod) => prod
           case _: ParseAction.Shift => symbol.name
 
-      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] =
+      def winsOver(first: ParseAction, second: ParseAction): Option[ParseAction] = {
         val to = second.toConflictKey
         val queue = mutable.ArrayDeque[ConflictKey](first.toConflictKey)
 
@@ -74,10 +75,12 @@ private[parser] object ConflictResolutionTable:
             loop(visited + head)
 
         loop(Set.empty)
+      }
 
-      winsOver(first, second) orElse winsOver(second, first)
+      winsOver(first, second).orElse(winsOver(second, first))
+    }
 
-    def verifyNoConflicts()(using DebugSettings): Unit =
+    def verifyNoConflicts()(using DebugSettings): Unit = {
       enum VisitState:
         case Unvisited, Visited, Processed
 
@@ -88,7 +91,7 @@ private[parser] object ConflictResolutionTable:
       val visited = mutable.Map.empty[ConflictKey, VisitState].withDefaultValue(VisitState.Unvisited)
 
       @tailrec
-      def loop(stack: List[Action]): Unit = stack match
+      def loop(stack: List[Action]): Unit = stack match {
         case Nil => // Done
 
         case Action.Leave(node) :: rest =>
@@ -103,10 +106,12 @@ private[parser] object ConflictResolutionTable:
               visited(node) = VisitState.Visited
               val neighbors = table.getOrElse(node, Set.empty).map(Action.Enter(_, node :: path)).toList
               loop(neighbors ::: List(Action.Leave(node)) ::: rest)
+      }
 
       for node <- table.keys do loop(Action.Enter(node) :: Nil)
+    }
 
-    def toMermaid: String =
+    def toMermaid: String = {
       val sb = new StringBuilder
       sb.append("graph TD\n")
 
@@ -147,6 +152,8 @@ private[parser] object ConflictResolutionTable:
       do sb.append(s"  ${nodeId(from)} --> ${nodeId(to)}\n")
 
       sb.toString
+    }
+  }
 
   /**
    * Showable instance for displaying conflict resolution tables.

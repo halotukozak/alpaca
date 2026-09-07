@@ -35,7 +35,7 @@ given Resolutions[MathParser.type] = resolutions(
   production.minus.before(MathLexer.`\\+`, MathLexer.`-`),
 )
 
-@main def mathParserMain(): Unit =
+@main def mathParserMain(): Unit = {
   import java.nio.file.{Files, Paths}
 
   val filePathIterative = s"inputs/iterative_math_3.txt"
@@ -65,3 +65,4 @@ given Resolutions[MathParser.type] = resolutions(
     case e: Exception =>
       println(s"\nError Recursive: ${e.getMessage}")
       e.printStackTrace()
+}

@@ -191,7 +191,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
 
       x = 2;
       y = 2.5;
-      """): input =>
+      """) { input =>
       val (_, lexems) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexems)
 
@@ -249,6 +249,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
       )
 
       assert(result == expected)
+    }
   }
 
   test("assignment operators, binary operators, transposition") {
@@ -268,7 +269,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
     C -= B ;  # substract B from C
     C *= A ;  # multiply A with C
     C /= A ;  # divide A by C
-    """): input =>
+    """) { input =>
       val (_, lexemes) = CTLexer.tokenize(input)
       val (_, result) = ASTPrinterParser.parse(lexemes)
       val expected = ASTNode(
@@ -292,6 +293,7 @@ final class CompilationTheoryTest extends AnyFunSuite:
       )
 
       assert(result == expected)
+    }
   }
 
   test("control flow instruction") {

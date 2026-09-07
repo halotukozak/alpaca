@@ -75,7 +75,7 @@ private[lexer] final class RewriteCtxMutations[Q <: Quotes](using val quotes: Q)
    * @param body the rule statements to rewrite
    * @param owner the owner to use when transforming the body
    */
-  def apply(ctxVar: Symbol)(body: Term)(owner: Symbol): Term =
+  def apply(ctxVar: Symbol)(body: Term)(owner: Symbol): Term = {
     val ctxRef = Ref(ctxVar)
     val aliases = scala.collection.mutable.Set(ctxVar)
 
@@ -108,6 +108,7 @@ private[lexer] final class RewriteCtxMutations[Q <: Quotes](using val quotes: Q)
         case _ => super.transformTerm(tree)(owner)
 
     rewriter.transformTerm(body)(owner)
+  }
 
   private def copyWith(recv: Term, field: String, value: Term): Term =
     val cls = recv.tpe.typeSymbol
