@@ -70,6 +70,14 @@ class AlpacaQuoteHandlerTest : BasePlatformTestCase() {
         assertEquals("\"\"", typeQuote("test.json", "<caret>"))
     }
 
+    fun `test typing an opening quote before a stray closing quote completes the literal`() {
+        // The typed quote plus the pre-existing trailing quote together already form a *closed*
+        // literal ("abc") -- hasNonClosedLiteral's scan must recognize that and skip past it
+        // rather than reporting the line as having an unclosed string, so no second closing quote
+        // gets inserted.
+        assertEquals("[\"abc\"]", typeQuote("test.json", "[<caret>abc\"]"))
+    }
+
     fun `test isInsideLiteral reports true only inside a string token`() {
         myFixture.configureByText("test.json", "[\"abc\"]")
         val iterator = (myFixture.editor as EditorEx).highlighter.createIterator(0)
