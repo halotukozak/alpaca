@@ -47,24 +47,24 @@ class GrammarExportChangeListenerTest : BasePlatformTestCase() {
     }
 
     fun `test invalidates the cache when a changed file is under the export directory`() {
-        writeLexer("L@L1", """[{"name":"A","pattern":"a","ignored":false}]""")
+        writeLexer("L@L1", versionedJson("""[{"name":"A","pattern":"a","ignored":false}]"""))
         val service = GrammarService.getInstance(project)
         assertEquals(listOf("A"), service.singleLexerTokenNames())
 
         // Change the file on disk behind the cache, exactly like GrammarServiceTest does, then
         // let the listener notice.
-        writeLexer("L@L1", """[{"name":"B","pattern":"b","ignored":false}]""")
+        writeLexer("L@L1", versionedJson("""[{"name":"B","pattern":"b","ignored":false}]"""))
         GrammarExportChangeListener(project).after(listOf(contentChangeEventAt(exportDir.resolve("L@L1.tokens.json"))))
 
         assertEquals(listOf("B"), service.singleLexerTokenNames())
     }
 
     fun `test leaves the cache untouched when no event is under the export directory`() {
-        writeLexer("L@L1", """[{"name":"A","pattern":"a","ignored":false}]""")
+        writeLexer("L@L1", versionedJson("""[{"name":"A","pattern":"a","ignored":false}]"""))
         val service = GrammarService.getInstance(project)
         assertEquals(listOf("A"), service.singleLexerTokenNames())
 
-        writeLexer("L@L1", """[{"name":"B","pattern":"b","ignored":false}]""")
+        writeLexer("L@L1", versionedJson("""[{"name":"B","pattern":"b","ignored":false}]"""))
         val elsewhere = Files.createTempFile("grammar-export-listener-test-unrelated", ".json")
         try {
             GrammarExportChangeListener(project).after(listOf(contentChangeEventAt(elsewhere)))
