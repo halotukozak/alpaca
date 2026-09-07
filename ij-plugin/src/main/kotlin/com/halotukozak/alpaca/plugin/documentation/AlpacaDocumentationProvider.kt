@@ -9,8 +9,10 @@ import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
 import com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 
 /**
  * Quick Documentation (Ctrl+Q / mouse hover) for Alpaca-defined languages, built entirely from the
@@ -23,6 +25,22 @@ import com.intellij.psi.PsiElement
  * regardless of which alternative actually produced the node under the caret.
  */
 class AlpacaDocumentationProvider : AbstractDocumentationProvider() {
+    // Alpaca-defined languages have no PsiReference and no PsiNamedElement, so the platform's
+    // default target-resolution (TargetElementUtil, built for "the reference's target" /
+    // "the named declaration") finds nothing to hand to generateDoc at all -- Quick Documentation
+    // would silently do nothing on hover/Ctrl+Q. This is exactly the override point the platform
+    // documents for that case: "a keyword where there's no PsiReference, but for which users might
+    // benefit from context help." The leaf already under the caret/mouse is a perfectly good target.
+    override fun getCustomDocumentationElement(
+        editor: Editor,
+        file: PsiFile,
+        contextElement: PsiElement?,
+        targetOffset: Int,
+    ): PsiElement? {
+        if (file.language != AlpacaLanguage) return null
+        return contextElement
+    }
+
     override fun generateDoc(
         element: PsiElement,
         originalElement: PsiElement?,

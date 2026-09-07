@@ -3,6 +3,7 @@ package com.halotukozak.alpaca.plugin.documentation
 import com.halotukozak.alpaca.plugin.lexer.AlpacaFileTypeRegistrar
 import com.halotukozak.alpaca.plugin.settings.AlpacaSettingsState
 import com.halotukozak.alpaca.plugin.settings.GrammarAssociation
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -11,9 +12,9 @@ private const val PARSER_ID = "MathTest.MathParser@L39"
 
 /**
  * Exercises [AlpacaDocumentationProvider] against MathParser's real exported grammar: a leaf shows
- * its lexer rule (name + pattern), a composite (reachable via a Structure View selection, not just
- * hovering a token -- Ctrl+Q resolves to the leaf under the caret by default) lists every
- * production alternative exported for its nonterminal.
+ * its lexer rule (name + pattern); a composite (reachable via a Structure View selection, not just
+ * hovering a token -- see [getCustomDocumentationElement][AlpacaDocumentationProvider.getCustomDocumentationElement])
+ * lists every production alternative exported for its nonterminal.
  */
 class AlpacaDocumentationProviderTest : BasePlatformTestCase() {
     private val provider = AlpacaDocumentationProvider()
@@ -81,5 +82,27 @@ class AlpacaDocumentationProviderTest : BasePlatformTestCase() {
         val leaf = file.findElementAt(0)!!
 
         assertNull(provider.generateDoc(leaf, leaf))
+    }
+
+    fun `test the platform can actually find a documentation target at a token`() {
+        // Regression test for the real bug: Alpaca-defined languages have no PsiReference and no
+        // PsiNamedElement, so TargetElementUtil's default resolution finds nothing at a caret
+        // offset -- Quick Documentation did nothing at all on hover/Ctrl+Q, even though
+        // generateDoc(leaf, leaf) called directly (the rest of this test class) worked fine.
+        // Exercises the platform's real target-resolution path, which is what caught this.
+        myFixture.configureByText("test.calc", "pi")
+        myFixture.editor.caretModel.moveToOffset(0)
+
+        val target = DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file)
+
+        assertNotNull(target)
+        assertEquals("pi", target!!.text)
+    }
+
+    fun `test getCustomDocumentationElement returns null outside an Alpaca language`() {
+        val file = myFixture.configureByText("plain.txt", "pi")
+        val leaf = file.findElementAt(0)!!
+
+        assertNull(provider.getCustomDocumentationElement(myFixture.editor, file, leaf, 0))
     }
 }
