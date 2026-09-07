@@ -6,13 +6,25 @@ import com.halotukozak.alpaca.plugin.grammar.ResolvedGrammar
 import com.halotukozak.alpaca.plugin.grammar.SymbolSpec
 import com.halotukozak.alpaca.plugin.grammar.TokenSpec
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** [buildGrammarTree] is plain data in, plain data out -- no PSI, no platform fixture needed. */
+/** [buildGrammarTree]/[alternativesOf] are plain data in, plain data out -- no PSI, no platform
+ *  test fixture needed. */
 class GrammarTreeTest {
     private val plusToken = TokenSpec(name = "\\+", pattern = "\\+", ignored = false)
     private val intToken = TokenSpec(name = "int", pattern = "\\d+", ignored = false)
     private val whitespaceToken = TokenSpec(name = "ws", pattern = "[ \\t]+", ignored = true)
+
+    /** `Expr -> Expr '+' Expr` (named `plus`) and `Expr -> int` (unnamed): the shape MathParser's
+     *  own grammar has, minimally reproduced so a test doesn't depend on the real export fixture. */
+    private val plusProduction =
+        ProductionSpec(
+            "Expr",
+            listOf(SymbolSpec("nonterminal", "Expr"), SymbolSpec("terminal", "\\+"), SymbolSpec("nonterminal", "Expr")),
+            "plus",
+        )
+    private val literalProduction = ProductionSpec("Expr", listOf(SymbolSpec("terminal", "int")), name = null)
 
     @Test
     fun `lists every token, marking ignored ones`() {
@@ -36,14 +48,7 @@ class GrammarTreeTest {
 
     @Test
     fun `groups productions by nonterminal and labels each alternative`() {
-        val plus =
-            ProductionSpec(
-                "Expr",
-                listOf(SymbolSpec("nonterminal", "Expr"), SymbolSpec("terminal", "\\+"), SymbolSpec("nonterminal", "Expr")),
-                "plus",
-            )
-        val literal = ProductionSpec("Expr", listOf(SymbolSpec("terminal", "int")), name = null)
-        val grammar = ParserGrammar("Parser", listOf(plus, literal))
+        val grammar = ParserGrammar("Parser", listOf(plusProduction, literalProduction))
         val resolved = ResolvedGrammar("Lexer", listOf(plusToken, intToken), grammar)
 
         val productions = buildGrammarTree(resolved).children[1]
@@ -55,6 +60,52 @@ class GrammarTreeTest {
             listOf("plus" to "Expr '+' Expr", "(unnamed)" to "int"),
             expr.children.map { it.primaryText to it.secondaryText },
         )
+    }
+
+    @Test
+    fun `a named alternative's nonterminal references are expandable, its terminals are not`() {
+        val grammar = ParserGrammar("Parser", listOf(plusProduction, literalProduction))
+        val resolved = ResolvedGrammar("Lexer", listOf(plusToken, intToken), grammar)
+
+        val alternatives =
+            buildGrammarTree(resolved)
+                .children[1]
+                .children
+                .single()
+                .children
+        val plusAlternative = alternatives.first { it.primaryText == "plus" }
+        val literalAlternative = alternatives.first { it.primaryText == "(unnamed)" }
+
+        // Expr -> Expr '+' Expr: both Expr occurrences become their own expandable child (not
+        // merged into one), the '+' terminal contributes nothing.
+        assertEquals(listOf("Expr", "Expr"), plusAlternative.children.map { it.primaryText })
+        assertTrue(plusAlternative.children.all { it.expandable })
+        assertEquals(emptyList<GrammarTreeNode>(), literalAlternative.children)
+    }
+
+    @Test
+    fun `alternativesOf computes the same rows for one nonterminal on demand`() {
+        val grammar = ParserGrammar("Parser", listOf(plusProduction, literalProduction))
+        val resolved = ResolvedGrammar("Lexer", listOf(plusToken, intToken), grammar)
+
+        val eager =
+            buildGrammarTree(resolved)
+                .children[1]
+                .children
+                .single()
+                .children
+        val lazy = alternativesOf("Expr", resolved)
+
+        assertEquals(eager, lazy)
+    }
+
+    @Test
+    fun `alternativesOf is empty for an unknown nonterminal or no parser grammar`() {
+        val withParser = ResolvedGrammar("Lexer", listOf(intToken), ParserGrammar("Parser", listOf(literalProduction)))
+        val withoutParser = ResolvedGrammar("Lexer", listOf(intToken), parserGrammar = null)
+
+        assertEquals(emptyList<GrammarTreeNode>(), alternativesOf("NoSuchRule", withParser))
+        assertEquals(emptyList<GrammarTreeNode>(), alternativesOf("Expr", withoutParser))
     }
 
     @Test

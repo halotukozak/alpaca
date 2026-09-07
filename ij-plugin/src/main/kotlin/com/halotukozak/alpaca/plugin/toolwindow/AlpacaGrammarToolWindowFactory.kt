@@ -1,5 +1,6 @@
 package com.halotukozak.alpaca.plugin.toolwindow
 
+import com.halotukozak.alpaca.plugin.grammar.ResolvedGrammar
 import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
 import com.halotukozak.alpaca.plugin.icons.AlpacaIcons
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,6 +20,8 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.SwingConstants
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
@@ -26,7 +29,10 @@ import javax.swing.tree.DefaultTreeModel
  * "Alpaca Grammar": the whole of the current file's grammar (every token, every production
  * alternative), browsable in one place -- unlike Structure View (this file's own parse tree) or
  * Quick Documentation (one node's rule at a time). Refreshes on every editor selection change to
- * always show the grammar of whichever file is now on top.
+ * always show the grammar of whichever file is now on top. A nonterminal referenced inside a
+ * production's right-hand side is itself expandable: clicking it lazily reveals that nonterminal's
+ * own alternatives (see [GrammarTreeNode.expandable]), so exploring a recursive grammar (`Expr ->
+ * Expr '+' Expr`) only ever grows as deep as actually clicked.
  */
 class AlpacaGrammarToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(
@@ -49,14 +55,26 @@ class AlpacaGrammarToolWindowFactory : ToolWindowFactory {
     }
 }
 
+/** Marks a Swing tree node added purely so an unexpanded [GrammarTreeNode.expandable] node shows
+ *  an expand arrow; swapped out for the real alternatives the moment it's actually expanded. */
+private object LoadingPlaceholder
+
 private class GrammarPanel(
     private val project: Project,
 ) : JPanel(BorderLayout()) {
     private val placeholder = JBLabel("Open an Alpaca-defined file to see its grammar.", SwingConstants.CENTER)
+    private var resolved: ResolvedGrammar? = null
     private val tree =
         Tree().apply {
             isRootVisible = true
             cellRenderer = GrammarTreeCellRenderer()
+            addTreeWillExpandListener(
+                object : TreeWillExpandListener {
+                    override fun treeWillExpand(event: TreeExpansionEvent) = expandLazily(event)
+
+                    override fun treeWillCollapse(event: TreeExpansionEvent) = Unit
+                },
+            )
         }
 
     init {
@@ -64,12 +82,13 @@ private class GrammarPanel(
     }
 
     fun showGrammarFor(file: VirtualFile?) {
-        val resolved = file?.let { resolveGrammarForFile(project, it) }
+        resolved = file?.let { resolveGrammarForFile(project, it) }
         removeAll()
-        if (resolved == null) {
+        val currentResolved = resolved
+        if (currentResolved == null) {
             add(placeholder, BorderLayout.CENTER)
         } else {
-            tree.model = DefaultTreeModel(toSwingTree(buildGrammarTree(resolved)))
+            tree.model = DefaultTreeModel(toSwingTree(buildGrammarTree(currentResolved)))
             // Only the root: a grammar with hundreds of productions (e.g. the Scala one this
             // project's own parser targets) would otherwise dump every alternative open at once.
             tree.expandRow(0)
@@ -79,9 +98,28 @@ private class GrammarPanel(
         repaint()
     }
 
+    private fun expandLazily(event: TreeExpansionEvent) {
+        val treeNode = event.path.lastPathComponent as? DefaultMutableTreeNode ?: return
+        val grammarNode = treeNode.userObject as? GrammarTreeNode ?: return
+        if (!grammarNode.expandable) return
+        val onlyChild = treeNode.firstChild as? DefaultMutableTreeNode ?: return
+        if (onlyChild.userObject !== LoadingPlaceholder) return
+
+        val currentResolved = resolved ?: return
+        treeNode.removeAllChildren()
+        for (alternative in alternativesOf(grammarNode.primaryText, currentResolved)) {
+            treeNode.add(toSwingTree(alternative))
+        }
+        (tree.model as DefaultTreeModel).nodeStructureChanged(treeNode)
+    }
+
     private fun toSwingTree(node: GrammarTreeNode): DefaultMutableTreeNode =
         DefaultMutableTreeNode(node).apply {
-            for (child in node.children) add(toSwingTree(child))
+            if (node.expandable && node.children.isEmpty()) {
+                add(DefaultMutableTreeNode(LoadingPlaceholder))
+            } else {
+                for (child in node.children) add(toSwingTree(child))
+            }
         }
 }
 

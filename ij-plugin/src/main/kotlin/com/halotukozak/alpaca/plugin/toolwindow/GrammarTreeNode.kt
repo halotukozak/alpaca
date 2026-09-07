@@ -11,11 +11,19 @@ import com.halotukozak.alpaca.plugin.grammar.symbolLabel
  * to be rendered dimmed/secondary (a token's pattern, a production's right-hand side) -- the same
  * role Structure View's location string plays, kept out of [primaryText] so a renderer can tell
  * the two apart instead of parsing one flat string.
+ *
+ * [expandable] marks a nonterminal reference inside a production's right-hand side: [children] is
+ * empty even though the node genuinely has some, because computing them means recursing into that
+ * nonterminal's own alternatives, and a grammar is routinely self-referential (`Expr -> Expr '+'
+ * Expr`) -- eagerly unrolling every reachable nonterminal would never terminate. A UI is expected
+ * to call [alternativesOf] itself, lazily, the moment such a node is actually expanded; that keeps
+ * the tree only ever as deep as a user actually clicked, never deeper.
  */
 data class GrammarTreeNode(
     val primaryText: String,
     val secondaryText: String? = null,
     val bold: Boolean = false,
+    val expandable: Boolean = false,
     val children: List<GrammarTreeNode> = emptyList(),
 )
 
@@ -44,7 +52,7 @@ fun buildGrammarTree(resolved: ResolvedGrammar): GrammarTreeNode {
                     GrammarTreeNode(
                         lhs,
                         bold = true,
-                        children = alternatives.map { alternativeNode(it, resolved.tokens) },
+                        children = alternatives.map { alternativeRow(it, resolved.tokens) },
                     )
                 }
         children += GrammarTreeNode("Productions (${nonterminals.size})", bold = true, children = nonterminals)
@@ -53,15 +61,32 @@ fun buildGrammarTree(resolved: ResolvedGrammar): GrammarTreeNode {
     return GrammarTreeNode(resolved.lexerId, bold = true, children = children)
 }
 
+/**
+ * [nonterminal]'s own alternatives, as rows -- the same shape [buildGrammarTree] already builds
+ * for every nonterminal up front, computed for just this one on demand. This is what a UI calls
+ * when the user expands a nonterminal-reference node it couldn't afford to expand eagerly.
+ */
+fun alternativesOf(
+    nonterminal: String,
+    resolved: ResolvedGrammar,
+): List<GrammarTreeNode> {
+    val grammar = resolved.parserGrammar ?: return emptyList()
+    return grammar.productions.filter { it.lhs == nonterminal }.map { alternativeRow(it, resolved.tokens) }
+}
+
 private fun tokenNode(token: TokenSpec): GrammarTreeNode {
     val secondary = if (token.ignored) "${token.pattern}  [ignored]" else token.pattern
     return GrammarTreeNode(token.name, secondary)
 }
 
-private fun alternativeNode(
+private fun alternativeRow(
     production: ProductionSpec,
     tokens: List<TokenSpec>,
 ): GrammarTreeNode {
-    val rhs = if (production.rhs.isEmpty()) "ε" else production.rhs.joinToString(" ") { symbolLabel(it, tokens) }
-    return GrammarTreeNode(production.name ?: "(unnamed)", rhs)
+    val rhsText = if (production.rhs.isEmpty()) "ε" else production.rhs.joinToString(" ") { symbolLabel(it, tokens) }
+    val nonterminalRefs =
+        production.rhs
+            .filter { it.kind != "terminal" }
+            .map { GrammarTreeNode(it.name, bold = true, expandable = true) }
+    return GrammarTreeNode(production.name ?: "(unnamed)", rhsText, children = nonterminalRefs)
 }
