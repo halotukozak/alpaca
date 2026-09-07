@@ -22,6 +22,7 @@
       <li><b>Line comment toggling</b> for grammars with a <code>prefix.*</code>-shaped ignored rule.</li>
       <li><b>Reformat Code</b> that spaces and indents around your grammar's brackets, commas, semicolons,
         and dots, however they're spelled.</li>
+      <li><b>Highlight occurrences</b> of the identifier under the caret, everywhere it appears in the file.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -44,6 +45,8 @@
         implementationClass="com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory"/>
     <colorSettingsPage implementation="com.halotukozak.alpaca.plugin.lexer.AlpacaColorSettingsPage"/>
     <heavyBracesHighlighter implementation="com.halotukozak.alpaca.plugin.editing.AlpacaBraceHighlighter"/>
+    <highlightUsagesHandlerFactory
+        implementation="com.halotukozak.alpaca.plugin.editing.AlpacaHighlightUsagesHandlerFactory"/>
     <lang.parserDefinition
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
