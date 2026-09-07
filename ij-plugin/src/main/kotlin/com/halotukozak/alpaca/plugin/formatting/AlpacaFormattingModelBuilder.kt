@@ -14,8 +14,9 @@ import com.intellij.formatting.SpacingBuilder
  * same way [com.halotukozak.alpaca.plugin.editing.AlpacaBraceHighlighter] and
  * [com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighterFactory] do, classifies its tokens
  * by shape ([FormattingRoles]), and builds an [AlpacaBlock] tree from that -- no per-grammar code,
- * just opinionated defaults: a single space between most tokens, none just inside a bracket pair
- * or around `,`/`;`/`.`, and one indent level for whatever a matching bracket pair encloses.
+ * and no opinion on anything [FormattingRoles] doesn't classify: no space just inside a bracket
+ * pair or around `,`/`;`/`.`, one indent level for whatever a matching bracket pair encloses, and
+ * everything else left exactly as the user typed it (see [AlpacaBlock.getSpacing]).
  */
 class AlpacaFormattingModelBuilder : FormattingModelBuilder {
     override fun createModel(formattingContext: FormattingContext): FormattingModel {

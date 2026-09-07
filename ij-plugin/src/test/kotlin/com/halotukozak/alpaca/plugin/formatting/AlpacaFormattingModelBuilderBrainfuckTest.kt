@@ -41,11 +41,9 @@ class AlpacaFormattingModelBuilderBrainfuckTest : BasePlatformTestCase() {
         assertEquals("[\n    +\n]", result)
     }
 
-    fun `test spaces consecutive operations that have no special role`() {
-        // Brainfuck's own convention packs operations tight with no separators at all, but none
-        // of `+`/`-`/`>`/`<` is a bracket/comma/semicolon/dot, so they get the same generic
-        // default spacing as any other unclassified token pair -- a known tradeoff of having no
-        // per-grammar rules, not a bug specific to this grammar.
-        assertEquals("+ + +", reformat("+++"))
+    fun `test leaves consecutive operations exactly as typed`() {
+        // None of `+`/`-`/`>`/`<` is a bracket/comma/semicolon/dot, and there is no generic
+        // fallback spacing rule, so Brainfuck's own tight-packed convention survives untouched.
+        assertEquals("+++", reformat("+++"))
     }
 }

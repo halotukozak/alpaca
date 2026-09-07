@@ -13,6 +13,13 @@ import com.intellij.psi.formatter.common.AbstractBlock
  * regenerated from [getSpacing] like any other gap -- but a comment leaf, despite also being an
  * `ignored` rule like whitespace, keeps its own block so reformatting can't eat it.
  *
+ * Spacing only ever touches what [FormattingRoles] classifies (no space just inside a bracket
+ * pair or around `,`/`;`/`.`): anywhere else, [getSpacing] returns null and the formatter leaves
+ * whatever the user actually typed alone. There is deliberately no generic "one space between any
+ * two tokens" fallback -- with no semantics, that would just be a different unjustified opinion
+ * (e.g. it made a keyword-shaped call like `atan2(1, 1)` reformat to `atan2 (1, 1)`, and spaced
+ * out a tight-packed grammar like Brainfuck's `+++` into `+ + +`).
+ *
  * Indentation is inferred purely from [roles]: when a node's own children end with a bracket
  * closer that has a matching opener earlier among the *same* direct children ([bracketSpan]),
  * whatever sits strictly between that pair is indented one level, exactly like a `{ ... }`/
@@ -46,7 +53,7 @@ class AlpacaBlock(
     override fun getSpacing(
         child1: Block?,
         child2: Block,
-    ): Spacing = spacingBuilder.getSpacing(this, child1, child2) ?: DEFAULT_SPACING
+    ): Spacing? = spacingBuilder.getSpacing(this, child1, child2)
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
         val span = bracketSpan(nonBlankChildren())
@@ -73,11 +80,4 @@ class AlpacaBlock(
         val open: Int,
         val close: Int,
     )
-
-    companion object {
-        // No special rule matched: one space, no forced line break, but keep one if the user
-        // already put it there (so a multi-line bracket group's line breaks survive reformatting),
-        // and collapse longer runs of blank lines down to at most one.
-        private val DEFAULT_SPACING = Spacing.createSpacing(1, 1, 0, true, 1)
-    }
 }

@@ -30,26 +30,26 @@ class AlpacaFormattingModelBuilderTest : BasePlatformTestCase() {
         return myFixture.editor.document.text
     }
 
-    fun `test spaces an operator with no spaces around it`() {
-        assertEquals("1 + 2", reformat("1+2"))
-    }
-
-    fun `test collapses extra spaces around an operator to one`() {
-        assertEquals("1 + 2", reformat("1    +    2"))
+    fun `test leaves an operator's own spacing untouched`() {
+        // Nothing classifies "+" -- there is no generic "one space between tokens" fallback, so
+        // whatever spacing the user typed around an unclassified token survives verbatim.
+        assertEquals("1+2", reformat("1+2"))
+        assertEquals("1    +    2", reformat("1    +    2"))
     }
 
     fun `test removes space just inside a paren pair`() {
         assertEquals("(1 + 2)", reformat("( 1 + 2 )"))
     }
 
-    fun `test removes space before a comma but keeps one after it`() {
-        // atan2 is a keyword-shaped token like any other, so the generic default (one space
-        // between tokens with no special rule) still applies right before its own "(" -- the
-        // grammar-agnostic design has no notion of "function call" to special-case that away.
-        assertEquals("atan2 (1, 1)", reformat("atan2 ( 1 , 1 )"))
+    fun `test removes space before a comma but keeps whatever was after it`() {
+        // The " " between atan2 and "(" is unclassified and survives; the " " before the comma is
+        // removed; the "  " after the comma is unclassified and survives as-is.
+        assertEquals("atan2 (1,  1)", reformat("atan2 ( 1 ,  1 )"))
     }
 
     fun `test indents a wrapped paren group by one level and keeps the wrap`() {
+        // "tan(" (no space) is left alone, same as any other unclassified gap -- only the
+        // parens' own interior spacing and the wrapped Expr's indent are touched.
         val result =
             reformat(
                 """
@@ -61,7 +61,7 @@ class AlpacaFormattingModelBuilderTest : BasePlatformTestCase() {
 
         assertEquals(
             """
-            tan (
+            tan(
                 (1 + 2) * (3 - 4)
             )
             """.trimIndent(),
@@ -69,11 +69,13 @@ class AlpacaFormattingModelBuilderTest : BasePlatformTestCase() {
         )
     }
 
-    fun `test still applies the generic default spacing when the file's grammar is unresolved`() {
+    fun `test an unresolved grammar leaves the file untouched`() {
         // The extension is still registered as an Alpaca file type, but no association names a
         // grammar for it -- the same situation a stale or mistyped Settings entry would leave.
+        // FormattingRoles.of("<unresolved>", emptyList()) classifies nothing, so every gap is
+        // left alone; this only confirms that resolving no grammar doesn't crash the formatter.
         AlpacaSettingsState.getInstance(project).associations = mutableListOf()
 
-        assertEquals("1 + 2", reformat("1    +    2"))
+        assertEquals("( 1 , 1 )", reformat("( 1 , 1 )"))
     }
 }
