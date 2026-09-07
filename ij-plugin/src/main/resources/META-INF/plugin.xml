@@ -27,6 +27,7 @@
       <li><b>Breadcrumbs</b> showing the caret's nesting path through the parsed tree.</li>
       <li><b>Quick Documentation</b> (hover / Ctrl+Q) showing a token's pattern or a nonterminal's
         full set of production alternatives.</li>
+      <li><b>Inlay hints</b> labelling each parsed node with the grammar production alternative that built it.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -36,6 +37,8 @@
   ]]></description>
 
   <depends>com.intellij.modules.platform</depends>
+
+  <resource-bundle>messages.AlpacaBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.halotukozak.alpaca.plugin.startup.AlpacaGrammarStartupActivity"/>
@@ -74,6 +77,14 @@
     <lang.formatter
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.formatting.AlpacaFormattingModelBuilder"/>
+    <codeInsight.declarativeInlayProvider
+        language="Alpaca"
+        providerId="alpaca.parseTree"
+        isEnabledByDefault="true"
+        group="OTHER_GROUP"
+        nameKey="inlay.alpaca.parseTree.name"
+        descriptionKey="inlay.alpaca.parseTree.description"
+        implementationClass="com.halotukozak.alpaca.plugin.hints.AlpacaParseTreeInlayHintsProvider"/>
     <notificationGroup id="Alpaca" displayType="BALLOON"/>
   </extensions>
 
