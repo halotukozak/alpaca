@@ -69,6 +69,22 @@ class AlpacaFormattingModelBuilderTest : BasePlatformTestCase() {
         )
     }
 
+    fun `test pressing Enter inside a paren group indents the new line one level`() {
+        // Drives AlpacaBlock.getChildAttributes: the caret sits between "(" and ")", so the fresh
+        // line is opened at one indent level -- the same span logic ReformatCode uses.
+        myFixture.configureByText("test.calc", "sin(<caret>)")
+        myFixture.type("\n")
+
+        assertEquals("sin(\n    \n)", myFixture.editor.document.text)
+    }
+
+    fun `test pressing Enter outside any bracket stays at column zero`() {
+        myFixture.configureByText("test.calc", "1 + 2<caret>")
+        myFixture.type("\n")
+
+        assertEquals("1 + 2\n", myFixture.editor.document.text)
+    }
+
     fun `test an unresolved grammar leaves the file untouched`() {
         // The extension is still registered as an Alpaca file type, but no association names a
         // grammar for it -- the same situation a stale or mistyped Settings entry would leave.
