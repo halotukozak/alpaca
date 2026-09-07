@@ -46,27 +46,20 @@ class AlpacaBreadcrumbsProviderTest : BasePlatformTestCase() {
         // root -> Expr is a unit production (same text range as its Expr child): filtered. The
         // literal-wrapping Expr around a single "int" token is not a unit production of another
         // composite (the terminal is a leaf, invisible to PsiElement#getChildren), so it stays.
-        assertEquals(listOf("Expr: 42"), crumbs("<caret>42"))
+        assertEquals(listOf("Expr"), crumbs("<caret>42"))
     }
 
     fun `test keeps every level that adds its own tokens`() {
         val result = crumbs("sin(<caret>1 + 2)")
 
-        assertEquals(
-            listOf(
-                "Expr: 1",
-                "Expr: 1 + 2",
-                "Expr: sin(1 + 2)",
-            ),
-            result,
-        )
+        // Every level here is an Expr (see the class doc), so this is really asserting the depth:
+        // the literal, the "1 + 2" sum, and the outer sin(...) call each get their own crumb.
+        assertEquals(listOf("Expr", "Expr", "Expr"), result)
     }
 
-    fun `test truncates a long snippet with an ellipsis`() {
+    fun `test a crumb is just the nonterminal name, no source snippet`() {
         val result = crumbs("sin(<caret>1 + 222222222222222222)")
 
-        val outer = result.last()
-        assertTrue(outer.startsWith("Expr: sin(1 + 22222222"))
-        assertTrue(outer.endsWith("…"))
+        assertEquals(listOf("Expr", "Expr", "Expr"), result)
     }
 }
