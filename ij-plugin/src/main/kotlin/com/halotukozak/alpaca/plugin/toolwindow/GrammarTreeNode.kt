@@ -18,6 +18,11 @@ import com.halotukozak.alpaca.plugin.grammar.symbolLabel
  * Expr`) -- eagerly unrolling every reachable nonterminal would never terminate. A UI is expected
  * to call [alternativesOf] itself, lazily, the moment such a node is actually expanded; that keeps
  * the tree only ever as deep as a user actually clicked, never deeper.
+ *
+ * [sourceFile]/[sourceLine] locate the lexer/parser rule this row was defined by, letting a UI
+ * offer "go to source"; null for a row with no source of its own -- a category heading (the
+ * "Tokens"/"Productions" groups, a nonterminal's own heading) or a production synthesized from
+ * EBNF sugar (`List`/`Option`/`SeparatedBy`) rather than written directly in the grammar.
  */
 data class GrammarTreeNode(
     val primaryText: String,
@@ -25,6 +30,8 @@ data class GrammarTreeNode(
     val bold: Boolean = false,
     val expandable: Boolean = false,
     val children: List<GrammarTreeNode> = emptyList(),
+    val sourceFile: String? = null,
+    val sourceLine: Int? = null,
 )
 
 /**
@@ -76,7 +83,7 @@ fun alternativesOf(
 
 private fun tokenNode(token: TokenSpec): GrammarTreeNode {
     val secondary = if (token.ignored) "${token.pattern}  [ignored]" else token.pattern
-    return GrammarTreeNode(token.name, secondary)
+    return GrammarTreeNode(token.name, secondary, sourceFile = token.sourceFile.orNullSource(), sourceLine = token.sourceLine)
 }
 
 private fun alternativeRow(
@@ -88,5 +95,15 @@ private fun alternativeRow(
         production.rhs
             .filter { it.kind != "terminal" }
             .map { GrammarTreeNode(it.name, bold = true, expandable = true) }
-    return GrammarTreeNode(production.name ?: "(unnamed)", rhsText, children = nonterminalRefs)
+    return GrammarTreeNode(
+        production.name ?: "(unnamed)",
+        rhsText,
+        children = nonterminalRefs,
+        sourceFile = production.sourceFile.orNullSource(),
+        sourceLine = production.sourceLine,
+    )
 }
+
+/** A blank export-side `sourceFile` marks a row with no source of its own (see [GrammarTreeNode]'s
+ *  doc) -- normalized to `null` here so a UI can tell "no source" apart from "source is /path". */
+private fun String?.orNullSource(): String? = this?.takeIf { it.isNotBlank() }

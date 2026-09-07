@@ -124,4 +124,38 @@ class GrammarTreeTest {
 
         assertEquals("(unnamed)" to "ε", alternative.primaryText to alternative.secondaryText)
     }
+
+    @Test
+    fun `carries the source location for tokens and production alternatives`() {
+        val token = intToken.copy(sourceFile = "/x/Lexer.scala", sourceLine = 4)
+        val production = literalProduction.copy(sourceFile = "/x/Parser.scala", sourceLine = 9)
+        val resolved = ResolvedGrammar("Lexer", listOf(token), ParserGrammar("Parser", listOf(production)))
+
+        val tokenNode = buildGrammarTree(resolved).children[0].children.single()
+        assertEquals("/x/Lexer.scala" to 4, tokenNode.sourceFile to tokenNode.sourceLine)
+
+        val productionNode =
+            buildGrammarTree(resolved)
+                .children[1]
+                .children
+                .single()
+                .children
+                .single()
+        assertEquals("/x/Parser.scala" to 9, productionNode.sourceFile to productionNode.sourceLine)
+    }
+
+    @Test
+    fun `a blank exported source file means no source, not an empty path`() {
+        val synthetic = literalProduction.copy(sourceFile = "", sourceLine = 0)
+        val resolved = ResolvedGrammar("Lexer", emptyList(), ParserGrammar("Parser", listOf(synthetic)))
+
+        val node =
+            buildGrammarTree(resolved)
+                .children[1]
+                .children
+                .single()
+                .children
+                .single()
+        assertEquals(null, node.sourceFile)
+    }
 }

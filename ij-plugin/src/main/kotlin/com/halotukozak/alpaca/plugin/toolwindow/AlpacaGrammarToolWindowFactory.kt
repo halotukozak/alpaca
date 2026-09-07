@@ -6,7 +6,9 @@ import com.halotukozak.alpaca.plugin.icons.AlpacaIcons
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -17,6 +19,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.SwingConstants
@@ -32,7 +38,9 @@ import javax.swing.tree.DefaultTreeModel
  * always show the grammar of whichever file is now on top. A nonterminal referenced inside a
  * production's right-hand side is itself expandable: clicking it lazily reveals that nonterminal's
  * own alternatives (see [GrammarTreeNode.expandable]), so exploring a recursive grammar (`Expr ->
- * Expr '+' Expr`) only ever grows as deep as actually clicked.
+ * Expr '+' Expr`) only ever grows as deep as actually clicked. Double-clicking (or pressing Enter
+ * on) a token or production row jumps to the `lexer{...}`/`parser` rule that defines it, when the
+ * export recorded one (see [GrammarTreeNode.sourceFile]).
  */
 class AlpacaGrammarToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(
@@ -75,6 +83,25 @@ private class GrammarPanel(
                     override fun treeWillCollapse(event: TreeExpansionEvent) = Unit
                 },
             )
+            addMouseListener(
+                object : MouseAdapter() {
+                    override fun mouseClicked(e: MouseEvent) {
+                        if (e.clickCount != 2) return
+                        val jtree = e.source as? JTree ?: return
+                        val path = jtree.getPathForLocation(e.x, e.y) ?: return
+                        navigateToSource(path.lastPathComponent as? DefaultMutableTreeNode)
+                    }
+                },
+            )
+            addKeyListener(
+                object : KeyAdapter() {
+                    override fun keyPressed(e: KeyEvent) {
+                        if (e.keyCode != KeyEvent.VK_ENTER) return
+                        val jtree = e.source as? JTree ?: return
+                        navigateToSource(jtree.selectionPath?.lastPathComponent as? DefaultMutableTreeNode)
+                    }
+                },
+            )
         }
 
     init {
@@ -111,6 +138,19 @@ private class GrammarPanel(
             treeNode.add(toSwingTree(alternative))
         }
         (tree.model as DefaultTreeModel).nodeStructureChanged(treeNode)
+    }
+
+    /** Opens the `lexer{...}`/`parser` rule [treeNode] was defined by, if the export recorded a
+     *  source location for it (see [GrammarTreeNode.sourceFile]) and the file can still be found --
+     *  a no-op otherwise, since the recorded path is an absolute compile-time path that may no
+     *  longer exist (a different machine, a moved/renamed source file). */
+    private fun navigateToSource(treeNode: DefaultMutableTreeNode?) {
+        val node = treeNode?.userObject as? GrammarTreeNode ?: return
+        val sourceFile = node.sourceFile ?: return
+        val sourceLine = node.sourceLine ?: return
+        val fileSystem = LocalFileSystem.getInstance()
+        val virtualFile = fileSystem.findFileByPath(sourceFile) ?: fileSystem.refreshAndFindFileByPath(sourceFile) ?: return
+        OpenFileDescriptor(project, virtualFile, sourceLine, 0).navigate(true)
     }
 
     private fun toSwingTree(node: GrammarTreeNode): DefaultMutableTreeNode =
