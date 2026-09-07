@@ -25,6 +25,16 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   /** An optional name for the production. */
   val name: ValidName | Null
 
+  // Mutable body fields rather than constructor params, deliberately: this class's hashCode is
+  // already overridden to (lhs, rhs, name) specifically so that separately-constructed-but-
+  // field-identical Production instances stay interchangeable (see that override's doc) --
+  // adding these as ordinary constructor params would put them in the default (unoverridden)
+  // equals too, silently breaking that guarantee. Kept out of the constructor, they don't
+  // affect equals/hashCode/copy at all; set once, after construction, only for a production
+  // built directly from a user-written grammar rule (see createTablesImpl).
+  var sourceFile: String = ""
+  var sourceLine: Int = 0
+
   /**
    * Caches the case-class-derived hash instead of recomputing it on every call. `rhs` is a
    * `Vector`-backed sequence, so the default (non-cached) hashCode would rehash it from scratch
@@ -72,11 +82,13 @@ private[alpaca] object Production:
   // NonEmpty/Empty share one flat shape rather than a tagged union; rhs.isEmpty distinguishes them.
   given MCodec[Production] =
     MCodec
-      .derived[(lhs: String, rhs: List[Symbol], name: String | Null)]
+      .derived[(lhs: String, rhs: List[Symbol], name: String | Null, sourceFile: String, sourceLine: Int)]
       .transform(
         onWrite = {
-          case NonEmpty(lhs, rhs, name) => (lhs = lhs.name, rhs = rhs.toList, name = name)
-          case Empty(lhs, name) => (lhs = lhs.name, rhs = Nil, name = name)
+          case p @ NonEmpty(lhs, rhs, name) =>
+            (lhs = lhs.name, rhs = rhs.toList, name = name, sourceFile = p.sourceFile, sourceLine = p.sourceLine)
+          case p @ Empty(lhs, name) =>
+            (lhs = lhs.name, rhs = Nil, name = name, sourceFile = p.sourceFile, sourceLine = p.sourceLine)
         },
         onRead = _ => throw UnsupportedOperationException("Production's export codec is write-only"),
       )

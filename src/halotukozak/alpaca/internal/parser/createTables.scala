@@ -116,20 +116,20 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 report.error("Guards are not supported yet", c.pos)
                 None
               // Tuple1
-              case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
+              case (c @ CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
                 val (symbol, bind, others) = extractEBNFAndAction(pattern)
-                (
-                  production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
-                  action = createAction(List(bind), rhs),
-                ) :: others
+                val production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name)
+                production.sourceFile = c.pos.sourceFile.path
+                production.sourceLine = c.pos.startLine
+                (production = production, action = createAction(List(bind), rhs)) :: others
 
               // TupleN, N > 1
-              case (CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
+              case (c @ CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
                 val (symbols, binds, others) = patterns.map(extractEBNFAndAction).unzip3(using _.toTuple)
-                (
-                  production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
-                  action = createAction(binds, rhs),
-                ) :: others.flatten
+                val production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name)
+                production.sourceFile = c.pos.sourceFile.path
+                production.sourceLine = c.pos.startLine
+                (production = production, action = createAction(binds, rhs)) :: others.flatten
               case other => raiseShouldNeverBeCalled(other)
             .toList
       }

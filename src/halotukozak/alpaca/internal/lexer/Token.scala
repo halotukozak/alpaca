@@ -38,7 +38,13 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Ctx
  * @param ignored whether matches of this token are dropped from the lexeme stream
  */
 private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String, ignored: Boolean)
-  derives ToExprFactory
+  derives ToExprFactory:
+  // Mutable body fields rather than constructor params: `derives ToExprFactory` only lifts the
+  // constructor's own fields (irrelevant here -- these are only ever read back during the same
+  // macro expansion that sets them, never spliced into the generated runtime code), and staying
+  // out of the constructor means they don't affect equals/hashCode/copy either.
+  var sourceFile: String = ""
+  var sourceLine: Int = 0
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -78,9 +84,12 @@ private[lexer] object TokenInfo:
   // Excludes regexGroupName, an internal-only detail with no meaning to the export's consumer.
   given MCodec[TokenInfo] =
     MCodec
-      .derived[(name: String, pattern: String, ignored: Boolean)]
+      .derived[(name: String, pattern: String, ignored: Boolean, sourceFile: String, sourceLine: Int)]
       .transform(
-        onWrite = { case TokenInfo(name, _, pattern, ignored) => (name = name, pattern = pattern, ignored = ignored) },
+        onWrite = {
+          case t @ TokenInfo(name, _, pattern, ignored) =>
+            (name = name, pattern = pattern, ignored = ignored, sourceFile = t.sourceFile, sourceLine = t.sourceLine)
+        },
         onRead = _ => throw UnsupportedOperationException("TokenInfo's export codec is write-only"),
       )
 // $COVERAGE-ON$
