@@ -158,12 +158,12 @@ private[parser] object ConflictResolutionTable:
   /**
    * Showable instance for displaying conflict resolution tables.
    */
-  given Showable[ConflictResolutionTable] = table =>
-    table
-      .map: (k, v) =>
-        def show(x: ConflictKey): String = x match
-          case p: Production => show"$p"
-          case s: String => show"Token[$s]"
+  given Showable[ConflictResolutionTable] = { table =>
+    given Showable[ConflictKey] =
+      case p: Production => show"$p"
+      case s: String => show"Token[$s]"
 
-        show"${show(k)} before ${v.map(show).mkShow(", ")}"
+    table
+      .map((k, v) => show"$k before ${v.mkShow(", ")}")
       .mkShow("\n")
+  }
