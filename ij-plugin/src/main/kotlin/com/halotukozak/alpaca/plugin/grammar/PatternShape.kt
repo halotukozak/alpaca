@@ -51,6 +51,13 @@ fun bracketRoleOf(pattern: String): BracketRole? =
     }
 
 /**
+ * The quote character a string-literal rule is delimited by, inferred the same way
+ * [com.halotukozak.alpaca.plugin.lexer.AlpacaSyntaxHighlighter] infers the string color: the first
+ * `"` or `'` that appears literally in [pattern] (`"[^"]*"`, `'(\\.|[^'])*'`). Null if neither does.
+ */
+fun stringQuoteOf(pattern: String): Char? = pattern.firstOrNull { it == '"' || it == '\'' }
+
+/**
  * The fixed prefix [pattern] denotes for "prefix, then anything to end of line" (`#.*`, `//.*`,
  * ...), the shape Alpaca grammars typically use for line comments among their `ignored` rules.
  * Returns null for anything else.

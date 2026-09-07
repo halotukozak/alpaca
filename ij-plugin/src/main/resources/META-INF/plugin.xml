@@ -27,6 +27,7 @@
       <li><b>Breadcrumbs</b> showing the caret's nesting path through the parsed tree.</li>
       <li><b>Quick Documentation</b> (hover / Ctrl+Q) showing a token's pattern or a nonterminal's
         full set of production alternatives.</li>
+      <li><b>Pair-quote insertion</b> for grammars whose strings are delimited by <code>"</code> or <code>'</code>.</li>
     </ul>
     <p>
       Point <b>Settings | Tools | Alpaca</b> at your grammar export directory and map file extensions
@@ -51,6 +52,9 @@
     <heavyBracesHighlighter implementation="com.halotukozak.alpaca.plugin.editing.AlpacaBraceHighlighter"/>
     <highlightUsagesHandlerFactory
         implementation="com.halotukozak.alpaca.plugin.editing.AlpacaHighlightUsagesHandlerFactory"/>
+    <lang.quoteHandler
+        language="Alpaca"
+        implementationClass="com.halotukozak.alpaca.plugin.editing.AlpacaQuoteHandler"/>
     <lang.parserDefinition
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.parser.AlpacaParserDefinition"/>
