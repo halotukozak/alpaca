@@ -33,7 +33,7 @@ private[parser] object LR0Automaton:
    * @param productionsByLhs all grammar productions, indexed by their LHS non-terminal
    * @return the constructed automaton
    */
-  def apply(productionsByLhs: Map[NonTerminal, List[Production]]): LR0Automaton =
+  def apply(productionsByLhs: Map[NonTerminal, List[Production]]): LR0Automaton = {
     val initialKernel = Core(productionsByLhs(parser.Symbol.Start).head)
     val initialState = LR0State.fromCore(LR0State.empty, initialKernel, productionsByLhs)
 
@@ -43,10 +43,10 @@ private[parser] object LR0Automaton:
     val stateIndex = mutable.HashMap(initialState -> 0)
 
     var currStateId = 0
-    while states.sizeIs > currStateId do
+    while states.sizeIs > currStateId do {
       val currState = states(currStateId)
 
-      for (stepSymbol, cores) <- currState.itemsByNextSymbol do
+      for (stepSymbol, cores) <- currState.itemsByNextSymbol do {
         val newState = LR0State.nextState(cores, productionsByLhs)
 
         val stateId = stateIndex.getOrElseUpdate(
@@ -59,7 +59,10 @@ private[parser] object LR0Automaton:
           },
         )
         gotoRows(currStateId).update(stepSymbol, stateId)
+      }
 
       currStateId += 1
+    }
 
     LR0Automaton(states.toIndexedSeq, kernels.toIndexedSeq, gotoRows.map(_.toMap).toIndexedSeq)
+  }

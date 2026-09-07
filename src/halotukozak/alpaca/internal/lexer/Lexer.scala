@@ -17,7 +17,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
   errorHandling: Expr[ErrorHandling[Ctx]],
   empty: Expr[Empty[Ctx]],
 )(using quotes: Quotes,
-): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] =
+): Expr[Tokenization[Ctx] { type LexemeFields = lexemeFields }] = {
   import quotes.reflect.*
 
   type TokenRefn = lexer.Token[?, Ctx, ?] { type LexemeTpe = Lexeme[?, ?] withFields lexemeFields }
@@ -38,7 +38,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       def extractSimple(ctxManipulation: Expr[CtxManipulation[Ctx]]): PartialFunction[
         Expr[TokenDef[ValidName, Ctx, Any]],
         List[(info: TokenInfo, expr: Expr[lexer.Token[?, Ctx, ?]])],
-      ] =
+      ] = {
         case '{ Token.Ignored(using $_) } =>
           compileNameAndPattern[Nothing](tree).map:
             case ('[type name <: ValidName; name], tokenInfo) =>
@@ -82,11 +82,12 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                   )
             case (_, tokenInfo) =>
               raiseShouldNeverBeCalled[(info: TokenInfo, expr: Expr[lexer.Token[?, Ctx, ?]])](tokenInfo)
+      }
 
       val pairs = extractSimple('{ (c: Ctx) => c })
         .lift(body.asExprOf[TokenDef[ValidName, Ctx, Any]])
         .orElse:
-          body match
+          body match {
             case Block(statements, expr) =>
               val ctxManipulation = createLambda[CtxManipulation[Ctx]]:
                 case (methSym, (newCtx: Term) :: Nil) =>
@@ -98,6 +99,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
                   Block(List(ValDef(ctxVar, Some(newCtx))), Block(List(rewritten), Ref(ctxVar)))
 
               extractSimple(ctxManipulation).lift(expr.asExprOf[TokenDef[ValidName, Ctx, Any]])
+          }
         .getOrElse:
           raiseShouldNeverBeCalled[List[(info: TokenInfo, expr: Expr[lexer.Token[?, Ctx, ?]])]](body)
 
@@ -148,7 +150,7 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
       CaseDef(Literal(StringConstant(NameTransformer.encode(t.info.name))), None, t.expr.asTerm),
   ).asExprOf[lexer.Token[?, Ctx, ?]]
 
-  (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match
+  (refinementTpeFrom(fields).asType, fieldsTpeFrom(fields).asType, types.asType).runtimeChecked match {
     case ('[refinedTpe], '[fields], '[types]) =>
       val tokensExpr = Expr.ofList(tokens.map(_.expr))
       val matcherExpr = '{ TokenMatcher.fromRegexes(${ Varargs(parsedRegexes.map(Expr(_))) }*) }
@@ -164,4 +166,6 @@ def lexerImpl[Ctx <: LexerCtx: Type, lexemeFields <: AnyNamedTuple: Type](
             override protected val matcher: TokenMatcher = $matcherExpr
         }.asInstanceOf[Tokenization[Ctx] { type LexemeFields = lexemeFields; type Fields = fields } & refinedTpe & types]
       }
+  }
+}
 // $COVERAGE-ON$

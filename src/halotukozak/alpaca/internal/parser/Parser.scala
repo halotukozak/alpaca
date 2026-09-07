@@ -65,7 +65,7 @@ abstract class Parser[Ctx <: ParserCtx](
    * @param lexemes the list of lexemes to parse
    * @return a tuple of (context, result), where result may be null on parse failure
    */
-  private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) =
+  private[alpaca] def unsafeParse[R](lexemes: List[Lexeme[?, ?]]): (ctx: Ctx, result: R | Null) = {
     enum Node:
       case Result(value: Any)
       case Token(lexeme: Lexeme[?, ?])
@@ -81,10 +81,10 @@ abstract class Parser[Ctx <: ParserCtx](
     stateStack += 0
     nodeStack += Node.Result(null)
 
-    @tailrec def loop(remaining: List[Lexeme[?, ?]]): Node =
+    @tailrec def loop(remaining: List[Lexeme[?, ?]]): Node = {
       val current = if remaining.isEmpty then Lexeme.EOF else remaining.head
       val nextSymbol = Terminal(current.name)
-      tables.parseTable(stateStack.last, nextSymbol) match
+      tables.parseTable(stateStack.last, nextSymbol) match {
         case ParseAction.Shift(gotoState) =>
           stateStack += gotoState
           nodeStack += Node.Token(current)
@@ -95,7 +95,7 @@ abstract class Parser[Ctx <: ParserCtx](
           val newStateIdx = stateStack(stateStack.size - 1 - n)
 
           if lhs == Symbol.Start && newStateIdx == 0 then nodeStack.last
-          else
+          else {
             val top = nodeStack.size - 1
             val children = Array.better.tabulate(n)(i => nodeStack(top - i).get)
             stateStack.dropRightInPlace(n)
@@ -106,6 +106,7 @@ abstract class Parser[Ctx <: ParserCtx](
             stateStack += gotoState
             nodeStack += Node.Result(result)
             loop(remaining)
+          }
 
         case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stateStack.last == 0 =>
           nodeStack.last
@@ -116,18 +117,21 @@ abstract class Parser[Ctx <: ParserCtx](
           stateStack += gotoState
           nodeStack += Node.Result(result)
           loop(remaining)
+      }
+    }
 
     val result = loop(lexemes) match
       case Node.Result(value) => value.asInstanceOf[R]
       case Node.Token(lexeme) => null
 
     (ctx, result)
+  }
 
 private val cachedProductions: mutable.Map[Type[? <: AnyKind], (Type[? <: AnyKind], Type[? <: AnyKind])] =
   mutable.Map.empty
 
 // $COVERAGE-OFF$
-def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionSelector] =
+def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionSelector] = {
   import quotes.reflect.*
   cachedProductions
     .getOrElseUpdate(
@@ -163,6 +167,7 @@ def productionImpl[P <: Parser[?]: Type](using quotes: Quotes): Expr[ProductionS
     .runtimeChecked match
     case ('[refinement], '[fields]) =>
       '{ DummyProductionSelector.asInstanceOf[ProductionSelector { type Fields = fields } & refinement] }
+}
 
 /**
  * A real (non-null) placeholder instance of [[ProductionSelector]].

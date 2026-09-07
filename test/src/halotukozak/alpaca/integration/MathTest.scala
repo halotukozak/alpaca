@@ -128,10 +128,11 @@ final class MathTest extends AnyFunSuite:
       - (-cos(0) + +sin(pi/2))
       + (((12 / 5) + (20 // 3) - (17 % 5)) * ((3 + 2) ** 3 / (2 ** 3)))
       + atan2(1, 0)
-    """): input =>
+    """) { input =>
       val (_, lexemes) = CalcLexer.tokenize(input)
       val (_, result) = MathParser.parse(lexemes)
       val expected = 2.0 + 128.0 + 12.0 + 0.0 + 100.0 + (math.Pi / 2.0)
 
       assert(result == expected, s"Multiple expression mismatch: $result vs $expected")
+    }
   }

@@ -1,7 +1,7 @@
 package com.halotukozak.alpaca.plugin.commenter
 
 import com.halotukozak.alpaca.plugin.grammar.lineCommentPrefixOf
-import com.halotukozak.alpaca.plugin.parser.resolveGrammarForFile
+import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
 import com.intellij.codeInsight.generation.CommenterDataHolder
 import com.intellij.codeInsight.generation.SelfManagingCommenter
 import com.intellij.lang.Commenter

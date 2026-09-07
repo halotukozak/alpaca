@@ -61,7 +61,7 @@ object JsonParser extends Parser:
     { case (ArrayElements(elems), JsonLexer.`,`(_), Value(v)) => elems :+ v },
   )
 
-@main def jsonParserMain(): Unit =
+@main def jsonParserMain(): Unit = {
   import java.nio.file.{Files, Paths}
 
   val filePathIterative = s"inputs/iterative_json_3.txt"
@@ -91,3 +91,4 @@ object JsonParser extends Parser:
     case e: Exception =>
       println(s"\nError Recursive: ${e.getMessage}")
       e.printStackTrace()
+}

@@ -45,7 +45,7 @@ private[parser] object State:
     productionsByLhs: Map[NonTerminal, List[Production]],
     firstSet: FirstSet,
   )(using DebugSettings,
-  ): State =
+  ): State = {
     @tailrec def loop(state: State, pending: Set[Item], worklist: List[Item]): State = worklist match
       case Nil => state
       case item :: rest if item.isLastItem => loop(state + item, pending, rest)
@@ -64,3 +64,4 @@ private[parser] object State:
           case _: Terminal => loop(state + item, pending, rest)
 
     loop(state, Set.empty, item :: Nil)
+  }

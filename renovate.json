@@ -36,7 +36,7 @@
       "matchStrings": [
         "//> using (?:test\\.)?dep \"?(?<groupId>[\\w.-]+)::(?<artifactId>[\\w.-]+):{1,2}(?<currentValue>[\\w.-]+)\"?",
         "\"(?<groupId>[\\w.-]+)\" %% \"(?<artifactId>[\\w.-]+)\" % \"(?<currentValue>[\\w.-]+)\"",
-        "mvn\"(?<groupId>[\\w.-]+)::(?<artifactId>[\\w.-]+):(?<currentValue>[\\w.-]+)\""
+        "mvn\"(?<groupId>[\\w.-]+)::(?<artifactId>[\\w.-]+):{1,2}(?<currentValue>[\\w.-]+)\""
       ],
       "packageNameTemplate": "{{groupId}}:{{artifactId}}_3",
       "datasourceTemplate": "sbt-package"

@@ -5,6 +5,54 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.streams.asSequence
+
+/**
+ * The export-format version this plugin build understands. Bumped only when the *shape* of an
+ * exported `.tokens.json`/`.productions.json`/`.table.json` file changes -- kept independently in
+ * sync with the alpaca library's own `JsonExport.ExportFormatVersion` constant, since the two ship
+ * on separate release schedules.
+ */
+const val CURRENT_EXPORT_FORMAT_VERSION: Int = 1
+
+/** The envelope every export file is wrapped in: `{"version": ..., "context": ...}`. `version`
+ *  defaults to 0 so a file with no `version` key at all (written before this envelope existed)
+ *  decodes as version 0 rather than failing outright. */
+@Serializable
+private data class ExportEnvelope<T>(
+    val version: Int = 0,
+    val context: T,
+)
+
+/** Just the `version` key, decoded leniently (unknown keys, i.e. `context`, ignored) so the found
+ *  version number is available even when `context`'s own shape can't be decoded as expected. */
+@Serializable
+private data class VersionOnly(
+    val version: Int = 0,
+)
+
+private val LENIENT_JSON = Json { ignoreUnknownKeys = true }
+
+/** The result of reading one versioned export file: either its (compatible-version) payload, or
+ *  the version actually found, when it doesn't match [CURRENT_EXPORT_FORMAT_VERSION]. */
+sealed interface VersionedExport<out T> {
+    data class Compatible<T>(
+        val value: T,
+    ) : VersionedExport<T>
+
+    data class Incompatible(
+        val foundVersion: Int,
+    ) : VersionedExport<Nothing>
+}
+
+/** Decodes [text] as a [CURRENT_EXPORT_FORMAT_VERSION]-shaped [ExportEnvelope]'s `context`, or
+ *  reports whatever version it actually found -- 0 for a pre-envelope file (a bare JSON array/
+ *  object with no `version` key at all), since that shape doesn't decode as an envelope either. */
+private inline fun <reified T> readVersioned(text: String): VersionedExport<T> {
+    val foundVersion = runCatching { LENIENT_JSON.decodeFromString<VersionOnly>(text).version }.getOrDefault(0)
+    if (foundVersion != CURRENT_EXPORT_FORMAT_VERSION) return VersionedExport.Incompatible(foundVersion)
+    return VersionedExport.Compatible(Json.decodeFromString<ExportEnvelope<T>>(text).context)
+}
 
 /**
  * One token rule as exported by Alpaca's `lexer{...}` macro (see
@@ -23,7 +71,7 @@ data class TokenSpec(
 object LexerGrammarFile {
     const val SUFFIX = ".tokens.json"
 
-    fun read(path: Path): List<TokenSpec> = Json.decodeFromString(Files.readString(path))
+    fun read(path: Path): VersionedExport<List<TokenSpec>> = readVersioned(Files.readString(path))
 }
 
 /** A single lexer's exported grammar, identified by its export file name (sans the `.tokens.json` suffix). */
@@ -55,7 +103,7 @@ data class ProductionSpec(
 object ParserGrammarFile {
     const val SUFFIX = ".productions.json"
 
-    fun read(path: Path): List<ProductionSpec> = Json.decodeFromString(Files.readString(path))
+    fun read(path: Path): VersionedExport<List<ProductionSpec>> = readVersioned(Files.readString(path))
 }
 
 /**
@@ -92,7 +140,7 @@ data class TableEntry(
 object ParserTableFile {
     const val SUFFIX = ".table.json"
 
-    fun read(path: Path): List<List<TableEntry>> = Json.decodeFromString(Files.readString(path))
+    fun read(path: Path): VersionedExport<List<List<TableEntry>>> = readVersioned(Files.readString(path))
 }
 
 /**
@@ -106,10 +154,21 @@ data class ParserGrammar(
     val table: List<List<TableEntry>> = emptyList(),
 )
 
-/** All grammars found in an `ALPACA_GRAMMAR_EXPORT_DIR` directory, lexers and parsers scanned separately. */
+/** One export file whose `version` didn't match [CURRENT_EXPORT_FORMAT_VERSION], excluded from the
+ *  scan's [ExportedGrammars.lexers]/[ExportedGrammars.parsers] the same way a grammar with no
+ *  Settings association would be: silently absent, with this record explaining why. */
+data class IncompatibleExport(
+    val fileName: String,
+    val foundVersion: Int,
+)
+
+/** All grammars found in an `ALPACA_GRAMMAR_EXPORT_DIR` directory, lexers and parsers scanned
+ *  separately; [incompatible] lists any export file whose format version this plugin build
+ *  doesn't understand. */
 data class ExportedGrammars(
     val lexers: List<LexerGrammar>,
     val parsers: List<ParserGrammar>,
+    val incompatible: List<IncompatibleExport> = emptyList(),
 )
 
 /**
@@ -121,16 +180,23 @@ object GrammarDirectory {
     fun scan(dir: Path): ExportedGrammars {
         if (!Files.isDirectory(dir)) return ExportedGrammars(emptyList(), emptyList())
 
+        val incompatible = mutableListOf<IncompatibleExport>()
+
         val lexers =
             Files.list(dir).use { entries ->
                 entries
+                    .asSequence()
                     .filter { it.fileName.toString().endsWith(LexerGrammarFile.SUFFIX) }
-                    .map { path ->
-                        LexerGrammar(
-                            id = path.fileName.toString().removeSuffix(LexerGrammarFile.SUFFIX),
-                            tokens = LexerGrammarFile.read(path),
-                        )
-                    }.sorted(compareBy { it.id })
+                    .mapNotNull { path ->
+                        val id = path.fileName.toString().removeSuffix(LexerGrammarFile.SUFFIX)
+                        when (val result = LexerGrammarFile.read(path)) {
+                            is VersionedExport.Compatible -> LexerGrammar(id, result.value)
+                            is VersionedExport.Incompatible -> {
+                                incompatible += IncompatibleExport(path.fileName.toString(), result.foundVersion)
+                                null
+                            }
+                        }
+                    }.sortedBy { it.id }
                     .toList()
             }
 
@@ -139,26 +205,39 @@ object GrammarDirectory {
                 .list(dir)
                 .use { entries ->
                     entries
+                        .asSequence()
                         .filter { it.fileName.toString().endsWith(ParserTableFile.SUFFIX) }
-                        .map { path -> path.fileName.toString().removeSuffix(ParserTableFile.SUFFIX) to ParserTableFile.read(path) }
-                        .toList()
+                        .mapNotNull { path ->
+                            val id = path.fileName.toString().removeSuffix(ParserTableFile.SUFFIX)
+                            when (val result = ParserTableFile.read(path)) {
+                                is VersionedExport.Compatible -> id to result.value
+                                is VersionedExport.Incompatible -> {
+                                    incompatible += IncompatibleExport(path.fileName.toString(), result.foundVersion)
+                                    null
+                                }
+                            }
+                        }.toList()
                 }.toMap()
 
         val parsers =
             Files.list(dir).use { entries ->
                 entries
+                    .asSequence()
                     .filter { it.fileName.toString().endsWith(ParserGrammarFile.SUFFIX) }
-                    .map { path ->
+                    .mapNotNull { path ->
                         val id = path.fileName.toString().removeSuffix(ParserGrammarFile.SUFFIX)
-                        ParserGrammar(
-                            id = id,
-                            productions = ParserGrammarFile.read(path),
-                            table = tablesById[id] ?: emptyList(),
-                        )
-                    }.sorted(compareBy { it.id })
+                        when (val result = ParserGrammarFile.read(path)) {
+                            is VersionedExport.Compatible ->
+                                ParserGrammar(id, productions = result.value, table = tablesById[id] ?: emptyList())
+                            is VersionedExport.Incompatible -> {
+                                incompatible += IncompatibleExport(path.fileName.toString(), result.foundVersion)
+                                null
+                            }
+                        }
+                    }.sortedBy { it.id }
                     .toList()
             }
 
-        return ExportedGrammars(lexers, parsers)
+        return ExportedGrammars(lexers, parsers, incompatible)
     }
 }

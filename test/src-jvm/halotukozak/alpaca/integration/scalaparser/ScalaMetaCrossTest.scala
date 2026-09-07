@@ -41,7 +41,7 @@ final class ScalaMetaCrossTest extends AnyFunSuite:
 
   // ---------- Renderer for Alpaca's ScalaTree ----------
 
-  private def renderMine(t: ScalaTree): String = t match
+  private def renderMine(t: ScalaTree): String = t match {
     case ScalaTree.IntLit(v) => s"(Int $v)"
     case ScalaTree.FloatLit(v) => s"(Float $v)"
     case ScalaTree.BoolLit(v) => s"(Bool $v)"
@@ -79,6 +79,7 @@ final class ScalaMetaCrossTest extends AnyFunSuite:
     case ScalaTree.Modified(_, inner) => renderMine(inner)
 
     case other => s"(UNSUPPORTED ${other.getClass.getSimpleName})"
+  }
 
   private def renderParam(p: Param): String = s"(Param ${p.name} ${renderType(p.tpe)})"
 
@@ -98,7 +99,7 @@ final class ScalaMetaCrossTest extends AnyFunSuite:
   // produces; the deprecated flat accessors (args, tparams, paramss, argss)
   // match this renderer's needs directly.
   @nowarn("cat=deprecation")
-  private def renderMeta(t: Tree): String = t match
+  private def renderMeta(t: Tree): String = t match {
     case Lit.Int(v) => s"(Int $v)"
     case Lit.Long(v) => s"(Int $v)" // Alpaca stores all ints as Long
     case Lit.Double(v) => s"(Float $v)"
@@ -171,6 +172,7 @@ final class ScalaMetaCrossTest extends AnyFunSuite:
     case t: Term.Tuple => s"(Tuple [${t.args.map(renderMeta).mkString(",")}])"
 
     case other => s"(UNSUPPORTED ${other.productPrefix})"
+  }
 
   private def renderMetaParam(p: Term.Param): String =
     val ty = p.decltpe match

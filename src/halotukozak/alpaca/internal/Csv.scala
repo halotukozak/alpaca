@@ -36,7 +36,8 @@ private[internal] object Csv:
     val rows = csv.rows.map(_.mkShow(",")).mkShow("\n")
     show"$header\n$rows"
 
-  extension [N <: Tuple, V <: Tuple](rows: List[NamedTuple[N, V]])
+  extension [N <: Tuple, V <: Tuple](rows: List[NamedTuple[N, V]]) {
+
     /**
      * Converts a list of named tuples to CSV format.
      *
@@ -52,6 +53,7 @@ private[internal] object Csv:
         compiletime.constValueTuple[N].toShowableList,
         rows.map(_.toTuple.toShowableList),
       )
+  }
 
   extension [T <: Tuple](tuple: T)
     inline private def toShowableList = compiletime
