@@ -1,5 +1,7 @@
 package com.halotukozak.alpaca.plugin.parser
 
+import com.halotukozak.alpaca.plugin.grammar.ResolvedGrammar
+import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
 import com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage
 import com.halotukozak.alpaca.plugin.lexer.AlpacaLexer
 import com.intellij.lang.ASTNode

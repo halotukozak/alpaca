@@ -1,5 +1,6 @@
 package com.halotukozak.alpaca.plugin.settings
 
+import com.halotukozak.alpaca.plugin.grammar.GrammarService
 import com.halotukozak.alpaca.plugin.lexer.AlpacaFileTypeRegistrar
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.options.Configurable
@@ -9,6 +10,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.FileContentUtil
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import javax.swing.JComponent
@@ -62,6 +64,13 @@ class AlpacaSettingsConfigurable(
         runWriteAction {
             settings.associations.forEach { AlpacaFileTypeRegistrar.ensureRegistered(it.extension, it.lexerGrammarId) }
         }
+
+        // The directory or the mappings may have changed: drop the cached scan, re-point the file
+        // watcher, and reparse open files so the new grammar takes effect immediately.
+        val grammarService = GrammarService.getInstance(project)
+        grammarService.invalidate()
+        grammarService.syncWatchedRoots()
+        FileContentUtil.reparseFiles(project, emptyList(), true)
     }
 
     override fun reset() {

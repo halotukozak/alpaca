@@ -1,7 +1,7 @@
 package com.halotukozak.alpaca.plugin.completion
 
+import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
 import com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage
-import com.halotukozak.alpaca.plugin.parser.resolveGrammarForFile
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.CompletionParameters

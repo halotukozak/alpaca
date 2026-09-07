@@ -56,4 +56,10 @@
         language="Alpaca"
         implementationClass="com.halotukozak.alpaca.plugin.commenter.AlpacaCommenter"/>
   </extensions>
+
+  <projectListeners>
+    <listener
+        class="com.halotukozak.alpaca.plugin.grammar.GrammarExportChangeListener"
+        topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 </idea-plugin>
