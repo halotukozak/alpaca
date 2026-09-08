@@ -54,6 +54,16 @@ private inline fun <reified T> readVersioned(text: String): VersionedExport<T> {
     return VersionedExport.Compatible(Json.decodeFromString<ExportEnvelope<T>>(text).context)
 }
 
+/** The location of a lexer/parser rule as written in the grammar's own source, exported nested
+ *  under a `"source"` key (see `Source` in the alpaca library); absent/`null` for a rule with no
+ *  source of its own -- a production synthesized from EBNF sugar (`List`/`Option`/`SeparatedBy`)
+ *  rather than written directly in the grammar. */
+@Serializable
+data class SourceLocation(
+    val line: Int,
+    val file: String,
+)
+
 /**
  * One token rule as exported by Alpaca's `lexer{...}` macro (see
  * `ALPACA_GRAMMAR_EXPORT_DIR` in the alpaca library): a name, the regex
@@ -65,8 +75,7 @@ data class TokenSpec(
     val name: String,
     val pattern: String,
     val ignored: Boolean,
-    val sourceFile: String? = null,
-    val sourceLine: Int? = null,
+    val source: SourceLocation? = null,
 )
 
 /** Reads a `<lexer>.tokens.json` file written by Alpaca's compile-time grammar export. */
@@ -99,8 +108,7 @@ data class ProductionSpec(
     val lhs: String,
     val rhs: List<SymbolSpec>,
     val name: String?,
-    val sourceFile: String? = null,
-    val sourceLine: Int? = null,
+    val source: SourceLocation? = null,
 )
 
 /** Reads a `<parser>.productions.json` file written by Alpaca's compile-time grammar export. */

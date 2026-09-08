@@ -3,6 +3,7 @@ package com.halotukozak.alpaca.plugin.toolwindow
 import com.halotukozak.alpaca.plugin.grammar.ParserGrammar
 import com.halotukozak.alpaca.plugin.grammar.ProductionSpec
 import com.halotukozak.alpaca.plugin.grammar.ResolvedGrammar
+import com.halotukozak.alpaca.plugin.grammar.SourceLocation
 import com.halotukozak.alpaca.plugin.grammar.SymbolSpec
 import com.halotukozak.alpaca.plugin.grammar.TokenSpec
 import org.junit.Assert.assertEquals
@@ -127,8 +128,8 @@ class GrammarTreeTest {
 
     @Test
     fun `carries the source location for tokens and production alternatives`() {
-        val token = intToken.copy(sourceFile = "/x/Lexer.scala", sourceLine = 4)
-        val production = literalProduction.copy(sourceFile = "/x/Parser.scala", sourceLine = 9)
+        val token = intToken.copy(source = SourceLocation(file = "/x/Lexer.scala", line = 4))
+        val production = literalProduction.copy(source = SourceLocation(file = "/x/Parser.scala", line = 9))
         val resolved = ResolvedGrammar("Lexer", listOf(token), ParserGrammar("Parser", listOf(production)))
 
         val tokenNode = buildGrammarTree(resolved).children[0].children.single()
@@ -145,8 +146,8 @@ class GrammarTreeTest {
     }
 
     @Test
-    fun `a blank exported source file means no source, not an empty path`() {
-        val synthetic = literalProduction.copy(sourceFile = "", sourceLine = 0)
+    fun `no exported source means no source, not a row missing it by omission`() {
+        val synthetic = literalProduction.copy(source = null)
         val resolved = ResolvedGrammar("Lexer", emptyList(), ParserGrammar("Parser", listOf(synthetic)))
 
         val node =
