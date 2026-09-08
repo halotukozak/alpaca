@@ -25,15 +25,7 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
   /** An optional name for the production. */
   val name: ValidName | Null
 
-  // Mutable body fields rather than constructor params, deliberately: this class's hashCode is
-  // already overridden to (lhs, rhs, name) specifically so that separately-constructed-but-
-  // field-identical Production instances stay interchangeable (see that override's doc) --
-  // adding these as ordinary constructor params would put them in the default (unoverridden)
-  // equals too, silently breaking that guarantee. Kept out of the constructor, they don't
-  // affect equals/hashCode/copy at all; set once, after construction, only for a production
-  // built directly from a user-written grammar rule (see createTablesImpl).
-  var sourceFile: String = ""
-  var sourceLine: Int = 0
+  val source: Source | Null
 
   /**
    * Caches the case-class-derived hash instead of recomputing it on every call. `rhs` is a
@@ -45,6 +37,9 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
    * `Production` instances with identical fields are constructed separately.
    */
   override val hashCode: Int = (lhs, rhs, name).hashCode()
+  override def equals(obj: Any): Boolean = obj match
+    case that: Production => (this.lhs == that.lhs) && (this.rhs == that.rhs) && (this.name == that.name)
+    case _ => false
 
   /**
    * Converts this production to an LR(0) item with a given lookahead.
@@ -58,21 +53,23 @@ private[alpaca] enum Production(val rhs: NEL[Symbol.NonEmpty] | Symbol.Empty.typ
     lhs: NonTerminal & Symbol.NonEmpty,
     override val rhs: NEL[Symbol.NonEmpty],
     name: ValidName | Null = null,
+    source: Source | Null = null,
   ) extends Production(rhs)
 
   case Empty(
     lhs: NonTerminal,
     name: ValidName | Null = null,
+    source: Source | Null = null,
   ) extends Production(Symbol.Empty)
 
 private[alpaca] object Production:
 
   /** Showable instance for displaying productions in human-readable form. */
   given Showable[Production] =
-    case NonEmpty(lhs, rhs, null) => show"$lhs -> ${rhs.mkShow(" ")}"
-    case NonEmpty(lhs, rhs, name: String) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
-    case Empty(lhs, null) => show"$lhs -> ${Symbol.Empty}"
-    case Empty(lhs, name: String) => show"$lhs -> ${Symbol.Empty} ($name)"
+    case NonEmpty(lhs, rhs, null, _) => show"$lhs -> ${rhs.mkShow(" ")}"
+    case NonEmpty(lhs, rhs, name: String, _) => show"$lhs -> ${rhs.mkShow(" ")} ($name)"
+    case Empty(lhs, null, _) => show"$lhs -> ${Symbol.Empty}"
+    case Empty(lhs, name: String, _) => show"$lhs -> ${Symbol.Empty} ($name)"
 
   given Ordering[Production] = Ordering.by(_.hashCode)
 
@@ -80,16 +77,13 @@ private[alpaca] object Production:
   private given MCodec[String | Null] = MCodec[String].nullable
 
   // NonEmpty/Empty share one flat shape rather than a tagged union; rhs.isEmpty distinguishes them.
-  given MCodec[Production] =
-    MCodec
-      .derived[(lhs: String, rhs: List[Symbol], name: String | Null, sourceFile: String, sourceLine: Int)]
-      .transform(
-        onWrite = {
-          case p @ NonEmpty(lhs, rhs, name) =>
-            (lhs = lhs.name, rhs = rhs.toList, name = name, sourceFile = p.sourceFile, sourceLine = p.sourceLine)
-          case p @ Empty(lhs, name) =>
-            (lhs = lhs.name, rhs = Nil, name = name, sourceFile = p.sourceFile, sourceLine = p.sourceLine)
-        },
-        onRead = _ => throw UnsupportedOperationException("Production's export codec is write-only"),
-      )
+  given MCodec[Production] = MCodec
+    .derived[(lhs: String, rhs: List[Symbol], name: String | Null, source: Source | Null)]
+    .transform(
+      onWrite = {
+        case NonEmpty(lhs, rhs, name, source) => (lhs = lhs.name, rhs = rhs.toList, name = name, source = source)
+        case Empty(lhs, name, source) => (lhs = lhs.name, rhs = Nil, name = name, source = source)
+      },
+      onRead = _ => throw UnsupportedOperationException("Production's export codec is write-only"),
+    )
 // $COVERAGE-ON$

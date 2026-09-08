@@ -1,8 +1,11 @@
 package halotukozak
 package alpaca.internal
 
+import halotukozak.mcodec.MCodec
+
 import scala.NamedTuple.{AnyNamedTuple, NamedTuple}
 import scala.collection.mutable
+import scala.quoted.{FromExprFactory, ToExprFactory}
 
 /**
  * A TreeMap that replaces symbol references in a tree.
@@ -95,6 +98,28 @@ private[internal] given [T: {ToExpr as toExpr}] => ToExpr[T | Null]:
   def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
     case null => '{ null }
     case value: T @unchecked => toExpr.apply(value)
+
+private[internal] given [T: {ToExprFactory as factory}] => ToExprFactory[T | Null]:
+  override def apply()(using tpe: Type[T | Null]): ToExpr[T | Null] = new ToExpr[T | Null]:
+    def apply(x: T | Null)(using Quotes): Expr[T | Null] = x match
+      case null => '{ null }
+      case value: T @unchecked =>
+        tpe match
+          case '[t | Null] =>
+            given Type[T] = Type.of[t].asInstanceOf[Type[T]]
+            factory.apply().apply(value)
+
+private[internal] given [T: {FromExprFactory as factory}] => FromExprFactory[T | Null]:
+  override def apply()(using tpe: Type[T | Null]): FromExpr[T | Null] = new FromExpr[T | Null]:
+    def unapply(x: Expr[T | Null])(using Quotes): Option[T | Null] = x match
+      case '{ $_ : Null } => Some(null)
+      case value: Expr[T] @unchecked =>
+        tpe match
+          case '[t | Null] =>
+            given Type[T] = Type.of[t].asInstanceOf[Type[T]]
+            factory.apply().unapply(value)
+
+private[internal] given [T: {MCodec as codec}] => MCodec[T | Null] = codec.nullable
 
 /**
  * FromExpr instance for nullable types.

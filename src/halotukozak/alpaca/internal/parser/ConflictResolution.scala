@@ -19,8 +19,8 @@ private[parser] object ConflictKey:
   inline def apply(key: Production | String): ConflictKey = key
 
   given Showable[ConflictKey] =
-    case Production.NonEmpty(lhs, rhs, null) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
-    case Production.Empty(lhs, null) => show"Reduction(${Symbol.Empty} -> $lhs)"
+    case Production.NonEmpty(lhs, rhs, null, _) => show"Reduction(${rhs.mkShow(" ")} -> $lhs)"
+    case Production.Empty(lhs, null, _) => show"Reduction(${Symbol.Empty} -> $lhs)"
     case p: Production => show"Reduction(${p.name.nn})"
     case s: String => show"Shift($s)"
 

@@ -39,11 +39,11 @@ private[parser] object FirstSet:
 
   @tailrec
   private def addImports(firstSet: FirstSet, production: Production): FirstSet = production.runtimeChecked match {
-    case Production.NonEmpty(lhs, NEL(head: Terminal, _), name) =>
+    case Production.NonEmpty(lhs, NEL(head: Terminal, _), name, _) =>
       val current = firstSet(lhs)
       if current.contains(head) then firstSet else firstSet.updated(lhs, current + head)
 
-    case Production.NonEmpty(lhs, NEL(head: NonTerminal { type IsEmpty = false }, tail), name) =>
+    case Production.NonEmpty(lhs, NEL(head: NonTerminal { type IsEmpty = false }, tail), name, _) =>
       val current = firstSet(lhs)
       val imported = firstSet(head) - Symbol.Empty
       val newFirstSet =
@@ -57,7 +57,7 @@ private[parser] object FirstSet:
       then addImports(newFirstSet, production)
       else newFirstSet
 
-    case Production.Empty(lhs, name) =>
+    case Production.Empty(lhs, name,_) =>
       val current = firstSet(lhs)
       if current.contains(Symbol.Empty) then firstSet else firstSet.updated(lhs, current + Symbol.Empty)
   }

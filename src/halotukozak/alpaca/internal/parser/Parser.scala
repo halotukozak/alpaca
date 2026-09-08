@@ -3,12 +3,10 @@ package alpaca
 package internal
 package parser
 
-import alpaca.internal.*
-import alpaca.internal.parser.*
-import halotukozak.alpaca.internal.lexer.Lexeme
-import halotukozak.alpaca.internal.{fieldsTpeFrom, refinementTpeFrom, withDefault, Empty, RevertedArray, RuleOnly, ValidName}
 import halotukozak.alpaca.{rule, ParserCtx, ProductionDefinition, Rule}
-import halotukozak.alpaca.internal.parser.Tables
+import halotukozak.alpaca.internal.{fieldsTpeFrom, refinementTpeFrom, withDefault, Empty, RevertedArray, RuleOnly, ValidName, *}
+import halotukozak.alpaca.internal.lexer.Lexeme
+import halotukozak.alpaca.internal.parser.{Tables, *}
 
 import scala.NamedTuple.NamedTuple
 import scala.annotation.{compileTimeOnly, tailrec}
@@ -90,7 +88,7 @@ abstract class Parser[Ctx <: ParserCtx](
           nodeStack += Node.Token(current)
           loop(if remaining.isEmpty then Nil else remaining.tail)
 
-        case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name)) =>
+        case ParseAction.Reduction(prod @ Production.NonEmpty(lhs, rhs, name, _)) =>
           val n = rhs.size
           val newStateIdx = stateStack(stateStack.size - 1 - n)
 
@@ -108,10 +106,10 @@ abstract class Parser[Ctx <: ParserCtx](
             loop(remaining)
           }
 
-        case ParseAction.Reduction(Production.Empty(Symbol.Start, name)) if stateStack.last == 0 =>
+        case ParseAction.Reduction(Production.Empty(Symbol.Start, name, _)) if stateStack.last == 0 =>
           nodeStack.last
 
-        case ParseAction.Reduction(prod @ Production.Empty(lhs, name)) =>
+        case ParseAction.Reduction(prod @ Production.Empty(lhs, name, _)) =>
           val ParseAction.Shift(gotoState) = tables.parseTable(stateStack.last, lhs).runtimeChecked
           val result = tables.actionTable(prod)(ctx, RevertedArray.empty)
           stateStack += gotoState
