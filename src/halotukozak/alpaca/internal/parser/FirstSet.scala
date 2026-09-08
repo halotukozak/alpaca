@@ -57,7 +57,7 @@ private[parser] object FirstSet:
       then addImports(newFirstSet, production)
       else newFirstSet
 
-    case Production.Empty(lhs, name,_) =>
+    case Production.Empty(lhs, name, _) =>
       val current = firstSet(lhs)
       if current.contains(Symbol.Empty) then firstSet else firstSet.updated(lhs, current + Symbol.Empty)
   }
