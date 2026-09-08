@@ -8,37 +8,30 @@ import halotukozak.regex.Subset
 
 import scala.annotation.tailrec
 
-/**
- * Compiler for lexer token patterns during macro expansion.
- *
- * This class extracts token names and patterns from pattern match trees
- * in lexer definitions. It handles various pattern forms including simple
- * patterns, alternatives, and bindings.
- *
- * @tparam Q the Quotes type
- * @param quotes the Quotes instance
- */
-private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: Q):
-  import quotes.reflect.*
-
 // $COVERAGE-OFF$
 
-  /**
-   * Compiles a pattern tree into token information.
-   *
-   * Extracts the token name and regex pattern from various forms of
-   * pattern matching trees, handling bindings and alternatives.
-   *
-   * @tparam T the type of the pattern
-   * @param pattern the pattern tree to compile
-   * @return a list of TokenInfo expressions
-   */
-  def apply[T: Type](pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] = {
-    // T is Nothing exactly when compiling a `Token.Ignored` case (see the two Nothing-guarded
-    // branches below); every other call site passes the token's own name as T.
-    val ignored = TypeRepr.of[T] =:= TypeRepr.of[Nothing]
+/**
+ * Compiles a pattern tree into token information during macro expansion.
+ *
+ * Extracts the token name and regex pattern from various forms of
+ * pattern matching trees in lexer definitions, handling simple patterns,
+ * alternatives, and bindings.
+ *
+ * @tparam T the type of the pattern
+ * @param pattern the pattern tree to compile
+ * @return a list of TokenInfo expressions
+ */
+private[lexer] def compileNameAndPattern[T: Type](
+  using quotes: Quotes,
+)(
+  pattern: quotes.reflect.Tree,
+): List[(Type[? <: ValidName], TokenInfo)] = {
+  import quotes.reflect.*
+  // T is Nothing exactly when compiling a `Token.Ignored` case (see the two Nothing-guarded
+  // branches below); every other call site passes the token's own name as T.
+  val ignored = TypeRepr.of[T] =:= TypeRepr.of[Nothing]
 
-    given Source = Source(pattern.pos.startLine, pattern.pos.sourceFile.path)
+  given Source = Source(pattern.pos.startLine, pattern.pos.sourceFile.path)
 
     @tailrec def loop(tpe: TypeRepr, pattern: Tree): List[(Type[? <: ValidName], TokenInfo)] = (tpe, pattern) match
       // case x @ "regex" => Token[x.type]
@@ -77,6 +70,6 @@ private[lexer] final class CompileNameAndPattern[Q <: Quotes](using val quotes: 
         TokenInfo(str, patterns.mkShow("|"), ignored) :: Nil
       case x => raiseShouldNeverBeCalled[List[(Type[? <: ValidName], TokenInfo)]](x.toString)
 
-    loop(TypeRepr.of[T], pattern)
-  }
+  loop(TypeRepr.of[T], pattern)
+}
 // $COVERAGE-ON$

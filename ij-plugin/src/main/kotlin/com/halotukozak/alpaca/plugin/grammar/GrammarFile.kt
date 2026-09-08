@@ -65,6 +65,8 @@ data class TokenSpec(
     val name: String,
     val pattern: String,
     val ignored: Boolean,
+    val sourceFile: String? = null,
+    val sourceLine: Int? = null,
 )
 
 /** Reads a `<lexer>.tokens.json` file written by Alpaca's compile-time grammar export. */
@@ -97,6 +99,8 @@ data class ProductionSpec(
     val lhs: String,
     val rhs: List<SymbolSpec>,
     val name: String?,
+    val sourceFile: String? = null,
+    val sourceLine: Int? = null,
 )
 
 /** Reads a `<parser>.productions.json` file written by Alpaca's compile-time grammar export. */

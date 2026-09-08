@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.4.20"
@@ -33,6 +34,15 @@ dependencies {
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        // Kotlin's default ("enable") emits a compatibility bridge in every implementing class for
+        // each default method of an implemented interface -- including ones we never touch. Several
+        // IntelliJ Platform interfaces (e.g. ToolWindowFactory) have default methods marked
+        // @ApiStatus.Internal; those bridges alone trip the Plugin Verifier's INTERNAL_API_USAGES
+        // check even though our code never calls or overrides them. This plugin has no Kotlin
+        // caller-compatibility surface to preserve, so no-compatibility (skip the bridges) is safe.
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
+    }
 }
 
 intellijPlatform {

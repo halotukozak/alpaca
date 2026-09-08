@@ -31,7 +31,7 @@ object myproject extends ScalaModule {
   def scalacOptions = Seq("-Yretain-trees", "-experimental")
 
   def mvnDeps = Seq(
-    mvn"com.halotukozak::alpaca::0.2.0"
+    mvn"com.halotukozak::alpaca::0.3.0"
   )
 }
 ```

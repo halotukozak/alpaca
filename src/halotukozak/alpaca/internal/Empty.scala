@@ -17,9 +17,9 @@ import halotukozak.made.label
  * @tparam T the type to create empty instances of
  */
 @implicitNotFound("${T} should be a case class.")
-private[alpaca] trait Empty[T] extends (() => T)
+trait Empty[T] extends (() => T)
 
-private[alpaca] object Empty:
+object Empty:
   inline private def collectDefaults(elems: Tuple)(using elems.type containsOnly MadeFieldElem): Tuple =
     inline elems match
       case EmptyTuple => EmptyTuple

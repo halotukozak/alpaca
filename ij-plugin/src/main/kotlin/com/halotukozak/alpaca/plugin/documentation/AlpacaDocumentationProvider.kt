@@ -2,10 +2,9 @@ package com.halotukozak.alpaca.plugin.documentation
 
 import com.halotukozak.alpaca.plugin.grammar.ProductionSpec
 import com.halotukozak.alpaca.plugin.grammar.ResolvedGrammar
-import com.halotukozak.alpaca.plugin.grammar.SymbolSpec
 import com.halotukozak.alpaca.plugin.grammar.TokenSpec
-import com.halotukozak.alpaca.plugin.grammar.literalTextOf
 import com.halotukozak.alpaca.plugin.grammar.resolveGrammarForFile
+import com.halotukozak.alpaca.plugin.grammar.symbolLabel
 import com.halotukozak.alpaca.plugin.lexer.AlpacaLanguage
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
@@ -99,15 +98,5 @@ class AlpacaDocumentationProvider : AbstractDocumentationProvider() {
             }
         val label = production.name?.let { " <i>(${StringUtil.escapeXmlEntities(it)})</i>" }.orEmpty()
         return "${StringUtil.escapeXmlEntities(production.lhs)} &rarr; $rhs$label<br>"
-    }
-
-    private fun symbolLabel(
-        symbol: SymbolSpec,
-        tokens: List<TokenSpec>,
-    ): String {
-        if (symbol.kind != "terminal") return symbol.name
-        val pattern = tokens.firstOrNull { it.name == symbol.name }?.pattern
-        val literal = pattern?.let(::literalTextOf)
-        return if (literal != null) "'$literal'" else symbol.name
     }
 }
