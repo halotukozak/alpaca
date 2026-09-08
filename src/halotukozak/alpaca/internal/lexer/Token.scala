@@ -86,7 +86,7 @@ private[lexer] object TokenInfo:
     MCodec
       .derived[(name: String, pattern: String, ignored: Boolean, source: Source | Null)]
       .transform(
-        onWrite = { case t @ TokenInfo(name, _, pattern, ignored, source) =>
+        onWrite = { case TokenInfo(name, _, pattern, ignored, source) =>
           (name = name, pattern = pattern, ignored = ignored, source = source)
         },
         onRead = _ => throw UnsupportedOperationException("TokenInfo's export codec is write-only"),
