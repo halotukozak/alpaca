@@ -3,8 +3,8 @@ package alpaca
 package internal
 package parser
 
-import alpaca.internal.Csv.toCsv
-import alpaca.internal.lexer.Token
+import halotukozak.alpaca.internal.Csv.toCsv
+import halotukozak.alpaca.internal.lexer.Token
 
 import scala.reflect.NameTransformer
 
@@ -112,20 +112,19 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
                 report.error("Guards are not supported yet", c.pos)
                 None
               // Tuple1
-              case (CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
+              case (c @ CaseDef(skipTypedOrTest(pattern @ Unapply(_, _, List(_))), None, rhs), name) =>
                 val (symbol, bind, others) = extractEBNFAndAction[Ctx](pattern)
-                (
-                  production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name),
-                  action = createAction(List(bind), rhs),
-                ) :: others
+                val source = Source(c.pos.startLine, c.pos.sourceFile.path)
+                val production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbol), name, source)
+                (production = production, action = createAction(List(bind), rhs)) :: others
 
               // TupleN, N > 1
-              case (CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
+              case (c @ CaseDef(skipTypedOrTest(Unapply(_, _, patterns)), None, rhs), name) =>
                 val (symbols, binds, others) = patterns.map(extractEBNFAndAction[Ctx]).unzip3(using _.toTuple)
-                (
-                  production = Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name),
-                  action = createAction(binds, rhs),
-                ) :: others.flatten
+                val source = Source(c.pos.startLine, c.pos.sourceFile.path)
+                val production =
+                  Production.NonEmpty(NonTerminal(ruleName), NEL(symbols.head, symbols.tail*), name, source)
+                (production = production, action = createAction(binds, rhs)) :: others.flatten
               case other => raiseShouldNeverBeCalled(other)
             .toList
       }
@@ -229,7 +228,7 @@ private def createTablesImpl[Ctx <: ParserCtx: Type](
 
       val root = table
         .collectFirst:
-          case (p @ Production.NonEmpty(NonTerminal("root"), _, _), _) => p
+          case (p @ Production.NonEmpty(NonTerminal("root"), _, _, _), _) => p
         .getOrElse:
           report.errorAndAbort(
             show"No root rule defined in $parserName. Define a root rule: val root: Rule[Any] = rule { ... }",

@@ -3,13 +3,13 @@ package alpaca
 package internal
 package lexer
 
-import halotukozak.alpaca.internal.{Default, RuleOnly, Showable, ValidName}
 import halotukozak.alpaca.{LexerCtx, SepValue}
+import halotukozak.alpaca.internal.{Default, RuleOnly, Showable, ValidName}
 import halotukozak.mcodec.MCodec
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.annotation.{compileTimeOnly, publicInBinary, unused}
+import scala.annotation.unchecked.uncheckedVariance as uv
 import scala.quoted.{Quotes, ToExprFactory}
 
 /**
@@ -37,8 +37,13 @@ private[lexer] type CtxManipulation[Ctx <: LexerCtx] = Ctx => Ctx
  * @param pattern the regex pattern that matches this token
  * @param ignored whether matches of this token are dropped from the lexeme stream
  */
-private[lexer] final case class TokenInfo(name: String, regexGroupName: String, pattern: String, ignored: Boolean)
-  derives ToExprFactory
+private[lexer] final case class TokenInfo(
+  name: String,
+  regexGroupName: String,
+  pattern: String,
+  ignored: Boolean,
+  source: Source | Null = null,
+) derives ToExprFactory
 
 private[lexer] object TokenInfo:
   private val counter = AtomicInteger(0)
@@ -56,12 +61,13 @@ private[lexer] object TokenInfo:
    * @return a TokenInfo expression
    */
 // $COVERAGE-OFF$
-  def apply(name: String, pattern: String, ignored: Boolean)(using quotes: Quotes): (Type[? <: ValidName], TokenInfo) =
+  def apply(name: String, pattern: String, ignored: Boolean)(using source: Source)(using quotes: Quotes)
+    : (Type[? <: ValidName], TokenInfo) =
     import quotes.reflect.*
     ValidName.check(name)
     (
       ConstantType(StringConstant(name)).asType.asInstanceOf[Type[? <: ValidName]],
-      TokenInfo(name, nextRegexGroupName(), pattern, ignored),
+      TokenInfo(name, nextRegexGroupName(), pattern, ignored, source),
     )
 
   /**
@@ -78,9 +84,11 @@ private[lexer] object TokenInfo:
   // Excludes regexGroupName, an internal-only detail with no meaning to the export's consumer.
   given MCodec[TokenInfo] =
     MCodec
-      .derived[(name: String, pattern: String, ignored: Boolean)]
+      .derived[(name: String, pattern: String, ignored: Boolean, source: Source | Null)]
       .transform(
-        onWrite = { case TokenInfo(name, _, pattern, ignored) => (name = name, pattern = pattern, ignored = ignored) },
+        onWrite = { case TokenInfo(name, _, pattern, ignored, source) =>
+          (name = name, pattern = pattern, ignored = ignored, source = source)
+        },
         onRead = _ => throw UnsupportedOperationException("TokenInfo's export codec is write-only"),
       )
 // $COVERAGE-ON$
